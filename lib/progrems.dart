@@ -1,5 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'services/workout_service.dart';
+import 'screens/active_workout_sheet.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_text.dart';
 
 class MuscleTrainingPage extends StatefulWidget {
   final String muscleGroup;
@@ -16,6 +21,11 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final _workoutService = WorkoutService();
+  String? _sessionId;
+  DateTime? _startTime;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -46,6 +56,26 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
     _fadeController.dispose();
     _slideController.dispose();
     super.dispose();
+  }
+
+  void _finishSession() async {
+    if (_sessionId != null) {
+      Navigator.of(context).pop(); // close bottom sheet
+      setState(() => _isLoading = true);
+      await _workoutService.endSession(
+        sessionId: _sessionId!, 
+        totalMinutes: DateTime.now().difference(_startTime ?? DateTime.now()).inMinutes,
+      );
+      if (mounted) {
+        setState(() {
+          _sessionId = null;
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Workout Session Completed! 💪'), backgroundColor: Colors.green),
+        );
+      }
+    }
   }
 
   Map<String, dynamic> getMuscleData(String muscle) {
@@ -340,20 +370,16 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
       },
     };
 
-
-
-
-
     return data[muscle.toLowerCase()] ?? data['chest']!;
   }
 
   Future<void> _launchVideo(String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+    final uri = Uri.parse(url);
+    final messenger = ScaffoldMessenger.of(context);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not launch video')));
+      messenger.showSnackBar(const SnackBar(content: Text('Could not launch video')));
     }
   }
 
@@ -362,7 +388,25 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
     final muscleData = getMuscleData(widget.muscleGroup);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: AppColors.surface,
+      floatingActionButton: _sessionId == null
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                setState(() => _isLoading = true);
+                final sid = await _workoutService.startSession(muscleGroup: widget.muscleGroup);
+                if (mounted) {
+                  setState(() {
+                    _sessionId = sid;
+                    _startTime = DateTime.now();
+                    _isLoading = false;
+                  });
+                }
+              },
+              icon: _isLoading ? const CircularProgressIndicator(color: Colors.black) : const Icon(Icons.play_arrow, color: Colors.black),
+              label: Text('START SESSION', style: AppText.buttonPrimary.copyWith(color: Colors.black)),
+              backgroundColor: AppColors.primaryFixed,
+            )
+          : null,
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeAnimation,
@@ -385,6 +429,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
                         _buildTipsSection(muscleData),
                         const SizedBox(height: 32),
                         _buildMotivationalQuote(muscleData),
+                        if (_sessionId != null) const SizedBox(height: 80),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -398,19 +443,21 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
     );
   }
 
+  // ────────────────── Sliver App Bar ──────────────────
   Widget _buildSliverAppBar(Map<String, dynamic> muscleData) {
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 220,
       pinned: true,
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: AppColors.surface,
       leading: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.glass2,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.glassBorder),
         ),
         child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -421,30 +468,62 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.7),
+                  Colors.black.withValues(alpha: 0.4),
+                  Colors.black.withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
             ),
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(muscleData['icon'], size: 48, color: Colors.white),
-                  const SizedBox(height: 16),
-                  Text(
-                    muscleData['title'],
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
+            child: Stack(
+              children: [
+                // Glow orb
+                Positioned(
+                  top: -40,
+                  right: -40,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.primaryFixed.withValues(alpha: 0.15),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 40),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppColors.glass2,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.glassBorder),
+                        ),
+                        child: Icon(
+                          muscleData['icon'],
+                          size: 36,
+                          color: AppColors.primaryFixed,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        muscleData['title'].toString().toUpperCase(),
+                        style: AppText.headlineMd,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -452,57 +531,63 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
     );
   }
 
+  // ────────────────── Introduction Card ──────────────────
   Widget _buildIntroduction(Map<String, dynamic> muscleData) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[800]!, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.glass1,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.glassBorder),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Introduction',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 4,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryFixed,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'INTRODUCTION',
+                    style: AppText.titleSm.copyWith(letterSpacing: 2),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                muscleData['intro'],
+                style: AppText.bodyMd.copyWith(height: 1.6),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            muscleData['intro'],
-            style: TextStyle(
-              color: Colors.grey[300],
-              fontSize: 16,
-              height: 1.5,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
+  // ────────────────── Exercises Section ──────────────────
   Widget _buildExercisesSection(Map<String, dynamic> muscleData) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Effective Exercises',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
+        Text('EXERCISES', style: AppText.headlineSm),
+        const SizedBox(height: 4),
+        Text(
+          '${(muscleData['exercises'] as List).length} MOVEMENTS',
+          style: AppText.labelSm.copyWith(
+            color: AppColors.primaryFixed,
+            letterSpacing: 2,
           ),
         ),
         const SizedBox(height: 20),
@@ -517,198 +602,256 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
   }
 
   Widget _buildExerciseCard(Map<String, dynamic> exercise, Gradient gradient) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[800]!, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (exercise["image"] != null) ...[
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.asset(
-                exercise["image"],
-                height: 180,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+    return GestureDetector(
+      onTap: () async {
+        if (_sessionId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Start the workout session first below!'),
+              backgroundColor: AppColors.error,
             ),
-            const SizedBox(height: 16),
-          ],
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  gradient: gradient,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  exercise["name"],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _launchVideo(exercise["video"]),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.play_arrow,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-              ),
-            ],
+          );
+          return;
+        }
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => ActiveWorkoutSheet(
+            muscleGroup: widget.muscleGroup,
+            exerciseName: exercise['name'].toString(),
+            sessionId: _sessionId!,
+            onFinish: _finishSession,
           ),
-          const SizedBox(height: 12),
-          Text(
-            exercise["description"],
-            style: TextStyle(
-              color: Colors.grey[400],
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.grey[800]!.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              exercise["sets"],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.glass1,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.glassBorder),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTipsSection(Map<String, dynamic> muscleData) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[800]!, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.lightbulb_outline, color: Colors.amber[400], size: 24),
-              const SizedBox(width: 12),
-              const Text(
-                'Training Tips',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ...muscleData['tips']
-              .map<Widget>(
-                (tip) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Exercise image (if available)
+                  if (exercise["image"] != null) ...[
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        exercise["image"],
+                        height: 160,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 100,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceContainerHigh,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.image_not_supported,
+                                color: AppColors.outline,
+                                size: 32,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  // Header row
+                  Row(
                     children: [
+                      // Accent dot
                       Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(top: 8, right: 12),
+                        width: 8,
+                        height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.amber[400],
+                          color: AppColors.primaryFixed,
                           shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          tip,
-                          style: TextStyle(
-                            color: Colors.grey[300],
-                            fontSize: 14,
-                            height: 1.4,
+                          exercise["name"].toString().toUpperCase(),
+                          style: AppText.titleSm.copyWith(letterSpacing: 1),
+                        ),
+                      ),
+                      // Play button
+                      GestureDetector(
+                        onTap: () => _launchVideo(exercise["video"]),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryFixed,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primaryFixed.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.play_arrow,
+                            color: AppColors.onPrimary,
+                            size: 18,
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              )
-              .toList(),
-        ],
+                  const SizedBox(height: 10),
+                  Text(
+                    exercise["description"],
+                    style: AppText.bodyMd.copyWith(height: 1.4),
+                  ),
+                  const SizedBox(height: 10),
+                  // Sets pill
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.glass2,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.glassBorder),
+                    ),
+                    child: Text(
+                      exercise["sets"].toString().toUpperCase(),
+                      style: AppText.labelMd.copyWith(
+                        color: AppColors.primaryFixed,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+  // ────────────────── Tips Section ──────────────────
+  Widget _buildTipsSection(Map<String, dynamic> muscleData) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.glass1,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.bolt,
+                    color: AppColors.tertiaryFixed,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'TRAINING INTEL',
+                    style: AppText.titleSm.copyWith(letterSpacing: 2),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ...muscleData['tips']
+                  .map<Widget>(
+                    (tip) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            margin: const EdgeInsets.only(top: 8, right: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.tertiaryFixed,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.tertiaryFixed.withValues(alpha: 0.3),
+                                  blurRadius: 4,
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              tip,
+                              style: AppText.bodyMd.copyWith(height: 1.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ],
+          ),
+        ),
       ),
     );
   }
 
+  // ────────────────── Motivational Quote ──────────────────
   Widget _buildMotivationalQuote(Map<String, dynamic> muscleData) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        gradient: muscleData['gradient'],
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primaryFixed.withValues(alpha: 0.15),
+            AppColors.primaryFixed.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryFixed.withValues(alpha: 0.2),
+        ),
       ),
       child: Column(
         children: [
-          const Icon(Icons.format_quote, color: Colors.white, size: 32),
+          Icon(
+            Icons.format_quote,
+            color: AppColors.primaryFixed,
+            size: 28,
+          ),
           const SizedBox(height: 16),
           Text(
             muscleData['quote'],
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
+            style: AppText.bodyLg.copyWith(
               fontStyle: FontStyle.italic,
-              height: 1.5,
+              color: AppColors.onSurface,
+              height: 1.6,
             ),
             textAlign: TextAlign.center,
           ),

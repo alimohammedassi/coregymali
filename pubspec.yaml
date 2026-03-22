@@ -12,9 +12,7 @@ dependencies:
   flutter:
     sdk: flutter
   fl_chart: ^0.68.0
-  firebase_core: ^2.24.2
-  firebase_auth: ^4.15.3
-  google_sign_in: ^6.1.6
+  supabase_flutter: ^2.5.0
   cupertino_icons: ^1.0.8
   glassy: ^0.0.6
   url_launcher: ^6.1.14

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CoreGym | Kinetic Login</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@1,900&amp;family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-fixed": "#00eefc",
+                        "inverse-on-surface": "#565554",
+                        "on-secondary-fixed-variant": "#005e64",
+                        "tertiary-dim": "#edce35",
+                        "surface-container-highest": "#262626",
+                        "on-error": "#450900",
+                        "on-background": "#ffffff",
+                        "on-primary-container": "#4c5d00",
+                        "secondary-fixed-dim": "#00deec",
+                        "background": "#0e0e0e",
+                        "inverse-primary": "#546600",
+                        "outline": "#777575",
+                        "on-tertiary-container": "#5c4e00",
+                        "on-secondary-fixed": "#003f43",
+                        "on-tertiary": "#665600",
+                        "secondary": "#00eefc",
+                        "outline-variant": "#494847",
+                        "on-primary-fixed": "#3c4a00",
+                        "tertiary-fixed": "#fcdc43",
+                        "surface-bright": "#2c2c2c",
+                        "primary-fixed": "#d1fc00",
+                        "tertiary": "#ffeb9c",
+                        "surface-variant": "#262626",
+                        "on-tertiary-fixed-variant": "#675700",
+                        "primary-dim": "#c7ef00",
+                        "on-primary": "#546600",
+                        "primary": "#f4ffc6",
+                        "surface-tint": "#f4ffc6",
+                        "primary-container": "#d1fc00",
+                        "error": "#ff7351",
+                        "surface-container-lowest": "#000000",
+                        "on-surface": "#ffffff",
+                        "on-surface-variant": "#adaaaa",
+                        "error-dim": "#d53d18",
+                        "inverse-surface": "#fcf8f8",
+                        "surface": "#0e0e0e",
+                        "secondary-dim": "#00deec",
+                        "on-error-container": "#ffd2c8",
+                        "surface-container": "#1a1919",
+                        "surface-container-low": "#131313",
+                        "surface-container-high": "#201f1f",
+                        "tertiary-container": "#fcdc43",
+                        "on-primary-fixed-variant": "#556800",
+                        "on-secondary-container": "#e3fdff"
+                    },
+                    fontFamily: {
+                        "headline": ["Epilogue"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .italic-skew {
+            font-family: 'Epilogue', sans-serif;
+            font-style: italic;
+            letter-spacing: -0.05em;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .neon-glow-primary {
+            box-shadow: 0 0 40px rgba(212, 255, 0, 0.15);
+        }
+        .input-gradient-focus:focus-within {
+            border-bottom: 2px solid #d1fc00;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest min-h-screen flex flex-col justify-center items-center px-6 relative">
+<!-- Background Atmospheric Bleed -->
+<div class="fixed top-[-10%] right-[-10%] w-[60%] h-[60%] bg-primary-container/10 blur-[120px] rounded-full z-0"></div>
+<div class="fixed bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-secondary-fixed/5 blur-[100px] rounded-full z-0"></div>
+<!-- Branding Header (TopAppBar Reference) -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-8">
+<h1 class="text-3xl italic-skew font-black tracking-tighter text-primary-fixed uppercase">
+            KINETIC
+        </h1>
+<div class="text-on-surface-variant font-label text-[10px] tracking-[0.2em] uppercase font-bold">
+            v2.4 // CoreGym
+        </div>
+</header>
+<!-- Main Content Canvas -->
+<main class="relative z-10 w-full max-w-[420px] flex flex-col items-center">
+<!-- Electric Volt Icon Circle -->
+<div class="mb-12 relative">
+<div class="w-24 h-24 rounded-full bg-primary-container/10 border border-primary-fixed/30 flex items-center justify-center neon-glow-primary relative overflow-hidden group">
+<!-- Moving Light Reflection -->
+<div class="absolute inset-0 bg-gradient-to-tr from-transparent via-primary-fixed/20 to-transparent translate-y-full group-hover:translate-y-[-100%] transition-transform duration-1000"></div>
+<span class="material-symbols-outlined text-4xl text-primary-fixed" data-icon="lock" style="font-variation-settings: 'FILL' 1;">lock</span>
+</div>
+<!-- Secondary Volt Ring -->
+<div class="absolute inset-0 w-24 h-24 rounded-full border border-secondary-fixed/20 scale-125 animate-pulse"></div>
+</div>
+<!-- Smoked Glass Form Container -->
+<div class="w-full glass-panel p-10 rounded-xl relative overflow-hidden">
+<!-- Accent Border Left -->
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary-fixed"></div>
+<div class="mb-10">
+<h2 class="text-4xl italic-skew font-black uppercase text-on-surface leading-none mb-2">
+                    IGNITE<br/><span class="text-primary-fixed">SYSTEM</span>
+</h2>
+<p class="text-on-surface-variant font-body text-xs tracking-wide uppercase">Enter credentials to authorize access</p>
+</div>
+<form class="space-y-8" onsubmit="return false;">
+<!-- Email Input -->
+<div class="relative group">
+<label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant mb-2 group-focus-within:text-primary-fixed transition-colors">
+                        OPERATOR_ID
+                    </label>
+<div class="relative bg-surface-container-highest flex items-center border-b border-outline/30 transition-all duration-300 input-gradient-focus">
+<span class="material-symbols-outlined text-outline ml-3" data-icon="alternate_email">alternate_email</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-on-surface py-4 px-4 font-body placeholder:text-outline/40 placeholder:uppercase placeholder:text-[10px] tracking-widest text-sm" placeholder="user@kineticsystem.com" type="email"/>
+</div>
+</div>
+<!-- Password Input -->
+<div class="relative group">
+<div class="flex justify-between items-center mb-2">
+<label class="block text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant group-focus-within:text-primary-fixed transition-colors">
+                            ENCRYPTED_KEY
+                        </label>
+<a class="text-[9px] font-bold uppercase tracking-widest text-secondary hover:text-secondary-fixed transition-colors" href="#">Forgot?</a>
+</div>
+<div class="relative bg-surface-container-highest flex items-center border-b border-outline/30 transition-all duration-300 input-gradient-focus">
+<span class="material-symbols-outlined text-outline ml-3" data-icon="key">key</span>
+<input class="w-full bg-transparent border-none focus:ring-0 text-on-surface py-4 px-4 font-body placeholder:text-outline/40 tracking-widest text-sm" placeholder="••••••••••••" type="password"/>
+</div>
+</div>
+<!-- Primary Action Button (Volt Pill) -->
+<button class="w-full bg-primary-fixed py-5 px-6 rounded-full flex items-center justify-between group hover:shadow-[0_0_30px_rgba(212,255,0,0.4)] transition-all duration-300 active:scale-95" type="submit">
+<span class="font-label font-extrabold uppercase tracking-[0.2em] text-on-primary text-xs ml-4">Initialize Session</span>
+<div class="w-8 h-8 rounded-full bg-on-primary flex items-center justify-center group-hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined text-primary-fixed text-lg" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+</button>
+</form>
+<div class="mt-12 flex items-center justify-center space-x-4">
+<div class="h-[1px] flex-grow bg-gradient-to-r from-transparent to-outline/20"></div>
+<span class="text-[9px] font-bold text-outline uppercase tracking-[0.3em]">External Auth</span>
+<div class="h-[1px] flex-grow bg-gradient-to-l from-transparent to-outline/20"></div>
+</div>
+<!-- Social Logins -->
+<div class="mt-8 grid grid-cols-2 gap-4">
+<button class="flex items-center justify-center space-x-3 py-3 glass-panel rounded-lg hover:bg-white/10 transition-colors">
+<img alt="Google Logo" class="w-4 h-4" data-alt="Google company logo icon" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnI0rfV4x2Y6-YvKEnVQHgYjrkyaQjgNc5PSU2HJ5wsAyS_Lp6BUUD6dDln_zw-5lAqVCX6u1O5rXqMKWdTwWrVm15U1TZ03jZXApIox2WSM5IvEB8KrGE7salRuRfkHzJObbklDBE394tv_D49wtYGysEhe0N_GGZ8PS2BNJkFawJXO9RZIra7vayYsuDAxjvB1ew7I5_lP8_a_FPH3_uYa1YOBiI_YpdZP8f-xLCEBs3qmlut3ALKMR3vIBKzcwQfBFQc4UBZYM"/>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">Google</span>
+</button>
+<button class="flex items-center justify-center space-x-3 py-3 glass-panel rounded-lg hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-on-surface text-lg" data-icon="apple" style="font-variation-settings: 'FILL' 1;">ios</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface">Apple ID</span>
+</button>
+</div>
+</div>
+<!-- Footer Link -->
+<p class="mt-10 text-on-surface-variant font-label text-[10px] tracking-widest uppercase">
+            New operative? <a class="text-primary-fixed font-black ml-1 hover:underline" href="#">Enroll Now</a>
+</p>
+</main>
+<!-- Decorative Bottom Asset -->
+<div class="fixed bottom-0 left-0 w-full h-[265px] pointer-events-none z-0">
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-full opacity-20">
+<img alt="Gym Texture" class="w-full h-full object-cover grayscale mix-blend-overlay [mask-image:linear-gradient(to_top,black,transparent)]" data-alt="Close up high contrast texture of weight plate metal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5oFLL55nrC10SSI1DpOK3wS7Qn1tFovBm5FwzjWYrU8ycWvVhRxxvyNRB9VL2lP4b2Dm_3SQMFnJR6yi_LQLdzAnhp2u2KdUzYMKc0BXEETCFfHr4dR2a-uI_ZBVkSIVEc8K8487fNakd-sLCqLvV4NIKG6EFBYnzEVCgzRm4WdH2baFhjYA0tETAuXTKkyKM-UbLscLwA7TLo-0Hgh6GgKD6BfZgfr-ZOLseb8Boa13GAsvpE9_mczM0CP0DeZ7ny_Eb96s95uA"/>
+</div>
+</div>
+<!-- Background Grid Overlay -->
+<div class="fixed inset-0 pointer-events-none opacity-[0.03] z-0" style="background-image: linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px); background-size: 40px 40px;">
+</div>
+</body></html>

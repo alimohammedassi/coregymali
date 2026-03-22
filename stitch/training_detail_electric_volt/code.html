@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@1,800;1,900&amp;family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#00eefc",
+              "inverse-on-surface": "#565554",
+              "on-secondary-fixed-variant": "#005e64",
+              "tertiary-dim": "#edce35",
+              "surface-container-highest": "#262626",
+              "on-error": "#450900",
+              "on-background": "#ffffff",
+              "on-primary-container": "#4c5d00",
+              "secondary-fixed-dim": "#00deec",
+              "background": "#0e0e0e",
+              "inverse-primary": "#546600",
+              "outline": "#777575",
+              "on-tertiary-container": "#5c4e00",
+              "on-secondary-fixed": "#003f43",
+              "on-tertiary": "#665600",
+              "secondary": "#00eefc",
+              "outline-variant": "#494847",
+              "on-primary-fixed": "#3c4a00",
+              "tertiary-fixed": "#fcdc43",
+              "surface-bright": "#2c2c2c",
+              "primary-fixed": "#d1fc00",
+              "tertiary": "#ffeb9c",
+              "surface-variant": "#262626",
+              "on-tertiary-fixed-variant": "#675700",
+              "primary-dim": "#c7ef00",
+              "on-primary": "#546600",
+              "primary": "#f4ffc6",
+              "surface-tint": "#f4ffc6",
+              "primary-container": "#d1fc00",
+              "error": "#ff7351",
+              "surface-container-lowest": "#000000",
+              "on-surface": "#ffffff",
+              "on-surface-variant": "#adaaaa",
+              "error-dim": "#d53d18",
+              "inverse-surface": "#fcf8f8",
+              "surface": "#0e0e0e",
+              "secondary-dim": "#00deec",
+              "on-error-container": "#ffd2c8",
+              "surface-container": "#1a1919",
+              "surface-container-low": "#131313",
+              "surface-container-high": "#201f1f",
+              "tertiary-container": "#fcdc43",
+              "on-primary-fixed-variant": "#556800",
+              "on-secondary-container": "#e3fdff"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .neon-glow-primary {
+        box-shadow: 0 0 20px rgba(212, 255, 0, 0.15);
+      }
+      .oblique-text {
+        transform: skewX(-10deg);
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-dim text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed overflow-x-hidden">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-neutral-950/80 backdrop-blur-xl shadow-[0_0_20px_rgba(212,255,0,0.05)]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface cursor-pointer active:scale-95 duration-200">arrow_back</span>
+<span class="text-2xl italic font-black tracking-tighter text-lime-400 font-headline uppercase">KINETIC</span>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface cursor-pointer active:scale-95 duration-200" data-icon="notifications">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-primary/20">
+<img class="w-full h-full object-cover" data-alt="User athletic profile portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzF9mt-_x-CCAPcIAZnwuL6x10nt9O4dQoYV08rsWA02Idkl9AlaGbXa4qOIru_-iVRoAVzWqBzFcpgSA5a9ieG9OzUUtOE8W4LeoF9xvIiExjxHIBiyfhPVMmtLV3w2nJG-1l8My4cXUYIBExF5ZMVazw6AtgJ6KW2Dil9OfQIZv0UIvzLZISewCFPsPISs_mDHzBVntU6u6tTbXTohQpVdyvbu4FBP5svfKlVPiZsbdzrwwlMbVqL4EBYffY_0ItAHF5AMyKCA8"/>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 bg-gradient-to-b from-lime-400/10 to-transparent h-[1px] w-full"></div>
+</nav>
+<main class="pt-20 pb-32 px-6">
+<!-- Hero Header Section -->
+<header class="relative mb-10 mt-4 overflow-hidden rounded-xl">
+<div class="absolute inset-0 bg-gradient-to-br from-primary-container via-secondary to-surface-container-lowest opacity-30"></div>
+<div class="relative z-10 p-8">
+<span class="font-label font-bold text-primary-fixed text-[10px] uppercase tracking-[0.2em] mb-2 block">Hyper-Intensity Protocol</span>
+<h1 class="font-headline text-5xl italic font-black tracking-tighter uppercase leading-[0.9] oblique-text mb-4">
+                    CHEST<br/><span class="text-secondary-fixed">TRAINING</span>
+</h1>
+<div class="flex gap-6 mt-8">
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Duration</span>
+<span class="text-xl font-headline italic font-black text-on-surface">55<span class="text-sm ml-1 text-primary">MIN</span></span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Intensity</span>
+<span class="text-xl font-headline italic font-black text-on-surface">ELITE</span>
+</div>
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-[10px] uppercase tracking-widest font-bold">Burn</span>
+<span class="text-xl font-headline italic font-black text-on-surface">640<span class="text-sm ml-1 text-secondary">KCAL</span></span>
+</div>
+</div>
+</div>
+<!-- Decorative "Bleed" element -->
+<div class="absolute -right-12 -bottom-12 font-headline text-9-xl italic font-black text-white/5 pointer-events-none uppercase scale-150 rotate-12">
+                BOLT
+            </div>
+</header>
+<!-- Progress Overview Bento -->
+<section class="grid grid-cols-2 gap-4 mb-10">
+<div class="glass-card p-5 rounded-xl border-l-2 border-primary">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Active Status</span>
+</div>
+<div class="text-2xl font-headline italic font-black">VOLT MODE</div>
+<div class="w-full h-1 bg-surface-container-highest mt-3 rounded-full overflow-hidden">
+<div class="w-[75%] h-full bg-primary-fixed neon-glow-primary"></div>
+</div>
+</div>
+<div class="glass-card p-5 rounded-xl border-l-2 border-secondary">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary" data-icon="monitoring">monitoring</span>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">Efficiency</span>
+</div>
+<div class="text-2xl font-headline italic font-black">94<span class="text-sm">%</span></div>
+<div class="w-full h-1 bg-surface-container-highest mt-3 rounded-full overflow-hidden">
+<div class="w-[94%] h-full bg-secondary-fixed"></div>
+</div>
+</div>
+</section>
+<!-- Exercise List -->
+<section class="space-y-6">
+<div class="flex justify-between items-end mb-4 px-2">
+<h2 class="font-headline italic font-black text-2xl uppercase tracking-tighter">THE CIRCUIT</h2>
+<span class="text-[10px] font-bold text-primary tracking-[0.2em] uppercase">6 Exercises</span>
+</div>
+<!-- Exercise Card 1 -->
+<div class="glass-card group flex items-center p-4 rounded-xl border border-white/5 hover:border-primary/30 transition-all duration-300">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Athlete performing bench press exercise" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtWE2bhpfSQ42FmuGRZ71Br2mho_tR9lJwg27VTAumjAhKI21WONq7GoU_ZoeDUHc2SLtGEFcDcM8pv2Gjb-DCdz9VouyDGhbZkvmROVPLtbVZ4By4Kjcbt5FKzst5kvyhKPx-9IT46wJFACUWN9XKo1mPWcK1yw60lH1TSGQGrsbkjN5tHltWvteuQud1h1CxSF4dgvv9zOoMowpfJMyuqCOu2JHmYU664t4zSG8b_QTcKIhXm_FNqCCkkTPIaqkK4ypxoGOITuM"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</div>
+</div>
+<div class="ml-5 flex-grow">
+<h3 class="font-headline italic font-black text-lg uppercase tracking-tight">Barbell Bench Press</h3>
+<div class="flex gap-4 mt-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">4 Sets</span>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">8-10 Reps</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Target</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="check_circle">check_circle</span>
+</div>
+</div>
+<!-- Exercise Card 2 -->
+<div class="glass-card group flex items-center p-4 rounded-xl border border-white/5 hover:border-primary/30 transition-all duration-300">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up of dumbbell flyes movement" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDWp4wzofKk28IBJmli8ScWY2q3Wapv1vQI0W2K1Grr3p9ZWVjA_akbIfDcckTAS394cRkhMtrhpDONFUy1QvT1nd2Lqw8eKm35irwmp7dgod1dW6kFBW2if55DMf3QSFOVdd3BZRaOrL8XjdgmqeN7dIS9zhD4SDGjyIZbqa_TN1uoghtjMYiLsVztahbYZWN2_FQSxULQo1uLnsitLxQtjYrCKMda6q9HScoJaF1Mv6iynWYElYnFLYAb1caEtJRwE0aqlPVDsyI"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</div>
+</div>
+<div class="ml-5 flex-grow">
+<h3 class="font-headline italic font-black text-lg uppercase tracking-tight">Incline Dumbbell Flyes</h3>
+<div class="flex gap-4 mt-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">3 Sets</span>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">12 Reps</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Target</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="circle">circle</span>
+</div>
+</div>
+<!-- Exercise Card 3 -->
+<div class="glass-card group flex items-center p-4 rounded-xl border border-white/5 hover:border-primary/30 transition-all duration-300">
+<div class="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Weighted cable crossovers exercise details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEdwtR-m5fi-Qm5Mipcgw4u79TxeNj5Lq1EvCNo7vvfCnJCRQcU9Rn4mLNZcxtBvYrpPLc9y51K11tStYoUBT9-oH4dQAI8QNbk1AXh4qmOveQhNUqqk1Y3EROscfBjWOvDQpY8AXYTfe2x5zQHCYvtPtmdhLlI6xANVMcPpax9JojCRs_88SouUhTmgWiUQsuqBbio22X7GK8BcuAzaK-ij-jXXJJcmhRuvG4zaqGEsqxeKMPNPRJMdWDfnyBKJYRa7K1bmC3BsM"/>
+<div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl" data-icon="play_circle" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+</div>
+</div>
+<div class="ml-5 flex-grow">
+<h3 class="font-headline italic font-black text-lg uppercase tracking-tight">Cable Crossover</h3>
+<div class="flex gap-4 mt-1">
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">3 Sets</span>
+<span class="text-xs font-bold text-on-surface-variant uppercase tracking-widest">15 Reps</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-2">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest">Target</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors" data-icon="circle">circle</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Floating Action Button -->
+<button class="fixed bottom-28 right-6 bg-primary-fixed text-on-primary-fixed w-14 h-14 rounded-sm shadow-[0_0_30px_rgba(212,255,0,0.4)] flex items-center justify-center active:scale-90 transition-transform duration-300 z-50">
+<span class="material-symbols-outlined font-black scale-125" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<!-- Bottom Navigation Shell -->
+<footer class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] z-50 flex justify-around items-center py-3 px-4 bg-white/5 dark:bg-neutral-900/40 backdrop-blur-2xl rounded-[44px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<div class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="grid_view">grid_view</span>
+<span class="font-label font-bold text-[10px] uppercase tracking-widest mt-1">Feed</span>
+</div>
+<div class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label font-bold text-[10px] uppercase tracking-widest mt-1">Plan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-lime-400 drop-shadow-[0_0_8px_rgba(212,255,0,0.6)] active:scale-90 transition-all duration-300">
+<span class="material-symbols-outlined" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label font-bold text-[10px] uppercase tracking-widest mt-1">Workout</span>
+</div>
+<div class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label font-bold text-[10px] uppercase tracking-widest mt-1">Stats</span>
+</div>
+<div class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label font-bold text-[10px] uppercase tracking-widest mt-1">Profile</span>
+</div>
+</footer>
+</body></html>

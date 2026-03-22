@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&amp;family=Inter:wght@400;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#00eefc",
+              "inverse-on-surface": "#565554",
+              "on-secondary-fixed-variant": "#005e64",
+              "tertiary-dim": "#edce35",
+              "surface-container-highest": "#262626",
+              "on-error": "#450900",
+              "on-background": "#ffffff",
+              "on-primary-container": "#4c5d00",
+              "secondary-fixed-dim": "#00deec",
+              "background": "#0e0e0e",
+              "inverse-primary": "#546600",
+              "outline": "#777575",
+              "on-tertiary-container": "#5c4e00",
+              "on-secondary-fixed": "#003f43",
+              "on-tertiary": "#665600",
+              "secondary": "#00eefc",
+              "outline-variant": "#494847",
+              "on-primary-fixed": "#3c4a00",
+              "tertiary-fixed": "#fcdc43",
+              "surface-bright": "#2c2c2c",
+              "primary-fixed": "#d1fc00",
+              "tertiary": "#ffeb9c",
+              "surface-variant": "#262626",
+              "on-tertiary-fixed-variant": "#675700",
+              "primary-dim": "#c7ef00",
+              "on-primary": "#546600",
+              "primary": "#f4ffc6",
+              "surface-tint": "#f4ffc6",
+              "primary-container": "#d1fc00",
+              "error": "#ff7351",
+              "surface-container-lowest": "#000000",
+              "on-surface": "#ffffff",
+              "on-surface-variant": "#adaaaa",
+              "error-dim": "#d53d18",
+              "inverse-surface": "#fcf8f8",
+              "surface": "#0e0e0e",
+              "secondary-dim": "#00deec",
+              "on-error-container": "#ffd2c8",
+              "surface-container": "#1a1919",
+              "surface-container-low": "#131313",
+              "surface-container-high": "#201f1f",
+              "tertiary-container": "#fcdc43",
+              "on-primary-fixed-variant": "#556800",
+              "on-secondary-container": "#e3fdff"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .italic-force { font-style: italic; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .volt-glow {
+            filter: drop-shadow(0 0 8px rgba(212, 255, 0, 0.4));
+        }
+        body {
+            background-color: #0e0e0e;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background min-h-screen pb-32">
+<!-- TopAppBar -->
+<nav class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-neutral-950/80 backdrop-blur-xl shadow-[0_0_20px_rgba(212,255,0,0.05)]">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full border border-primary/20 overflow-hidden bg-surface-container">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Close up of a muscular athlete face" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBWb5ZBIxe2KxUM3Rzz9xUUBEUoLfd-h0jZ65QvhTqqn-zF2rppJdC8gMNF4RbcIRY5UjWssLucF3EMRuuogf5dlhjuOaSh2DFm3ISHQfPYN1s9jxFiri-B4OYYtpYmYunQ9Pvhf7staNNx2SL5JfycJ1gp6c6kWiBlKQy8ZYLwWHmyIt_jMMBBgJ6SmayFJk3hG6XAt_frvq-VPvgSmgQsdXX60XalxmRQ94NdQy--j7KGUNa_slrepryKOpfMkOO6e56xIRy0InQ"/>
+</div>
+<span class="text-2xl font-black italic tracking-tighter uppercase text-lime-400 font-headline italic-force">KINETIC</span>
+</div>
+<div class="flex items-center gap-4">
+<button class="active:scale-95 duration-200 text-neutral-400 hover:text-lime-300 transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+<div class="absolute bottom-0 left-0 bg-gradient-to-r from-transparent via-lime-400/20 to-transparent h-[1px] w-full"></div>
+</nav>
+<!-- Content Canvas -->
+<main class="pt-24 px-6 max-w-5xl mx-auto space-y-10">
+<!-- Hero Metric: Electric Volt Theme -->
+<section class="relative">
+<div class="absolute -top-20 -left-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px]"></div>
+<div class="relative z-10">
+<p class="font-label text-xs uppercase tracking-[0.2em] text-on-surface-variant mb-2">Current Velocity</p>
+<div class="flex items-baseline gap-2">
+<h1 class="font-headline font-black italic italic-force text-7xl md:text-8xl tracking-tighter text-white uppercase volt-glow">
+                        142<span class="text-primary text-3xl md:text-4xl ml-2">BPM</span>
+</h1>
+</div>
+<div class="mt-6 flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+<div class="glass-panel border-l-2 border-primary px-6 py-4 min-w-[140px]">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Burned</p>
+<p class="text-2xl font-black italic font-headline italic-force mt-1">842 <span class="text-xs font-normal opacity-60">KCAL</span></p>
+</div>
+<div class="glass-panel border-l-2 border-secondary-fixed px-6 py-4 min-w-[140px]">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Intensity</p>
+<p class="text-2xl font-black italic font-headline italic-force mt-1 text-secondary-fixed">HIGH</p>
+</div>
+<div class="glass-panel border-l-2 border-outline-variant px-6 py-4 min-w-[140px]">
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Duration</p>
+<p class="text-2xl font-black italic font-headline italic-force mt-1">42 <span class="text-xs font-normal opacity-60">MIN</span></p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bento Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Activity Chart: Smoked Glass -->
+<div class="md:col-span-2 glass-panel rounded-xl p-8 border border-white/5 relative overflow-hidden">
+<div class="flex justify-between items-center mb-8">
+<h3 class="font-headline italic italic-force font-black text-xl tracking-tight uppercase">Weekly Activity</h3>
+<span class="text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">Last 7 Days</span>
+</div>
+<div class="flex items-end justify-between h-40 gap-2">
+<!-- Lime Bars -->
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-1/2">
+<div class="absolute bottom-0 w-full bg-primary h-[60%] group-hover:h-[80%] transition-all duration-500 rounded-t-sm shadow-[0_0_15px_rgba(212,255,0,0.3)]"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">M</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-2/3">
+<div class="absolute bottom-0 w-full bg-primary h-[40%] group-hover:h-[60%] transition-all duration-500 rounded-t-sm"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">T</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-full">
+<div class="absolute bottom-0 w-full bg-primary h-[90%] group-hover:h-full transition-all duration-500 rounded-t-sm shadow-[0_0_20px_rgba(212,255,0,0.5)]"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">W</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-3/4">
+<div class="absolute bottom-0 w-full bg-primary h-[20%] group-hover:h-[40%] transition-all duration-500 rounded-t-sm"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">T</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-1/2">
+<div class="absolute bottom-0 w-full bg-primary h-[75%] group-hover:h-[85%] transition-all duration-500 rounded-t-sm"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">F</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-4/5">
+<div class="absolute bottom-0 w-full bg-primary h-[10%] group-hover:h-[30%] transition-all duration-500 rounded-t-sm"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">S</span>
+</div>
+<div class="flex-1 bg-surface-container-highest rounded-t-sm relative group h-2/3">
+<div class="absolute bottom-0 w-full bg-primary h-[5%] group-hover:h-[15%] transition-all duration-500 rounded-t-sm"></div>
+<span class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold opacity-40">S</span>
+</div>
+</div>
+</div>
+<!-- Recovery Metric -->
+<div class="glass-panel rounded-xl p-8 border border-white/5 flex flex-col justify-between">
+<div>
+<h3 class="font-headline italic italic-force font-black text-xl tracking-tight uppercase">Recovery</h3>
+<p class="text-xs text-on-surface-variant mt-1">Recommended rest</p>
+</div>
+<div class="relative py-8 flex justify-center">
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-surface-container-highest opacity-20" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-secondary-fixed volt-glow" cx="64" cy="64" fill="transparent" r="58" stroke="currentColor" stroke-dasharray="364.4" stroke-dashoffset="100" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-black italic font-headline italic-force">18h</span>
+<span class="text-[8px] font-bold uppercase tracking-widest opacity-60">Left</span>
+</div>
+</div>
+<button class="w-full bg-surface-container-highest py-3 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-surface-bright transition-colors">Adjust Schedule</button>
+</div>
+</section>
+<!-- Featured Plans: Smoked Glass Overlays -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-headline italic italic-force font-black text-3xl tracking-tighter uppercase">Power Programs</h3>
+<span class="text-primary text-xs font-bold uppercase tracking-widest border-b border-primary">Explore All</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Plan Card 1 -->
+<div class="group relative aspect-[16/9] rounded-xl overflow-hidden cursor-pointer">
+<img alt="Deadlift Focus" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-110 group-hover:grayscale-0" data-alt="Monochrome close up of barbell with heavy weights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUvFbNq1hF57FTX-TOyIDcrWhLdhl_aqq4mHdF7dbCmcwskiIOW2ARi2oI3tq6FmwijASV3ZUTmgNN9B9X0QjGu2YLVOkvwNuUJ_KhCeQ3KLX8emb_Jk-K2VBGSxAZsJkIlWwM5Son1inkVx8TeLS_u6FbH_WjN9elWoWQrjxj9Tz9hrQO9ecodX_W-rHhq8hruzIb3tUNoYNb3ges37At2glvWOiYuexZelwCu5ORGmcS8Hv2-w6Vu3J2q0H1eCjg-mq79AzpVZY"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+<div class="absolute inset-0 glass-panel opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-primary-fixed text-on-primary-fixed px-2 py-0.5 text-[8px] font-black uppercase tracking-widest italic font-headline italic-force">Elite</span>
+<span class="text-white/60 text-[10px] font-bold uppercase tracking-widest">4 Weeks</span>
+</div>
+<h4 class="font-headline italic italic-force font-black text-2xl tracking-tight uppercase group-hover:text-primary transition-colors">Absolute Strength II</h4>
+<div class="mt-4 flex gap-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-secondary-fixed">bolt</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Hard</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-secondary-fixed">timer</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">60m</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Plan Card 2 -->
+<div class="group relative aspect-[16/9] rounded-xl overflow-hidden cursor-pointer">
+<img alt="HIIT Sprint" class="absolute inset-0 w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-110 group-hover:grayscale-0" data-alt="Athlete sprinting on a track in dramatic lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAawCNwV3l0PJfcZoi7Wi2369YEUP0vIPCtkmHG2Q41GiykTNsOc_oGQEDTYkEbM5herVWctD-1Q0kw-EgSn6qMQR3Bxy5U2XI5CiAFzab10SQKs_uughhyOTgzywAdILoyfEqPv4VTI968o4p25fryIymG9nzqPThIxRtF4pmvdwy_1hhJ8R82GvAw6IVKIYbrrmWiyYb_KxSF5cZXXHhlxHo2FX_hIGhQVY8MN3FqdVvB5uHVH_q69TVBUarGFIKW_9w0wiQ1uE"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+<div class="absolute inset-0 glass-panel opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<div class="absolute bottom-6 left-6 right-6">
+<div class="flex items-center gap-2 mb-2">
+<span class="bg-secondary text-on-secondary px-2 py-0.5 text-[8px] font-black uppercase tracking-widest italic font-headline italic-force">Sprint</span>
+<span class="text-white/60 text-[10px] font-bold uppercase tracking-widest">6 Weeks</span>
+</div>
+<h4 class="font-headline italic italic-force font-black text-2xl tracking-tight uppercase group-hover:text-secondary-fixed transition-colors">Kinetic Engine</h4>
+<div class="mt-4 flex gap-4 opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary">bolt</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Intense</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-primary">timer</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">35m</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Floating Action Button Contextual Mock -->
+<button class="fixed right-6 bottom-28 w-14 h-14 bg-primary rounded-full shadow-[0_0_20px_rgba(212,255,0,0.4)] flex items-center justify-center text-on-primary-container z-40 active:scale-90 transition-transform duration-300">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] z-50 flex justify-around items-center py-3 px-4 bg-white/5 dark:bg-neutral-900/40 backdrop-blur-2xl rounded-[44px] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+<!-- Feed Item -->
+<a class="flex flex-col items-center justify-center text-lime-400 drop-shadow-[0_0_8px_rgba(212,255,0,0.6)] active:scale-90 transition-transform duration-300" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="font-['Inter'] font-bold text-[10px] uppercase tracking-widest mt-1">Feed</span>
+</a>
+<!-- Plan Item -->
+<a class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-['Inter'] font-bold text-[10px] uppercase tracking-widest mt-1">Plan</span>
+</a>
+<!-- Workout Item (Active for Dashboard concept often) -->
+<a class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300" href="#">
+<div class="p-2 bg-neutral-800 rounded-full mb-0.5">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<span class="font-['Inter'] font-bold text-[10px] uppercase tracking-widest">Workout</span>
+</a>
+<!-- Stats Item -->
+<a class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<span class="font-['Inter'] font-bold text-[10px] uppercase tracking-widest mt-1">Stats</span>
+</a>
+<!-- Profile Item -->
+<a class="flex flex-col items-center justify-center text-neutral-500 hover:text-neutral-200 transition-all active:scale-90 duration-300" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Inter'] font-bold text-[10px] uppercase tracking-widest mt-1">Profile</span>
+</a>
+</nav>
+</body></html>

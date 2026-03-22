@@ -1,8 +1,15 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'gender.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_text.dart';
+import 'services/supabase_client.dart';
+import 'services/onboarding_service.dart';
+import 'screens/onboarding_flow.dart';
+import 'fitness_home_pages.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Core Gym',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: SplashScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -23,14 +30,17 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  _SplashScreenState createState() => _SplashScreenState();
+  State<SplashScreen> createState() => _SplashScreenState();
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
+  late AnimationController _progressController;
+  late Animation<double> _progressAnimation;
+  late AnimationController _pulseController;
 
   @override
   void initState() {
@@ -38,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -49,22 +59,50 @@ class _SplashScreenState extends State<SplashScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
     );
 
-    _animationController.forward();
+    _progressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
+    );
+    _progressAnimation = Tween<double>(begin: 0.0, end: 0.92).animate(
+      CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
+    );
 
-    // Navigate to onboarding after 3 seconds
-    Future.delayed(Duration(seconds: 3), () {
-      if (mounted) {
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+
+    _animationController.forward();
+    _progressController.forward();
+
+    // Navigate after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (!mounted) return;
+      final user = supabase.auth.currentUser;
+      if (user == null) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             pageBuilder: (context, animation, secondaryAnimation) =>
-                OnboardingScreen(),
+                const OnboardingScreen(),
             transitionsBuilder:
                 (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-            transitionDuration: Duration(milliseconds: 500),
+              return FadeTransition(opacity: animation, child: child);
+            },
+            transitionDuration: const Duration(milliseconds: 500),
           ),
         );
+      } else {
+        final done = await OnboardingService().isCompleted();
+        if (!mounted) return;
+        if (done) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const FitnessHomePage()),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+          );
+        }
       }
     });
   }
@@ -72,119 +110,336 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF2D2D2D),
-      body: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo section
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.7,
-                      height: MediaQuery.of(context).size.height * 0.4,
-                      child: _buildSplashLogo(),
-                    ),
-
-                    SizedBox(height: 30),
-
-                    // App title
-                    Text(
-                      'CORE GYM',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 3,
-                      ),
-                    ),
-
-                    SizedBox(height: 8),
-
-                    Text(
-                      'Transform Your Body & Mind',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                        letterSpacing: 1,
-                      ),
-                    ),
-
-                    SizedBox(height: 50),
-
-                    // Loading indicator
-                    CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4A90E2),
-                      ),
-                      strokeWidth: 3,
-                    ),
+      backgroundColor: AppColors.surfaceLowest,
+      body: Stack(
+        children: [
+          // Background gym image with dark overlay
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/coreGym.png',
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  Container(color: AppColors.surfaceLowest),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.7),
+                    Colors.black.withValues(alpha: 0.85),
+                    Colors.black.withValues(alpha: 0.95),
                   ],
                 ),
               ),
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSplashLogo() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 15,
-            offset: Offset(0, 8),
           ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Image.asset(
-          'assets/images/coreGym.png',
-          fit: BoxFit.contain,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
+          // Primary glow orb top-right
+          Positioned(
+            top: -100,
+            right: -80,
+            child: IgnorePointer(
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.glowOrbPrimary,
+                      Colors.transparent,
+                    ],
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(20),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.fitness_center, size: 100, color: Colors.white),
-                  SizedBox(height: 20),
-                  Text(
-                    'CORE GYM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2,
+            ),
+          ),
+          // Content
+          AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 40),
+                          // Top branding
+                          Text(
+                            'KINETIC SYSTEM V2.0',
+                            style: AppText.labelMd.copyWith(
+                              color: AppColors.primaryFixed,
+                              letterSpacing: 3.0,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 60,
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryFixed,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+
+                          const Spacer(flex: 3),
+
+                          // Bolt icon
+                          Center(
+                            child: AnimatedBuilder(
+                              animation: _pulseController,
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: 1.0 + (_pulseController.value * 0.08),
+                                  child: Icon(
+                                    Icons.bolt,
+                                    size: 56,
+                                    color: AppColors.primaryFixed,
+                                    shadows: [
+                                      Shadow(
+                                        color: AppColors.primaryFixed.withValues(alpha: 0.6),
+                                        blurRadius: 30,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // CORE title
+                          Center(
+                            child: Text(
+                              'CORE',
+                              style: AppText.displayLg.copyWith(
+                                fontSize: 80,
+                                letterSpacing: -3,
+                              ),
+                            ),
+                          ),
+
+                          // Ghost reflection text
+                          Center(
+                            child: ShaderMask(
+                              shaderCallback: (bounds) => LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.white.withValues(alpha: 0.15),
+                                  Colors.transparent,
+                                ],
+                              ).createShader(bounds),
+                              child: Text(
+                                'CORE',
+                                style: AppText.displayLg.copyWith(
+                                  fontSize: 64,
+                                  letterSpacing: -3,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const Spacer(flex: 2),
+
+                          // Status pill
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                              child: Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 14,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.glass1,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.glassBorder,
+                                  ),
+                                ),
+                                child: Text(
+                                  'INITIALIZING HIGH-PERFORMANCE MODULES',
+                                  style: AppText.labelMd.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Progress section
+                          Text(
+                            'ELECTRIC VOLT ENGINE',
+                            style: AppText.labelMd.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          AnimatedBuilder(
+                            animation: _progressAnimation,
+                            builder: (context, child) {
+                              return Text(
+                                '${(_progressAnimation.value * 100).toInt()}%',
+                                style: AppText.headlineMd.copyWith(
+                                  color: AppColors.primaryFixed,
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Progress bar
+                          AnimatedBuilder(
+                            animation: _progressAnimation,
+                            builder: (context, child) {
+                              return Container(
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                child: FractionallySizedBox(
+                                  alignment: Alignment.centerLeft,
+                                  widthFactor: _progressAnimation.value,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.primaryActionGradient,
+                                      borderRadius: BorderRadius.circular(2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppColors.primaryFixed.withValues(alpha: 0.5),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Sub labels
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('SYNCING BIO-METRICS', style: AppText.labelSm),
+                              Text('COREGYM', style: AppText.labelSm),
+                            ],
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Status card
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: AppColors.glass2,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.glassBorder),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.glass2,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.wifi_tethering,
+                                        color: AppColors.onSurfaceVariant,
+                                        size: 22,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'STATUS',
+                                          style: AppText.labelMd.copyWith(
+                                            color: AppColors.onSurface,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'READY FOR IGNITION',
+                                          style: AppText.labelSm.copyWith(
+                                            color: AppColors.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Spacer(),
+                                    Row(
+                                      children: [
+                                        AnimatedBuilder(
+                                          animation: _pulseController,
+                                          builder: (context, child) {
+                                            return Container(
+                                              width: 8,
+                                              height: 8,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: AppColors.primaryFixed.withValues(
+                                                  alpha: 0.5 + _pulseController.value * 0.5,
+                                                ),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                                                    blurRadius: 6,
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'LIVE',
+                                          style: AppText.labelMd.copyWith(
+                                            color: AppColors.primaryFixed,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'LOGO PLACEHOLDER',
-                    style: TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -192,15 +447,21 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _progressController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Onboarding
+// ────────────────────────────────────────────────────────────────────────────
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
   @override
-  _OnboardingScreenState createState() => _OnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
@@ -237,6 +498,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.surfaceLowest,
       body: Stack(
         children: [
           PageView.builder(
@@ -251,33 +513,63 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return OnboardingPage(
                 data: onboardingData[index],
                 isLastPage: index == onboardingData.length - 1,
+                pageIndex: index,
+                totalPages: onboardingData.length,
                 onNextPressed: () => _handleNextPage(index),
                 onSkipPressed: () => _navigateToLogin(),
               );
             },
           ),
 
-          // Skip button
-          if (currentPage < onboardingData.length - 1)
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              right: 20,
-              child: TextButton(
-                onPressed: _navigateToLogin,
-                child: Text(
-                  'Skip',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+          // Top bar
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 24,
+            right: 24,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'KINETIC',
+                  style: AppText.headlineSm.copyWith(
+                    color: AppColors.primaryFixed,
+                    fontSize: 18,
                   ),
                 ),
-              ),
+                // Page counter pill
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.glass1,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: AppColors.primaryFixed.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Text(
+                        '${(currentPage + 1).toString().padLeft(2, '0')}/${onboardingData.length.toString().padLeft(2, '0')}',
+                        style: AppText.labelMd.copyWith(
+                          color: AppColors.primaryFixed,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
 
-          // Page indicator
+          // Page indicator (dots)
           Positioned(
-            bottom: 160,
+            bottom: 180,
             left: 0,
             right: 0,
             child: Row(
@@ -285,15 +577,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: List.generate(
                 onboardingData.length,
                 (index) => AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  margin: EdgeInsets.symmetric(horizontal: 4),
-                  width: currentPage == index ? 20 : 8,
+                  duration: const Duration(milliseconds: 300),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: currentPage == index ? 24 : 8,
                   height: 8,
                   decoration: BoxDecoration(
                     color: currentPage == index
-                        ? Color(0xFF4A90E2)
-                        : Colors.white.withOpacity(0.4),
+                        ? AppColors.primaryFixed
+                        : Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
+                    boxShadow: currentPage == index
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                            ),
+                          ]
+                        : [],
                   ),
                 ),
               ),
@@ -309,7 +609,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _navigateToLogin();
     } else {
       _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
@@ -319,25 +619,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            GenderSelectionScreen(),
+            const GenderSelectionScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return SlideTransition(
             position: Tween<Offset>(
-              begin: Offset(1.0, 0.0),
+              begin: const Offset(1.0, 0.0),
               end: Offset.zero,
             ).animate(animation),
             child: child,
           );
         },
-        transitionDuration: Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Onboarding Page
+// ────────────────────────────────────────────────────────────────────────────
+
 class OnboardingPage extends StatelessWidget {
   final OnboardingData data;
   final bool isLastPage;
+  final int pageIndex;
+  final int totalPages;
   final VoidCallback onNextPressed;
   final VoidCallback onSkipPressed;
 
@@ -345,111 +651,220 @@ class OnboardingPage extends StatelessWidget {
     super.key,
     required this.data,
     required this.isLastPage,
+    required this.pageIndex,
+    required this.totalPages,
     required this.onNextPressed,
     required this.onSkipPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.black.withOpacity(0.2),
-            Colors.black.withOpacity(0.6),
-            Colors.black.withOpacity(0.9),
-          ],
-        ),
-      ),
-      child: Stack(
-        children: [
-          // Background image
-          _buildBackgroundImage(context),
+    return Stack(
+      children: [
+        // Background image
+        _buildBackgroundImage(context),
 
-          // Content overlay
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
+        // Dark gradient overlay
+        Positioned.fill(
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: const [0.0, 0.4, 0.7, 1.0],
+                colors: [
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.1),
+                  Colors.black.withValues(alpha: 0.7),
+                  Colors.black.withValues(alpha: 0.95),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        // Primary glow orb
+        Positioned(
+          bottom: -60,
+          left: -100,
+          child: IgnorePointer(
             child: Container(
-              padding: EdgeInsets.fromLTRB(32, 60, 32, 40),
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
                   colors: [
+                    AppColors.glowOrbPrimary,
                     Colors.transparent,
-                    Colors.black.withOpacity(0.8),
-                    Colors.black,
                   ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    data.title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
+            ),
+          ),
+        ),
+
+        // Content overlay at bottom
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Title — bleeds off edges
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: _buildTitle(),
+              ),
+
+              const SizedBox(height: 8),
+
+              // Accent bar
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  width: 60,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryFixed,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    data.description,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 16,
-                      height: 1.6,
-                    ),
-                  ),
-                  SizedBox(height: 50),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: onNextPressed,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF4A90E2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(28),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Glass bottom card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.glass1,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.glassBorder,
                         ),
-                        elevation: 4,
-                        shadowColor: Color(0xFF4A90E2).withOpacity(0.3),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            isLastPage ? 'Get Started' : 'Next',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                          // Handle bar
+                          Center(
+                            child: Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
                           ),
-                          SizedBox(width: 8),
-                          Icon(
-                            isLastPage
-                                ? Icons.arrow_forward
-                                : Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 20,
+                          const SizedBox(height: 20),
+
+                          Text(
+                            data.description,
+                            style: AppText.bodyMd.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                              height: 1.6,
+                            ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // CTA Button — Electric Volt
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: onNextPressed,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryFixed,
+                                foregroundColor: AppColors.onPrimary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    isLastPage
+                                        ? 'INITIATE ENGINE'
+                                        : 'NEXT',
+                                    style: AppText.buttonPrimary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    Icons.arrow_forward,
+                                    color: AppColors.onPrimary,
+                                    size: 18,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ),
                   ),
-                ],
+                ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Already a member
+              Center(
+                child: GestureDetector(
+                  onTap: onSkipPressed,
+                  child: RichText(
+                    text: TextSpan(
+                      style: AppText.labelMd.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                      children: [
+                        const TextSpan(text: 'ALREADY A MEMBER? '),
+                        TextSpan(
+                          text: 'SIGN IN',
+                          style: AppText.labelMd.copyWith(
+                            color: AppColors.onSurface,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitle() {
+    final words = data.title.split('\n');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int i = 0; i < words.length; i++)
+          Text(
+            words[i].toUpperCase(),
+            style: AppText.displaySm.copyWith(
+              fontSize: i == 1 ? 44 : 38,
+              color: i == 1 ? AppColors.primaryFixed : AppColors.onSurface,
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -464,56 +879,50 @@ class OnboardingPage extends StatelessWidget {
           return Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF2D2D2D), Color(0xFF1A1A1A)],
+                colors: [AppColors.surfaceContainer, AppColors.surface],
               ),
             ),
             child: Center(
               child: Container(
-                padding: EdgeInsets.all(40),
-                margin: EdgeInsets.all(40),
+                padding: const EdgeInsets.all(40),
+                margin: const EdgeInsets.all(40),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppColors.glass1,
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Color(0xFF4A90E2).withOpacity(0.3),
-                    width: 2,
+                    color: AppColors.primaryFixed.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Color(0xFF4A90E2).withOpacity(0.2),
+                        color: AppColors.primaryFixed.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         data.icon,
                         size: 80,
-                        color: Color(0xFF4A90E2),
+                        color: AppColors.primaryFixed,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Text(
                       data.placeholderText,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppText.titleMd,
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Image Placeholder',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
-                        fontSize: 14,
+                      style: AppText.bodySm.copyWith(
+                        color: AppColors.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -549,153 +958,109 @@ class LoginPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF2D2D2D),
+      backgroundColor: AppColors.surfaceLowest,
       body: SafeArea(
         child: Column(
           children: [
-            // Header with back button
             Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white),
+                    icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
                     onPressed: () {
-                      // Access the page controller and jump to the first page
-                      Navigator.of(
-                        context,
-                      ).maybePop(); // Optionally close if not on onboarding
-                      // If you are already on the onboarding screen, jump to first page:
-                      // (You need access to the PageController)
-                      // _pageController.jumpToPage(0);
+                      Navigator.of(context).maybePop();
                     },
                   ),
                 ],
               ),
             ),
-
-            // Content
             Expanded(
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo section
                     Container(
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF4A90E2), Color(0xFF357ABD)],
-                        ),
+                        color: AppColors.primaryFixed.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
+                        border: Border.all(
+                          color: AppColors.primaryFixed.withValues(alpha: 0.3),
+                        ),
                         boxShadow: [
                           BoxShadow(
-                            color: Color(0xFF4A90E2).withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: Offset(0, 8),
+                            color: AppColors.primaryGlow,
+                            blurRadius: 30,
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.fitness_center,
-                        color: Colors.white,
+                        color: AppColors.primaryFixed,
                         size: 60,
                       ),
                     ),
-
-                    SizedBox(height: 24),
-
-                    Text(
-                      'CORE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 3,
-                      ),
-                    ),
+                    const SizedBox(height: 24),
+                    Text('CORE', style: AppText.displayMd),
                     Text(
                       'GYM',
-                      style: TextStyle(
-                        color: Color(0xFF4A90E2),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 4,
+                      style: AppText.labelLg.copyWith(
+                        color: AppColors.primaryFixed,
+                        letterSpacing: 6,
                       ),
                     ),
-
-                    SizedBox(height: 40),
-
+                    const SizedBox(height: 40),
                     Container(
-                      padding: EdgeInsets.all(24),
-                      margin: EdgeInsets.symmetric(horizontal: 32),
+                      padding: const EdgeInsets.all(24),
+                      margin: const EdgeInsets.symmetric(horizontal: 32),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: Color(0xFF4A90E2).withOpacity(0.3),
-                        ),
+                        color: AppColors.glass1,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.glassBorder),
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.login, color: Color(0xFF4A90E2), size: 40),
-                          SizedBox(height: 16),
-                          Text(
-                            'Login Screen',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          Icon(
+                            Icons.login,
+                            color: AppColors.primaryFixed,
+                            size: 40,
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 16),
+                          Text('Login Screen', style: AppText.headlineSm),
+                          const SizedBox(height: 8),
                           Text(
                             'Replace this with your\nlogin page implementation',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 16,
-                              height: 1.4,
-                            ),
+                            style: AppText.bodyMd,
                             textAlign: TextAlign.center,
                           ),
                         ],
                       ),
                     ),
-
-                    SizedBox(height: 40),
-
-                    // Demo button
+                    const SizedBox(height: 40),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
                       child: SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Implement your login logic here',
-                                ),
-                                backgroundColor: Color(0xFF4A90E2),
+                              const SnackBar(
+                                content: Text('Implement your login logic here'),
+                                backgroundColor: AppColors.primaryFixed,
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFF4A90E2),
+                            backgroundColor: AppColors.primaryFixed,
+                            foregroundColor: AppColors.onPrimary,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: Text(
-                            'Continue to Login',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          child: Text('CONTINUE TO LOGIN', style: AppText.buttonPrimary),
                         ),
                       ),
                     ),

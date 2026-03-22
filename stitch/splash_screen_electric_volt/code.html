@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CoreGym | Kinetic Splash</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Epilogue:ital,wght@1,900&amp;family=Inter:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#00eefc",
+              "inverse-on-surface": "#565554",
+              "on-secondary-fixed-variant": "#005e64",
+              "tertiary-dim": "#edce35",
+              "surface-container-highest": "#262626",
+              "on-error": "#450900",
+              "on-background": "#ffffff",
+              "on-primary-container": "#4c5d00",
+              "secondary-fixed-dim": "#00deec",
+              "background": "#0e0e0e",
+              "inverse-primary": "#546600",
+              "outline": "#777575",
+              "on-tertiary-container": "#5c4e00",
+              "on-secondary-fixed": "#003f43",
+              "on-tertiary": "#665600",
+              "secondary": "#00eefc",
+              "outline-variant": "#494847",
+              "on-primary-fixed": "#3c4a00",
+              "tertiary-fixed": "#fcdc43",
+              "surface-bright": "#2c2c2c",
+              "primary-fixed": "#d1fc00",
+              "tertiary": "#ffeb9c",
+              "surface-variant": "#262626",
+              "on-tertiary-fixed-variant": "#675700",
+              "primary-dim": "#c7ef00",
+              "on-primary": "#546600",
+              "primary": "#f4ffc6",
+              "surface-tint": "#f4ffc6",
+              "primary-container": "#d1fc00",
+              "error": "#ff7351",
+              "surface-container-lowest": "#000000",
+              "on-surface": "#ffffff",
+              "on-surface-variant": "#adaaaa",
+              "error-dim": "#d53d18",
+              "inverse-surface": "#fcf8f8",
+              "surface": "#0e0e0e",
+              "secondary-dim": "#00deec",
+              "on-error-container": "#ffd2c8",
+              "surface-container": "#1a1919",
+              "surface-container-low": "#131313",
+              "surface-container-high": "#201f1f",
+              "tertiary-container": "#fcdc43",
+              "on-primary-fixed-variant": "#556800",
+              "on-secondary-container": "#e3fdff"
+            },
+            fontFamily: {
+              "headline": ["Epilogue"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .neon-glow {
+            filter: drop-shadow(0 0 15px rgba(212, 255, 0, 0.4));
+        }
+        .volt-orb {
+            background: radial-gradient(circle, rgba(212,255,0,0.4) 0%, rgba(212,255,0,0) 70%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest text-on-surface font-body selection:bg-primary-container selection:text-on-primary-container overflow-hidden">
+<!-- Splash Background Composition -->
+<main class="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+<!-- Background Asset: Subtle High-Performance Texture -->
+<div class="absolute inset-0 z-0 opacity-20">
+<img alt="High-contrast gym equipment in low light" class="w-full h-full object-cover mix-blend-overlay" data-alt="Dark dramatic gym weight room background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb8QIWGcB8CIbkkMnDqDt8efXvjuYyyi-KnTl3lGR5qsCoep1WwjJyAF25y_Pq5FssJnMrCFItwj338Q_8R_lRQRAg6pbFI2q8S3r7B3mvaEu_jg1EJF227Sx8JmWiLP_BbAlFophoLh-AVd_t92U8SsQ7MidgdnJ0Me-e4VFg0QGRmrEQe0irbF4ofq8mK_UDhRv-PwUMBvnB1EpEjWWur86p1m4VC-NXKyIAha0oa1MJgZ99wtbYopR371iS1tgR1YvQFd4nBpI"/>
+</div>
+<!-- Pulse Gradient Core (The Kinetic Engine) -->
+<div class="absolute z-10 w-[600px] h-[600px] volt-orb rounded-full blur-[80px] opacity-40"></div>
+<!-- Top Branding Layout (Editorial/Asymmetric) -->
+<div class="absolute top-12 left-8 z-20">
+<div class="flex flex-col">
+<span class="font-headline italic font-black text-primary-fixed text-sm tracking-[0.3em] uppercase mb-1">Kinetic System v2.0</span>
+<div class="h-1 w-24 bg-primary-fixed"></div>
+</div>
+</div>
+<!-- Center Content: Branding -->
+<div class="relative z-20 flex flex-col items-center">
+<div class="mb-4">
+<span class="material-symbols-outlined text-primary-fixed text-6xl neon-glow" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<h1 class="font-headline italic font-black text-8xl md:text-9xl text-on-surface tracking-tighter leading-none flex flex-col items-center">
+<span class="block">CORE</span>
+<span aria-hidden="true" class="block text-outline-variant opacity-20 -mt-8 md:-mt-12 select-none">CORE</span>
+</h1>
+<div class="mt-8 glass-panel border border-white/10 px-6 py-2 rounded-xl">
+<p class="font-label font-bold uppercase tracking-widest text-[10px] text-primary-fixed">Initializing High-Performance Modules</p>
+</div>
+</div>
+<!-- Bottom UI: Progress & Interaction -->
+<div class="absolute bottom-16 w-full max-w-md px-10 z-20">
+<!-- Progress Section -->
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<div class="flex flex-col">
+<span class="font-label text-xs font-bold uppercase text-on-surface-variant tracking-wider">Electric Volt Engine</span>
+<span class="font-headline italic font-black text-2xl text-primary-fixed">92%</span>
+</div>
+<div class="flex space-x-1 mb-1">
+<div class="h-3 w-[2px] bg-primary-fixed/20"></div>
+<div class="h-3 w-[2px] bg-primary-fixed/40"></div>
+<div class="h-3 w-[2px] bg-primary-fixed/60"></div>
+<div class="h-3 w-[2px] bg-primary-fixed"></div>
+</div>
+</div>
+<!-- Sleek Neon Progress Indicator -->
+<div class="relative h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="absolute top-0 left-0 h-full w-[92%] bg-primary-fixed neon-glow rounded-full"></div>
+</div>
+<!-- Sub-labels -->
+<div class="flex justify-between pt-2">
+<span class="font-label text-[10px] uppercase text-on-surface-variant/50">Syncing Bio-Metrics</span>
+<span class="font-label text-[10px] uppercase text-on-surface-variant/50">Seattle, WA</span>
+</div>
+</div>
+<!-- Loading Footer Glass Component -->
+<div class="mt-12 glass-panel p-4 rounded-xl border border-white/5 flex items-center justify-between">
+<div class="flex items-center space-x-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-lg">sensors</span>
+</div>
+<div>
+<p class="text-[10px] font-bold text-on-surface uppercase leading-none">Status</p>
+<p class="text-[10px] text-on-surface-variant uppercase leading-none mt-1">Ready for Ignition</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<div class="w-1.5 h-1.5 rounded-full bg-primary-fixed animate-pulse"></div>
+<span class="font-label text-[9px] font-black uppercase text-primary-fixed tracking-tighter">Live</span>
+</div>
+</div>
+</div>
+<!-- Ornamental Side Data (High-end UI detail) -->
+<div class="hidden lg:block absolute right-12 top-1/2 -translate-y-1/2 z-20">
+<div class="flex flex-col space-y-12 items-end">
+<div class="text-right border-r-2 border-primary-fixed/30 pr-4">
+<p class="font-label text-xs text-on-surface-variant uppercase mb-1">Peak Power</p>
+<p class="font-headline italic text-4xl text-on-surface">320<span class="text-lg ml-1">kw</span></p>
+</div>
+<div class="text-right border-r-2 border-secondary/30 pr-4">
+<p class="font-label text-xs text-on-surface-variant uppercase mb-1">Heart Rate</p>
+<p class="font-headline italic text-4xl text-on-surface">144<span class="text-lg ml-1">bpm</span></p>
+</div>
+<div class="text-right border-r-2 border-primary-fixed/30 pr-4">
+<p class="font-label text-xs text-on-surface-variant uppercase mb-1">Time Elapsed</p>
+<p class="font-headline italic text-4xl text-on-surface">42:10</p>
+</div>
+</div>
+</div>
+</main>
+<!-- Navigation Shell Suppression: This is a Splash Screen (Focused Journey), so Global Nav is omitted -->
+</body></html>

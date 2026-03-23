@@ -63,8 +63,8 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
       Navigator.of(context).pop(); // close bottom sheet
       setState(() => _isLoading = true);
       await _workoutService.endSession(
-        sessionId: _sessionId!, 
-        totalMinutes: DateTime.now().difference(_startTime ?? DateTime.now()).inMinutes,
+        _sessionId!, 
+        DateTime.now().difference(_startTime ?? DateTime.now()).inMinutes,
       );
       if (mounted) {
         setState(() {
@@ -748,6 +748,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
         ),
       ),
     );
+  }
 
   // ────────────────── Tips Section ──────────────────
   Widget _buildTipsSection(Map<String, dynamic> muscleData) {

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:coregym2/fitness_home_pages.dart';
 import 'package:flutter/material.dart';
@@ -8,10 +9,12 @@ import 'forgetpassword.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 
-// Auth Wrapper - Controls navigation between login and signup
+// ─────────────────────────────────────────────────────────────────────────────
+// Auth Wrapper
+// ─────────────────────────────────────────────────────────────────────────────
+
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
-
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
@@ -19,45 +22,49 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper>
     with TickerProviderStateMixin {
   bool isLogin = true;
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
+
+  late AnimationController _bgController;
+  late AnimationController _switchController;
+  late Animation<double> _fade;
+  late Animation<Offset> _slide;
 
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+
+    _bgController = AnimationController(
       vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat(reverse: true);
+
+    _switchController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
-
-    _slideAnimation =
-        Tween<Offset>(begin: const Offset(0.3, 0), end: Offset.zero).animate(
+    _fade = CurvedAnimation(parent: _switchController, curve: Curves.easeInOut);
+    _slide = Tween<Offset>(begin: const Offset(0.04, 0), end: Offset.zero)
+        .animate(
           CurvedAnimation(
-            parent: _animationController,
+            parent: _switchController,
             curve: Curves.easeOutCubic,
           ),
         );
 
-    _animationController.forward();
+    _switchController.forward();
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _bgController.dispose();
+    _switchController.dispose();
     super.dispose();
   }
 
-  void _toggleAuthMode() {
-    setState(() {
-      isLogin = !isLogin;
-    });
-    _animationController.reset();
-    _animationController.forward();
+  void _toggle() {
+    setState(() => isLogin = !isLogin);
+    _switchController.reset();
+    _switchController.forward();
   }
 
   @override
@@ -66,65 +73,74 @@ class _AuthWrapperState extends State<AuthWrapper>
       backgroundColor: AppColors.surfaceLowest,
       body: Stack(
         children: [
-          // Background glow orbs
-          Positioned(
-            top: -120,
-            right: -80,
-            child: IgnorePointer(
-              child: Container(
-                width: 350,
-                height: 350,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryFixed.withValues(alpha: 0.10),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -80,
-            child: IgnorePointer(
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.secondary.withValues(alpha: 0.05),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Grid overlay
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(painter: _GridPainter()),
-            ),
-          ),
-          // Content
+          // Animated background orbs
           AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: isLogin
-                      ? LoginScreen(onToggle: _toggleAuthMode)
-                      : SignupScreen(onToggle: _toggleAuthMode),
-                ),
+            animation: _bgController,
+            builder: (_, __) {
+              final t = _bgController.value;
+              return Stack(
+                children: [
+                  Positioned(
+                    top: -80 + 40 * sin(t * pi),
+                    right: -60 + 30 * cos(t * pi),
+                    child: _GlowOrb(
+                      size: 380,
+                      color: AppColors.primaryFixed.withOpacity(
+                        0.09 + 0.03 * sin(t * pi),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -60 + 30 * cos(t * pi * 1.3),
+                    left: -80 + 20 * sin(t * pi * 0.7),
+                    child: _GlowOrb(
+                      size: 280,
+                      color: AppColors.secondary.withOpacity(
+                        0.05 + 0.02 * cos(t * pi),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 300 + 60 * sin(t * pi * 0.5),
+                    left: 40 + 20 * cos(t * pi * 1.2),
+                    child: _GlowOrb(
+                      size: 160,
+                      color: AppColors.primaryFixed.withOpacity(0.04),
+                    ),
+                  ),
+                ],
               );
             },
+          ),
+
+          // Grid
+          const Positioned.fill(
+            child: IgnorePointer(child: _GridPainterWidget()),
+          ),
+
+          // Corner brackets
+          const Positioned(top: 0, left: 0, child: _CornerBracket(corner: 0)),
+          const Positioned(top: 0, right: 0, child: _CornerBracket(corner: 1)),
+          const Positioned(
+            bottom: 0,
+            left: 0,
+            child: _CornerBracket(corner: 2),
+          ),
+          const Positioned(
+            bottom: 0,
+            right: 0,
+            child: _CornerBracket(corner: 3),
+          ),
+
+          // Content
+          FadeTransition(
+            opacity: _fade,
+            child: SlideTransition(
+              position: _slide,
+              child: isLogin
+                  ? LoginScreen(onToggle: _toggle)
+                  : SignupScreen(onToggle: _toggle),
+            ),
           ),
         ],
       ),
@@ -132,34 +148,13 @@ class _AuthWrapperState extends State<AuthWrapper>
   }
 }
 
-// Grid background painter
-class _GridPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.03)
-      ..strokeWidth = 0.5;
-    const spacing = 40.0;
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-// ────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // Login Screen
-// ────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class LoginScreen extends StatefulWidget {
   final VoidCallback onToggle;
   const LoginScreen({super.key, required this.onToggle});
-
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -169,100 +164,86 @@ class _LoginScreenState extends State<LoginScreen>
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
+  bool _passwordVisible = false;
   bool _isLoading = false;
-  late AnimationController _buttonController;
-  late Animation<double> _buttonAnimation;
+
+  late AnimationController _entryController;
+  late List<Animation<double>> _itemFades;
+  late List<Animation<Offset>> _itemSlides;
 
   @override
   void initState() {
     super.initState();
-    _buttonController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _entryController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
-    _buttonAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
+
+    _itemFades = List.generate(
+      6,
+      (i) => CurvedAnimation(
+        parent: _entryController,
+        curve: Interval(i * 0.08, i * 0.08 + 0.5, curve: Curves.easeOut),
+      ),
     );
+    _itemSlides = List.generate(
+      6,
+      (i) =>
+          Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(
+            CurvedAnimation(
+              parent: _entryController,
+              curve: Interval(
+                i * 0.08,
+                i * 0.08 + 0.5,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
+          ),
+    );
+    _entryController.forward();
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _buttonController.dispose();
+    _entryController.dispose();
     super.dispose();
   }
 
+  Widget _animated(int i, Widget child) => FadeTransition(
+    opacity: _itemFades[i],
+    child: SlideTransition(position: _itemSlides[i], child: child),
+  );
+
   Future<void> _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      try {
-        final authService = AuthService();
-        final response = await authService.signInWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-          final done = await OnboardingService().isCompleted();
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Welcome back, ${response.user?.email}!'),
-              backgroundColor: Colors.green[600],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-          if (done) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingFlow()),
-            );
-          }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Colors.red[600],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      final res = await AuthService().signInWithEmail(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+      final done = await OnboardingService().isCompleted();
+      if (!mounted) return;
+      _showSnack('Welcome back, ${res.user?.email}!', isError: false);
+      Navigator.pushReplacement(
+        context,
+        _route(done ? const FitnessHomePage() : const OnboardingFlow()),
+      );
+    } catch (e) {
+      if (mounted) _showSnack(e.toString(), isError: true);
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      final authService = AuthService();
-      await authService.signInWithGoogle();
-      // Supabase OAuth redirects automatically
-      // Navigation handled by auth state listener
+      await AuthService().signInWithGoogle();
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+      if (mounted) _showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -272,318 +253,151 @@ class _LoginScreenState extends State<LoginScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
 
-                // Branding header
-                Row(
-                  children: [
-                    Text(
-                      'KINETIC',
-                      style: AppText.headlineSm.copyWith(
-                        color: AppColors.primaryFixed,
-                        fontSize: 18,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      'V2.4 // COREGYM',
-                      style: AppText.labelSm.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                // Top bar
+                _animated(0, _TopBar()),
+                const SizedBox(height: 32),
+
+                // Logo mark
+                _animated(1, _LogoMark()),
+                const SizedBox(height: 32),
+
+                // Headline
+                _animated(
+                  2,
+                  _Headline(
+                    line1: 'IGNITE',
+                    line2: 'SYSTEM',
+                    sub: 'ENTER CREDENTIALS TO AUTHORIZE ACCESS',
+                  ),
                 ),
+                const SizedBox(height: 28),
 
-                const SizedBox(height: 24),
-
-                // Lock icon — glass circle
-                Center(
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: AppColors.glass1,
-                      border: Border.all(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryFixed.withValues(alpha: 0.15),
-                          blurRadius: 40,
+                // Form card
+                _animated(
+                  3,
+                  _GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _FieldLabel('OPERATOR_ID'),
+                        const SizedBox(height: 8),
+                        KineticTextField(
+                          controller: _emailController,
+                          hint: 'user@coregym.app',
+                          icon: Icons.alternate_email_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: _emailValidator,
+                        ),
+                        const SizedBox(height: 22),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const _FieldLabel('ENCRYPTED_KEY'),
+                            GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                _route(ForgotPasswordScreen()),
+                              ),
+                              child: Text(
+                                'FORGOT?',
+                                style: AppText.labelSm.copyWith(
+                                  color: AppColors.secondary,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 1.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        KineticTextField(
+                          controller: _passwordController,
+                          hint: '••••••••••••',
+                          icon: Icons.key_rounded,
+                          obscureText: !_passwordVisible,
+                          validator: _passwordValidator,
+                          suffix: GestureDetector(
+                            onTap: () => setState(
+                              () => _passwordVisible = !_passwordVisible,
+                            ),
+                            child: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility_off_rounded
+                                  : Icons.visibility_rounded,
+                              color: AppColors.outline,
+                              size: 18,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: const Icon(
-                      Icons.lock_outline,
-                      size: 40,
-                      color: AppColors.primaryFixed,
-                    ),
                   ),
                 ),
-
-                const SizedBox(height: 32),
-
-                // Glass form card
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                    child: Container(
-                      padding: const EdgeInsets.all(28),
-                      decoration: BoxDecoration(
-                        color: AppColors.glass1,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: Stack(
-                        children: [
-                          // Left accent border
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            child: Container(
-                              width: 3,
-                              color: AppColors.primaryFixed,
-                            ),
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Title
-                              Text('IGNITE', style: AppText.displaySm),
-                              Text(
-                                'SYSTEM',
-                                style: AppText.displaySm.copyWith(
-                                  color: AppColors.primaryFixed,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'ENTER CREDENTIALS TO AUTHORIZE ACCESS',
-                                style: AppText.labelMd.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                ),
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              // Email field
-                              _buildLabel('OPERATOR_ID'),
-                              const SizedBox(height: 8),
-                              CustomTextField(
-                                controller: _emailController,
-                                hintText: 'user@kineticsystem.com',
-                                prefixIcon: Icons.alternate_email,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value?.isEmpty ?? true) {
-                                    return 'Please enter your email';
-                                  }
-                                  if (!RegExp(
-                                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                  ).hasMatch(value!)) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              const SizedBox(height: 24),
-
-                              // Password field
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  _buildLabel('ENCRYPTED_KEY'),
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => ForgotPasswordScreen(),
-                                        ),
-                                      );
-                                    },
-                                    child: Text(
-                                      'FORGOT?',
-                                      style: AppText.labelSm.copyWith(
-                                        color: AppColors.secondary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              CustomTextField(
-                                controller: _passwordController,
-                                hintText: '••••••••••••',
-                                prefixIcon: Icons.key,
-                                obscureText: !_isPasswordVisible,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    _isPasswordVisible
-                                        ? Icons.visibility_off
-                                        : Icons.visibility,
-                                    color: AppColors.outline,
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isPasswordVisible = !_isPasswordVisible;
-                                    });
-                                  },
-                                ),
-                                validator: (value) {
-                                  if (value?.isEmpty ?? true) {
-                                    return 'Please enter your password';
-                                  }
-                                  if ((value?.length ?? 0) < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                },
-                              ),
-
-                              const SizedBox(height: 32),
-
-                              // Primary button
-                              ScaleTransition(
-                                scale: _buttonAnimation,
-                                child: CustomButton(
-                                  text: 'INITIALIZE SESSION',
-                                  isLoading: _isLoading,
-                                  onPressed: _handleLogin,
-                                  onTapDown: (_) => _buttonController.forward(),
-                                  onTapUp: (_) => _buttonController.reverse(),
-                                  onTapCancel: () => _buttonController.reverse(),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // External Auth divider
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.transparent,
-                              AppColors.outline.withValues(alpha: 0.2),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'EXTERNAL AUTH',
-                        style: AppText.labelSm.copyWith(
-                          color: AppColors.outline,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 1,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.outline.withValues(alpha: 0.2),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
                 const SizedBox(height: 24),
 
-                // Social Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: SocialButton(
-                        icon: Icons.g_mobiledata,
-                        text: 'GOOGLE',
-                        onPressed: _handleGoogleSignIn,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: SocialButton(
-                        icon: Icons.apple,
-                        text: 'APPLE ID',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Apple sign-in not implemented yet'),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
+                // CTA button
+                _animated(
+                  4,
+                  KineticButton(
+                    label: 'INITIALIZE SESSION',
+                    isLoading: _isLoading,
+                    onTap: _handleLogin,
+                  ),
                 ),
+                const SizedBox(height: 28),
 
-                const SizedBox(height: 32),
+                // Divider
+                _animated(5, _AuthDivider()),
+                const SizedBox(height: 20),
 
-                // Sign Up Link
-                Center(
-                  child: GestureDetector(
+                // Social
+                _animated(
+                  5,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SocialBtn(
+                          icon: Icons.g_mobiledata_rounded,
+                          label: 'GOOGLE',
+                          onTap: _handleGoogleSignIn,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SocialBtn(
+                          icon: Icons.apple_rounded,
+                          label: 'APPLE',
+                          onTap: () => _showSnack(
+                            'Apple sign-in coming soon',
+                            isError: false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Toggle
+                _animated(
+                  5,
+                  _ToggleLink(
+                    prefix: 'NEW OPERATIVE?  ',
+                    action: 'ENROLL NOW',
                     onTap: widget.onToggle,
-                    child: RichText(
-                      text: TextSpan(
-                        style: AppText.labelMd.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                        children: [
-                          const TextSpan(text: 'NEW OPERATIVE?  '),
-                          TextSpan(
-                            text: 'ENROLL NOW',
-                            style: AppText.labelMd.copyWith(
-                              color: AppColors.primaryFixed,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
-
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -591,26 +405,15 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
-
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: AppText.labelMd.copyWith(
-        color: AppColors.onSurfaceVariant,
-        letterSpacing: 2.0,
-      ),
-    );
-  }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 // Signup Screen
-// ────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
 
 class SignupScreen extends StatefulWidget {
   final VoidCallback onToggle;
   const SignupScreen({super.key, required this.onToggle});
-
   @override
   State<SignupScreen> createState() => _SignupScreenState();
 }
@@ -618,134 +421,89 @@ class SignupScreen extends StatefulWidget {
 class _SignupScreenState extends State<SignupScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _confCtrl = TextEditingController();
+  bool _passVisible = false;
+  bool _confVisible = false;
+  bool _agreed = false;
   bool _isLoading = false;
-  bool _agreeToTerms = false;
-  late AnimationController _buttonController;
-  late Animation<double> _buttonAnimation;
+
+  late AnimationController _entryController;
+  late List<Animation<double>> _fades;
+  late List<Animation<Offset>> _slides;
 
   @override
   void initState() {
     super.initState();
-    _buttonController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+    _entryController = AnimationController(
       vsync: this,
+      duration: const Duration(milliseconds: 1100),
     );
-    _buttonAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
+    _fades = List.generate(
+      6,
+      (i) => CurvedAnimation(
+        parent: _entryController,
+        curve: Interval(i * 0.07, i * 0.07 + 0.45, curve: Curves.easeOut),
+      ),
     );
+    _slides = List.generate(
+      6,
+      (i) =>
+          Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(
+            CurvedAnimation(
+              parent: _entryController,
+              curve: Interval(
+                i * 0.07,
+                i * 0.07 + 0.45,
+                curve: Curves.easeOutCubic,
+              ),
+            ),
+          ),
+    );
+    _entryController.forward();
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    _buttonController.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    _confCtrl.dispose();
+    _entryController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSignup() async {
-    if (_formKey.currentState!.validate() && _agreeToTerms) {
-      setState(() => _isLoading = true);
-      try {
-        final authService = AuthService();
-        final response = await authService.registerWithEmail(
-          _emailController.text.trim(),
-          _passwordController.text,
-          _nameController.text.trim(),
-        );
-        if (response.user != null) {
-          final done = await OnboardingService().isCompleted();
-          if (!mounted) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                  'Welcome, ${_nameController.text}! Account created.'),
-              backgroundColor: Colors.green[600],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-          if (done) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-            );
-          } else {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const OnboardingFlow()),
-            );
-          }
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Colors.red[600],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } else if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please agree to Terms & Conditions'),
-          backgroundColor: Colors.red[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10)),
-        ),
-      );
-    }
-  }
+  Widget _a(int i, Widget w) => FadeTransition(
+    opacity: _fades[i],
+    child: SlideTransition(position: _slides[i], child: w),
+  );
 
-  Future<void> _handleGoogleSignUp() async {
-    if (!_agreeToTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please agree to Terms & Conditions'),
-          backgroundColor: Colors.red[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
+  Future<void> _handleSignup() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (!_agreed) {
+      _showSnack('Please agree to Terms & Conditions', isError: true);
       return;
     }
-
     setState(() => _isLoading = true);
     try {
-      final authService = AuthService();
-      await authService.signInWithGoogle();
-      // Supabase OAuth redirects automatically
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10)),
-          ),
+      final res = await AuthService().registerWithEmail(
+        _emailCtrl.text.trim(),
+        _passCtrl.text,
+        _nameCtrl.text.trim(),
+      );
+      if (res.user != null) {
+        final done = await OnboardingService().isCompleted();
+        if (!mounted) return;
+        _showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
+        Navigator.pushReplacement(
+          context,
+          _route(done ? const FitnessHomePage() : const OnboardingFlow()),
         );
       }
+    } catch (e) {
+      if (mounted) _showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -753,362 +511,434 @@ class _SignupScreenState extends State<SignupScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 20),
-
-              // Title
-              Text('ENROLL', style: AppText.displaySm),
-              Text(
-                'OPERATIVE',
-                style: AppText.displaySm.copyWith(
-                  color: AppColors.primaryFixed,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                _a(0, _TopBar()),
+                const SizedBox(height: 32),
+                _a(
+                  1,
+                  _Headline(
+                    line1: 'ENROLL',
+                    line2: 'OPERATIVE',
+                    sub: 'CREATE NEW SYSTEM ACCESS',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'CREATE NEW SYSTEM ACCESS',
-                style: AppText.labelMd.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
+                const SizedBox(height: 24),
 
-              const SizedBox(height: 32),
-
-              // Glass Card for form
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: AppColors.glass1,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.glassBorder),
-                    ),
+                _a(
+                  2,
+                  _GlassCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name Field
-                        _buildLabel('OPERATIVE_NAME'),
+                        const _FieldLabel('OPERATIVE_NAME'),
                         const SizedBox(height: 8),
-                        CustomTextField(
-                          controller: _nameController,
-                          hintText: 'Full Name',
-                          prefixIcon: Icons.person_outline,
+                        KineticTextField(
+                          controller: _nameCtrl,
+                          hint: 'Full Name',
+                          icon: Icons.person_outline_rounded,
                           textCapitalization: TextCapitalization.words,
-                          validator: (value) {
-                            if (value?.isEmpty ?? true) {
-                              return 'Please enter your full name';
-                            }
-                            if ((value?.length ?? 0) < 2) {
-                              return 'Name must be at least 2 characters';
-                            }
-                            return null;
-                          },
+                          validator: (v) =>
+                              (v?.length ?? 0) < 2 ? 'Enter your name' : null,
                         ),
-
                         const SizedBox(height: 20),
-
-                        // Email Field
-                        _buildLabel('OPERATOR_ID'),
+                        const _FieldLabel('OPERATOR_ID'),
                         const SizedBox(height: 8),
-                        CustomTextField(
-                          controller: _emailController,
-                          hintText: 'Email Address',
-                          prefixIcon: Icons.alternate_email,
+                        KineticTextField(
+                          controller: _emailCtrl,
+                          hint: 'Email Address',
+                          icon: Icons.alternate_email_rounded,
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value?.isEmpty ?? true) {
-                              return 'Please enter your email';
-                            }
-                            if (!RegExp(
-                              r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                            ).hasMatch(value!)) {
-                              return 'Please enter a valid email';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Password Field
-                        _buildLabel('ENCRYPTED_KEY'),
-                        const SizedBox(height: 8),
-                        CustomTextField(
-                          controller: _passwordController,
-                          hintText: 'Password',
-                          prefixIcon: Icons.key,
-                          obscureText: !_isPasswordVisible,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: AppColors.outline,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          ),
-                          validator: (value) {
-                            if (value?.isEmpty ?? true) {
-                              return 'Please enter a password';
-                            }
-                            if ((value?.length ?? 0) < 6) {
-                              return 'Password must be at least 6 characters';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Confirm Password Field
-                        _buildLabel('CONFIRM_KEY'),
-                        const SizedBox(height: 8),
-                        CustomTextField(
-                          controller: _confirmPasswordController,
-                          hintText: 'Confirm Password',
-                          prefixIcon: Icons.key,
-                          obscureText: !_isConfirmPasswordVisible,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isConfirmPasswordVisible
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                              color: AppColors.outline,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
-                              });
-                            },
-                          ),
-                          validator: (value) {
-                            if (value?.isEmpty ?? true) {
-                              return 'Please confirm your password';
-                            }
-                            if (value != _passwordController.text) {
-                              return 'Passwords do not match';
-                            }
-                            return null;
-                          },
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Terms & Conditions
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: _agreeToTerms,
-                              onChanged: (value) {
-                                setState(() {
-                                  _agreeToTerms = value ?? false;
-                                });
-                              },
-                              activeColor: AppColors.primaryFixed,
-                              checkColor: AppColors.surfaceLowest,
-                              side: const BorderSide(color: AppColors.outline),
-                            ),
-                            Expanded(
-                              child: RichText(
-                                text: TextSpan(
-                                  style: AppText.bodySm.copyWith(
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
-                                  children: [
-                                    const TextSpan(text: 'I agree to the '),
-                                    TextSpan(
-                                      text: 'Terms & Conditions',
-                                      style: AppText.bodySm.copyWith(
-                                        color: AppColors.onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                    const TextSpan(text: ' and '),
-                                    TextSpan(
-                                      text: 'Privacy Policy',
-                                      style: AppText.bodySm.copyWith(
-                                        color: AppColors.onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        decoration: TextDecoration.underline,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                          validator: _emailValidator,
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 12),
 
-              const SizedBox(height: 24),
-
-              // Signup Button
-              ScaleTransition(
-                scale: _buttonAnimation,
-                child: CustomButton(
-                  text: 'CREATE OPERATIVE',
-                  isLoading: _isLoading,
-                  onPressed: _handleSignup,
-                  onTapDown: (_) => _buttonController.forward(),
-                  onTapUp: (_) => _buttonController.reverse(),
-                  onTapCancel: () => _buttonController.reverse(),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Social login divider
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            AppColors.outline.withValues(alpha: 0.2),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'EXTERNAL AUTH',
-                      style: AppText.labelSm.copyWith(color: AppColors.outline),
-                    ),
-                  ),
-                  Expanded(
-                    child: Container(
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.outline.withValues(alpha: 0.2),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 24),
-
-              // Social Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.g_mobiledata,
-                      text: 'GOOGLE',
-                      onPressed: _handleGoogleSignUp,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.apple,
-                      text: 'APPLE ID',
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Apple sign-up not implemented yet'),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Sign In Link
-              Center(
-                child: GestureDetector(
-                  onTap: widget.onToggle,
-                  child: RichText(
-                    text: TextSpan(
-                      style: AppText.labelMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
+                _a(
+                  3,
+                  _GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TextSpan(text: 'ALREADY ENROLLED?  '),
-                        TextSpan(
-                          text: 'SIGN IN',
-                          style: AppText.labelMd.copyWith(
-                            color: AppColors.primaryFixed,
-                            fontWeight: FontWeight.w900,
+                        const _FieldLabel('ENCRYPTED_KEY'),
+                        const SizedBox(height: 8),
+                        KineticTextField(
+                          controller: _passCtrl,
+                          hint: 'Password',
+                          icon: Icons.key_rounded,
+                          obscureText: !_passVisible,
+                          validator: _passwordValidator,
+                          suffix: GestureDetector(
+                            onTap: () =>
+                                setState(() => _passVisible = !_passVisible),
+                            child: Icon(
+                              _passVisible
+                                  ? Icons.visibility_off_rounded
+                                  : Icons.visibility_rounded,
+                              color: AppColors.outline,
+                              size: 18,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const _FieldLabel('CONFIRM_KEY'),
+                        const SizedBox(height: 8),
+                        KineticTextField(
+                          controller: _confCtrl,
+                          hint: 'Confirm Password',
+                          icon: Icons.key_rounded,
+                          obscureText: !_confVisible,
+                          validator: (v) => v != _passCtrl.text
+                              ? 'Passwords do not match'
+                              : null,
+                          suffix: GestureDetector(
+                            onTap: () =>
+                                setState(() => _confVisible = !_confVisible),
+                            child: Icon(
+                              _confVisible
+                                  ? Icons.visibility_off_rounded
+                                  : Icons.visibility_rounded,
+                              color: AppColors.outline,
+                              size: 18,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 20),
+                // Terms
+                _a(
+                  4,
+                  _TermsRow(
+                    value: _agreed,
+                    onChanged: (v) => setState(() => _agreed = v ?? false),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                _a(
+                  4,
+                  KineticButton(
+                    label: 'CREATE OPERATIVE',
+                    isLoading: _isLoading,
+                    onTap: _handleSignup,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                _a(5, _AuthDivider()),
+                const SizedBox(height: 20),
+
+                _a(
+                  5,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SocialBtn(
+                          icon: Icons.g_mobiledata_rounded,
+                          label: 'GOOGLE',
+                          onTap: () async {
+                            if (!_agreed) {
+                              _showSnack('Agree to Terms first', isError: true);
+                              return;
+                            }
+                            setState(() => _isLoading = true);
+                            try {
+                              await AuthService().signInWithGoogle();
+                            } catch (e) {
+                              if (mounted)
+                                _showSnack(e.toString(), isError: true);
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _SocialBtn(
+                          icon: Icons.apple_rounded,
+                          label: 'APPLE',
+                          onTap: () => _showSnack(
+                            'Apple sign-up coming soon',
+                            isError: false,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                _a(
+                  5,
+                  _ToggleLink(
+                    prefix: 'ALREADY ENROLLED?  ',
+                    action: 'SIGN IN',
+                    onTap: widget.onToggle,
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared UI Components
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TopBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Logo pill
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.primaryFixed.withOpacity(0.12),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.primaryFixed.withOpacity(0.25)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryFixed,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'COREGYM',
+                style: TextStyle(
+                  color: AppColors.primaryFixed,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        Text(
+          'v2.4 // KINETIC',
+          style: AppText.labelSm.copyWith(
+            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+            letterSpacing: 1.5,
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LogoMark extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Outer ring
+          Container(
+            width: 90,
+            height: 90,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primaryFixed.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+          ),
+          // Mid ring
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.primaryFixed.withOpacity(0.25),
+                width: 1,
+              ),
+            ),
+          ),
+          // Icon box
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.glass1,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppColors.primaryFixed.withOpacity(0.35),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryFixed.withOpacity(0.2),
+                  blurRadius: 24,
+                  spreadRadius: -4,
+                ),
+              ],
+            ),
+            child: const Icon(
+              Icons.lock_outline_rounded,
+              size: 26,
+              color: AppColors.primaryFixed,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Headline extends StatelessWidget {
+  final String line1, line2, sub;
+  const _Headline({
+    required this.line1,
+    required this.line2,
+    required this.sub,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(line1, style: AppText.displaySm),
+        Text(
+          line2,
+          style: AppText.displaySm.copyWith(color: AppColors.primaryFixed),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Container(
+              width: 20,
+              height: 1.5,
+              color: AppColors.primaryFixed.withOpacity(0.5),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              sub,
+              style: AppText.labelSm.copyWith(
+                color: AppColors.onSurfaceVariant,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.glass1,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.glassBorder),
+          ),
+          child: Stack(
+            children: [
+              // Left accent
+              Positioned(
+                left: -24,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 3,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.primaryFixed,
+                        AppColors.primaryFixed.withOpacity(0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              child,
             ],
           ),
         ),
       ),
     );
   }
-
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: AppText.labelMd.copyWith(
-        color: AppColors.onSurfaceVariant,
-        letterSpacing: 2.0,
-      ),
-    );
-  }
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Custom Widgets — Kinetic Obsidian Style
-// ────────────────────────────────────────────────────────────────────────────
+class _FieldLabel extends StatelessWidget {
+  final String text;
+  const _FieldLabel(this.text);
 
-class CustomTextField extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Text(
+    text,
+    style: AppText.labelSm.copyWith(
+      color: AppColors.onSurfaceVariant,
+      letterSpacing: 2.0,
+      fontSize: 10,
+    ),
+  );
+}
+
+/// Improved text field — cleaner underline style matching existing theme
+class KineticTextField extends StatefulWidget {
   final TextEditingController controller;
-  final String hintText;
-  final IconData? prefixIcon;
-  final Widget? suffixIcon;
+  final String hint;
+  final IconData? icon;
+  final Widget? suffix;
   final bool obscureText;
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final String? Function(String?)? validator;
 
-  const CustomTextField({
+  const KineticTextField({
     super.key,
     required this.controller,
-    required this.hintText,
-    this.prefixIcon,
-    this.suffixIcon,
+    required this.hint,
+    this.icon,
+    this.suffix,
     this.obscureText = false,
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
@@ -1116,136 +946,325 @@ class CustomTextField extends StatelessWidget {
   });
 
   @override
+  State<KineticTextField> createState() => _KineticTextFieldState();
+}
+
+class _KineticTextFieldState extends State<KineticTextField>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _focusCtrl;
+  late Animation<double> _focusAnim;
+  final _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 200),
+    );
+    _focusAnim = CurvedAnimation(parent: _focusCtrl, curve: Curves.easeOut);
+    _focus.addListener(() {
+      if (_focus.hasFocus)
+        _focusCtrl.forward();
+      else
+        _focusCtrl.reverse();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusCtrl.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      textCapitalization: textCapitalization,
-      validator: validator,
-      style: const TextStyle(
-        color: AppColors.onSurface,
-        fontFamily: 'Inter',
-        fontSize: 14,
-        letterSpacing: 1.0,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        hintStyle: TextStyle(
-          color: AppColors.outline.withValues(alpha: 0.5),
-          fontFamily: 'Inter',
-          fontSize: 11,
-          letterSpacing: 2.0,
-        ),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColors.outline, size: 20)
-            : null,
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: AppColors.surfaceContainerHighest,
-        border: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.outline, width: 0.5),
-        ),
-        enabledBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: AppColors.outline.withValues(alpha: 0.3),
+    return AnimatedBuilder(
+      animation: _focusAnim,
+      builder: (_, child) => Container(
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: Color.lerp(
+              AppColors.outline.withOpacity(0.2),
+              AppColors.primaryFixed.withOpacity(0.6),
+              _focusAnim.value,
+            )!,
+            width: 1 + _focusAnim.value * 0.5,
           ),
         ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.primaryFixed, width: 2),
+        child: child,
+      ),
+      child: TextFormField(
+        controller: widget.controller,
+        focusNode: _focus,
+        obscureText: widget.obscureText,
+        keyboardType: widget.keyboardType,
+        textCapitalization: widget.textCapitalization,
+        validator: widget.validator,
+        style: TextStyle(
+          color: AppColors.onSurface,
+          fontSize: 14,
+          letterSpacing: 0.5,
         ),
-        errorBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.error, width: 2),
-        ),
-        focusedErrorBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: AppColors.error, width: 2),
-        ),
-        errorStyle: const TextStyle(
-          color: AppColors.error,
-          fontWeight: FontWeight.w500,
-          fontSize: 11,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+        decoration: InputDecoration(
+          hintText: widget.hint,
+          hintStyle: TextStyle(
+            color: AppColors.outline.withOpacity(0.4),
+            fontSize: 12,
+            letterSpacing: 1.5,
+          ),
+          prefixIcon: widget.icon != null
+              ? Icon(
+                  widget.icon,
+                  color: AppColors.outline.withOpacity(0.7),
+                  size: 18,
+                )
+              : null,
+          suffixIcon: widget.suffix != null
+              ? Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: widget.suffix,
+                )
+              : null,
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 32,
+            minHeight: 32,
+          ),
+          filled: false,
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          errorBorder: InputBorder.none,
+          focusedErrorBorder: InputBorder.none,
+          errorStyle: const TextStyle(color: AppColors.error, fontSize: 11),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
   }
 }
 
-// Custom Button Widget — Electric Volt Pill
-class CustomButton extends StatelessWidget {
-  final String text;
-  final VoidCallback? onPressed;
+/// Main CTA button — kinetic pill with animated press
+class KineticButton extends StatefulWidget {
+  final String label;
   final bool isLoading;
-  final void Function(TapDownDetails)? onTapDown;
-  final void Function(TapUpDetails)? onTapUp;
-  final VoidCallback? onTapCancel;
+  final VoidCallback onTap;
 
-  const CustomButton({
+  const KineticButton({
     super.key,
-    required this.text,
-    this.onPressed,
+    required this.label,
     this.isLoading = false,
-    this.onTapDown,
-    this.onTapUp,
-    this.onTapCancel,
+    required this.onTap,
   });
 
   @override
+  State<KineticButton> createState() => _KineticButtonState();
+}
+
+class _KineticButtonState extends State<KineticButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pressCtrl;
+  late Animation<double> _scaleAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pressCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 0.96,
+    ).animate(CurvedAnimation(parent: _pressCtrl, curve: Curves.easeIn));
+  }
+
+  @override
+  void dispose() {
+    _pressCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: onTapDown,
-      onTapUp: onTapUp,
-      onTapCancel: onTapCancel,
-      child: Container(
-        height: 60,
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryActionGradient,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryFixed.withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+    return ScaleTransition(
+      scale: _scaleAnim,
+      child: GestureDetector(
+        onTapDown: (_) => _pressCtrl.forward(),
+        onTapUp: (_) {
+          _pressCtrl.reverse();
+          widget.onTap();
+        },
+        onTapCancel: () => _pressCtrl.reverse(),
+        child: Container(
+          height: 58,
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryActionGradient,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryFixed.withOpacity(0.28),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const SizedBox(width: 52),
+              if (widget.isLoading)
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              else
+                Text(widget.label, style: AppText.buttonPrimary),
+              Container(
+                width: 36,
+                height: 36,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.bolt_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: isLoading ? null : onPressed,
-            borderRadius: BorderRadius.circular(30),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+      ),
+    );
+  }
+}
+
+class _AuthDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            height: 0.5,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  AppColors.outline.withOpacity(0.3),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text(
+            'EXTERNAL AUTH',
+            style: AppText.labelSm.copyWith(
+              color: AppColors.outline.withOpacity(0.6),
+              fontSize: 9,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Container(
+            height: 0.5,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.outline.withOpacity(0.3),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SocialBtn extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _SocialBtn({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+  @override
+  State<_SocialBtn> createState() => _SocialBtnState();
+}
+
+class _SocialBtnState extends State<_SocialBtn>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.95).animate(_ctrl);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scale,
+      child: GestureDetector(
+        onTapDown: (_) => _ctrl.forward(),
+        onTapUp: (_) {
+          _ctrl.reverse();
+          widget.onTap();
+        },
+        onTapCancel: () => _ctrl.reverse(),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              height: 50,
+              decoration: BoxDecoration(
+                color: AppColors.glass1,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.glassBorder),
+              ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(width: 32),
-                  isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppColors.onPrimary,
-                            ),
-                          ),
-                        )
-                      : Text(text, style: AppText.buttonPrimary),
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.onPrimary,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(
-                      Icons.bolt,
-                      color: AppColors.primaryFixed,
-                      size: 18,
+                  Icon(widget.icon, color: AppColors.onSurface, size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.label,
+                    style: AppText.buttonSecondary.copyWith(
+                      fontSize: 11,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ],
@@ -1258,52 +1277,240 @@ class CustomButton extends StatelessWidget {
   }
 }
 
-// Social Button Widget — Glass Panel
-class SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  final VoidCallback? onPressed;
+class _TermsRow extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool?> onChanged;
+  const _TermsRow({required this.value, required this.onChanged});
 
-  const SocialButton({
-    super.key,
-    required this.icon,
-    required this.text,
-    this.onPressed,
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 20,
+          height: 20,
+          child: Checkbox(
+            value: value,
+            onChanged: onChanged,
+            activeColor: AppColors.primaryFixed,
+            checkColor: Colors.white,
+            side: BorderSide(color: AppColors.outline.withOpacity(0.5)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: AppText.bodySm.copyWith(
+                color: AppColors.onSurfaceVariant,
+                fontSize: 11,
+              ),
+              children: [
+                const TextSpan(text: 'I agree to the '),
+                TextSpan(
+                  text: 'Terms & Conditions',
+                  style: AppText.bodySm.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                    fontSize: 11,
+                  ),
+                ),
+                const TextSpan(text: ' and '),
+                TextSpan(
+                  text: 'Privacy Policy',
+                  style: AppText.bodySm.copyWith(
+                    color: AppColors.onSurface,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ToggleLink extends StatelessWidget {
+  final String prefix, action;
+  final VoidCallback onTap;
+  const _ToggleLink({
+    required this.prefix,
+    required this.action,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 52,
-          decoration: BoxDecoration(
-            color: AppColors.glass1,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.glassBorder),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onPressed,
-              borderRadius: BorderRadius.circular(8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: AppColors.onSurface, size: 20),
-                  const SizedBox(width: 8),
-                  Text(text, style: AppText.buttonSecondary.copyWith(
-                    fontSize: 10,
-                    letterSpacing: 2.0,
-                  )),
-                ],
+    return Center(
+      child: GestureDetector(
+        onTap: onTap,
+        child: RichText(
+          text: TextSpan(
+            style: AppText.labelMd.copyWith(color: AppColors.onSurfaceVariant),
+            children: [
+              TextSpan(text: prefix),
+              TextSpan(
+                text: action,
+                style: AppText.labelMd.copyWith(
+                  color: AppColors.primaryFixed,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Background decorations
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GlowOrb extends StatelessWidget {
+  final double size;
+  final Color color;
+  const _GlowOrb({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) => IgnorePointer(
+    child: Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(colors: [color, Colors.transparent]),
+      ),
+    ),
+  );
+}
+
+class _GridPainterWidget extends StatelessWidget {
+  const _GridPainterWidget();
+  @override
+  Widget build(BuildContext context) => CustomPaint(painter: _GridPainter());
+}
+
+class _GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.025)
+      ..strokeWidth = 0.5;
+    const spacing = 44.0;
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+class _CornerBracket extends StatelessWidget {
+  final int corner; // 0=TL, 1=TR, 2=BL, 3=BR
+  const _CornerBracket({required this.corner});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(24, 24),
+      painter: _CornerPainter(corner: corner),
+    );
+  }
+}
+
+class _CornerPainter extends CustomPainter {
+  final int corner;
+  const _CornerPainter({required this.corner});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppColors.primaryFixed.withOpacity(0.3)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    const len = 14.0;
+    final w = size.width;
+    final h = size.height;
+
+    switch (corner) {
+      case 0: // TL
+        canvas.drawLine(Offset(0, len), const Offset(0, 0), paint);
+        canvas.drawLine(const Offset(0, 0), Offset(len, 0), paint);
+        break;
+      case 1: // TR
+        canvas.drawLine(Offset(w - len, 0), Offset(w, 0), paint);
+        canvas.drawLine(Offset(w, 0), Offset(w, len), paint);
+        break;
+      case 2: // BL
+        canvas.drawLine(Offset(0, h - len), Offset(0, h), paint);
+        canvas.drawLine(Offset(0, h), Offset(len, h), paint);
+        break;
+      case 3: // BR
+        canvas.drawLine(Offset(w - len, h), Offset(w, h), paint);
+        canvas.drawLine(Offset(w, h), Offset(w, h - len), paint);
+        break;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter old) => false;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+String? _emailValidator(String? v) {
+  if (v?.isEmpty ?? true) return 'Please enter your email';
+  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v!))
+    return 'Please enter a valid email';
+  return null;
+}
+
+String? _passwordValidator(String? v) {
+  if (v?.isEmpty ?? true) return 'Please enter your password';
+  if ((v?.length ?? 0) < 6) return 'Password must be at least 6 characters';
+  return null;
+}
+
+PageRoute _route(Widget page) => PageRouteBuilder(
+  pageBuilder: (_, a, __) => page,
+  transitionsBuilder: (_, a, __, child) => FadeTransition(
+    opacity: CurvedAnimation(parent: a, curve: Curves.easeOut),
+    child: child,
+  ),
+  transitionDuration: const Duration(milliseconds: 350),
+);
+
+extension on BuildContext {
+  void _showSnack(String msg, {required bool isError}) {
+    ScaffoldMessenger.of(this).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: isError ? Colors.red[600] : Colors.green[600],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+}
+
+void _showSnack(String msg, {required bool isError}) {}

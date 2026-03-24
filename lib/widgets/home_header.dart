@@ -1,7 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:coregym2/l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/language_toggle.dart';
 
 class HomeHeader extends StatelessWidget {
   final String userName;
@@ -13,11 +15,11 @@ class HomeHeader extends StatelessWidget {
     required this.avatarUrl,
   });
 
-  String get _greeting {
+  String _greeting(BuildContext context) {
     final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning';
-    if (h < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (h < 12) return AppLocalizations.of(context)!.goodMorning;
+    if (h < 17) return AppLocalizations.of(context)!.goodAfternoon;
+    return AppLocalizations.of(context)!.goodEvening;
   }
 
   String get _greetingEmoji {
@@ -53,7 +55,7 @@ class HomeHeader extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _greeting,
+                      _greeting(context),
                       style: TextStyle(
                         fontSize: 13,
                         color: AppColors.onSurfaceVariant,
@@ -83,6 +85,8 @@ class HomeHeader extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          const LanguageToggle(compact: true),
           const SizedBox(width: 12),
           // Avatar
           _Avatar(name: firstName, avatarUrl: avatarUrl),
@@ -227,8 +231,8 @@ class _AvatarState extends State<_Avatar>
             ),
           ),
           // Online indicator dot
-          Positioned(
-            bottom: 4, right: 4,
+          Positioned.directional(textDirection: Directionality.of(context), 
+            bottom: 4, end: 4,
             child: Container(
               width: 10, height: 10,
               decoration: BoxDecoration(

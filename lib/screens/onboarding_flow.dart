@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:coregym2/l10n/app_localizations.dart';
 import '../services/onboarding_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
@@ -189,7 +190,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildStepHeader("Let's get to know you", "Enter your basic info"),
-          Text("Full Name", style: AppText.labelMd),
+          Text(AppLocalizations.of(context)!.fullNameHint, style: AppText.labelMd),
           const SizedBox(height: 8),
           TextField(
             style: AppText.bodyLg.copyWith(color: Colors.white),
@@ -302,7 +303,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         children: [
           _buildStepHeader("What's your goal?", "Select your primary focus"),
           _OptionCard(
-            label: 'Muscle Gain',
+            label: AppLocalizations.of(context)!.muscleGain,
             desc: 'Build strength and mass',
             icon: Icons.fitness_center,
             isSelected: _goal == 'muscle_gain',
@@ -310,7 +311,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Weight Loss',
+            label: AppLocalizations.of(context)!.weightLoss,
             desc: 'Burn fat, feel lighter',
             icon: Icons.local_fire_department,
             isSelected: _goal == 'weight_loss',
@@ -318,7 +319,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Endurance',
+            label: AppLocalizations.of(context)!.endurance,
             desc: 'Improve stamina and cardio',
             icon: Icons.directions_run,
             isSelected: _goal == 'endurance',
@@ -326,7 +327,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Flexibility',
+            label: AppLocalizations.of(context)!.flexibility,
             desc: 'Move better, recover faster',
             icon: Icons.self_improvement,
             isSelected: _goal == 'flexibility',
@@ -334,7 +335,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'General Fitness',
+            label: AppLocalizations.of(context)!.generalFitness,
             desc: 'Stay healthy and active',
             icon: Icons.bolt,
             isSelected: _goal == 'general_fitness',
@@ -365,7 +366,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         children: [
           _buildStepHeader("How active are you?", "Helps calculate your nutrition"),
           _OptionCard(
-            label: 'Sedentary',
+            label: AppLocalizations.of(context)!.sedentary,
             desc: 'Little to no exercise',
             icon: Icons.chair,
             isSelected: _activityLevel == 'sedentary',
@@ -373,7 +374,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Lightly Active',
+            label: AppLocalizations.of(context)!.lightlyActive,
             desc: '1-3 days/week',
             icon: Icons.directions_walk,
             isSelected: _activityLevel == 'lightly_active',
@@ -381,7 +382,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Moderately Active',
+            label: AppLocalizations.of(context)!.moderatelyActive,
             desc: '3-5 days/week',
             icon: Icons.directions_run,
             isSelected: _activityLevel == 'moderately_active',
@@ -389,7 +390,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Very Active',
+            label: AppLocalizations.of(context)!.veryActive,
             desc: '6-7 days/week',
             icon: Icons.fitness_center,
             isSelected: _activityLevel == 'very_active',
@@ -397,7 +398,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 12),
           _OptionCard(
-            label: 'Extra Active',
+            label: AppLocalizations.of(context)!.extraActive,
             desc: 'Twice daily',
             icon: Icons.electric_bolt,
             isSelected: _activityLevel == 'extra_active',
@@ -431,7 +432,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             onChanged: (val) => setState(() => _targetWeight = val),
           ),
           const SizedBox(height: 32),
-          Text("Weekly Workouts", style: AppText.labelMd),
+          Text(AppLocalizations.of(context)!.weeklyWorkoutsLabel, style: AppText.labelMd),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,

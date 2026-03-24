@@ -2,12 +2,14 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:coregym2/fitness_home_pages.dart';
 import 'package:flutter/material.dart';
+import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:coregym2/supabase/supabase_exports.dart';
 import 'services/onboarding_service.dart';
 import 'screens/onboarding_flow.dart';
 import 'forgetpassword.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
+import 'widgets/language_toggle.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Wrapper
@@ -119,14 +121,14 @@ class _AuthWrapperState extends State<AuthWrapper>
           ),
 
           // Corner brackets
-          const Positioned(top: 0, left: 0, child: _CornerBracket(corner: 0)),
-          const Positioned(top: 0, right: 0, child: _CornerBracket(corner: 1)),
-          const Positioned(
+          Positioned.directional(textDirection: Directionality.of(context), top: 0, start: 0, child: _CornerBracket(corner: 0)),
+          Positioned.directional(textDirection: Directionality.of(context), top: 0, end: 0, child: _CornerBracket(corner: 1)),
+          Positioned(
             bottom: 0,
             left: 0,
             child: _CornerBracket(corner: 2),
           ),
-          const Positioned(
+          Positioned(
             bottom: 0,
             right: 0,
             child: _CornerBracket(corner: 3),
@@ -140,6 +142,15 @@ class _AuthWrapperState extends State<AuthWrapper>
               child: isLogin
                   ? LoginScreen(onToggle: _toggle)
                   : SignupScreen(onToggle: _toggle),
+            ),
+          ),
+          Positioned(
+            top: 0, right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: LanguageToggle(compact: false),
+              ),
             ),
           ),
         ],
@@ -275,9 +286,9 @@ class _LoginScreenState extends State<LoginScreen>
                 _animated(
                   2,
                   _Headline(
-                    line1: 'IGNITE',
-                    line2: 'SYSTEM',
-                    sub: 'ENTER CREDENTIALS TO AUTHORIZE ACCESS',
+                    line1: AppLocalizations.of(context)!.loginTitle,
+                    line2: AppLocalizations.of(context)!.loginSubtitle,
+                    sub: AppLocalizations.of(context)!.loginDesc,
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -289,11 +300,11 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _FieldLabel('OPERATOR_ID'),
+                        _FieldLabel(AppLocalizations.of(context)!.operatorId),
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _emailController,
-                          hint: 'user@coregym.app',
+                          hint: AppLocalizations.of(context)!.emailHint,
                           icon: Icons.alternate_email_rounded,
                           keyboardType: TextInputType.emailAddress,
                           validator: _emailValidator,
@@ -302,14 +313,14 @@ class _LoginScreenState extends State<LoginScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const _FieldLabel('ENCRYPTED_KEY'),
+                            _FieldLabel(AppLocalizations.of(context)!.encryptedKey),
                             GestureDetector(
                               onTap: () => Navigator.push(
                                 context,
                                 _route(ForgotPasswordScreen()),
                               ),
                               child: Text(
-                                'FORGOT?',
+                                AppLocalizations.of(context)!.forgotPassword,
                                 style: AppText.labelSm.copyWith(
                                   color: AppColors.secondary,
                                   fontWeight: FontWeight.w800,
@@ -322,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen>
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _passwordController,
-                          hint: '••••••••••••',
+                          hint: AppLocalizations.of(context)!.passwordHint,
                           icon: Icons.key_rounded,
                           obscureText: !_passwordVisible,
                           validator: _passwordValidator,
@@ -349,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen>
                 _animated(
                   4,
                   KineticButton(
-                    label: 'INITIALIZE SESSION',
+                    label: AppLocalizations.of(context)!.initializeSession,
                     isLoading: _isLoading,
                     onTap: _handleLogin,
                   ),
@@ -368,7 +379,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: _SocialBtn(
                           icon: Icons.g_mobiledata_rounded,
-                          label: 'GOOGLE',
+                          label: AppLocalizations.of(context)!.google,
                           onTap: _handleGoogleSignIn,
                         ),
                       ),
@@ -376,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Expanded(
                         child: _SocialBtn(
                           icon: Icons.apple_rounded,
-                          label: 'APPLE',
+                          label: AppLocalizations.of(context)!.apple,
                           onTap: () => _showSnack(
                             'Apple sign-in coming soon',
                             isError: false,
@@ -392,8 +403,8 @@ class _LoginScreenState extends State<LoginScreen>
                 _animated(
                   5,
                   _ToggleLink(
-                    prefix: 'NEW OPERATIVE?  ',
-                    action: 'ENROLL NOW',
+                    prefix: AppLocalizations.of(context)!.newOperative,
+                    action: AppLocalizations.of(context)!.enrollNow,
                     onTap: widget.onToggle,
                   ),
                 ),
@@ -527,9 +538,9 @@ class _SignupScreenState extends State<SignupScreen>
                 _a(
                   1,
                   _Headline(
-                    line1: 'ENROLL',
-                    line2: 'OPERATIVE',
-                    sub: 'CREATE NEW SYSTEM ACCESS',
+                    line1: AppLocalizations.of(context)!.signupTitle,
+                    line2: AppLocalizations.of(context)!.signupSubtitle,
+                    sub: AppLocalizations.of(context)!.signupDesc,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -540,18 +551,18 @@ class _SignupScreenState extends State<SignupScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _FieldLabel('OPERATIVE_NAME'),
+                        _FieldLabel(AppLocalizations.of(context)!.operativeName),
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _nameCtrl,
-                          hint: 'Full Name',
+                          hint: AppLocalizations.of(context)!.fullNameHint,
                           icon: Icons.person_outline_rounded,
                           textCapitalization: TextCapitalization.words,
                           validator: (v) =>
                               (v?.length ?? 0) < 2 ? 'Enter your name' : null,
                         ),
                         const SizedBox(height: 20),
-                        const _FieldLabel('OPERATOR_ID'),
+                        _FieldLabel(AppLocalizations.of(context)!.operatorId),
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _emailCtrl,
@@ -572,7 +583,7 @@ class _SignupScreenState extends State<SignupScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _FieldLabel('ENCRYPTED_KEY'),
+                        _FieldLabel(AppLocalizations.of(context)!.encryptedKey),
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _passCtrl,
@@ -593,7 +604,7 @@ class _SignupScreenState extends State<SignupScreen>
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const _FieldLabel('CONFIRM_KEY'),
+                        _FieldLabel(AppLocalizations.of(context)!.confirmKey),
                         const SizedBox(height: 8),
                         KineticTextField(
                           controller: _confCtrl,
@@ -634,7 +645,7 @@ class _SignupScreenState extends State<SignupScreen>
                 _a(
                   4,
                   KineticButton(
-                    label: 'CREATE OPERATIVE',
+                    label: AppLocalizations.of(context)!.createOperative,
                     isLoading: _isLoading,
                     onTap: _handleSignup,
                   ),
@@ -651,7 +662,7 @@ class _SignupScreenState extends State<SignupScreen>
                       Expanded(
                         child: _SocialBtn(
                           icon: Icons.g_mobiledata_rounded,
-                          label: 'GOOGLE',
+                          label: AppLocalizations.of(context)!.google,
                           onTap: () async {
                             if (!_agreed) {
                               _showSnack('Agree to Terms first', isError: true);
@@ -673,7 +684,7 @@ class _SignupScreenState extends State<SignupScreen>
                       Expanded(
                         child: _SocialBtn(
                           icon: Icons.apple_rounded,
-                          label: 'APPLE',
+                          label: AppLocalizations.of(context)!.apple,
                           onTap: () => _showSnack(
                             'Apple sign-up coming soon',
                             isError: false,
@@ -688,8 +699,8 @@ class _SignupScreenState extends State<SignupScreen>
                 _a(
                   5,
                   _ToggleLink(
-                    prefix: 'ALREADY ENROLLED?  ',
-                    action: 'SIGN IN',
+                    prefix: AppLocalizations.of(context)!.alreadyEnrolled,
+                    action: AppLocalizations.of(context)!.signIn,
                     onTap: widget.onToggle,
                   ),
                 ),
@@ -1025,7 +1036,7 @@ class _KineticTextFieldState extends State<KineticTextField>
               : null,
           suffixIcon: widget.suffix != null
               ? Padding(
-                  padding: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsetsDirectional.only(end: 12),
                   child: widget.suffix,
                 )
               : null,
@@ -1133,7 +1144,7 @@ class _KineticButtonState extends State<KineticButton>
               Container(
                 width: 36,
                 height: 36,
-                margin: const EdgeInsets.only(right: 12),
+                margin: const EdgeInsetsDirectional.only(end: 12),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(10),
@@ -1173,7 +1184,7 @@ class _AuthDivider extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
-            'EXTERNAL AUTH',
+            AppLocalizations.of(context)!.externalAuth,
             style: AppText.labelSm.copyWith(
               color: AppColors.outline.withOpacity(0.6),
               fontSize: 9,
@@ -1311,9 +1322,9 @@ class _TermsRow extends StatelessWidget {
                 fontSize: 11,
               ),
               children: [
-                const TextSpan(text: 'I agree to the '),
+                TextSpan(text: AppLocalizations.of(context)!.agreeTerms),
                 TextSpan(
-                  text: 'Terms & Conditions',
+                  text: AppLocalizations.of(context)!.termsConditions,
                   style: AppText.bodySm.copyWith(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.bold,
@@ -1321,9 +1332,9 @@ class _TermsRow extends StatelessWidget {
                     fontSize: 11,
                   ),
                 ),
-                const TextSpan(text: ' and '),
+                TextSpan(text: AppLocalizations.of(context)!.and),
                 TextSpan(
-                  text: 'Privacy Policy',
+                  text: AppLocalizations.of(context)!.privacyPolicy,
                   style: AppText.bodySm.copyWith(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.bold,

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -278,8 +279,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       builder: (c) => AlertDialog(
         backgroundColor: AppColors.surfaceContainer,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Update Steps',
+        title: Text(AppLocalizations.of(context)!.updateSteps,
           style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         content: TextField(
@@ -301,7 +301,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -324,7 +324,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               });
             },
             child: Text(
-              'Save',
+              AppLocalizations.of(context)!.save,
               style: TextStyle(color: AppColors.primaryFixed),
             ),
           ),
@@ -470,7 +470,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 delay: 280,
                 child: _SectionHeader(
                   title: 'Today\'s Meals',
-                  action: '+ Add Food',
+                  action: AppLocalizations.of(context)!.addFood,
                   onAction: () => widget.onNavigate(1),
                 ),
               ),
@@ -497,7 +497,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 ctrl: _pageCtrl,
                 delay: 420,
                 child: _SectionHeader(
-                  title: 'Your Program',
+                  title: AppLocalizations.of(context)!.yourProgram,
                   action: '',
                   onAction: null,
                 ),
@@ -571,14 +571,14 @@ class _GoalsBanner extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Complete your profile to see personalized goals.',
+              AppLocalizations.of(context)!.completeProfile,
               style: TextStyle(fontSize: 12, color: Colors.orangeAccent),
             ),
           ),
           GestureDetector(
             onTap: onTap,
             child: Text(
-              'Fix →',
+              AppLocalizations.of(context)!.fix,
               style: TextStyle(
                 color: Colors.orangeAccent,
                 fontWeight: FontWeight.w700,
@@ -639,7 +639,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'CALORIES TODAY',
+                  AppLocalizations.of(context)!.caloriesToday,
                   style: TextStyle(
                     fontSize: 10,
                     color: AppColors.onSurfaceVariant,
@@ -704,7 +704,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'kcal',
+                              AppLocalizations.of(context)!.kcal,
                               style: TextStyle(
                                 fontSize: 10,
                                 color: AppColors.onSurfaceVariant,
@@ -735,7 +735,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
                   child: Column(
                     children: [
                       _MacroRow(
-                        label: 'Protein',
+                        label: AppLocalizations.of(context)!.proteinGoal,
                         color: Colors.redAccent,
                         current: totalProtein,
                         goal: goalProtein,
@@ -743,7 +743,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _MacroRow(
-                        label: 'Carbs',
+                        label: AppLocalizations.of(context)!.carbs,
                         color: Colors.blueAccent,
                         current: totalCarbs,
                         goal: goalCarbs,
@@ -751,7 +751,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
                       _MacroRow(
-                        label: 'Fat',
+                        label: AppLocalizations.of(context)!.fat,
                         color: Colors.orangeAccent,
                         current: totalFat,
                         goal: goalFat,
@@ -877,7 +877,7 @@ class _ActivityStrip extends StatelessWidget {
             child: _ActivityCard(
               emoji: '💧',
               value: '$waterGlasses',
-              unit: 'of 8 glasses',
+              unit: AppLocalizations.of(context)!.ofGlasses,
               accentColor: const Color(0xFF4A9EFF),
               actionIcon: Icons.add_rounded,
               onAction: onAddWater,
@@ -904,7 +904,7 @@ class _ActivityStrip extends StatelessWidget {
             child: _ActivityCard(
               emoji: '👟',
               value: '$stepsInt',
-              unit: 'of 10,000 steps',
+              unit: AppLocalizations.of(context)!.ofSteps,
               accentColor: const Color(0xFF4DC591),
               actionIcon: Icons.edit_rounded,
               onAction: onEditSteps,
@@ -925,7 +925,7 @@ class _ActivityStrip extends StatelessWidget {
             child: _ActivityCard(
               emoji: '🔥',
               value: '$caloriesBurned',
-              unit: 'kcal burned',
+              unit: AppLocalizations.of(context)!.kcalBurned,
               accentColor: AppColors.primaryFixed,
             ),
           ),
@@ -1060,24 +1060,27 @@ class _MealsScroll extends StatelessWidget {
   final VoidCallback onTap;
   const _MealsScroll({required this.logs, required this.onTap});
 
-  static const _meals = [
-    ('breakfast', 'Breakfast', '🍳'),
-    ('lunch', 'Lunch', '🥗'),
-    ('dinner', 'Dinner', '🍽'),
-    ('snack', 'Snack', '🥜'),
-  ];
+  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+  static const _emojis = ['🍳', '🥗', '🍽', '🥜'];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final meals = [
+      ('breakfast', l10n.breakfast, '🍳'),
+      ('lunch', l10n.lunch, '🥗'),
+      ('dinner', l10n.dinner, '🍽'),
+      ('snack', l10n.snack, '🥜'),
+    ];
     return SizedBox(
       height: 120,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: _meals.length,
+        itemCount: meals.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
-          final (type, label, emoji) = _meals[i];
+          final (type, label, emoji) = meals[i];
           final mLogs = logs.where((l) => l['meal_type'] == type).toList();
           final kcal = mLogs.fold(
             0.0,
@@ -1126,7 +1129,7 @@ class _MealsScroll extends StatelessWidget {
                   Text(
                     has
                         ? '${mLogs.length} item${mLogs.length > 1 ? 's' : ''}'
-                        : 'not logged',
+                        : AppLocalizations.of(context)!.notLogged,
                     style: TextStyle(
                       fontSize: 10,
                       color: AppColors.onSurfaceVariant.withOpacity(0.6),
@@ -1171,7 +1174,7 @@ class _EmptyMeals extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'No meals logged yet',
+                    AppLocalizations.of(context)!.noMealsYet,
                     style: AppText.titleSm.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -1221,7 +1224,7 @@ class _ProgramCard extends StatelessWidget {
               style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
-            _PrimaryBtn(label: 'Browse Programs →', onTap: onTap),
+            _PrimaryBtn(label: AppLocalizations.of(context)!.browsePrograms, onTap: onTap),
           ],
         ),
       );
@@ -1250,7 +1253,7 @@ class _ProgramCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ACTIVE PROGRAM',
+                    AppLocalizations.of(context)!.activeProgram2,
                     style: TextStyle(
                       fontSize: 9,
                       color: AppColors.primaryFixed,
@@ -1301,7 +1304,7 @@ class _ProgramCard extends StatelessWidget {
               (i) => Expanded(
                 child: Container(
                   height: 3,
-                  margin: EdgeInsets.only(right: i < 11 ? 3 : 0),
+                  margin: EdgeInsetsDirectional.only(end: i < 11 ? 3 : 0),
                   decoration: BoxDecoration(
                     color: i < filled
                         ? AppColors.primaryFixed
@@ -1352,13 +1355,13 @@ class _LastWorkoutCard extends StatelessWidget {
               style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
-            _OutlineBtn(label: 'Log Your First Workout →', onTap: onTap),
+            _OutlineBtn(label: AppLocalizations.of(context)!.logFirstWorkout, onTap: onTap),
           ],
         ),
       );
     }
 
-    final name = lastWorkout!['session_name'] as String? ?? 'Workout';
+    final name = lastWorkout!['session_name'] as String? ?? AppLocalizations.of(context)!.navWorkout;
     final date = lastWorkout!['session_date'] as String? ?? '';
     final duration = (lastWorkout!['duration_min'] as num?)?.toInt() ?? 0;
 
@@ -1411,7 +1414,7 @@ class _LastWorkoutCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'History',
+                AppLocalizations.of(context)!.history,
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.primaryFixed,

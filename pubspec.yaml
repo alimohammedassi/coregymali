@@ -11,6 +11,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  shared_preferences: ^2.2.0
+  provider: ^6.1.0
   fl_chart: ^0.68.0
   supabase_flutter: ^2.5.0
   cupertino_icons: ^1.0.8
@@ -27,8 +31,10 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
+  generate: true
   uses-material-design: true
   assets:
     - assets/images/

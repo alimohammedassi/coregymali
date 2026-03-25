@@ -207,15 +207,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             onChanged: (val) => _name = val,
           ),
           const SizedBox(height: 24),
-          Text("Age: $_age", style: AppText.labelMd),
-          Slider(
-            value: _age.toDouble(),
+          Text("Age", style: AppText.labelMd),
+          const SizedBox(height: 12),
+          _CounterInput(
+            value: _age,
             min: 14,
             max: 100,
-            activeColor: AppColors.primaryFixed,
-            onChanged: (val) {
-              setState(() => _age = val.toInt());
-            },
+            unit: "years",
+            onChanged: (val) => setState(() => _age = val),
           ),
           const SizedBox(height: 24),
           Text("Gender", style: AppText.labelMd),
@@ -256,22 +255,24 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildStepHeader("Your current body", "Help us tailor your plan"),
-          Text("Height: ${_heightCm.toInt()} cm", style: AppText.labelMd),
-          Slider(
-            value: _heightCm,
+          Text("Height", style: AppText.labelMd),
+          const SizedBox(height: 12),
+          _CounterInput(
+            value: _heightCm.toInt(),
             min: 140,
             max: 220,
-            activeColor: AppColors.primaryFixed,
-            onChanged: (val) => setState(() => _heightCm = val),
+            unit: "cm",
+            onChanged: (val) => setState(() => _heightCm = val.toDouble()),
           ),
-          const SizedBox(height: 24),
-          Text("Weight: ${_weightKg.toInt()} kg", style: AppText.labelMd),
-          Slider(
-            value: _weightKg,
+          const SizedBox(height: 32),
+          Text("Weight", style: AppText.labelMd),
+          const SizedBox(height: 12),
+          _CounterInput(
+            value: _weightKg.toInt(),
             min: 40,
             max: 150,
-            activeColor: AppColors.primaryFixed,
-            onChanged: (val) => setState(() => _weightKg = val),
+            unit: "kg",
+            onChanged: (val) => setState(() => _weightKg = val.toDouble()),
           ),
           const SizedBox(height: 48),
           Center(
@@ -423,13 +424,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildStepHeader("Set your targets", "Build your routine"),
-          Text("Target Weight: ${_targetWeight.toInt()} kg", style: AppText.labelMd),
-          Slider(
-            value: _targetWeight,
+          Text("Target Weight", style: AppText.labelMd),
+          const SizedBox(height: 12),
+          _CounterInput(
+            value: _targetWeight.toInt(),
             min: 40,
             max: 150,
-            activeColor: AppColors.primaryFixed,
-            onChanged: (val) => setState(() => _targetWeight = val),
+            unit: "kg",
+            onChanged: (val) => setState(() => _targetWeight = val.toDouble()),
           ),
           const SizedBox(height: 32),
           Text(AppLocalizations.of(context)!.weeklyWorkoutsLabel, style: AppText.labelMd),
@@ -484,6 +486,87 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             ),
           )
         ],
+      ),
+    );
+  }
+}
+
+class _CounterInput extends StatelessWidget {
+  final int value;
+  final int min;
+  final int max;
+  final String unit;
+  final ValueChanged<int> onChanged;
+
+  const _CounterInput({
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.unit,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _CounterButton(
+            icon: Icons.remove,
+            onTap: value > min ? () => onChanged(value - 1) : null,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  '$value',
+                  style: AppText.displaySm.copyWith(color: Colors.white),
+                ),
+                Text(
+                  unit,
+                  style: AppText.labelMd.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+              ],
+            ),
+          ),
+          _CounterButton(
+            icon: Icons.add,
+            onTap: value < max ? () => onChanged(value + 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CounterButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _CounterButton({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: isEnabled ? AppColors.primaryFixed : AppColors.surfaceContainerHigh,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          color: isEnabled ? Colors.black : AppColors.onSurfaceVariant,
+        ),
       ),
     );
   }

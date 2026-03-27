@@ -49,10 +49,10 @@ class NutritionService {
         'food_name': foodName,
         'meal_type': mealType,
         'quantity': quantity,
-        'calories': calories * (quantity / 100),
-        'protein_g': proteinG * (quantity / 100),
-        'carbs_g': carbsG * (quantity / 100),
-        'fat_g': fatG * (quantity / 100),
+        'calories': calories,
+        'protein_g': proteinG,
+        'carbs_g': carbsG,
+        'fat_g': fatG,
         'logged_date': d,
       });
 

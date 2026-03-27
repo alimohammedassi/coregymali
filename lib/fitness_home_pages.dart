@@ -13,6 +13,8 @@ import 'theme/app_text.dart';
 import 'services/supabase_client.dart';
 import 'widgets/core_gym_navbar.dart';
 import 'widgets/home_header.dart';
+import 'widgets/app_background.dart';
+import 'widgets/enhanced_charts.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Root scaffold
@@ -384,18 +386,21 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.surface,
-        body: _buildShimmer(),
+        body: AppBackground(
+          child: _buildShimmer(),
+        ),
       );
     }
 
     return Scaffold(
       backgroundColor: AppColors.surface,
-      body: RefreshIndicator(
-        onRefresh: _loadData,
-        color: AppColors.primaryFixed,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
+      body: AppBackground(
+        child: RefreshIndicator(
+          onRefresh: _loadData,
+          color: AppColors.primaryFixed,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
             // ── Header ──────────────────────────────────────────────────────
             SliverToBoxAdapter(
               child: SafeArea(
@@ -539,7 +544,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
@@ -623,6 +629,13 @@ class _CaloriesMacrosCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Gradient colors based on progress
+    final gradientColors = progress >= 1.0
+        ? [const Color(0xFFFF5252), const Color(0xFFFF8A65)]
+        : progress > 0.85
+            ? [const Color(0xFFFFAB40), const Color(0xFFFFD54F)]
+            : [AppColors.primaryFixed, const Color(0xFFA8E600)];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
@@ -631,6 +644,13 @@ class _CaloriesMacrosCard extends StatelessWidget {
           color: AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withOpacity(0.06)),
+          boxShadow: [
+            BoxShadow(
+              color: gradientColors.first.withOpacity(0.08),
+              blurRadius: 30,
+              spreadRadius: -10,
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -665,7 +685,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Ring
+                // Ring with glow
                 SizedBox(
                   width: 130,
                   height: 130,
@@ -681,6 +701,7 @@ class _CaloriesMacrosCard extends StatelessWidget {
                             painter: _RingPainter(
                               progress: progress * ringAnim.value,
                               color: c ?? AppColors.primaryFixed,
+                              showGlow: true,
                             ),
                           ),
                         ),
@@ -1483,18 +1504,25 @@ class _OutlineBtn extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ring painter
+// Ring painter (using enhanced version from enhanced_charts.dart)
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _RingPainter extends CustomPainter {
   final double progress;
   final Color color;
-  const _RingPainter({required this.progress, required this.color});
+  final bool showGlow;
+
+  const _RingPainter({
+    required this.progress,
+    required this.color,
+    this.showGlow = true,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2 - 10;
+    final strokeWidth = 14.0;
 
     // Track
     canvas.drawCircle(
@@ -1502,25 +1530,31 @@ class _RingPainter extends CustomPainter {
       radius,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 14
+        ..strokeWidth = strokeWidth
         ..color = Colors.white.withOpacity(0.07),
     );
 
-    // Glow when near goal
-    if (progress > 0.85) {
+    // Glow effect
+    if (showGlow && progress > 0) {
       canvas.drawCircle(
         center,
         radius,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 18
-          ..color = color.withOpacity(0.12)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+          ..strokeWidth = strokeWidth + 8
+          ..color = color.withOpacity(0.15)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
       );
     }
 
-    // Arc
+    // Arc with gradient-like effect
     if (progress > 0) {
+      // Create a gradient effect by drawing multiple arcs
+      final gradientColors = [
+        color,
+        color.withOpacity(0.8),
+      ];
+
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         -pi / 2,
@@ -1528,10 +1562,30 @@ class _RingPainter extends CustomPainter {
         false,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 14
+          ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round
-          ..color = color,
+          ..shader = SweepGradient(
+            colors: gradientColors,
+            startAngle: -pi / 2,
+            endAngle: -pi / 2 + 2 * pi * progress.clamp(0.0, 1.0),
+            transform: GradientRotation(-pi / 2),
+          ).createShader(Rect.fromCircle(center: center, radius: radius)),
       );
+
+      // End cap highlight
+      if (progress > 0.02) {
+        final endAngle = -pi / 2 + 2 * pi * progress.clamp(0.0, 1.0);
+        final endX = center.dx + radius * cos(endAngle);
+        final endY = center.dy + radius * sin(endAngle);
+
+        canvas.drawCircle(
+          Offset(endX, endY),
+          strokeWidth / 3,
+          Paint()
+            ..color = Colors.white.withOpacity(0.4)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+        );
+      }
     }
   }
 

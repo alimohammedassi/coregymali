@@ -58,9 +58,11 @@ class OnboardingService {
       }).eq('id', currentUserId!);
 
       // Calculate TDEE-based calorie goal
+      // Using Mifflin-St Jeor equation (more accurate modern standard)
       double bmr = gender == 'male'
-          ? 88.36 + (13.4 * weightKg) + (4.8 * heightCm) - (5.7 * age)
-          : 447.6 + (9.2 * weightKg) + (3.1 * heightCm) - (4.3 * age);
+          ? (10 * weightKg) + (6.25 * heightCm) - (5 * age) + 5
+          : (10 * weightKg) + (6.25 * heightCm) - (5 * age) - 161;
+      
       final multipliers = {
         'sedentary': 1.2,
         'lightly_active': 1.375,
@@ -71,13 +73,32 @@ class OnboardingService {
       int tdee = (bmr * (multipliers[activityLevel] ?? 1.55)).round();
       if (goal == 'weight_loss') tdee -= 500;
       if (goal == 'muscle_gain') tdee += 300;
+      
+      // Ensure a safe minimum for daily calories
+      if (tdee < 1200) tdee = 1200;
+
+      // Calculate macros such that their total calories exactly match the TDEE
+      // Protein: ~2g per kg of body weight
+      int proteinGrams = (weightKg * 2.0).round();
+      // Fat: 25% of total calories
+      int fatGrams = ((tdee * 0.25) / 9).round();
+      
+      // Carbs: The remaining calories split into grams
+      int proteinCals = proteinGrams * 4;
+      int fatCals = fatGrams * 9;
+      int remainingCals = tdee - (proteinCals + fatCals);
+      int carbsGrams = (remainingCals / 4).round();
+      
+      if (carbsGrams < 0) {
+        carbsGrams = 0; // Fallback in case goal was extremely aggressive
+      }
 
       await supabase.from('user_goals').upsert({
         'user_id': currentUserId,
         'daily_calories': tdee,
-        'daily_protein_g': (weightKg * 2.2).round(),
-        'daily_carbs_g': ((tdee * 0.45) / 4).round(),
-        'daily_fat_g': ((tdee * 0.25) / 9).round(),
+        'daily_protein_g': proteinGrams,
+        'daily_carbs_g': carbsGrams,
+        'daily_fat_g': fatGrams,
         'target_weight_kg': targetWeight,
         'weekly_workouts': weeklyWorkouts,
         'updated_at': DateTime.now().toIso8601String(),

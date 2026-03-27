@@ -1,0 +1,387 @@
+import 'dart:math';
+import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+
+/// Animated background with gradient overlay and floating glow orbs
+/// Matches the Kinetic Obsidian — Electric Volt design system
+class AppBackground extends StatefulWidget {
+  final Widget child;
+  final bool showGlowOrbs;
+  final bool animate;
+  final List<Color>? additionalGlowColors;
+
+  const AppBackground({
+    super.key,
+    required this.child,
+    this.showGlowOrbs = true,
+    this.animate = true,
+    this.additionalGlowColors,
+  });
+
+  @override
+  State<AppBackground> createState() => _AppBackgroundState();
+}
+
+class _AppBackgroundState extends State<AppBackground>
+    with TickerProviderStateMixin {
+  late AnimationController _orb1Controller;
+  late AnimationController _orb2Controller;
+  late AnimationController _orb3Controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _orb1Controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 8000),
+    )..repeat(reverse: true);
+
+    _orb2Controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 10000),
+    )..repeat(reverse: true);
+
+    _orb3Controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 12000),
+    )..repeat(reverse: true);
+
+    if (!widget.animate) {
+      _orb1Controller.stop();
+      _orb2Controller.stop();
+      _orb3Controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _orb1Controller.dispose();
+    _orb2Controller.dispose();
+    _orb3Controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        // Base gradient
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color(0xFF0A0A0A),
+                Color(0xFF0E0E0E),
+                Color(0xFF0A0A0A),
+              ],
+              stops: [0.0, 0.5, 1.0],
+            ),
+          ),
+        ),
+
+        // Subtle diagonal lines pattern
+        CustomPaint(
+          painter: _DiagonalLinesPainter(),
+          size: Size.infinite,
+        ),
+
+        // Glow orbs
+        if (widget.showGlowOrbs) ...[
+          _buildGlowOrb(
+            controller: _orb1Controller,
+            color: AppColors.glowOrbPrimary,
+            size: 300,
+            initialOffset: const Offset(-100, -50),
+            animationOffset: const Offset(50, 30),
+          ),
+          _buildGlowOrb(
+            controller: _orb2Controller,
+            color: AppColors.glowOrbSecondary,
+            size: 350,
+            initialOffset: const Offset(200, 100),
+            animationOffset: const Offset(-60, 40),
+          ),
+          _buildGlowOrb(
+            controller: _orb3Controller,
+            color: widget.additionalGlowColors?.firstOrNull ??
+                AppColors.tertiary.withOpacity(0.03),
+            size: 250,
+            initialOffset: const Offset(50, 400),
+            animationOffset: const Offset(30, -50),
+          ),
+        ],
+
+        // Content
+        widget.child,
+      ],
+    );
+  }
+
+  Widget _buildGlowOrb({
+    required AnimationController controller,
+    required Color color,
+    required double size,
+    required Offset initialOffset,
+    required Offset animationOffset,
+  }) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final offset = Offset(
+          initialOffset.dx + (animationOffset.dx * controller.value),
+          initialOffset.dy + (animationOffset.dy * controller.value),
+        );
+        return Positioned(
+          left: offset.dx,
+          top: offset.dy,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  color.withOpacity(0.6),
+                  color.withOpacity(0.0),
+                ],
+                stops: const [0.0, 1.0],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Diagonal lines painter for subtle texture
+class _DiagonalLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.012)
+      ..strokeWidth = 1;
+
+    const spacing = 40.0;
+    final diagonalLength = sqrt(size.width * size.width + size.height * size.height);
+
+    for (double i = -diagonalLength; i < diagonalLength * 2; i += spacing) {
+      canvas.drawLine(
+        Offset(i, -diagonalLength),
+        Offset(i + diagonalLength, diagonalLength),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Glass card container with blur effect and subtle glow
+class GlassCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? margin;
+  final double borderRadius;
+  final Color? borderColor;
+  final double borderWidth;
+  final bool showGlow;
+  final Color? glowColor;
+  final double glowIntensity;
+
+  const GlassCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.margin,
+    this.borderRadius = 20,
+    this.borderColor,
+    this.borderWidth = 1,
+    this.showGlow = false,
+    this.glowColor,
+    this.glowIntensity = 0.15,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final effectiveBorderColor =
+        borderColor ?? Colors.white.withOpacity(0.07);
+    final effectiveGlowColor = glowColor ?? AppColors.primaryFixed;
+
+    return Container(
+      margin: margin,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius),
+        boxShadow: showGlow
+            ? [
+                BoxShadow(
+                  color: effectiveGlowColor.withOpacity(glowIntensity),
+                  blurRadius: 20,
+                  spreadRadius: -5,
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: Container(
+          padding: padding,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(borderRadius),
+            border: Border.all(
+              color: effectiveBorderColor,
+              width: borderWidth,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withOpacity(0.03),
+                Colors.white.withOpacity(0.0),
+              ],
+            ),
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+/// Animated gradient container for hero sections
+class AnimatedGradientContainer extends StatefulWidget {
+  final Widget child;
+  final List<Color> colors;
+  final Duration duration;
+  final BorderRadius? borderRadius;
+
+  const AnimatedGradientContainer({
+    super.key,
+    required this.child,
+    required this.colors,
+    this.duration = const Duration(milliseconds: 3000),
+    this.borderRadius,
+  });
+
+  @override
+  State<AnimatedGradientContainer> createState() =>
+      _AnimatedGradientContainerState();
+}
+
+class _AnimatedGradientContainerState
+    extends State<AnimatedGradientContainer> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    )..repeat();
+    _animation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOutSine,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: widget.borderRadius ?? BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: widget.colors,
+              transform: GradientRotation(_animation.value * 2 * pi),
+            ),
+          ),
+          child: child,
+        );
+      },
+      child: widget.child,
+    );
+  }
+}
+
+/// Pulsing glow effect widget
+class PulsingGlow extends StatefulWidget {
+  final Widget child;
+  final Color glowColor;
+  final Duration pulseDuration;
+  final double minOpacity;
+  final double maxOpacity;
+
+  const PulsingGlow({
+    super.key,
+    required this.child,
+    required this.glowColor,
+    this.pulseDuration = const Duration(milliseconds: 2000),
+    this.minOpacity = 0.1,
+    this.maxOpacity = 0.3,
+  });
+
+  @override
+  State<PulsingGlow> createState() => _PulsingGlowState();
+}
+
+class _PulsingGlowState extends State<PulsingGlow>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.pulseDuration,
+    )..repeat(reverse: true);
+    _animation = Tween<double>(
+      begin: widget.minOpacity,
+      end: widget.maxOpacity,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: widget.glowColor.withOpacity(_animation.value),
+                blurRadius: 30,
+                spreadRadius: -10,
+              ),
+            ],
+          ),
+          child: widget.child,
+        );
+      },
+    );
+  }
+}

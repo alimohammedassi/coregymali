@@ -1,5 +1,5 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 
@@ -18,19 +18,23 @@ class CoreGymNavBar extends StatelessWidget {
   static const _navItems = [
     _NavItem(
       icon: Icons.other_houses_outlined,
-      activeIcon: Icons.other_houses_rounded,
+      activeIcon: Icons.home_rounded,
+      label: 'Home',
     ),
     _NavItem(
       icon: Icons.restaurant_outlined,
       activeIcon: Icons.restaurant_rounded,
+      label: 'Nutrition',
     ),
     _NavItem(
       icon: Icons.fitness_center_outlined,
       activeIcon: Icons.fitness_center,
+      label: 'Workout',
     ),
     _NavItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
+      label: 'Profile',
     ),
   ];
 
@@ -39,37 +43,45 @@ class CoreGymNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
         child: Container(
-          height: 64,
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(50),
-            boxShadow: const [
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
               BoxShadow(
-                color: Colors.black54,
+                color: Colors.black.withValues(alpha: 0.25),
                 blurRadius: 20,
-                offset: Offset(0, 6),
+                offset: const Offset(0, 10),
               ),
             ],
-            border: Border.all(
-              color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.07),
-              width: 0.8,
-            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              for (int i = 0; i < _navItems.length; i++) ...[
-                Expanded(
-                  child: _NavItemWidget(
-                    item: _navItems[i],
-                    isActive: currentIndex == i,
-                    onTap: () => onTap(i),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(32),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(
+                height: 76,
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLow.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(
+                    color: AppColors.glassBorder,
+                    width: 1.2,
                   ),
                 ),
-              ],
-            ],
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(_navItems.length, (i) {
+                    return _NavItemWidget(
+                      item: _navItems[i],
+                      isActive: currentIndex == i,
+                      onTap: () => onTap(i),
+                    );
+                  }),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -77,9 +89,7 @@ class CoreGymNavBar extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────
-
-class _NavItemWidget extends StatefulWidget {
+class _NavItemWidget extends StatelessWidget {
   final _NavItem item;
   final bool isActive;
   final VoidCallback onTap;
@@ -91,155 +101,96 @@ class _NavItemWidget extends StatefulWidget {
   });
 
   @override
-  State<_NavItemWidget> createState() => _NavItemWidgetState();
-}
-
-class _NavItemWidgetState extends State<_NavItemWidget>
-    with TickerProviderStateMixin {
-  late AnimationController _activeCtrl;
-  late Animation<double> _bounce;
-
-  late AnimationController _pressCtrl;
-  late Animation<double> _pressScale;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _activeCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 420),
-    );
-
-    _bounce = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _activeCtrl, curve: Curves.elasticOut));
-
-    _pressCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-    );
-
-    _pressScale = Tween<double>(
-      begin: 1.0,
-      end: 0.9,
-    ).animate(CurvedAnimation(parent: _pressCtrl, curve: Curves.easeInOut));
-
-    if (widget.isActive) _activeCtrl.value = 1.0;
-  }
-
-  @override
-  void didUpdateWidget(_NavItemWidget oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isActive && !oldWidget.isActive) {
-      _activeCtrl.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _activeCtrl.dispose();
-    _pressCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onTapDown(TapDownDetails _) => _pressCtrl.forward();
-
-  void _onTapUp(TapUpDetails _) {
-    _pressCtrl.reverse();
-    HapticFeedback.lightImpact();
-    widget.onTap();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: _onTapDown,
-      onTapUp: _onTapUp,
-      onTapCancel: () => _pressCtrl.reverse(),
-      child: AnimatedBuilder(
-        animation: Listenable.merge([_activeCtrl, _pressCtrl]),
-        builder: (_, child) {
-          final scale = _bounce.value * _pressScale.value;
-          return Transform.scale(scale: scale, child: child);
-        },
-        child: _ItemCircle(item: widget.item, isActive: widget.isActive),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isActive ? 16 : 10,
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primaryFixed : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: AppColors.primaryFixed.withValues(alpha: 0.35),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
+              : [],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              transitionBuilder: (child, animation) {
+                return ScaleTransition(scale: animation, child: child);
+              },
+              child: Icon(
+                isActive ? item.activeIcon : item.icon,
+                key: ValueKey<bool>(isActive),
+                color: isActive ? AppColors.surfaceLowest : AppColors.onSurfaceVariant,
+                size: 26,
+              ),
+            ),
+            Flexible(
+              child: ClipRect(
+                child: AnimatedSize(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: isActive ? null : 0,
+                    height: 24, // Fix vertical layout shifting
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: AppColors.surfaceLowest,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              letterSpacing: 0.3,
+                            ),
+                            overflow: TextOverflow.fade,
+                            maxLines: 1,
+                            softWrap: false,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────
-
-class _ItemCircle extends StatelessWidget {
-  final _NavItem item;
-  final bool isActive;
-
-  const _ItemCircle({required this.item, required this.isActive});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 320),
-          width: isActive ? 52 : 44,
-          height: isActive ? 52 : 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? const Color.fromARGB(255, 6, 6, 5) : Colors.transparent,
-            border: isActive
-                ? null
-                : Border.all(
-                    color: AppColors.outline.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: AppColors.primaryFixed.withOpacity(0.4),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Icon(
-            isActive ? item.activeIcon : item.icon,
-            size: isActive ? 26 : 22,
-            color: isActive ? Colors.white : AppColors.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 4),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          height: 4,
-          width: isActive ? 4 : 0,
-          decoration: BoxDecoration(
-            color: AppColors.primaryFixed,
-            shape: BoxShape.circle,
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: AppColors.primaryFixed.withOpacity(0.6),
-                      blurRadius: 6,
-                    ),
-                  ]
-                : null,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────
-
 class _NavItem {
   final IconData icon;
   final IconData activeIcon;
+  final String label;
 
-  const _NavItem({required this.icon, required this.activeIcon});
+  const _NavItem({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
 }

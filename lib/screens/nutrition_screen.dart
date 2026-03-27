@@ -7,6 +7,8 @@ import '../services/nutrition_service.dart';
 import '../services/stats_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/app_background.dart';
+import '../widgets/enhanced_charts.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NutritionScreen — Redesigned for maximum clarity, delight & usability
@@ -138,19 +140,20 @@ class _NutritionScreenState extends State<NutritionScreen>
     return 'Goal reached! Great job today 🎉';
   }
 
-  // ─── build ────────────────────────────────────────────────────────────────
+  // ─── build ────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
-      extendBodyBehindAppBar: false,
       appBar: _buildAppBar(),
-      body: _isLoading
-          ? _buildShimmer()
-          : TabBarView(
-              controller: _tabController,
-              children: [_buildTodayTab(), _buildHistoryTab()],
-            ),
+      body: AppBackground(
+        child: _isLoading
+            ? _buildShimmer()
+            : TabBarView(
+                controller: _tabController,
+                children: [_buildTodayTab(), _buildHistoryTab()],
+              ),
+      ),
       floatingActionButton: _tabController.index == 0 ? _buildFAB() : null,
     );
   }
@@ -210,17 +213,20 @@ class _NutritionScreenState extends State<NutritionScreen>
 
   // ─── FAB ──────────────────────────────────────────────────────────────────
   Widget _buildFAB() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        HapticFeedback.lightImpact();
-        _showAddFoodBottomSheet(context);
-      },
-      backgroundColor: AppColors.primaryFixed,
-      foregroundColor: Colors.white,
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      icon: const Icon(Icons.add_rounded, size: 22),
-      label: const Text('Add Food', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 96),
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          _showAddFoodBottomSheet(context);
+        },
+        backgroundColor: AppColors.primaryFixed,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: const Icon(Icons.add_rounded, size: 22),
+        label: const Text('Add Food', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+      ),
     );
   }
 
@@ -266,7 +272,7 @@ class _NutritionScreenState extends State<NutritionScreen>
       color: AppColors.primaryFixed,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 220),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -305,29 +311,57 @@ class _NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  // ─── Hero Calories Card (redesigned) ─────────────────────────────────────
+  // ─── Hero Calories Card (redesigned with enhanced visuals) ─────────────────────────────────────
   Widget _buildHeroCaloriesCard() {
+    // Gradient colors based on progress
+    final gradientColors = _calorieProgress >= 1.0
+        ? [const Color(0xFFFF5252), const Color(0xFFFF8A65)]
+        : _calorieProgress > 0.85
+            ? [const Color(0xFFFFAB40), const Color(0xFFFFD54F)]
+            : [AppColors.primaryFixed, const Color(0xFFA8E600)];
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.07)),
+        boxShadow: [
+          BoxShadow(
+            color: gradientColors.first.withOpacity(0.08),
+            blurRadius: 30,
+            spreadRadius: -10,
+          ),
+        ],
       ),
       child: Column(
         children: [
-          // Top motivational banner
+          // Top motivational banner with gradient
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             decoration: BoxDecoration(
-              color: _ringColor.withOpacity(0.1),
+              gradient: LinearGradient(
+                colors: [
+                  gradientColors.first.withOpacity(0.18),
+                  gradientColors.last.withOpacity(0.05),
+                ],
+              ),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
             ),
             child: Row(
               children: [
                 Container(
                   width: 6, height: 6,
-                  decoration: BoxDecoration(color: _ringColor, shape: BoxShape.circle),
+                  decoration: BoxDecoration(
+                    color: _ringColor,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: _ringColor.withOpacity(0.5),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -338,9 +372,16 @@ class _NutritionScreenState extends State<NutritionScreen>
                 ),
                 AnimatedBuilder(
                   animation: _ringAnim,
-                  builder: (_, __) => Text(
-                    '${(_calorieProgress * 100 * _ringAnim.value).toInt()}%',
-                    style: TextStyle(fontSize: 12, color: _ringColor, fontWeight: FontWeight.w800),
+                  builder: (_, __) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _ringColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${(_calorieProgress * 100 * _ringAnim.value).toInt()}%',
+                      style: TextStyle(fontSize: 11, color: _ringColor, fontWeight: FontWeight.w800),
+                    ),
                   ),
                 ),
               ],
@@ -351,7 +392,7 @@ class _NutritionScreenState extends State<NutritionScreen>
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             child: Row(
               children: [
-                // Ring
+                // Enhanced Ring with glow
                 SizedBox(
                   width: 140, height: 140,
                   child: Stack(
@@ -360,11 +401,12 @@ class _NutritionScreenState extends State<NutritionScreen>
                         animation: _ringAnim,
                         builder: (_, __) => CustomPaint(
                           size: const Size(140, 140),
-                          painter: _NutritionRingPainter(
+                          painter: EnhancedRingPainter(
                             progress: _calorieProgress * _ringAnim.value,
-                            color: _ringColor,
+                            gradientColors: gradientColors,
                             trackColor: Colors.white.withOpacity(0.07),
                             strokeWidth: 12,
+                            showGlow: true,
                           ),
                         ),
                       ),
@@ -380,6 +422,14 @@ class _NutritionScreenState extends State<NutritionScreen>
                               ),
                             ),
                             Text(AppLocalizations.of(context)!.kcal, style: TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant)),
+                            const SizedBox(height: 2),
+                            AnimatedBuilder(
+                              animation: _ringAnim,
+                              builder: (_, __) => Text(
+                                'of ${_caloriesGoal.toInt()}',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: gradientColors.first),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -414,42 +464,51 @@ class _NutritionScreenState extends State<NutritionScreen>
               ],
             ),
           ),
-          // Progress bar at bottom
+          // Progress bar at bottom with enhanced style
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AnimatedBuilder(
-                  animation: _ringAnim,
-                  builder: (_, __) {
-                    final pct = _calorieProgress * _ringAnim.value;
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(
-                            value: pct,
-                            minHeight: 6,
-                            backgroundColor: Colors.white.withOpacity(0.07),
-                            valueColor: AlwaysStoppedAnimation(_ringColor),
+            child: AnimatedBuilder(
+              animation: _ringAnim,
+              builder: (_, __) {
+                final pct = _calorieProgress * _ringAnim.value;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: FractionallySizedBox(
+                        widthFactor: pct.clamp(0.0, 1.0),
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(colors: gradientColors),
+                            borderRadius: BorderRadius.circular(2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: gradientColors.first.withOpacity(0.3),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('0', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
-                            Text('${(_caloriesGoal / 2).toInt()}', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
-                            Text('${_caloriesGoal.toInt()} kcal', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
-                          ],
-                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('0', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
+                        Text('${(_caloriesGoal / 2).toInt()}', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
+                        Text('${_caloriesGoal.toInt()} kcal', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
                       ],
-                    );
-                  },
-                ),
-              ],
+                    ),
+                  ],
+                );
+              },
             ),
           ),
         ],
@@ -462,7 +521,21 @@ class _NutritionScreenState extends State<NutritionScreen>
       crossAxisAlignment: CrossAxisAlignment.baseline,
       textBaseline: TextBaseline.alphabetic,
       children: [
-        Container(width: 3, height: 28, color: color, margin: const EdgeInsetsDirectional.only(end: 10)),
+        Container(
+          width: 3,
+          height: 28,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 4,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -508,11 +581,14 @@ class _NutritionScreenState extends State<NutritionScreen>
               children: [
                 Text(mealEmojis[i], style: const TextStyle(fontSize: 18)),
                 const SizedBox(height: 4),
-                Text(
-                  logged ? '${cals.toInt()}' : '—',
-                  style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w800,
-                    color: logged ? AppColors.primaryFixed : AppColors.onSurfaceVariant,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    logged ? '${cals.toInt()}' : '—',
+                    style: TextStyle(
+                      fontSize: 13, fontWeight: FontWeight.w800,
+                      color: logged ? AppColors.primaryFixed : AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ),
                 if (logged) Text(AppLocalizations.of(context)!.kcal, style: TextStyle(fontSize: 8, color: AppColors.onSurfaceVariant)),
@@ -993,7 +1069,7 @@ class _NutritionScreenState extends State<NutritionScreen>
     final avgCals = _weeklyProgress.isEmpty ? 0.0 : _weeklyProgress.fold(0.0, (s, d) => s + ((d['calories_consumed'] as num?)?.toDouble() ?? 0)) / _weeklyProgress.length;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 150),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1832,31 +1908,116 @@ class _LogFoodSheet extends StatefulWidget {
 
 class _LogFoodSheetState extends State<_LogFoodSheet> {
   final _nutritionService = NutritionService();
-  final _quantityCtrl = TextEditingController(text: '100');
+  late TextEditingController _quantityCtrl;
   String _mealType = 'breakfast';
-  double _quantity = 100;
-  String _unit = 'g';
+  late double _quantity;
+  late String _unit;
   bool _logging = false;
 
   static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
   static const _emojis = ['🍳', '🥗', '🍽', '🥜'];
 
-  static const _unitConversions = {
-    'g': 1.0, 'oz': 28.3495, 'cup': 240.0, 'piece': 1.0, 'serving': 100.0,
-  };
+  @override
+  void initState() {
+    super.initState();
+    // Pick the smartest default unit & quantity for this food
+    final units = _servingUnitsFor(widget.food['name'] ?? '');
+    _unit = units.first.label;
+    // Use 1 unit for named units, 100 for plain grams
+    _quantity = _unit == 'g' ? 100.0 : 1.0;
+    _quantityCtrl = TextEditingController(text: _quantity.toStringAsFixed(0));
+  }
 
-  static const _units = [
-    (label: 'g', icon: '⚖️', hint: 'Grams'),
-    (label: 'oz', icon: '🇺🇸', hint: '1 oz = 28.35g'),
-    (label: 'cup', icon: '☕', hint: '1 cup ≈ 240g'),
-    (label: 'piece', icon: '🍴', hint: '1 piece = 1g equiv.'),
-    (label: 'serving', icon: '🥣', hint: '1 serving = 100g'),
-  ];
+  // ─── Smart per-food serving units ─────────────────────────────────────────
+  bool _kw(String name, List<String> keys) => keys.any((k) => name.contains(k));
 
-  double get _grams => _quantity * (_unitConversions[_unit] ?? 1.0);
+  List<({String label, double grams, String icon, String hint})> _servingUnitsFor(String rawName) {
+    final n = rawName.toLowerCase();
+
+    if (_kw(n, ['egg', 'بيض', 'beyd']))
+      return [(label: 'piece (حبة)', grams: 50.0, icon: '🥚', hint: '1 egg ≈ 50g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['bread', 'toast', 'خبز', 'عيش', 'pita', 'aish']))
+      return [(label: 'slice (شريحة)', grams: 25.0, icon: '🍞', hint: '1 slice ≈ 25g'), (label: 'loaf (رغيف)', grams: 300.0, icon: '🥖', hint: '1 loaf ≈ 300g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['milk', 'حليب', 'lait']))
+      return [(label: 'cup (كوب)', grams: 240.0, icon: '🥛', hint: '1 cup = 240ml'), (label: 'glass (كأس)', grams: 200.0, icon: '🥛', hint: '1 glass ≈ 200ml'), (label: 'ml', grams: 1.0, icon: '💧', hint: 'Milliliters')];
+
+    if (_kw(n, ['yogurt', 'yoghurt', 'زبادي', 'zabadi', 'labneh', 'لبن']))
+      return [(label: 'cup (كوب)', grams: 245.0, icon: '🥛', hint: '1 cup ≈ 245g'), (label: 'tbsp', grams: 15.0, icon: '🥄', hint: '1 tbsp ≈ 15g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['cheese', 'جبن', 'جبنة']))
+      return [(label: 'slice (شريحة)', grams: 20.0, icon: '🧀', hint: '1 slice ≈ 20g'), (label: 'cup (مبشور)', grams: 113.0, icon: '🧀', hint: '1 cup shredded ≈ 113g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['butter', 'زبدة']))
+      return [(label: 'tbsp (ملعقة)', grams: 14.0, icon: '🧈', hint: '1 tbsp ≈ 14g'), (label: 'tsp (صغيرة)', grams: 4.7, icon: '🥄', hint: '1 tsp ≈ 5g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['oil', 'زيت']))
+      return [(label: 'tbsp (ملعقة)', grams: 14.0, icon: '🫙', hint: '1 tbsp ≈ 14g'), (label: 'tsp (صغيرة)', grams: 4.7, icon: '🥄', hint: '1 tsp ≈ 5g'), (label: 'ml', grams: 0.9, icon: '💧', hint: 'Milliliters')];
+
+    if (_kw(n, ['rice', 'أرز', 'ارز', 'ruz']))
+      return [(label: 'cup cooked (كوب)', grams: 186.0, icon: '🍚', hint: '1 cup cooked ≈ 186g'), (label: 'cup dry (جاف)', grams: 185.0, icon: '🌾', hint: '1 cup dry ≈ 185g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['oat', 'oats', 'oatmeal', 'شوفان']))
+      return [(label: 'cup (كوب)', grams: 90.0, icon: '🌾', hint: '1 cup dry oats ≈ 90g'), (label: 'tbsp', grams: 10.0, icon: '🥄', hint: '1 tbsp ≈ 10g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['banana', 'موز']))
+      return [(label: 'piece (حبة)', grams: 118.0, icon: '🍌', hint: '1 medium banana ≈ 118g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['apple', 'تفاح']))
+      return [(label: 'piece (حبة)', grams: 182.0, icon: '🍎', hint: '1 medium apple ≈ 182g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['orange', 'برتقال']))
+      return [(label: 'piece (حبة)', grams: 131.0, icon: '🍊', hint: '1 medium orange ≈ 131g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['chicken', 'دجاج', 'djaj']))
+      return [(label: 'piece (قطعة)', grams: 150.0, icon: '🍗', hint: '1 breast ≈ 150g'), (label: '½ piece (نص)', grams: 75.0, icon: '🍗', hint: 'Half breast ≈ 75g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['tuna', 'تونة']))
+      return [(label: 'can (علبة)', grams: 140.0, icon: '🐟', hint: '1 can drained ≈ 140g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['almond', 'peanut', 'cashew', 'walnut', 'pistachio', 'لوز', 'فول سوداني', 'كاجو', 'جوز', 'فستق', 'nuts', 'مكسرات']))
+      return [(label: 'handful (حفنة)', grams: 28.0, icon: '🥜', hint: '1 handful ≈ 28g'), (label: 'tbsp', grams: 16.0, icon: '🥄', hint: '1 tbsp ≈ 16g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['peanut butter', 'زبدة الفول']))
+      return [(label: 'tbsp (ملعقة)', grams: 16.0, icon: '🥜', hint: '1 tbsp ≈ 16g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['potato', 'بطاطس', 'batata']))
+      return [(label: 'piece (حبة)', grams: 150.0, icon: '🥔', hint: '1 medium potato ≈ 150g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['pasta', 'spaghetti', 'noodle', 'معكرونة', 'مكرونة']))
+      return [(label: 'cup cooked (كوب)', grams: 140.0, icon: '🍝', hint: '1 cup cooked ≈ 140g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['sugar', 'سكر', 'sukkar']))
+      return [(label: 'tsp (صغيرة)', grams: 4.0, icon: '🍬', hint: '1 tsp ≈ 4g'), (label: 'tbsp (كبيرة)', grams: 12.0, icon: '🥄', hint: '1 tbsp ≈ 12g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['honey', 'عسل']))
+      return [(label: 'tbsp (ملعقة)', grams: 21.0, icon: '🍯', hint: '1 tbsp ≈ 21g'), (label: 'tsp (صغيرة)', grams: 7.0, icon: '🥄', hint: '1 tsp ≈ 7g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    if (_kw(n, ['avocado', 'أفوكادو']))
+      return [(label: 'piece (حبة)', grams: 200.0, icon: '🥑', hint: '1 whole ≈ 200g'), (label: '½ piece (نص)', grams: 100.0, icon: '🥑', hint: 'Half ≈ 100g'), (label: 'g', grams: 1.0, icon: '⚖️', hint: 'Grams')];
+
+    // Default fallback
+    return [
+      (label: 'g',          grams: 1.0,   icon: '⚖️', hint: 'Grams'),
+      (label: 'oz',         grams: 28.35, icon: '🇺🇸', hint: '1 oz ≈ 28g'),
+      (label: 'cup (كوب)',  grams: 240.0, icon: '☕',  hint: '1 cup ≈ 240g'),
+      (label: 'serving',    grams: 100.0, icon: '🥣',  hint: '1 serving = 100g'),
+    ];
+  }
+
+  double get _grams {
+    final units = _servingUnitsFor(widget.food['name'] ?? '');
+    final match = units.firstWhere((u) => u.label == _unit, orElse: () => units.first);
+    return _quantity * match.grams;
+  }
+
   double _calc(String key) => ((widget.food[key] as num?)?.toDouble() ?? 0) * _grams / 100;
 
-  String get _unitHint => _units.firstWhere((u) => u.label == _unit, orElse: () => _units[0]).hint;
+  String get _unitHint {
+    final units = _servingUnitsFor(widget.food['name'] ?? '');
+    return units.firstWhere((u) => u.label == _unit, orElse: () => units.first).hint;
+  }
 
   List<({String type, String label, String emoji})> _getMeals(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -1970,16 +2131,27 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                     border: Border.all(color: AppColors.primaryFixed.withOpacity(0.35)),
                   ),
                   child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _unit,
-                      dropdownColor: AppColors.surfaceContainerHigh,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
-                      icon: Icon(Icons.expand_more_rounded, color: AppColors.primaryFixed, size: 18),
-                      items: _units.map((u) => DropdownMenuItem(
-                        value: u.label,
-                        child: Text('${u.icon} ${u.label}', style: const TextStyle(color: Colors.white, fontSize: 13)),
-                      )).toList(),
-                      onChanged: (v) => setState(() => _unit = v ?? 'g'),
+                    child: Builder(
+                      builder: (context) {
+                        final units = _servingUnitsFor(widget.food['name'] ?? '');
+                        // If current _unit isn't valid for this food, snap to first
+                        if (!units.any((u) => u.label == _unit)) {
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) setState(() => _unit = units.first.label);
+                          });
+                        }
+                        return DropdownButton<String>(
+                          value: units.any((u) => u.label == _unit) ? _unit : units.first.label,
+                          dropdownColor: AppColors.surfaceContainerHigh,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                          icon: Icon(Icons.expand_more_rounded, color: AppColors.primaryFixed, size: 18),
+                          items: units.map((u) => DropdownMenuItem(
+                            value: u.label,
+                            child: Text('${u.icon} ${u.label}', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                          )).toList(),
+                          onChanged: (v) => setState(() => _unit = v ?? units.first.label),
+                        );
+                      },
                     ),
                   ),
                 ),

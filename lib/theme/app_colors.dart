@@ -80,6 +80,6 @@ class AppColors {
   );
 
   // ── Background Glow Orbs ──
-  static Color glowOrbPrimary = const Color(0xFFD1FC00).withValues(alpha: 0.10);
-  static Color glowOrbSecondary = const Color(0xFF00EEFC).withValues(alpha: 0.05);
+  static Color glowOrbPrimary = const Color(0xFFD1FC00).withValues(alpha: 0.05);
+  static Color glowOrbSecondary = const Color(0xFF00EEFC).withValues(alpha: 0.03);
 }

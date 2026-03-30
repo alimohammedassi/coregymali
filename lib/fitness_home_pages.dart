@@ -14,7 +14,6 @@ import 'services/supabase_client.dart';
 import 'widgets/core_gym_navbar.dart';
 import 'widgets/home_header.dart';
 import 'widgets/app_background.dart';
-import 'widgets/enhanced_charts.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Root scaffold
@@ -281,7 +280,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       builder: (c) => AlertDialog(
         backgroundColor: AppColors.surfaceContainer,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(context)!.updateSteps,
+        title: Text(
+          AppLocalizations.of(context)!.updateSteps,
           style: TextStyle(color: Colors.white, fontSize: 16),
         ),
         content: TextField(
@@ -386,9 +386,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.surface,
-        body: AppBackground(
-          child: _buildShimmer(),
-        ),
+        body: AppBackground(child: _buildShimmer()),
       );
     }
 
@@ -401,151 +399,151 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-            // ── Header ──────────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(0, 16, 0, 20),
-                  child: HomeHeader(
-                    userName: _profile['name'] ?? 'User',
-                    avatarUrl: _profile['avatar_url'] ?? '',
+              // ── Header ──────────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 16, 0, 20),
+                    child: HomeHeader(
+                      userName: _profile['name'] ?? 'User',
+                      avatarUrl: _profile['avatar_url'] ?? '',
+                    ),
                   ),
                 ),
               ),
-            ),
 
-            // ── Goals banner ────────────────────────────────────────────────
-            if (_noGoalsSet)
+              // ── Goals banner ────────────────────────────────────────────────
+              if (_noGoalsSet)
+                SliverToBoxAdapter(
+                  child: _FadeIn(
+                    ctrl: _pageCtrl,
+                    delay: 0,
+                    child: _GoalsBanner(onTap: () => widget.onNavigate(3)),
+                  ),
+                ),
+
+              // ── Calories + Macros card ───────────────────────────────────────
               SliverToBoxAdapter(
                 child: _FadeIn(
                   ctrl: _pageCtrl,
-                  delay: 0,
-                  child: _GoalsBanner(onTap: () => widget.onNavigate(3)),
-                ),
-              ),
-
-            // ── Calories + Macros card ───────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 80,
-                child: _CaloriesMacrosCard(
-                  ringAnim: _ringAnim,
-                  proteinAnim: _proteinAnim,
-                  carbsAnim: _carbsAnim,
-                  fatAnim: _fatAnim,
-                  progress: _calorieProgress,
-                  ringColor: _ringColor,
-                  totalCalories: _totalCalories,
-                  goalCalories: _goalCalories,
-                  totalProtein: _totalProtein,
-                  goalProtein: _goalProtein,
-                  totalCarbs: _totalCarbs,
-                  goalCarbs: _goalCarbs,
-                  totalFat: _totalFat,
-                  goalFat: _goalFat,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ── Activity strip ───────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 180,
-                child: _ActivityStrip(
-                  waterGlasses: _waterGlasses,
-                  stepsInt: _stepsInt,
-                  caloriesBurned: _caloriesBurned,
-                  onAddWater: _updateWater,
-                  onEditSteps: _editSteps,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── Today's meals ───────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 280,
-                child: _SectionHeader(
-                  title: 'Today\'s Meals',
-                  action: AppLocalizations.of(context)!.addFood,
-                  onAction: () => widget.onNavigate(1),
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 10)),
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 320,
-                child: _nutritionLogs.isEmpty
-                    ? _EmptyMeals(onTap: () => widget.onNavigate(1))
-                    : _MealsScroll(
-                        logs: _nutritionLogs,
-                        onTap: () => widget.onNavigate(1),
-                      ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── Active program ───────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 420,
-                child: _SectionHeader(
-                  title: AppLocalizations.of(context)!.yourProgram,
-                  action: '',
-                  onAction: null,
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 10)),
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 460,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _ProgramCard(
-                    activeProgram: _activeProgram,
-                    onTap: () => widget.onNavigate(2),
+                  delay: 80,
+                  child: _CaloriesMacrosCard(
+                    ringAnim: _ringAnim,
+                    proteinAnim: _proteinAnim,
+                    carbsAnim: _carbsAnim,
+                    fatAnim: _fatAnim,
+                    progress: _calorieProgress,
+                    ringColor: _ringColor,
+                    totalCalories: _totalCalories,
+                    goalCalories: _goalCalories,
+                    totalProtein: _totalProtein,
+                    goalProtein: _goalProtein,
+                    totalCarbs: _totalCarbs,
+                    goalCarbs: _goalCarbs,
+                    totalFat: _totalFat,
+                    goalFat: _goalFat,
                   ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // ── Last workout ─────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: _FadeIn(
-                ctrl: _pageCtrl,
-                delay: 540,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _LastWorkoutCard(
-                    lastWorkout: _lastWorkout,
-                    onTap: () => widget.onNavigate(2),
+              // ── Activity strip ───────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 180,
+                  child: _ActivityStrip(
+                    waterGlasses: _waterGlasses,
+                    stepsInt: _stepsInt,
+                    caloriesBurned: _caloriesBurned,
+                    onAddWater: _updateWater,
+                    onEditSteps: _editSteps,
                   ),
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 110)),
-          ],
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // ── Today's meals ───────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 280,
+                  child: _SectionHeader(
+                    title: 'Today\'s Meals',
+                    action: AppLocalizations.of(context)!.addFood,
+                    onAction: () => widget.onNavigate(1),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 320,
+                  child: _nutritionLogs.isEmpty
+                      ? _EmptyMeals(onTap: () => widget.onNavigate(1))
+                      : _MealsScroll(
+                          logs: _nutritionLogs,
+                          onTap: () => widget.onNavigate(1),
+                        ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // ── Active program ───────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 420,
+                  child: _SectionHeader(
+                    title: AppLocalizations.of(context)!.yourProgram,
+                    action: '',
+                    onAction: null,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 460,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _ProgramCard(
+                      activeProgram: _activeProgram,
+                      onTap: () => widget.onNavigate(2),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              // ── Last workout ─────────────────────────────────────────────────
+              SliverToBoxAdapter(
+                child: _FadeIn(
+                  ctrl: _pageCtrl,
+                  delay: 540,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _LastWorkoutCard(
+                      lastWorkout: _lastWorkout,
+                      onTap: () => widget.onNavigate(2),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 110)),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
 }
 
@@ -599,7 +597,7 @@ class _GoalsBanner extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Calories + Macros card  (matches screenshot layout exactly)
+// Calories + Macros card  ── upgraded to semi-arc reference layout
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _CaloriesMacrosCard extends StatelessWidget {
@@ -629,118 +627,128 @@ class _CaloriesMacrosCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Gradient colors based on progress
-    final gradientColors = progress >= 1.0
-        ? [const Color(0xFFFF5252), const Color(0xFFFF8A65)]
-        : progress > 0.85
-            ? [const Color(0xFFFFAB40), const Color(0xFFFFD54F)]
-            : [AppColors.primaryFixed, const Color(0xFFA8E600)];
+    final caloriesLeft = (goalCalories - totalCalories).clamp(0, goalCalories);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
-          boxShadow: [
-            BoxShadow(
-              color: gradientColors.first.withOpacity(0.08),
-              blurRadius: 30,
-              spreadRadius: -10,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Label row
-            Row(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+            boxShadow: [
+              BoxShadow(
+                color: ringColor.withValues(alpha: 0.07),
+                blurRadius: 28,
+                spreadRadius: -6,
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 20, 18, 20),
+            child: Column(
               children: [
-                Text(
-                  AppLocalizations.of(context)!.caloriesToday,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 1.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                // Badge
-                AnimatedBuilder(
-                  animation: ringAnim,
-                  builder: (_, __) => _Badge(
-                    label:
-                        '${(totalCalories * ringAnim.value).toInt()} / ${goalCalories.toInt()} kcal',
-                    color: ringColor,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-
-            // Ring + Macros row  (screenshot layout)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Ring with glow
+                // ── Arc row ──
                 SizedBox(
-                  width: 130,
-                  height: 130,
+                  height: 155,
                   child: Stack(
+                    alignment: Alignment.center,
                     children: [
-                      AnimatedBuilder(
-                        animation: ringAnim,
-                        builder: (_, __) => TweenAnimationBuilder<Color?>(
-                          tween: ColorTween(end: ringColor),
-                          duration: const Duration(milliseconds: 500),
-                          builder: (_, c, __) => CustomPaint(
-                            size: const Size(130, 130),
-                            painter: _RingPainter(
-                              progress: progress * ringAnim.value,
-                              color: c ?? AppColors.primaryFixed,
-                              showGlow: true,
+                      Positioned.fill(
+                        child: AnimatedBuilder(
+                          animation: ringAnim,
+                          builder: (_, __) => TweenAnimationBuilder<Color?>(
+                            tween: ColorTween(end: ringColor),
+                            duration: const Duration(milliseconds: 500),
+                            builder: (_, c, __) => CustomPaint(
+                              painter: _SemiArcPainter(
+                                progress: progress * ringAnim.value,
+                                color: c ?? AppColors.primaryFixed,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AnimatedBuilder(
-                              animation: ringAnim,
-                              builder: (_, __) => Text(
-                                (totalCalories * ringAnim.value)
-                                    .toInt()
-                                    .toString(),
+                      // Eaten label (left)
+                      Positioned(
+                        left: 8,
+                        bottom: 8,
+                        child: AnimatedBuilder(
+                          animation: ringAnim,
+                          builder: (_, __) => Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${(totalCalories * ringAnim.value).toInt()}',
                                 style: const TextStyle(
-                                  fontSize: 28,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
                                   height: 1,
                                 ),
                               ),
-                            ),
-                            Text(
-                              AppLocalizations.of(context)!.kcal,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 1),
-                            AnimatedBuilder(
-                              animation: ringAnim,
-                              builder: (_, __) => Text(
-                                'of ${goalCalories.toInt()}',
+                              Text(
+                                'Eaten',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: ringColor,
+                                  color: AppColors.onSurfaceVariant,
                                 ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Center calories left
+                      Positioned(
+                        bottom: 4,
+                        child: AnimatedBuilder(
+                          animation: ringAnim,
+                          builder: (_, __) => Column(
+                            children: [
+                              Text(
+                                '${(caloriesLeft * ringAnim.value + totalCalories * (1 - ringAnim.value)).toInt()}',
+                                style: const TextStyle(
+                                  fontSize: 36,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  height: 1,
+                                  letterSpacing: -1,
+                                ),
+                              ),
+                              Text(
+                                'calories left',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // Burned label (right)
+                      Positioned(
+                        right: 8,
+                        bottom: 8,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              '0',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                height: 1,
+                              ),
+                            ),
+                            Text(
+                              'Burned',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -749,74 +757,74 @@ class _CaloriesMacrosCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 16),
 
-                // Macros column — matches screenshot
-                Expanded(
-                  child: Column(
-                    children: [
-                      _MacroRow(
+                const SizedBox(height: 16),
+
+                // ── Macro row ──
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MacroCol(
+                        emoji: '🌾',
+                        label: AppLocalizations.of(context)!.carbs,
+                        color: AppColors.secondary,
+                        current: totalCarbs,
+                        goal: goalCarbs,
+                        anim: carbsAnim,
+                      ),
+                    ),
+                    _vertDivider(),
+                    Expanded(
+                      child: _MacroCol(
+                        emoji: '🥩',
                         label: AppLocalizations.of(context)!.proteinGoal,
                         color: Colors.redAccent,
                         current: totalProtein,
                         goal: goalProtein,
                         anim: proteinAnim,
                       ),
-                      const SizedBox(height: 12),
-                      _MacroRow(
-                        label: AppLocalizations.of(context)!.carbs,
-                        color: Colors.blueAccent,
-                        current: totalCarbs,
-                        goal: goalCarbs,
-                        anim: carbsAnim,
-                      ),
-                      const SizedBox(height: 12),
-                      _MacroRow(
+                    ),
+                    _vertDivider(),
+                    Expanded(
+                      child: _MacroCol(
+                        emoji: '🫙',
                         label: AppLocalizations.of(context)!.fat,
-                        color: Colors.orangeAccent,
+                        color: AppColors.tertiaryFixed,
                         current: totalFat,
                         goal: goalFat,
                         anim: fatAnim,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+
+  Widget _vertDivider() => Container(
+        width: 1,
+        height: 40,
+        color: Colors.white.withValues(alpha: 0.07),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+      );
 }
 
-class _Badge extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _Badge({required this.label, required this.color});
 
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      color: color.withOpacity(0.15),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: color.withOpacity(0.3), width: 0.8),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w700),
-    ),
-  );
-}
 
-class _MacroRow extends StatelessWidget {
+// ── Macro column (upgraded, used in row below the arc) ──
+class _MacroCol extends StatelessWidget {
+  final String emoji;
   final String label;
   final Color color;
   final double current, goal;
   final Animation<double> anim;
 
-  const _MacroRow({
+  const _MacroCol({
+    required this.emoji,
     required this.label,
     required this.color,
     required this.current,
@@ -827,49 +835,61 @@ class _MacroRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final prog = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 12, color: Colors.white70)),
-            const Spacer(),
-            AnimatedBuilder(
-              animation: anim,
-              builder: (_, __) => Text(
-                '${(current * anim.value).toInt()}/${goal.toInt()}g',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.white60,
-                  fontWeight: FontWeight.w600,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 14)),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 5),
-        AnimatedBuilder(
-          animation: anim,
-          builder: (_, __) => ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: (prog * anim.value).clamp(0.0, 1.0),
-              minHeight: 5,
-              backgroundColor: Colors.white.withOpacity(0.08),
-              color: color,
+            ],
+          ),
+          const SizedBox(height: 6),
+          AnimatedBuilder(
+            animation: anim,
+            builder: (_, __) => ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: (prog * anim.value).clamp(0.0, 1.0),
+                minHeight: 4,
+                backgroundColor: Colors.white.withValues(alpha: 0.08),
+                color: color,
+              ),
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 4),
+          AnimatedBuilder(
+            animation: anim,
+            builder: (_, __) => Text(
+              '${(current * anim.value).toInt()} / ${goal.toInt()}g',
+              style: TextStyle(
+                fontSize: 10,
+                color: AppColors.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+// ── Legacy _MacroRow (kept for any residual references) ──
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Activity strip  (Water / Steps / Burned)
@@ -1073,7 +1093,8 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Meals scroll  (matches screenshot card style)
+// Meals scroll  ── upgraded: circular ring around meal icon + plus button
+// Reference: Breakfast / Lunch / Dinner / Snack with arc progress and kcal
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _MealsScroll extends StatelessWidget {
@@ -1081,79 +1102,93 @@ class _MealsScroll extends StatelessWidget {
   final VoidCallback onTap;
   const _MealsScroll({required this.logs, required this.onTap});
 
-  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
-  static const _emojis = ['🍳', '🥗', '🍽', '🥜'];
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final meals = [
-      ('breakfast', l10n.breakfast, '🍳'),
-      ('lunch', l10n.lunch, '🥗'),
-      ('dinner', l10n.dinner, '🍽'),
-      ('snack', l10n.snack, '🥜'),
+      ('breakfast', l10n.breakfast, '🍳', 600.0),
+      ('lunch', l10n.lunch, '🥗', 700.0),
+      ('dinner', l10n.dinner, '🍽', 700.0),
+      ('snack', l10n.snack, '🥜', 300.0),
     ];
     return SizedBox(
-      height: 120,
+      height: 140,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: meals.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (_, i) {
-          final (type, label, emoji) = meals[i];
+          final (type, label, emoji, targetKcal) = meals[i];
           final mLogs = logs.where((l) => l['meal_type'] == type).toList();
           final kcal = mLogs.fold(
             0.0,
             (s, l) => s + ((l['calories'] as num?) ?? 0),
           );
           final has = mLogs.isNotEmpty;
+          final ringProg = (kcal / targetKcal).clamp(0.0, 1.0);
+
           return GestureDetector(
             onTap: onTap,
-            child: Container(
-              width: 130,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: has
-                    ? AppColors.primaryFixed.withOpacity(0.07)
-                    : AppColors.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: has
-                      ? AppColors.primaryFixed.withOpacity(0.28)
-                      : Colors.white.withOpacity(0.06),
-                ),
-              ),
+            child: SizedBox(
+              width: 88,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(emoji, style: const TextStyle(fontSize: 20)),
-                  const Spacer(),
+                  // Circular ring icon
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        width: 80,
+                        height: 80,
+                        child: CustomPaint(
+                          painter: _MealRingPainter(
+                            progress: has ? ringProg : 0,
+                            trackColor: Colors.white.withValues(alpha: 0.07),
+                            arcColor: has ? AppColors.primaryFixed : Colors.white.withValues(alpha: 0.15),
+                          ),
+                        ),
+                      ),
+                      // Emoji
+                      Text(emoji, style: const TextStyle(fontSize: 28)),
+                      // Plus button overlay
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceContainerHighest,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.12),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.add_rounded,
+                            size: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     label,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    has ? '${kcal.toInt()} cal' : '0 cal',
+                    style: TextStyle(
+                      fontSize: 11,
                       color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    has ? '${kcal.toInt()} kcal' : '—',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: has
-                          ? AppColors.primaryFixed
-                          : Colors.white.withOpacity(0.2),
-                    ),
-                  ),
-                  Text(
-                    has
-                        ? '${mLogs.length} item${mLogs.length > 1 ? 's' : ''}'
-                        : AppLocalizations.of(context)!.notLogged,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.onSurfaceVariant.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -1245,7 +1280,10 @@ class _ProgramCard extends StatelessWidget {
               style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
-            _PrimaryBtn(label: AppLocalizations.of(context)!.browsePrograms, onTap: onTap),
+            _PrimaryBtn(
+              label: AppLocalizations.of(context)!.browsePrograms,
+              onTap: onTap,
+            ),
           ],
         ),
       );
@@ -1270,33 +1308,37 @@ class _ProgramCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.activeProgram2,
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: AppColors.primaryFixed,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.activeProgram2,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: AppColors.primaryFixed,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    name,
-                    style: AppText.headlineSm.copyWith(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 20,
-                      letterSpacing: -0.3,
+                    const SizedBox(height: 3),
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.headlineSm.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                        letterSpacing: -0.3,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
+                  horizontal: 10,
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
@@ -1376,13 +1418,18 @@ class _LastWorkoutCard extends StatelessWidget {
               style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
-            _OutlineBtn(label: AppLocalizations.of(context)!.logFirstWorkout, onTap: onTap),
+            _OutlineBtn(
+              label: AppLocalizations.of(context)!.logFirstWorkout,
+              onTap: onTap,
+            ),
           ],
         ),
       );
     }
 
-    final name = lastWorkout!['session_name'] as String? ?? AppLocalizations.of(context)!.navWorkout;
+    final name =
+        lastWorkout!['session_name'] as String? ??
+        AppLocalizations.of(context)!.navWorkout;
     final date = lastWorkout!['session_date'] as String? ?? '';
     final duration = (lastWorkout!['duration_min'] as num?)?.toInt() ?? 0;
 
@@ -1504,95 +1551,130 @@ class _OutlineBtn extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Ring painter (using enhanced version from enhanced_charts.dart)
+// Semi-arc painter (220° arc, reference layout: eaten-left / calories-center / burned-right)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _RingPainter extends CustomPainter {
+class _SemiArcPainter extends CustomPainter {
   final double progress;
   final Color color;
-  final bool showGlow;
+  const _SemiArcPainter({required this.progress, required this.color});
 
-  const _RingPainter({
+  @override
+  void paint(Canvas canvas, Size size) {
+    // Arc spans ~230° opening at the bottom (like a horseshoe / helmet ring)
+    const arcAngle = 3.9; // ~223° in radians
+    const startAngle = (pi / 2) + (2 * pi - arcAngle) / 2;
+
+    // Center pushed down so the top of the arc sits near the top edge of the
+    // canvas (not above it). With center.y = size.height * 0.82 and
+    // radius = size.height * 0.72, top of arc = 0.82*h - 0.72*h = 0.10*h ✓
+    final center = Offset(size.width / 2, size.height * 0.84);
+    final radius = size.height * 0.72;
+    const strokeW = 14.0;
+
+    // Track
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      arcAngle,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeW
+        ..strokeCap = StrokeCap.round
+        ..color = Colors.white.withValues(alpha: 0.08),
+    );
+
+    // Glow
+    if (progress > 0) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        arcAngle * progress.clamp(0, 1),
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeW + 10
+          ..strokeCap = StrokeCap.round
+          ..color = color.withValues(alpha: 0.12)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+      );
+
+      // Arc fill
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        arcAngle * progress.clamp(0, 1),
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeW
+          ..strokeCap = StrokeCap.round
+          ..shader = SweepGradient(
+            colors: [color, color.withValues(alpha: 0.75)],
+            startAngle: startAngle,
+            endAngle: startAngle + arcAngle,
+            transform: GradientRotation(startAngle),
+          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SemiArcPainter o) =>
+      o.progress != progress || o.color != color;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Meal ring painter (full circle progress ring around meal icon)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MealRingPainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color arcColor;
+  const _MealRingPainter({
     required this.progress,
-    required this.color,
-    this.showGlow = true,
+    required this.trackColor,
+    required this.arcColor,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 10;
-    final strokeWidth = 14.0;
-
+    final radius = size.width / 2 - 5;
+    const strokeW = 4.0;
     // Track
     canvas.drawCircle(
       center,
       radius,
       Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..color = Colors.white.withOpacity(0.07),
+        ..strokeWidth = strokeW
+        ..color = trackColor,
     );
-
-    // Glow effect
-    if (showGlow && progress > 0) {
-      canvas.drawCircle(
-        center,
-        radius,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth + 8
-          ..color = color.withOpacity(0.15)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-      );
-    }
-
-    // Arc with gradient-like effect
+    // Progress
     if (progress > 0) {
-      // Create a gradient effect by drawing multiple arcs
-      final gradientColors = [
-        color,
-        color.withOpacity(0.8),
-      ];
-
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius),
         -pi / 2,
-        2 * pi * progress.clamp(0.0, 1.0),
+        2 * pi * progress,
         false,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeWidth
+          ..strokeWidth = strokeW
           ..strokeCap = StrokeCap.round
-          ..shader = SweepGradient(
-            colors: gradientColors,
-            startAngle: -pi / 2,
-            endAngle: -pi / 2 + 2 * pi * progress.clamp(0.0, 1.0),
-            transform: GradientRotation(-pi / 2),
-          ).createShader(Rect.fromCircle(center: center, radius: radius)),
+          ..color = arcColor,
       );
-
-      // End cap highlight
-      if (progress > 0.02) {
-        final endAngle = -pi / 2 + 2 * pi * progress.clamp(0.0, 1.0);
-        final endX = center.dx + radius * cos(endAngle);
-        final endY = center.dy + radius * sin(endAngle);
-
-        canvas.drawCircle(
-          Offset(endX, endY),
-          strokeWidth / 3,
-          Paint()
-            ..color = Colors.white.withOpacity(0.4)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
-        );
-      }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter o) =>
-      o.progress != progress || o.color != color;
+  bool shouldRepaint(covariant _MealRingPainter o) =>
+      o.progress != progress || o.arcColor != arcColor;
 }
+
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fade + slide-in animation wrapper

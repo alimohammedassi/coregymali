@@ -65,114 +65,62 @@ class _AppBackgroundState extends State<AppBackground>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Base gradient
+        // ── Base: pure dark, no color tint ──
         Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF0A0A0A),
-                Color(0xFF0E0E0E),
-                Color(0xFF0A0A0A),
-              ],
-              stops: [0.0, 0.5, 1.0],
-            ),
-          ),
+          color: const Color(0xFF090909),
         ),
 
-        // Subtle diagonal lines pattern
+        // ── Subtle dot-grid texture ──
         CustomPaint(
-          painter: _DiagonalLinesPainter(),
+          painter: _DotGridPainter(),
           size: Size.infinite,
         ),
 
-        // Glow orbs
-        if (widget.showGlowOrbs) ...[
-          _buildGlowOrb(
-            controller: _orb1Controller,
-            color: AppColors.glowOrbPrimary,
-            size: 300,
-            initialOffset: const Offset(-100, -50),
-            animationOffset: const Offset(50, 30),
+        // ── Single corner accent (Electric Volt, top-left only) ──
+        if (widget.showGlowOrbs)
+          Positioned(
+            left: -60,
+            top: -60,
+            child: AnimatedBuilder(
+              animation: _orb1Controller,
+              builder: (_, __) => Container(
+                width: 180,
+                height: 180,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.primaryFixed.withValues(alpha:
+                          0.04 + 0.015 * _orb1Controller.value),
+                      const Color(0x00000000),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
-          _buildGlowOrb(
-            controller: _orb2Controller,
-            color: AppColors.glowOrbSecondary,
-            size: 350,
-            initialOffset: const Offset(200, 100),
-            animationOffset: const Offset(-60, 40),
-          ),
-          _buildGlowOrb(
-            controller: _orb3Controller,
-            color: widget.additionalGlowColors?.firstOrNull ??
-                AppColors.tertiary.withOpacity(0.03),
-            size: 250,
-            initialOffset: const Offset(50, 400),
-            animationOffset: const Offset(30, -50),
-          ),
-        ],
 
-        // Content
+        // ── Content ──
         widget.child,
       ],
     );
   }
-
-  Widget _buildGlowOrb({
-    required AnimationController controller,
-    required Color color,
-    required double size,
-    required Offset initialOffset,
-    required Offset animationOffset,
-  }) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, child) {
-        final offset = Offset(
-          initialOffset.dx + (animationOffset.dx * controller.value),
-          initialOffset.dy + (animationOffset.dy * controller.value),
-        );
-        return Positioned(
-          left: offset.dx,
-          top: offset.dy,
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                colors: [
-                  color.withOpacity(0.6),
-                  color.withOpacity(0.0),
-                ],
-                stops: const [0.0, 1.0],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
-/// Diagonal lines painter for subtle texture
-class _DiagonalLinesPainter extends CustomPainter {
+
+/// Ultra-subtle dot grid for premium texture — pure white dots at ~1.5% opacity
+class _DotGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.012)
-      ..strokeWidth = 1;
+      ..color = Colors.white.withValues(alpha: 0.015)
+      ..strokeWidth = 0;
 
-    const spacing = 40.0;
-    final diagonalLength = sqrt(size.width * size.width + size.height * size.height);
-
-    for (double i = -diagonalLength; i < diagonalLength * 2; i += spacing) {
-      canvas.drawLine(
-        Offset(i, -diagonalLength),
-        Offset(i + diagonalLength, diagonalLength),
-        paint,
-      );
+    const spacing = 24.0;
+    for (double x = spacing / 2; x < size.width; x += spacing) {
+      for (double y = spacing / 2; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), 1.0, paint);
+      }
     }
   }
 

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'premium_glass_bg.dart';
 
 /// Animated background with gradient overlay and floating glow orbs
 /// Matches the Kinetic Obsidian — Electric Volt design system
@@ -63,46 +64,8 @@ class _AppBackgroundState extends State<AppBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // ── Base: pure dark, no color tint ──
-        Container(
-          color: const Color(0xFF090909),
-        ),
-
-        // ── Subtle dot-grid texture ──
-        CustomPaint(
-          painter: _DotGridPainter(),
-          size: Size.infinite,
-        ),
-
-        // ── Single corner accent (Electric Volt, top-left only) ──
-        if (widget.showGlowOrbs)
-          Positioned(
-            left: -60,
-            top: -60,
-            child: AnimatedBuilder(
-              animation: _orb1Controller,
-              builder: (_, __) => Container(
-                width: 180,
-                height: 180,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.primaryFixed.withValues(alpha:
-                          0.04 + 0.015 * _orb1Controller.value),
-                      const Color(0x00000000),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-        // ── Content ──
-        widget.child,
-      ],
+    return PremiumGlassmorphismBg(
+      child: widget.child,
     );
   }
 }

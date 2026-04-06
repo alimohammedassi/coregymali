@@ -217,15 +217,15 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
             const SizedBox(height: 20),
 
             // Stat pills row
-            Row(
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 _statPill(
                     Icons.calendar_today_outlined,
                     '${program['days_per_week']} days/week',
                     const Color(0xFF2C2C2E)),
-                const SizedBox(width: 8),
                 _pillBadge(program['level'] ?? '', levelColor),
-                const SizedBox(width: 8),
                 _pillBadge(program['goal'] ?? '', goalColor),
               ],
             ),

@@ -10,6 +10,7 @@ import 'forgetpassword.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'widgets/language_toggle.dart';
+import 'widgets/premium_glass_bg.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth Wrapper
@@ -71,55 +72,9 @@ class _AuthWrapperState extends State<AuthWrapper>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surfaceLowest,
-      body: Stack(
+    return PremiumGlassmorphismBg(
+      child: Stack(
         children: [
-          // Animated background orbs
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (_, __) {
-              final t = _bgController.value;
-              return Stack(
-                children: [
-                  Positioned(
-                    top: -80 + 40 * sin(t * pi),
-                    right: -60 + 30 * cos(t * pi),
-                    child: _GlowOrb(
-                      size: 380,
-                      color: AppColors.primaryFixed.withOpacity(
-                        0.09 + 0.03 * sin(t * pi),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: -60 + 30 * cos(t * pi * 1.3),
-                    left: -80 + 20 * sin(t * pi * 0.7),
-                    child: _GlowOrb(
-                      size: 280,
-                      color: AppColors.secondary.withOpacity(
-                        0.05 + 0.02 * cos(t * pi),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 300 + 60 * sin(t * pi * 0.5),
-                    left: 40 + 20 * cos(t * pi * 1.2),
-                    child: _GlowOrb(
-                      size: 160,
-                      color: AppColors.primaryFixed.withOpacity(0.04),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-
-          // Grid
-          const Positioned.fill(
-            child: IgnorePointer(child: _GridPainterWidget()),
-          ),
-
           // Corner brackets
           Positioned.directional(textDirection: Directionality.of(context), top: 0, start: 0, child: _CornerBracket(corner: 0)),
           Positioned.directional(textDirection: Directionality.of(context), top: 0, end: 0, child: _CornerBracket(corner: 1)),

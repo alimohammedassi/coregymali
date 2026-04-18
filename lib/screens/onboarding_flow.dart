@@ -4,6 +4,10 @@ import 'package:coregym2/l10n/app_localizations.dart';
 import '../services/onboarding_service.dart';
 import '../theme/app_colors.dart';
 import '../fitness_home_pages.dart';
+import 'package:provider/provider.dart';
+import '../providers/profile_provider.dart';
+import '../features/coach/presentation/providers/coach_setup_provider.dart';
+import '../features/coach/presentation/screens/coach_profile_setup_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Onboarding Flow  (upgraded UI — same logic, same data layer)
@@ -75,10 +79,26 @@ class _OnboardingFlowState extends State<OnboardingFlow>
         weeklyWorkouts: _weeklyWorkouts,
       );
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-        );
+        final profileProv = context.read<ProfileProvider>();
+        await profileProv.fetchProfile();
+        
+        if (!mounted) return;
+        if (profileProv.isCoach && profileProv.needsCoachSetup) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChangeNotifierProvider(
+                create: (_) => CoachSetupNotifier(),
+                child: const CoachProfileSetupScreen(),
+              ),
+            ),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const FitnessHomePage()),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

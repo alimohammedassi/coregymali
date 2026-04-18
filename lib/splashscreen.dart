@@ -4,9 +4,15 @@ import 'gender.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'services/supabase_client.dart';
-import 'services/onboarding_service.dart';
+
 import 'screens/onboarding_flow.dart';
 import 'fitness_home_pages.dart';
+
+import 'features/coach/presentation/screens/coach_profile_setup_screen.dart';
+
+import 'package:provider/provider.dart';
+import 'features/coach/presentation/providers/coach_setup_provider.dart';
+import 'providers/profile_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -92,15 +98,34 @@ class _SplashScreenState extends State<SplashScreen>
           ),
         );
       } else {
-        final done = await OnboardingService().isCompleted();
+        final profileProv = context.read<ProfileProvider>();
+        await profileProv.fetchProfile();
         if (!mounted) return;
-        if (done) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-          );
-        } else {
+
+        if (profileProv.needsUserOnboarding) {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const OnboardingFlow()),
+          );
+        } else if (profileProv.isCoach) {
+          if (profileProv.needsCoachSetup) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (_) => ChangeNotifierProvider(
+                  create: (_) => CoachSetupNotifier(),
+                  child: const CoachProfileSetupScreen(),
+                ),
+              ),
+            );
+          } else {
+            // "NEVER send a coach to a subscription page... /home (with coach nav bar)"
+            // Notice: the requirements say /home contains the coach tab!
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (_) => const FitnessHomePage()),
+            );
+          }
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const FitnessHomePage()),
           );
         }
       }
@@ -442,6 +467,21 @@ class _SplashScreenState extends State<SplashScreen>
         ],
       ),
     );
+  }
+
+  Future<String?> _getUserRole() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return null;
+      final response = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+      return response['role'] as String?;
+    } catch (e) {
+      return null;
+    }
   }
 
   @override

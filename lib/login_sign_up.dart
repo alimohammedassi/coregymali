@@ -1,12 +1,17 @@
-import 'dart:math';
 import 'dart:ui';
 import 'package:coregym2/fitness_home_pages.dart';
 import 'package:flutter/material.dart';
 import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:coregym2/supabase/supabase_exports.dart';
-import 'services/onboarding_service.dart';
+import 'providers/profile_provider.dart';
+import 'services/supabase_client.dart';
 import 'screens/onboarding_flow.dart';
 import 'forgetpassword.dart';
+import 'features/coach/presentation/screens/coach_dashboard_screen.dart';
+import 'features/coach/presentation/screens/coach_profile_setup_screen.dart';
+import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
+import 'package:provider/provider.dart';
+import 'features/coach/presentation/providers/coach_setup_provider.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'widgets/language_toggle.dart';
@@ -190,17 +195,43 @@ class _LoginScreenState extends State<LoginScreen>
         _emailController.text.trim(),
         _passwordController.text,
       );
-      final done = await OnboardingService().isCompleted();
+
+      final profileProv = context.read<ProfileProvider>();
+      await profileProv.fetchProfile();
       if (!mounted) return;
+
       _showSnack('Welcome back, ${res.user?.email}!', isError: false);
-      Navigator.pushReplacement(
-        context,
-        _route(done ? const FitnessHomePage() : const OnboardingFlow()),
-      );
+
+      if (profileProv.needsUserOnboarding) {
+        Navigator.pushReplacement(context, _route(const OnboardingFlow()));
+      } else if (profileProv.isCoach) {
+        if (profileProv.needsCoachSetup) {
+          Navigator.pushReplacement(context, _route(ChangeNotifierProvider(create: (_) => CoachSetupNotifier(), child: const CoachProfileSetupScreen())));
+        } else {
+          Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+        }
+      } else {
+        Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+      }
     } catch (e) {
       if (mounted) _showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<String?> _getUserRole() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return null;
+      final response = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+      return response['role'] as String?;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -395,6 +426,7 @@ class _SignupScreenState extends State<SignupScreen>
   bool _confVisible = false;
   bool _agreed = false;
   bool _isLoading = false;
+  String _selectedRole = 'client';
 
   late AnimationController _entryController;
   late List<Animation<double>> _fades;
@@ -454,19 +486,45 @@ class _SignupScreenState extends State<SignupScreen>
     }
     setState(() => _isLoading = true);
     try {
+      // Register with role stored in auth metadata
       final res = await AuthService().registerWithEmail(
         _emailCtrl.text.trim(),
         _passCtrl.text,
         _nameCtrl.text.trim(),
+        role: _selectedRole,
       );
+
       if (res.user != null) {
-        final done = await OnboardingService().isCompleted();
         if (!mounted) return;
+
+        // Insert into profiles table with the selected role
+        try {
+          await supabase.from('profiles').upsert({
+            'id': res.user!.id,
+            'name': _nameCtrl.text.trim(),
+            'email': _emailCtrl.text.trim(),
+            'role': _selectedRole,
+          }, onConflict: 'id');
+        } catch (_) {}
+
         _showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
-        Navigator.pushReplacement(
-          context,
-          _route(done ? const FitnessHomePage() : const OnboardingFlow()),
-        );
+
+        final profileProv = context.read<ProfileProvider>();
+        await profileProv.fetchProfile();
+
+        if (!mounted) return;
+
+        if (profileProv.needsUserOnboarding) {
+          Navigator.pushReplacement(context, _route(const OnboardingFlow()));
+        } else if (profileProv.isCoach) {
+          if (profileProv.needsCoachSetup) {
+            Navigator.pushReplacement(context, _route(ChangeNotifierProvider(create: (_) => CoachSetupNotifier(), child: const CoachProfileSetupScreen())));
+          } else {
+            Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+          }
+        } else {
+          Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+        }
       }
     } catch (e) {
       if (mounted) _showSnack(e.toString(), isError: true);
@@ -580,6 +638,106 @@ class _SignupScreenState extends State<SignupScreen>
                               size: 18,
                             ),
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Role Selection
+                _a(
+                  4,
+                  _GlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _FieldLabel('Choose your path'),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedRole = 'client'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _selectedRole == 'client'
+                                        ? AppColors.primaryFixed.withOpacity(0.2)
+                                        : AppColors.glass1,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _selectedRole == 'client'
+                                          ? AppColors.primaryFixed
+                                          : AppColors.outline.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.fitness_center_rounded,
+                                        color: _selectedRole == 'client'
+                                            ? AppColors.primaryFixed
+                                            : AppColors.onSurfaceVariant,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Athlete',
+                                        style: AppText.labelMd.copyWith(
+                                          color: _selectedRole == 'client'
+                                              ? AppColors.primaryFixed
+                                              : AppColors.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () => setState(() => _selectedRole = 'coach'),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: _selectedRole == 'coach'
+                                        ? AppColors.primaryFixed.withOpacity(0.2)
+                                        : AppColors.glass1,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: _selectedRole == 'coach'
+                                          ? AppColors.primaryFixed
+                                          : AppColors.outline.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.sports_rounded,
+                                        color: _selectedRole == 'coach'
+                                            ? AppColors.primaryFixed
+                                            : AppColors.onSurfaceVariant,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Coach',
+                                        style: AppText.labelMd.copyWith(
+                                          color: _selectedRole == 'coach'
+                                              ? AppColors.primaryFixed
+                                              : AppColors.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

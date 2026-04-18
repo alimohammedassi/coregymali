@@ -26,12 +26,12 @@ class AuthService {
 
   // Register with email and password
   Future<AuthResponse> registerWithEmail(
-      String email, String password, String name) async {
+      String email, String password, String name, {String role = 'user'}) async {
     try {
       return await _client.auth.signUp(
         email: email,
         password: password,
-        data: {'name': name},
+        data: {'name': name, 'role': role},
       );
     } on AuthException catch (e) {
       throw _handleAuthException(e);

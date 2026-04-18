@@ -381,7 +381,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
               ),
             ),
           ),
-          const SizedBox(height: 110),
+          const SizedBox(height: 150),
         ],
       ),
     );
@@ -544,7 +544,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
             final exercise = entry.value;
             return _buildExerciseCard(exercise, index);
           }),
-          const SizedBox(height: 110),
+          const SizedBox(height: 150),
         ],
       ),
     );

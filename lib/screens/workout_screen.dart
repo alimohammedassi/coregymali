@@ -64,7 +64,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
               ],
             ),
           ),
-          const SizedBox(height: 110),
+          const SizedBox(height: 150),
         ],
       ),
     );

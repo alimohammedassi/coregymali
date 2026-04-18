@@ -6,7 +6,9 @@
       "Bash(flutter doctor:*)",
       "Bash(ls:*)",
       "Bash(flutter gen-l10n:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(flutter pub:*)",
+      "Bash(flutter build:*)"
     ]
   }
 }

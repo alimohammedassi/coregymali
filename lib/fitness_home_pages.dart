@@ -19,6 +19,8 @@ import 'features/coach/presentation/screens/coach_dashboard_screen.dart';
 import 'features/coach/presentation/providers/coach_providers.dart';
 import 'features/coach/presentation/providers/subscription_providers.dart';
 import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
+import 'features/coach/data/repositories/coach_repository_impl.dart';
+import 'features/coach/data/repositories/subscription_repository_impl.dart';
 import 'providers/profile_provider.dart';
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
@@ -586,9 +588,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               child: Row(
                 children: List.generate(
                   4,
-                  (i) => Padding(
-                    padding: EdgeInsets.only(right: i < 3 ? 12 : 0),
-                    child: _shim(88, width: 88, radius: 18),
+                  (i) => Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: i < 3 ? 12 : 0),
+                      child: _shim(88, radius: 18),
+                    ),
                   ),
                 ),
               ),
@@ -2212,18 +2216,25 @@ class _CoachBanner extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
+        // Instantiate concretely — avoids ChangeNotifierProxyProvider
+        // read-at-create-time ProviderNotFoundException.
+        final subRepo = SubscriptionRepositoryImpl();
+        final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
+          ..fetchActiveSubscription();
+        final subNotifier = SubscriptionNotifier(subRepo);
+
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => CoachProviders.provideRepository(
-              child: SubscriptionProviders.provideRepository(
-                child: CoachProviders.provideCoachList(
-                  child: SubscriptionProviders.provideActiveSubscription(
-                    child: SubscriptionProviders.provideSubscriptionActions(
-                      child: const CoachMarketplaceScreen(),
-                    ),
-                  ),
+            builder: (_) => MultiProvider(
+              providers: [
+                ChangeNotifierProvider(
+                  create: (_) => CoachListNotifier(CoachRepositoryImpl())
+                    ..fetchCoaches(),
                 ),
-              ),
+                ChangeNotifierProvider.value(value: activeSubNotifier),
+                ChangeNotifierProvider.value(value: subNotifier),
+              ],
+              child: const CoachMarketplaceScreen(),
             ),
           ),
         );

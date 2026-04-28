@@ -6,6 +6,10 @@ import '../../../../theme/app_text.dart';
 import '../../domain/entities/coach_entity.dart';
 import '../providers/coach_providers.dart';
 import '../providers/subscription_providers.dart';
+import '../providers/stripe_provider.dart';
+import '../../data/services/stripe_service.dart';
+import '../../data/repositories/coach_repository_impl.dart';
+import '../../data/repositories/subscription_repository_impl.dart';
 import '../widgets/coach_shared.dart';
 import 'coach_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -304,11 +308,31 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
   }
 
   void _navigateToDetail(CoachEntity coach) {
+    // Instantiate concretely — no ProxyProvider needed since this is a
+    // self-contained navigation scope and dependencies don't change.
+    final activeSubNotifier =
+        ActiveSubscriptionNotifier(SubscriptionRepositoryImpl())
+          ..fetchActiveSubscription();
+
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CoachProviders.provideSelectedCoach(
-          coachId: coach.id,
+        builder: (_) => MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => SelectedCoachNotifier(CoachRepositoryImpl())
+                ..fetchCoach(coach.id),
+            ),
+            // Share the same instance so both the UI and StripePaymentNotifier
+            // see subscription updates in real time.
+            ChangeNotifierProvider.value(value: activeSubNotifier),
+            ChangeNotifierProvider(
+              create: (_) => StripePaymentNotifier(
+                stripeService: StripeService(),
+                subscriptionNotifier: activeSubNotifier,
+              ),
+            ),
+          ],
           child: CoachDetailScreen(coachId: coach.id),
         ),
       ),

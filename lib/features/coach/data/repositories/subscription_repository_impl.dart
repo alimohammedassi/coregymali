@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../services/supabase_client.dart';
 import '../../domain/entities/subscription_entity.dart';
 import '../../domain/repositories/subscription_repository.dart';
-import '../models/subscription_model.dart';
 
 class SubscriptionRepositoryException implements Exception {
   final String message;
@@ -49,7 +48,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
           .select()
           .single();
 
-      return SubscriptionModel.fromJson(response).toEntity();
+      return (response as Map<String, dynamic>).toEntity();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {
@@ -100,7 +99,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
 
       if (response == null) return null;
 
-      return SubscriptionModel.fromJson(response).toEntity();
+      return (response as Map<String, dynamic>).toEntity();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {
@@ -135,7 +134,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
           .eq('status', 'active');
 
       return response
-          .map((json) => SubscriptionModel.fromJson(json).toEntity())
+          .map((json) => (json as Map<String, dynamic>).toEntity())
           .toList();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
@@ -143,5 +142,27 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
       if (e is SubscriptionRepositoryException) rethrow;
       throw SubscriptionRepositoryException('Failed to get subscribers: $e');
     }
+  }
+}
+
+extension _ParseSubscription on Map<String, dynamic> {
+  SubscriptionEntity toEntity() {
+    return SubscriptionEntity(
+      id: this['id'] as String,
+      clientId: this['client_id'] as String,
+      coachId: this['coach_id'] as String,
+      status: SubscriptionStatus.values.firstWhere(
+        (e) => e.name == this['status'],
+        orElse: () => SubscriptionStatus.pending,
+      ),
+      tier: this['tier'] as String? ?? 'standard',
+      startDate: DateTime.parse(this['start_date'] as String),
+      endDate: this['end_date'] != null ? DateTime.parse(this['end_date'] as String) : null,
+      stripeSubId: this['stripe_sub_id'] as String?,
+      createdAt: DateTime.parse(this['created_at'] as String? ?? DateTime.now().toIso8601String()),
+      updatedAt: this['updated_at'] != null 
+          ? DateTime.parse(this['updated_at'] as String) 
+          : DateTime.parse(this['created_at'] as String? ?? DateTime.now().toIso8601String()),
+    );
   }
 }

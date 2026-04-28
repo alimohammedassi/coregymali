@@ -27,6 +27,11 @@ class _NutritionScreenState extends State<NutritionScreen>
   late AnimationController _ringController;
   late AnimationController _macroController;
   late AnimationController _pageController;
+  late AnimationController _lineChartController;
+  late AnimationController _shimmerController;
+  late AnimationController _fabController;
+  late AnimationController _pulseController;
+  
   late Animation<double> _ringAnim;
   late Animation<double> _proteinAnim;
   late Animation<double> _carbsAnim;
@@ -53,6 +58,10 @@ class _NutritionScreenState extends State<NutritionScreen>
     _ringController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600));
     _macroController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400));
     _pageController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000));
+    _lineChartController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
+    _shimmerController = AnimationController(vsync: this, duration: const Duration(milliseconds: 2000))..repeat();
+    _fabController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000))..repeat(reverse: true);
 
     _ringAnim = CurvedAnimation(parent: _ringController, curve: Curves.easeOutExpo);
     _proteinAnim = CurvedAnimation(parent: _macroController, curve: const Interval(0.0, 0.7, curve: Curves.easeOutCubic));
@@ -87,6 +96,8 @@ class _NutritionScreenState extends State<NutritionScreen>
     _ringController.forward();
     _macroController.forward();
     _pageController.forward();
+    _lineChartController.forward();
+    _fabController.forward(); // Initially expand
   }
 
   Future<void> _deleteLog(String id) async {
@@ -101,6 +112,10 @@ class _NutritionScreenState extends State<NutritionScreen>
     _ringController.dispose();
     _macroController.dispose();
     _pageController.dispose();
+    _lineChartController.dispose();
+    _shimmerController.dispose();
+    _fabController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -183,50 +198,78 @@ class _NutritionScreenState extends State<NutritionScreen>
         const SizedBox(width: 4),
       ],
       bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(44),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-          child: Container(
-            height: 36,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              indicator: BoxDecoration(
-                color: AppColors.primaryFixed,
-                borderRadius: BorderRadius.circular(8),
+        preferredSize: const Size.fromHeight(56),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+              child: Container(
+                height: 40,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: TabBar(
+                  controller: _tabController,
+                  indicator: BoxDecoration(
+                    color: AppColors.primaryFixed,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(color: AppColors.primaryFixed.withOpacity(0.3), blurRadius: 8, spreadRadius: -2),
+                    ],
+                  ),
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: AppColors.onSurfaceVariant,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, letterSpacing: 0.3),
+                  dividerColor: Colors.transparent,
+                  tabs: [
+                    Tab(text: AppLocalizations.of(context)!.today),
+                    Tab(text: AppLocalizations.of(context)!.historyTab),
+                  ],
+                ),
               ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelColor: Colors.white,
-              unselectedLabelColor: AppColors.onSurfaceVariant,
-              labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, letterSpacing: 0.5),
-              dividerColor: Colors.transparent,
-              tabs: [Tab(text: AppLocalizations.of(context)!.today), Tab(text: AppLocalizations.of(context)!.historyTab)],
             ),
-          ),
+            // Bottom gradient border
+            Container(
+              height: 1,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, Colors.white.withOpacity(0.08), Colors.transparent],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // ─── FAB ──────────────────────────────────────────────────────────────────
   Widget _buildFAB() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 96),
-      child: FloatingActionButton.extended(
-        onPressed: () {
-          HapticFeedback.lightImpact();
-          _showAddFoodBottomSheet(context);
-        },
-        backgroundColor: AppColors.primaryFixed,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: const Icon(Icons.add_rounded, size: 22),
-        label: const Text('Add Food', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-      ),
+    return AnimatedBuilder(
+      animation: _fabController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _fabController.value,
+          child: Opacity(
+            opacity: _fabController.value.clamp(0.0, 1.0),
+            child: FloatingActionButton.extended(
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                _showAddFoodBottomSheet(context);
+              },
+              backgroundColor: AppColors.primaryFixed,
+              foregroundColor: Colors.white,
+              elevation: 6,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              icon: const Icon(Icons.add_rounded, size: 24),
+              label: const Text('Add Food', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 0.3)),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -249,8 +292,6 @@ class _NutritionScreenState extends State<NutritionScreen>
           _shimmerBox(120, radius: 18),
           const SizedBox(height: 10),
           _shimmerBox(80, radius: 18),
-          const SizedBox(height: 10),
-          _shimmerBox(80, radius: 18),
         ],
       ),
     );
@@ -267,21 +308,20 @@ class _NutritionScreenState extends State<NutritionScreen>
 
   // ─── TODAY TAB ────────────────────────────────────────────────────────────
   Widget _buildTodayTab() {
-    return RefreshIndicator(
+    return CustomRefreshIndicator(
       onRefresh: _loadData,
-      color: AppColors.primaryFixed,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 220),
+        padding: const EdgeInsets.fromLTRB(16, 20, 16, 220),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FadeSlideIn(parent: _pageController, delayMs: 0, child: _buildHeroCaloriesCard()),
+            _FadeSlideIn(parent: _pageController, delayMs: 120, child: _buildHeroCaloriesCard()),
             const SizedBox(height: 12),
-            _FadeSlideIn(parent: _pageController, delayMs: 100, child: _buildQuickStatsRow()),
+            _FadeSlideIn(parent: _pageController, delayMs: 180, child: _buildCaloriesRemainingPill()),
             const SizedBox(height: 12),
-            _FadeSlideIn(parent: _pageController, delayMs: 180, child: _buildMacrosCard()),
-            const SizedBox(height: 12),
+            _FadeSlideIn(parent: _pageController, delayMs: 220, child: _buildMacrosCard()),
+            const SizedBox(height: 16),
             _FadeSlideIn(parent: _pageController, delayMs: 260, child: _buildMicronutrientsCard()),
             const SizedBox(height: 22),
             _FadeSlideIn(
@@ -311,9 +351,7 @@ class _NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  // ─── Hero Calories Card (redesigned with enhanced visuals) ─────────────────────────────────────
   Widget _buildHeroCaloriesCard() {
-    // Gradient colors based on progress
     final gradientColors = _calorieProgress >= 1.0
         ? [const Color(0xFFFF5252), const Color(0xFFFF8A65)]
         : _calorieProgress > 0.85
@@ -327,27 +365,39 @@ class _NutritionScreenState extends State<NutritionScreen>
         border: Border.all(color: Colors.white.withOpacity(0.07)),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withOpacity(0.08),
-            blurRadius: 30,
-            spreadRadius: -10,
+            color: gradientColors.first.withOpacity(0.12),
+            blurRadius: 40,
+            spreadRadius: -15,
           ),
         ],
       ),
       child: Column(
         children: [
-          // Top motivational banner with gradient
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradientColors.first.withOpacity(0.18),
-                  gradientColors.last.withOpacity(0.05),
-                ],
-              ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
-            ),
+          // Top motivational banner with shimmer effect
+          AnimatedBuilder(
+            animation: _shimmerController,
+            builder: (context, child) {
+              return Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      gradientColors.first.withOpacity(0.18),
+                      gradientColors.last.withOpacity(0.05),
+                      gradientColors.first.withOpacity(0.18),
+                    ],
+                    stops: [
+                      (_shimmerController.value - 0.3).clamp(0.0, 1.0),
+                      _shimmerController.value,
+                      (_shimmerController.value + 0.3).clamp(0.0, 1.0),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(23)),
+                ),
+                child: child,
+              );
+            },
             child: Row(
               children: [
                 Container(
@@ -356,10 +406,7 @@ class _NutritionScreenState extends State<NutritionScreen>
                     color: _ringColor,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      BoxShadow(
-                        color: _ringColor.withOpacity(0.5),
-                        blurRadius: 6,
-                      ),
+                      BoxShadow(color: _ringColor.withOpacity(0.5), blurRadius: 6),
                     ],
                   ),
                 ),
@@ -370,18 +417,15 @@ class _NutritionScreenState extends State<NutritionScreen>
                     style: TextStyle(fontSize: 12, color: _ringColor, fontWeight: FontWeight.w600),
                   ),
                 ),
-                AnimatedBuilder(
-                  animation: _ringAnim,
-                  builder: (_, __) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: _ringColor.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${(_calorieProgress * 100 * _ringAnim.value).toInt()}%',
-                      style: TextStyle(fontSize: 11, color: _ringColor, fontWeight: FontWeight.w800),
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _ringColor.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${(_calorieProgress * 100).toInt()}%',
+                    style: TextStyle(fontSize: 11, color: _ringColor, fontWeight: FontWeight.w800),
                   ),
                 ),
               ],
@@ -392,11 +436,26 @@ class _NutritionScreenState extends State<NutritionScreen>
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
             child: Row(
               children: [
-                // Enhanced Ring with glow
+                // Enhanced Ring with double glow
                 SizedBox(
                   width: 140, height: 140,
                   child: Stack(
                     children: [
+                      // Outer soft glow halo
+                      AnimatedBuilder(
+                        animation: _ringAnim,
+                        builder: (_, __) => CustomPaint(
+                          size: const Size(140, 140),
+                          painter: EnhancedRingPainter(
+                            progress: _calorieProgress * _ringAnim.value,
+                            gradientColors: gradientColors.map((c) => c.withOpacity(0.15)).toList(),
+                            trackColor: Colors.transparent,
+                            strokeWidth: 24,
+                            showGlow: false,
+                          ),
+                        ),
+                      ),
+                      // Main ring
                       AnimatedBuilder(
                         animation: _ringAnim,
                         builder: (_, __) => CustomPaint(
@@ -414,12 +473,16 @@ class _NutritionScreenState extends State<NutritionScreen>
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            AnimatedBuilder(
-                              animation: _ringAnim,
-                              builder: (_, __) => Text(
-                                (_caloriesConsumed * _ringAnim.value).toInt().toString(),
-                                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, height: 1),
-                              ),
+                            TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0, end: _caloriesConsumed.toDouble()),
+                              duration: const Duration(milliseconds: 1500),
+                              curve: Curves.easeOutExpo,
+                              builder: (context, value, _) {
+                                return Text(
+                                  value.toInt().toString(),
+                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, height: 1),
+                                );
+                              },
                             ),
                             Text(AppLocalizations.of(context)!.kcal, style: TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant)),
                             const SizedBox(height: 2),
@@ -555,105 +618,177 @@ class _NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  // ─── Quick Stats Row (new) ────────────────────────────────────────────────
-  Widget _buildQuickStatsRow() {
-    final meals = ['breakfast', 'lunch', 'dinner', 'snack'];
-    final mealEmojis = ['🍳', '🥗', '🍽', '🥜'];
-    return Row(
-      children: List.generate(4, (i) {
-        final logs = _todayLogs[meals[i]] ?? [];
-        final cals = logs.fold(0.0, (s, l) => s + ((l['calories'] as num?) ?? 0));
-        final logged = logs.isNotEmpty;
-        return Expanded(
-          child: Container(
-            margin: EdgeInsetsDirectional.only(end: i < 3 ? 8 : 0),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            decoration: BoxDecoration(
-              color: logged
-                  ? AppColors.primaryFixed.withOpacity(0.12)
-                  : AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: logged ? AppColors.primaryFixed.withOpacity(0.3) : Colors.white.withOpacity(0.05),
+  Widget _buildCaloriesRemainingPill() {
+    final isOver = _isOverGoal;
+    final value = isOver ? (_caloriesConsumed - _caloriesGoal).toInt() : _caloriesRemaining.toInt();
+    final color = isOver ? const Color(0xFFFF5252) : AppColors.primaryFixed;
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isOver ? Icons.warning_amber_rounded : Icons.bolt_rounded, size: 16, color: color),
+            const SizedBox(width: 8),
+            Text(
+              isOver ? 'OVER BY ' : 'REMAINING ',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: color, letterSpacing: 1),
+            ),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: value.toDouble()),
+              duration: const Duration(milliseconds: 1200),
+              builder: (context, val, _) => Text(
+                '${val.toInt()} kcal',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: color),
               ),
             ),
-            child: Column(
-              children: [
-                Text(mealEmojis[i], style: const TextStyle(fontSize: 18)),
-                const SizedBox(height: 4),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    logged ? '${cals.toInt()}' : '—',
-                    style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w800,
-                      color: logged ? AppColors.primaryFixed : AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                if (logged) Text(AppLocalizations.of(context)!.kcal, style: TextStyle(fontSize: 8, color: AppColors.onSurfaceVariant)),
-                if (!logged) Text(meals[i].substring(0, 3).toUpperCase(), style: TextStyle(fontSize: 8, color: AppColors.onSurfaceVariant.withOpacity(0.5))),
-              ],
-            ),
-          ),
-        );
-      }),
+          ],
+        ),
+      ),
     );
   }
 
-  // ─── Macros Card (redesigned) ─────────────────────────────────────────────
+  Widget _buildMacroProgressBar({
+    required String label,
+    required double current,
+    required double goal,
+    required Color color,
+    required IconData icon,
+    required int delay,
+  }) {
+    final pct = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
+    final anim = CurvedAnimation(
+      parent: _macroController,
+      curve: Interval(0.2 + (delay * 0.15), 0.8 + (delay * 0.05), curve: Curves.easeOutCubic),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 14, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                label.toUpperCase(),
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.onSurfaceVariant, letterSpacing: 0.5),
+              ),
+            ),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: current),
+              duration: const Duration(milliseconds: 1500),
+              builder: (context, val, _) => Text(
+                '${val.toInt()}g',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: Colors.white),
+              ),
+            ),
+            Text(' / ${goal.toInt()}g', style: TextStyle(fontSize: 11, color: AppColors.onSurfaceVariant)),
+          ],
+        ),
+        const SizedBox(height: 10),
+        AnimatedBuilder(
+          animation: anim,
+          builder: (context, child) {
+            final progress = pct * anim.value;
+            return Stack(
+              children: [
+                Container(
+                  height: 10,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                FractionallySizedBox(
+                  widthFactor: progress,
+                  child: Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [color, color.withOpacity(0.7)],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, spreadRadius: -2),
+                      ],
+                    ),
+                  ),
+                ),
+                if (progress > 0.15)
+                  Positioned(
+                    left: (MediaQuery.of(context).size.width - 76) * progress - 15,
+                    top: -5,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                      child: Text(
+                        '${(pct * 100).toInt()}%',
+                        style: TextStyle(fontSize: 7, fontWeight: FontWeight.w900, color: color),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _buildMacrosCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('MACRONUTRIENTS', style: TextStyle(fontSize: 10, color: AppColors.onSurfaceVariant, letterSpacing: 1.2, fontWeight: FontWeight.w700)),
-              const Spacer(),
-              // Macro pie-donut summary
-              _MacroPieIndicator(
-                protein: _proteinConsumed * 4,
-                carbs: _carbsConsumed * 4,
-                fat: _fatConsumed * 9,
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _AnimatedMacroRow(
+          _buildMacroProgressBar(
             label: AppLocalizations.of(context)!.proteinGoal,
-            color: const Color(0xFFFF6B6B),
             current: _proteinConsumed,
             goal: _proteinGoal,
-            animation: _proteinAnim,
-            unit: 'g',
-            icon: Icons.fitness_center_rounded,
+            color: const Color(0xFFFF6B6B),
+            icon: Icons.egg_alt_rounded,
+            delay: 0,
           ),
-          const SizedBox(height: 16),
-          _AnimatedMacroRow(
-            label: 'Carbohydrates',
-            color: const Color(0xFF4A9EFF),
+          const SizedBox(height: 20),
+          _buildMacroProgressBar(
+            label: AppLocalizations.of(context)!.carbs,
             current: _carbsConsumed,
             goal: _carbsGoal,
-            animation: _carbsAnim,
-            unit: 'g',
-            icon: Icons.grain_rounded,
+            color: const Color(0xFF4A9EFF),
+            icon: Icons.bakery_dining_rounded,
+            delay: 1,
           ),
-          const SizedBox(height: 16),
-          _AnimatedMacroRow(
+          const SizedBox(height: 20),
+          _buildMacroProgressBar(
             label: AppLocalizations.of(context)!.fat,
-            color: const Color(0xFFFFB84A),
             current: _fatConsumed,
             goal: _fatGoal,
-            animation: _fatAnim,
-            unit: 'g',
-            icon: Icons.water_drop_rounded,
+            color: const Color(0xFFFFB84A),
+            icon: Icons.opacity_rounded,
+            delay: 2,
           ),
         ],
       ),
@@ -691,11 +826,14 @@ class _NutritionScreenState extends State<NutritionScreen>
   Widget _micronutrientTile(String label, double current, double goal, String unit, Color color, IconData icon) {
     final progress = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
     final isOver = current > goal;
+    // Mock sparkline data
+    final trend = [0.4, 0.6, 0.5, 0.8, 0.7, 0.9, current / (goal > 0 ? goal : 1)];
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2)),
       ),
       child: Column(
@@ -703,29 +841,46 @@ class _NutritionScreenState extends State<NutritionScreen>
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: color),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                child: Icon(icon, size: 12, color: color),
+              ),
               const Spacer(),
-              if (isOver) Icon(Icons.warning_amber_rounded, size: 12, color: const Color(0xFFFFAB40)),
+              SizedBox(
+                width: 24, height: 12,
+                child: CustomPaint(painter: _SparklinePainter(trend, color.withOpacity(0.5))),
+              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             '${current.toStringAsFixed(current >= 10 ? 0 : 1)}$unit',
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color),
-          ),
-          Text('/ ${goal.toInt()}$unit', style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 3,
-              backgroundColor: Colors.white.withOpacity(0.07),
-              valueColor: AlwaysStoppedAnimation(isOver ? const Color(0xFFFFAB40) : color),
-            ),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: color, height: 1),
           ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant, fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 4,
+                width: double.infinity,
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(2)),
+              ),
+              FractionallySizedBox(
+                widthFactor: progress,
+                child: Container(
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: isOver ? const Color(0xFFFFAB40) : color,
+                    borderRadius: BorderRadius.circular(2),
+                    boxShadow: [BoxShadow(color: (isOver ? const Color(0xFFFFAB40) : color).withOpacity(0.3), blurRadius: 4)],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -856,25 +1011,43 @@ class _NutritionScreenState extends State<NutritionScreen>
                 ...logs.asMap().entries.map((entry) {
                   final log = entry.value;
                   final isLast = entry.key == logs.length - 1;
-                  return Dismissible(
-                    key: Key(log['id'].toString()),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsetsDirectional.only(end: 20),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFF5252).withOpacity(0.15),
-                        borderRadius: isLast
-                            ? const BorderRadius.vertical(bottom: Radius.circular(18))
-                            : BorderRadius.zero,
-                      ),
-                      child: const Icon(Icons.delete_outline_rounded, color: Color(0xFFFF5252)),
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: Duration(milliseconds: 400 + (entry.key * 100)),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) => Transform.translate(
+                      offset: Offset(0, 20 * (1 - value)),
+                      child: Opacity(opacity: value, child: child),
                     ),
-                    confirmDismiss: (_) async {
-                      return await _showDeleteConfirm(context, log['food_name'] ?? '');
-                    },
-                    onDismissed: (_) => _deleteLog(log['id'].toString()),
-                    child: _buildLogItem(log, isLast, accentColor),
+                    child: Dismissible(
+                      key: Key(log['id'].toString()),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsetsDirectional.only(end: 20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [const Color(0xFFFF5252).withOpacity(0.0), const Color(0xFFFF5252).withOpacity(0.25)],
+                            stops: const [0.6, 1.0],
+                          ),
+                          borderRadius: isLast
+                              ? const BorderRadius.vertical(bottom: Radius.circular(18))
+                              : BorderRadius.zero,
+                        ),
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0.8, end: 1.2),
+                          duration: const Duration(milliseconds: 600),
+                          curve: Curves.elasticOut,
+                          builder: (context, scale, child) => Transform.scale(
+                            scale: scale,
+                            child: const Icon(Icons.delete_rounded, color: Color(0xFFFF5252), size: 24),
+                          ),
+                        ),
+                      ),
+                      confirmDismiss: (_) async => await _showDeleteConfirm(context, log['food_name'] ?? ''),
+                      onDismissed: (_) => _deleteLog(log['id'].toString()),
+                      child: _buildLogItem(log, isLast, accentColor),
+                    ),
                   );
                 }),
                 if (hasLogs) ...[
@@ -1073,7 +1246,7 @@ class _NutritionScreenState extends State<NutritionScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Weekly summary cards (new)
+          // Weekly summary cards
           _FadeSlideIn(
             parent: _pageController, delayMs: 0,
             child: _buildWeeklyStatsRow(avgCals),
@@ -1108,87 +1281,123 @@ class _NutritionScreenState extends State<NutritionScreen>
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 180,
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: maxY,
-                        titlesData: FlTitlesData(
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                final i = value.toInt();
-                                if (i >= 0 && i < _weeklyProgress.length) {
-                                  final d = _weeklyProgress[i]['summary_date'].toString();
-                                  return Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Text(d.substring(5, 10), style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 9)),
-                                  );
-                                }
-                                return const Text('');
-                              },
-                            ),
-                          ),
-                          leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: AxisTitles(sideTitles: SideTitles(
-                            showTitles: true,
-                            getTitlesWidget: (value, meta) {
-                              if (value == 0 || value == maxY) return const Text('');
-                              return Text('${value.toInt()}', style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 9));
-                            },
-                            reservedSize: 36,
-                          )),
-                        ),
-                        gridData: FlGridData(
-                          show: true,
-                          horizontalInterval: maxY / 4,
-                          getDrawingHorizontalLine: (_) => FlLine(color: Colors.white.withOpacity(0.04), strokeWidth: 1),
-                          drawVerticalLine: false,
-                        ),
-                        borderData: FlBorderData(show: false),
-                        barGroups: _weeklyProgress.asMap().entries.map((e) {
+                    height: 200,
+                    child: AnimatedBuilder(
+                      animation: _lineChartController,
+                      builder: (context, child) {
+                        final progress = _lineChartController.value;
+                        final spots = _weeklyProgress.asMap().entries.map((e) {
                           final cals = (e.value['calories_consumed'] as num?)?.toDouble() ?? 0;
-                          final isGoalMet = cals >= (_goals['daily_calories'] as num? ?? 2000);
-                          final isToday = e.key == _weeklyProgress.length - 1;
-                          return BarChartGroupData(
-                            x: e.key,
-                            barRods: [
-                              BarChartRodData(
-                                toY: cals,
-                                width: 20,
-                                borderRadius: BorderRadius.circular(6),
-                                color: isToday
-                                    ? AppColors.primaryFixed
-                                    : isGoalMet
-                                    ? AppColors.primaryFixed.withOpacity(0.6)
-                                    : AppColors.primaryFixed.withOpacity(0.25),
-                                rodStackItems: isToday ? [
-                                  BarChartRodStackItem(0, cals, AppColors.primaryFixed),
-                                ] : [],
+                          return FlSpot(e.key.toDouble(), cals);
+                        }).toList();
+
+                        final animatedSpots = spots.where((s) => s.x <= (spots.length - 1) * progress).toList();
+                        if (animatedSpots.isEmpty && spots.isNotEmpty) animatedSpots.add(spots.first);
+
+                        return LineChart(
+                          LineChartData(
+                            gridData: FlGridData(
+                              show: true,
+                              drawVerticalLine: false,
+                              horizontalInterval: maxY / 4,
+                              getDrawingHorizontalLine: (value) => FlLine(
+                                color: Colors.white.withOpacity(0.04),
+                                strokeWidth: 1,
+                              ),
+                            ),
+                            titlesData: FlTitlesData(
+                              leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 22,
+                                  interval: 1,
+                                  getTitlesWidget: (value, meta) {
+                                    final i = value.toInt();
+                                    if (i >= 0 && i < _weeklyProgress.length) {
+                                      final dateStr = _weeklyProgress[i]['summary_date'].toString();
+                                      final displayDate = dateStr.length >= 10 ? dateStr.substring(5, 10) : dateStr;
+                                      return SideTitleWidget(
+                                        axisSide: meta.axisSide,
+                                        child: Text(displayDate, style: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 9)),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                            ),
+                            borderData: FlBorderData(show: false),
+                            minX: 0,
+                            maxX: (_weeklyProgress.length - 1).toDouble(),
+                            minY: 0,
+                            maxY: maxY,
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: animatedSpots,
+                                isCurved: true,
+                                curveSmoothness: 0.35,
+                                color: AppColors.primaryFixed,
+                                barWidth: 3,
+                                isStrokeCapRound: true,
+                                dotData: FlDotData(
+                                  show: true,
+                                  getDotPainter: (spot, percent, barData, index) {
+                                    final isLast = index == animatedSpots.length - 1 && progress > 0.95;
+                                    return FlDotCirclePainter(
+                                        radius: isLast ? 8 : 4,
+                                        color: isLast ? Colors.white : AppColors.primaryFixed,
+                                        strokeWidth: isLast ? 3 : 2,
+                                        strokeColor: AppColors.primaryFixed,
+                                      );
+                                  },
+                                ),
+                                belowBarData: BarAreaData(
+                                  show: true,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      AppColors.primaryFixed.withOpacity(0.25 * progress),
+                                      AppColors.primaryFixed.withOpacity(0),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
-                          );
-                        }).toList(),
-                        // Goal line
-                        extraLinesData: ExtraLinesData(
-                          horizontalLines: [
-                            HorizontalLine(
-                              y: (_goals['daily_calories'] as num?)?.toDouble() ?? 2000,
-                              color: Colors.white.withOpacity(0.2),
-                              strokeWidth: 1,
-                              dashArray: [6, 4],
-                              label: HorizontalLineLabel(
-                                show: true,
-                                alignment: Alignment.topRight,
-                                labelResolver: (l) => AppLocalizations.of(context)!.goal,
-                                style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(0.4)),
+                            extraLinesData: ExtraLinesData(
+                              horizontalLines: [
+                                HorizontalLine(
+                                  y: (_goals['daily_calories'] as num?)?.toDouble() ?? 2000,
+                                  color: Colors.white.withOpacity(0.2),
+                                  strokeWidth: 1,
+                                  dashArray: [6, 4],
+                                ),
+                              ],
+                            ),
+                            lineTouchData: LineTouchData(
+                              touchTooltipData: LineTouchTooltipData(
+                                getTooltipColor: (spot) => const Color(0xFF1A1A1A),
+                                tooltipRoundedRadius: 10,
+                                tooltipBorder: BorderSide(color: AppColors.primaryFixed.withOpacity(0.3)),
+                                getTooltipItems: (touchedSpots) {
+                                  return touchedSpots.map((spot) {
+                                    final i = spot.x.toInt();
+                                    final date = _weeklyProgress[i]['summary_date'].toString();
+                                    final workout = _weeklyProgress[i]['workout_done'] == true ? ' ✓' : ' —';
+                                    return LineTooltipItem(
+                                      '$date\n${spot.y.toInt()} kcal$workout',
+                                      AppText.labelSm.copyWith(color: Colors.white),
+                                    );
+                                  }).toList();
+                                },
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -1268,7 +1477,6 @@ class _NutritionScreenState extends State<NutritionScreen>
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // Progress bar with goal marker
                       Stack(
                         children: [
                           ClipRRect(
@@ -1892,6 +2100,7 @@ class _AddFoodSheetState extends State<_AddFoodSheet> {
       ),
     );
   }
+
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2244,4 +2453,77 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
       Text(label, style: TextStyle(fontSize: 9, color: AppColors.onSurfaceVariant)),
     ],
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Custom Refresh Indicator
+// ─────────────────────────────────────────────────────────────────────────────
+class CustomRefreshIndicator extends StatefulWidget {
+  final Widget child;
+  final Future<void> Function() onRefresh;
+  const CustomRefreshIndicator({required this.child, required this.onRefresh});
+  @override
+  State<CustomRefreshIndicator> createState() => _CustomRefreshIndicatorState();
+}
+
+class _CustomRefreshIndicatorState extends State<CustomRefreshIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+  }
+
+  @override
+  void dispose() { _ctrl.dispose(); super.dispose(); }
+
+  @override
+  Widget build(BuildContext context) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        setState(() => _refreshing = true);
+        _ctrl.repeat();
+        await widget.onRefresh();
+        if (mounted) {
+          _ctrl.stop();
+          setState(() => _refreshing = false);
+        }
+      },
+      displacement: 40,
+      edgeOffset: 20,
+      backgroundColor: AppColors.surfaceContainerHigh,
+      color: AppColors.primaryFixed,
+      strokeWidth: 2,
+      child: widget.child,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sparkline Painter
+// ─────────────────────────────────────────────────────────────────────────────
+class _SparklinePainter extends CustomPainter {
+  final List<double> data;
+  final Color color;
+  _SparklinePainter(this.data, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.length < 2) return;
+    final paint = Paint()..color = color..strokeWidth = 1.8..style = PaintingStyle.stroke..strokeCap = StrokeCap.round..strokeJoin = StrokeJoin.round;
+    final path = Path();
+    final dx = size.width / (data.length - 1);
+    final maxVal = data.reduce((a, b) => a > b ? a : b).clamp(0.1, 100.0);
+
+    for (int i = 0; i < data.length; i++) {
+      final x = i * dx;
+      final y = size.height - (data[i] / maxVal * size.height).clamp(0.0, size.height);
+      if (i == 0) path.moveTo(x, y); else path.lineTo(x, y);
+    }
+    canvas.drawPath(path, paint);
+  }
+
+  @override bool shouldRepaint(covariant CustomPainter old) => true;
 }

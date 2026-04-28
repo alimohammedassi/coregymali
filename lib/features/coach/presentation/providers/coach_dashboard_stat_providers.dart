@@ -43,7 +43,7 @@ class CoachDashboardStatNotifier extends ChangeNotifier {
       // Get coach row
       final coachRow = await supabase
           .from('coaches')
-          .select('id, max_clients, price_monthly')
+          .select('id, price_monthly')
           .eq('user_id', userId)
           .maybeSingle();
 
@@ -60,13 +60,22 @@ class CoachDashboardStatNotifier extends ChangeNotifier {
       }
 
       final coachId = coachRow['id'];
-      final maxClients = coachRow['max_clients'] ?? 10;
       final priceMonthly = (coachRow['price_monthly'] ?? 0).toDouble();
+
+      int maxClients = 10;
+      final onboardingRow = await supabase
+          .from('coach_onboarding')
+          .select('max_clients')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (onboardingRow != null) {
+        maxClients = onboardingRow['max_clients'] ?? 10;
+      }
 
       // Get active subscribers
       final subs = await supabase
           .from('subscriptions')
-          .select('id, price_plan')
+          .select('id, tier')
           .eq('coach_id', coachId)
           .eq('status', 'active');
 
@@ -74,7 +83,7 @@ class CoachDashboardStatNotifier extends ChangeNotifier {
       final monthlyRevenue = subs.fold<double>(
         0,
         (sum, s) {
-          final plan = s['price_plan'] ?? 'standard';
+          final plan = s['tier'] ?? 'standard';
           // If premium, use premium price (stored separately, here we approximate)
           return sum + priceMonthly;
         },

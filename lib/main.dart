@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:coregym2/supabase/supabase_config.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -57,7 +58,10 @@ class MyApp extends StatelessWidget {
         );
       },
       title: 'Core Gym',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        textTheme: GoogleFonts.soraTextTheme(),
+      ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );

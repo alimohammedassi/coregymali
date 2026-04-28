@@ -19,6 +19,8 @@ class CoachProfileData {
   final double pricePremium;
   final int maxClients;
   final String? introVideoUrl;
+  final List<String> certificateFiles;
+  final List<String> transformationImages;
 
   CoachProfileData({
     required this.displayName,
@@ -35,6 +37,8 @@ class CoachProfileData {
     required this.pricePremium,
     required this.maxClients,
     this.introVideoUrl,
+    this.certificateFiles = const [],
+    this.transformationImages = const [],
   });
 }
 
@@ -86,6 +90,8 @@ class CoachProfileNotifier extends ChangeNotifier {
           pricePremium: (row['price_premium'] ?? 0).toDouble(),
           maxClients: row['max_clients'] ?? 10,
           introVideoUrl: row['intro_video_url'],
+          certificateFiles: List<String>.from(row['certificate_files'] ?? []),
+          transformationImages: List<String>.from(row['transformation_images'] ?? []),
         );
       }
     } catch (e) {
@@ -96,7 +102,12 @@ class CoachProfileNotifier extends ChangeNotifier {
     }
   }
 
-  Future<String?> save(CoachProfileData data, {String? newAvatarPath}) async {
+  Future<String?> save(
+    CoachProfileData data, {
+    String? newAvatarPath,
+    List<String> newCertificatePaths = const [],
+    List<String> newTransformationPaths = const [],
+  }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -126,6 +137,30 @@ class CoachProfileNotifier extends ChangeNotifier {
         avatarUrl = '$publicUrl?t=${DateTime.now().millisecondsSinceEpoch}';
       }
 
+      // Upload new certificates
+      List<String> finalCertFiles = List.from(data.certificateFiles);
+      for (final path in newCertificatePaths) {
+        final file = File(path);
+        final bytes = await file.readAsBytes();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.split(Platform.pathSeparator).last}';
+        final storagePath = '$userId/certs/$fileName';
+        await supabase.storage.from('coach-media').uploadBinary(storagePath, bytes);
+        final publicUrl = supabase.storage.from('coach-media').getPublicUrl(storagePath);
+        finalCertFiles.add(publicUrl);
+      }
+
+      // Upload new transformations
+      List<String> finalTransImages = List.from(data.transformationImages);
+      for (final path in newTransformationPaths) {
+        final file = File(path);
+        final bytes = await file.readAsBytes();
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${path.split(Platform.pathSeparator).last}';
+        final storagePath = '$userId/transformations/$fileName';
+        await supabase.storage.from('coach-media').uploadBinary(storagePath, bytes);
+        final publicUrl = supabase.storage.from('coach-media').getPublicUrl(storagePath);
+        finalTransImages.add(publicUrl);
+      }
+
       // Update coach_onboarding
       await supabase.from('coach_onboarding').update({
         'display_name': data.displayName,
@@ -142,6 +177,8 @@ class CoachProfileNotifier extends ChangeNotifier {
         'phone_number': data.phoneNumber,
         'city': data.city,
         'gender': data.gender,
+        'certificate_files': finalCertFiles,
+        'transformation_images': finalTransImages,
       }).eq('user_id', userId);
 
       // Update coaches

@@ -1,14 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-// ignore: depend_on_referenced_packages
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../../../widgets/premium_glass_bg.dart';
 import '../providers/coach_profile_provider.dart';
-import '../../../../fitness_home_pages.dart';
 
 class CoachEditProfileScreen extends StatefulWidget {
   const CoachEditProfileScreen({super.key});
@@ -36,6 +35,11 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
   List<String> _languages = [];
   double _maxClients = 10;
   bool _isLoaded = false;
+  
+  List<String> _existingCertificateFiles = [];
+  List<String> _existingTransformationImages = [];
+  List<String> _newCertificatePaths = [];
+  List<String> _newTransformationPaths = [];
 
   @override
   void initState() {
@@ -66,6 +70,8 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
         _certifications = List.from(profile.certifications);
         _languages = List.from(profile.languages);
         _maxClients = profile.maxClients.toDouble();
+        _existingCertificateFiles = List.from(profile.certificateFiles);
+        _existingTransformationImages = List.from(profile.transformationImages);
         _selectedImagePath = null; // Will show existing avatar from provider
         _isLoaded = true;
       });
@@ -103,6 +109,29 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
     });
   }
 
+  Future<void> _pickCertificates() async {
+    final result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'png', 'jpeg'],
+      allowMultiple: true,
+    );
+    if (result != null) {
+      setState(() {
+        _newCertificatePaths.addAll(result.paths.whereType<String>());
+      });
+    }
+  }
+
+  Future<void> _pickTransformations() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickMultiImage(maxWidth: 1024, maxHeight: 1024);
+    if (picked.isNotEmpty) {
+      setState(() {
+        _newTransformationPaths.addAll(picked.map((e) => e.path));
+      });
+    }
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -123,9 +152,16 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
       pricePremium: double.tryParse(_premiumCtrl.text) ?? 0,
       maxClients: _maxClients.round(),
       introVideoUrl: _videoCtrl.text.trim().isEmpty ? null : _videoCtrl.text.trim(),
+      certificateFiles: _existingCertificateFiles,
+      transformationImages: _existingTransformationImages,
     );
 
-    final err = await notifier.save(profile, newAvatarPath: _selectedImagePath);
+    final err = await notifier.save(
+      profile, 
+      newAvatarPath: _selectedImagePath,
+      newCertificatePaths: _newCertificatePaths,
+      newTransformationPaths: _newTransformationPaths,
+    );
     if (err != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -207,6 +243,10 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                       _buildSpecializations(),
                       const SizedBox(height: 16),
                       _buildCertifications(),
+                      const SizedBox(height: 16),
+                      _buildCertificateFiles(),
+                      const SizedBox(height: 16),
+                      _buildTransformationImages(),
                       const SizedBox(height: 16),
                       _buildLanguages(),
                       const SizedBox(height: 16),
@@ -709,6 +749,98 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCertificateFiles() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('CERTIFICATE FILES (PDF/IMAGES)'),
+        const SizedBox(height: 12),
+        ..._existingCertificateFiles.map((url) => _buildMediaItem(url, isUrl: true, onRemove: () {
+          setState(() => _existingCertificateFiles.remove(url));
+        })),
+        ..._newCertificatePaths.map((path) => _buildMediaItem(path, isUrl: false, onRemove: () {
+          setState(() => _newCertificatePaths.remove(path));
+        })),
+        const SizedBox(height: 8),
+        _buildAddMediaButton('Add Certificates', _pickCertificates, Icons.upload_file_rounded),
+      ],
+    );
+  }
+
+  Widget _buildTransformationImages() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle('CLIENT TRANSFORMATIONS'),
+        const SizedBox(height: 12),
+        ..._existingTransformationImages.map((url) => _buildMediaItem(url, isUrl: true, onRemove: () {
+          setState(() => _existingTransformationImages.remove(url));
+        })),
+        ..._newTransformationPaths.map((path) => _buildMediaItem(path, isUrl: false, onRemove: () {
+          setState(() => _newTransformationPaths.remove(path));
+        })),
+        const SizedBox(height: 8),
+        _buildAddMediaButton('Add Transformation Images', _pickTransformations, Icons.add_photo_alternate_rounded),
+      ],
+    );
+  }
+
+  Widget _buildMediaItem(String source, {required bool isUrl, required VoidCallback onRemove}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            source.toLowerCase().endsWith('.pdf') ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
+            color: const Color(0xFFC9A84C),
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              isUrl ? source.split('/').last.split('?').first : source.split(Platform.pathSeparator).last,
+              style: AppText.bodySm.copyWith(color: AppColors.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error, size: 20),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddMediaButton(String label, VoidCallback onTap, IconData icon) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFC9A84C).withValues(alpha: 0.5), width: 1),
+          borderRadius: BorderRadius.circular(12),
+          color: const Color(0xFFC9A84C).withValues(alpha: 0.05),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFFC9A84C), size: 20),
+            const SizedBox(width: 8),
+            Text(label, style: AppText.labelLg.copyWith(color: const Color(0xFFC9A84C))),
+          ],
+        ),
+      ),
     );
   }
 

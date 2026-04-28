@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:coregym2/supabase/supabase_exports.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_colors.dart';
-import 'theme/app_text.dart';
+import 'theme/auth_app_text.dart';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Forgot Password Screen
@@ -141,10 +141,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                     const SizedBox(height: 32),
 
-                    Text('RESET', style: AppText.displaySm),
+                    Text('RESET', style: AuthAppText.displaySm),
                     Text(
                       'ACCESS',
-                      style: AppText.displaySm.copyWith(
+                      style: AuthAppText.displaySm.copyWith(
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -153,7 +153,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                     Text(
                       'ENTER YOUR EMAIL TO RECEIVE A RESET CODE',
-                      style: AppText.bodyMd.copyWith(
+                      style: AuthAppText.bodyMd.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
                     ),
@@ -177,7 +177,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             children: [
                               Text(
                                 'OPERATOR_ID',
-                                style: AppText.labelMd.copyWith(
+                                style: AuthAppText.labelMd.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                   letterSpacing: 2.0,
                                 ),
@@ -231,14 +231,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         },
                         child: RichText(
                           text: TextSpan(
-                            style: AppText.labelMd.copyWith(
+                            style: AuthAppText.labelMd.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),
                             children: [
                               const TextSpan(text: 'REMEMBER PASSWORD?  '),
                               TextSpan(
                                 text: 'SIGN IN',
-                                style: AppText.labelMd.copyWith(
+                                style: AuthAppText.labelMd.copyWith(
                                   color: AppColors.primaryFixed,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -411,7 +411,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: AppText.metricLg.copyWith(
+        style: AuthAppText.metricLg.copyWith(
           color: AppColors.primaryFixed,
         ),
         decoration: const InputDecoration(
@@ -501,10 +501,10 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
 
                   const SizedBox(height: 32),
 
-                  Text('VERIFY', style: AppText.displaySm),
+                  Text('VERIFY', style: AuthAppText.displaySm),
                   Text(
                     'CODE',
-                    style: AppText.displaySm.copyWith(
+                    style: AuthAppText.displaySm.copyWith(
                       color: AppColors.primaryFixed,
                     ),
                   ),
@@ -513,7 +513,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
 
                   Text(
                     'WE\'VE SENT A 6-DIGIT CODE TO\n${widget.email.toUpperCase()}',
-                    style: AppText.bodyMd.copyWith(
+                    style: AuthAppText.bodyMd.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
@@ -548,14 +548,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                     children: [
                       Text(
                         "DIDN'T RECEIVE?  ",
-                        style: AppText.labelSm.copyWith(
+                        style: AuthAppText.labelSm.copyWith(
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
                       if (_resendTimer > 0)
                         Text(
                           'RESEND IN ${_resendTimer}s',
-                          style: AppText.labelSm.copyWith(
+                          style: AuthAppText.labelSm.copyWith(
                             color: AppColors.outline,
                           ),
                         )
@@ -575,7 +575,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                                 )
                               : Text(
                                   'RESEND NOW',
-                                  style: AppText.labelSm.copyWith(
+                                  style: AuthAppText.labelSm.copyWith(
                                     color: AppColors.primaryFixed,
                                     fontWeight: FontWeight.w900,
                                   ),
@@ -595,14 +595,14 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                       },
                       child: RichText(
                         text: TextSpan(
-                          style: AppText.labelMd.copyWith(
+                          style: AuthAppText.labelMd.copyWith(
                             color: AppColors.onSurfaceVariant,
                           ),
                           children: [
                             const TextSpan(text: 'REMEMBER PASSWORD?  '),
                             TextSpan(
                               text: 'SIGN IN',
-                              style: AppText.labelMd.copyWith(
+                              style: AuthAppText.labelMd.copyWith(
                                 color: AppColors.primaryFixed,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -780,10 +780,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
                     const SizedBox(height: 32),
 
-                    Text('NEW', style: AppText.displaySm),
+                    Text('NEW', style: AuthAppText.displaySm),
                     Text(
                       'PASSWORD',
-                      style: AppText.displaySm.copyWith(
+                      style: AuthAppText.displaySm.copyWith(
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -792,7 +792,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
                     Text(
                       'ENTER YOUR NEW ENCRYPTED KEY',
-                      style: AppText.bodyMd.copyWith(
+                      style: AuthAppText.bodyMd.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
                     ),
@@ -816,7 +816,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             children: [
                               Text(
                                 'NEW_KEY',
-                                style: AppText.labelMd.copyWith(
+                                style: AuthAppText.labelMd.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                   letterSpacing: 2.0,
                                 ),
@@ -860,7 +860,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
                               Text(
                                 'CONFIRM_KEY',
-                                style: AppText.labelMd.copyWith(
+                                style: AuthAppText.labelMd.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                   letterSpacing: 2.0,
                                 ),
@@ -926,14 +926,14 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                         },
                         child: RichText(
                           text: TextSpan(
-                            style: AppText.labelMd.copyWith(
+                            style: AuthAppText.labelMd.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),
                             children: [
                               const TextSpan(text: 'REMEMBER PASSWORD?  '),
                               TextSpan(
                                 text: 'SIGN IN',
-                                style: AppText.labelMd.copyWith(
+                                style: AuthAppText.labelMd.copyWith(
                                   color: AppColors.primaryFixed,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -1064,7 +1064,7 @@ Widget _buildButton({
                           ),
                         ),
                       )
-                    : Text(text, style: AppText.buttonPrimary),
+                    : Text(text, style: AuthAppText.buttonPrimary),
                 Container(
                   width: 32,
                   height: 32,

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../data/repositories/coach_subscription_repository.dart';
+import 'coach_subscriptions_notifier.dart';
 
 import '../../data/repositories/coach_dashboard_repository_impl.dart';
 import '../../domain/entities/client_full_data_entity.dart';
@@ -123,37 +127,38 @@ class SelectedDateRangeNotifier extends ChangeNotifier {
 
 // ── Dashboard providers static helper ────────────────────────────────────────
 
-
 class CoachDashboardProviders {
   static Widget provideAll({required Widget child}) {
-    return ChangeNotifierProvider<CoachDashboardStatNotifier>(
-      create: (_) => CoachDashboardStatNotifier()..fetch(),
-      child: ChangeNotifierProvider<CoachDashboardRepositoryProvider>(
-        create: (_) => CoachDashboardRepositoryProvider(),
-        child: ChangeNotifierProvider<SelectedDateRangeNotifier>(
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<CoachDashboardStatNotifier>(
+          create: (_) => CoachDashboardStatNotifier()..fetch(),
+        ),
+        ChangeNotifierProvider<CoachDashboardRepositoryProvider>(
+          create: (_) => CoachDashboardRepositoryProvider(),
+        ),
+        ChangeNotifierProvider<SelectedDateRangeNotifier>(
           create: (_) => SelectedDateRangeNotifier(),
-          child: ChangeNotifierProxyProvider<CoachDashboardRepositoryProvider,
-              ActiveClientsNotifier>(
-            create: (ctx) {
-              final n = ActiveClientsNotifier(
-                  ctx.read<CoachDashboardRepositoryProvider>().repository);
-              n.fetch();
-              return n;
-            },
-            update: (_, repoProvider, previous) =>
-                previous ??
-                ActiveClientsNotifier(repoProvider.repository),
-            child: ChangeNotifierProxyProvider<CoachDashboardRepositoryProvider,
-                ClientDataNotifier>(
-              create: (ctx) => ClientDataNotifier(
-                  ctx.read<CoachDashboardRepositoryProvider>().repository),
-              update: (_, repoProvider, previous) =>
-                  previous ?? ClientDataNotifier(repoProvider.repository),
-              child: child,
-            ),
+        ),
+        ChangeNotifierProxyProvider<CoachDashboardRepositoryProvider, ActiveClientsNotifier>(
+          create: (ctx) {
+            final n = ActiveClientsNotifier(ctx.read<CoachDashboardRepositoryProvider>().repository);
+            n.fetch();
+            return n;
+          },
+          update: (_, repoProvider, previous) => previous ?? ActiveClientsNotifier(repoProvider.repository),
+        ),
+        ChangeNotifierProxyProvider<CoachDashboardRepositoryProvider, ClientDataNotifier>(
+          create: (ctx) => ClientDataNotifier(ctx.read<CoachDashboardRepositoryProvider>().repository),
+          update: (_, repoProvider, previous) => previous ?? ClientDataNotifier(repoProvider.repository),
+        ),
+        ChangeNotifierProvider<CoachSubscriptionsNotifier>(
+          create: (_) => CoachSubscriptionsNotifier(
+            CoachSubscriptionRepository(Supabase.instance.client),
           ),
         ),
-      ),
+      ],
+      child: child,
     );
   }
 }

@@ -13,7 +13,7 @@ import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
 import 'package:provider/provider.dart';
 import 'features/coach/presentation/providers/coach_setup_provider.dart';
 import 'theme/app_colors.dart';
-import 'theme/app_text.dart';
+import 'theme/auth_app_text.dart';
 import 'widgets/language_toggle.dart';
 import 'widgets/premium_glass_bg.dart';
 
@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen>
       await profileProv.fetchProfile();
       if (!mounted) return;
 
-      _showSnack('Welcome back, ${res.user?.email}!', isError: false);
+      context._showSnack('Welcome back, ${res.user?.email}!', isError: false);
 
       if (profileProv.needsUserOnboarding) {
         Navigator.pushReplacement(context, _route(const OnboardingFlow()));
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(context, _route(const FitnessHomePage()));
       }
     } catch (e) {
-      if (mounted) _showSnack(e.toString(), isError: true);
+      if (mounted) context._showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -238,9 +238,52 @@ class _LoginScreenState extends State<LoginScreen>
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
-      await AuthService().signInWithGoogle();
+      debugPrint("Starting Google Sign-In process...");
+      final res = await AuthService().signInWithGoogle();
+      debugPrint("Google Sign-In successful. User ID: ${res.user?.id}");
+      
+      final profileProv = context.read<ProfileProvider>();
+      debugPrint("Fetching profile...");
+      await profileProv.fetchProfile();
+      debugPrint("Profile fetched. needsRoleSelection: ${profileProv.needsRoleSelection}");
+
+      if (profileProv.needsRoleSelection) {
+        if (!mounted) return;
+        debugPrint("Showing Role Selection Dialog...");
+        final role = await showDialog<String>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const _RoleSelectionDialog(),
+        );
+        
+        if (role != null) {
+          debugPrint("Setting role to: $role");
+          await profileProv.setRole(role);
+        }
+      }
+      
+      if (!mounted) return;
+
+      context._showSnack('Signed in with Google!', isError: false);
+
+      if (profileProv.needsUserOnboarding) {
+        debugPrint("Navigating to OnboardingFlow");
+        Navigator.pushReplacement(context, _route(const OnboardingFlow()));
+      } else if (profileProv.isCoach) {
+        if (profileProv.needsCoachSetup) {
+          debugPrint("Navigating to CoachProfileSetupScreen");
+          Navigator.pushReplacement(context, _route(ChangeNotifierProvider(create: (_) => CoachSetupNotifier(), child: const CoachProfileSetupScreen())));
+        } else {
+          debugPrint("Navigating to FitnessHomePage (Coach)");
+          Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+        }
+      } else {
+        debugPrint("Navigating to FitnessHomePage (Athlete)");
+        Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+      }
     } catch (e) {
-      if (mounted) _showSnack(e.toString(), isError: true);
+      debugPrint("Google Sign-In Error: $e");
+      if (mounted) context._showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -307,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen>
                               ),
                               child: Text(
                                 AppLocalizations.of(context)!.forgotPassword,
-                                style: AppText.labelSm.copyWith(
+                                style: AuthAppText.labelSm.copyWith(
                                   color: AppColors.secondary,
                                   fontWeight: FontWeight.w800,
                                   letterSpacing: 1.5,
@@ -374,7 +417,7 @@ class _LoginScreenState extends State<LoginScreen>
                         child: _SocialBtn(
                           icon: Icons.apple_rounded,
                           label: AppLocalizations.of(context)!.apple,
-                          onTap: () => _showSnack(
+                          onTap: () => context._showSnack(
                             'Apple sign-in coming soon',
                             isError: false,
                           ),
@@ -481,7 +524,7 @@ class _SignupScreenState extends State<SignupScreen>
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     if (!_agreed) {
-      _showSnack('Please agree to Terms & Conditions', isError: true);
+      context._showSnack('Please agree to Terms & Conditions', isError: true);
       return;
     }
     setState(() => _isLoading = true);
@@ -507,7 +550,7 @@ class _SignupScreenState extends State<SignupScreen>
           }, onConflict: 'id');
         } catch (_) {}
 
-        _showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
+        context._showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
 
         final profileProv = context.read<ProfileProvider>();
         await profileProv.fetchProfile();
@@ -527,7 +570,7 @@ class _SignupScreenState extends State<SignupScreen>
         }
       }
     } catch (e) {
-      if (mounted) _showSnack(e.toString(), isError: true);
+      if (mounted) context._showSnack(e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -685,7 +728,7 @@ class _SignupScreenState extends State<SignupScreen>
                                       const SizedBox(width: 8),
                                       Text(
                                         'Athlete',
-                                        style: AppText.labelMd.copyWith(
+                                        style: AuthAppText.labelMd.copyWith(
                                           color: _selectedRole == 'client'
                                               ? AppColors.primaryFixed
                                               : AppColors.onSurfaceVariant,
@@ -726,7 +769,7 @@ class _SignupScreenState extends State<SignupScreen>
                                       const SizedBox(width: 8),
                                       Text(
                                         'Coach',
-                                        style: AppText.labelMd.copyWith(
+                                        style: AuthAppText.labelMd.copyWith(
                                           color: _selectedRole == 'coach'
                                               ? AppColors.primaryFixed
                                               : AppColors.onSurfaceVariant,
@@ -778,15 +821,50 @@ class _SignupScreenState extends State<SignupScreen>
                           label: AppLocalizations.of(context)!.google,
                           onTap: () async {
                             if (!_agreed) {
-                              _showSnack('Agree to Terms first', isError: true);
+                              context._showSnack('Agree to Terms first', isError: true);
                               return;
                             }
                             setState(() => _isLoading = true);
                             try {
+                              debugPrint("SignupScreen: Starting Google Sign-In...");
                               await AuthService().signInWithGoogle();
+                              
+                              final profileProv = context.read<ProfileProvider>();
+                              debugPrint("SignupScreen: Fetching profile...");
+                              await profileProv.fetchProfile();
+
+                              if (profileProv.needsRoleSelection) {
+                                if (!mounted) return;
+                                debugPrint("SignupScreen: Showing Role Selection Dialog...");
+                                final role = await showDialog<String>(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => const _RoleSelectionDialog(),
+                                );
+                                
+                                if (role != null) {
+                                  debugPrint("SignupScreen: Setting role to $role");
+                                  await profileProv.setRole(role);
+                                }
+                              }
+
+                              if (!mounted) return;
+
+                              if (profileProv.needsUserOnboarding) {
+                                Navigator.pushReplacement(context, _route(const OnboardingFlow()));
+                              } else if (profileProv.isCoach) {
+                                if (profileProv.needsCoachSetup) {
+                                  Navigator.pushReplacement(context, _route(ChangeNotifierProvider(create: (_) => CoachSetupNotifier(), child: const CoachProfileSetupScreen())));
+                                } else {
+                                  Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+                                }
+                              } else {
+                                Navigator.pushReplacement(context, _route(const FitnessHomePage()));
+                              }
                             } catch (e) {
+                              debugPrint("SignupScreen: Google Sign-In Error: $e");
                               if (mounted)
-                                _showSnack(e.toString(), isError: true);
+                                context._showSnack(e.toString(), isError: true);
                             } finally {
                               if (mounted) setState(() => _isLoading = false);
                             }
@@ -798,7 +876,7 @@ class _SignupScreenState extends State<SignupScreen>
                         child: _SocialBtn(
                           icon: Icons.apple_rounded,
                           label: AppLocalizations.of(context)!.apple,
-                          onTap: () => _showSnack(
+                          onTap: () => context._showSnack(
                             'Apple sign-up coming soon',
                             isError: false,
                           ),
@@ -871,7 +949,7 @@ class _TopBar extends StatelessWidget {
         const Spacer(),
         Text(
           'v2.4 // KINETIC',
-          style: AppText.labelSm.copyWith(
+          style: AuthAppText.labelSm.copyWith(
             color: AppColors.onSurfaceVariant.withOpacity(0.6),
             letterSpacing: 1.5,
             fontSize: 10,
@@ -956,10 +1034,10 @@ class _Headline extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(line1, style: AppText.displaySm),
+        Text(line1, style: AuthAppText.displaySm),
         Text(
           line2,
-          style: AppText.displaySm.copyWith(color: AppColors.primaryFixed),
+          style: AuthAppText.displaySm.copyWith(color: AppColors.primaryFixed),
         ),
         const SizedBox(height: 6),
         Row(
@@ -972,7 +1050,7 @@ class _Headline extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               sub,
-              style: AppText.labelSm.copyWith(
+              style: AuthAppText.labelSm.copyWith(
                 color: AppColors.onSurfaceVariant,
                 letterSpacing: 1.5,
               ),
@@ -1038,7 +1116,7 @@ class _FieldLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
-    style: AppText.labelSm.copyWith(
+    style: AuthAppText.labelSm.copyWith(
       color: AppColors.onSurfaceVariant,
       letterSpacing: 2.0,
       fontSize: 10,
@@ -1253,7 +1331,7 @@ class _KineticButtonState extends State<KineticButton>
                   ),
                 )
               else
-                Text(widget.label, style: AppText.buttonPrimary),
+                Text(widget.label, style: AuthAppText.buttonPrimary),
               Container(
                 width: 36,
                 height: 36,
@@ -1298,7 +1376,7 @@ class _AuthDivider extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             AppLocalizations.of(context)!.externalAuth,
-            style: AppText.labelSm.copyWith(
+            style: AuthAppText.labelSm.copyWith(
               color: AppColors.outline.withOpacity(0.6),
               fontSize: 9,
               letterSpacing: 2,
@@ -1386,7 +1464,7 @@ class _SocialBtnState extends State<_SocialBtn>
                   const SizedBox(width: 8),
                   Text(
                     widget.label,
-                    style: AppText.buttonSecondary.copyWith(
+                    style: AuthAppText.buttonSecondary.copyWith(
                       fontSize: 11,
                       letterSpacing: 1.5,
                     ),
@@ -1430,7 +1508,7 @@ class _TermsRow extends StatelessWidget {
         Expanded(
           child: RichText(
             text: TextSpan(
-              style: AppText.bodySm.copyWith(
+              style: AuthAppText.bodySm.copyWith(
                 color: AppColors.onSurfaceVariant,
                 fontSize: 11,
               ),
@@ -1438,7 +1516,7 @@ class _TermsRow extends StatelessWidget {
                 TextSpan(text: AppLocalizations.of(context)!.agreeTerms),
                 TextSpan(
                   text: AppLocalizations.of(context)!.termsConditions,
-                  style: AppText.bodySm.copyWith(
+                  style: AuthAppText.bodySm.copyWith(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,
@@ -1448,7 +1526,7 @@ class _TermsRow extends StatelessWidget {
                 TextSpan(text: AppLocalizations.of(context)!.and),
                 TextSpan(
                   text: AppLocalizations.of(context)!.privacyPolicy,
-                  style: AppText.bodySm.copyWith(
+                  style: AuthAppText.bodySm.copyWith(
                     color: AppColors.onSurface,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,
@@ -1480,12 +1558,12 @@ class _ToggleLink extends StatelessWidget {
         onTap: onTap,
         child: RichText(
           text: TextSpan(
-            style: AppText.labelMd.copyWith(color: AppColors.onSurfaceVariant),
+            style: AuthAppText.labelMd.copyWith(color: AppColors.onSurfaceVariant),
             children: [
               TextSpan(text: prefix),
               TextSpan(
                 text: action,
-                style: AppText.labelMd.copyWith(
+                style: AuthAppText.labelMd.copyWith(
                   color: AppColors.primaryFixed,
                   fontWeight: FontWeight.w900,
                 ),
@@ -1637,4 +1715,145 @@ extension on BuildContext {
   }
 }
 
-void _showSnack(String msg, {required bool isError}) {}
+class _RoleSelectionDialog extends StatelessWidget {
+  const _RoleSelectionDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.glass2,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.glassBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 30,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryFixed.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.person_add_rounded,
+                  color: AppColors.primaryFixed,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'WELCOME TO CORE GYM',
+                style: AuthAppText.headlineSm.copyWith(
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Choose your path to get started',
+                textAlign: TextAlign.center,
+                style: AuthAppText.labelMd.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 32),
+              _RoleOption(
+                icon: Icons.fitness_center_rounded,
+                title: 'ATHLETE',
+                subtitle: 'I want to track my workouts',
+                onTap: () => Navigator.pop(context, 'client'),
+              ),
+              const SizedBox(height: 16),
+              _RoleOption(
+                icon: Icons.sports_rounded,
+                title: 'COACH',
+                subtitle: 'I want to manage my clients',
+                onTap: () => Navigator.pop(context, 'coach'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RoleOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _RoleOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.glass1,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.glassBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.primaryFixed.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppColors.primaryFixed),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AuthAppText.labelLg.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: AuthAppText.labelSm.copyWith(
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: AppColors.outline,
+              size: 14,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

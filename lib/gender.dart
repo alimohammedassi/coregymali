@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'login_sign_up.dart';
 import 'theme/app_colors.dart';
-import 'theme/app_text.dart';
+import 'theme/auth_app_text.dart';
 
 class GenderSelectionScreen extends StatefulWidget {
   const GenderSelectionScreen({super.key});
@@ -95,7 +95,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                     children: [
                       Text(
                         'KINETIC',
-                        style: AppText.headlineSm.copyWith(
+                        style: AuthAppText.headlineSm.copyWith(
                           color: AppColors.primaryFixed,
                           fontSize: 18,
                         ),
@@ -103,7 +103,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                       const Spacer(),
                       Text(
                         'STEP 01/03',
-                        style: AppText.labelMd.copyWith(
+                        style: AuthAppText.labelMd.copyWith(
                           color: AppColors.onSurfaceVariant,
                         ),
                       ),
@@ -125,13 +125,13 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                             children: [
                               Text(
                                 'SELECT YOUR',
-                                style: AppText.displaySm.copyWith(
+                                style: AuthAppText.displaySm.copyWith(
                                   color: AppColors.onSurface,
                                 ),
                               ),
                               Text(
                                 'IDENTITY',
-                                style: AppText.displaySm.copyWith(
+                                style: AuthAppText.displaySm.copyWith(
                                   color: AppColors.primaryFixed,
                                 ),
                               ),
@@ -147,7 +147,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                               const SizedBox(height: 16),
                               Text(
                                 'HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU',
-                                style: AppText.bodyMd.copyWith(
+                                style: AuthAppText.bodyMd.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                   height: 1.6,
                                   letterSpacing: 0.5,
@@ -280,7 +280,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                 // Label
                 Text(
                   label,
-                  style: AppText.headlineSm.copyWith(
+                  style: AuthAppText.headlineSm.copyWith(
                     color: isSelected ? AppColors.onSurface : AppColors.onSurfaceVariant,
                     fontSize: 22,
                     letterSpacing: 3,

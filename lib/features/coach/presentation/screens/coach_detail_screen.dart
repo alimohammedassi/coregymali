@@ -32,11 +32,11 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<SelectedCoachNotifier>().fetchCoach(widget.coachId).then((_) {
-        final c = context.read<SelectedCoachNotifier>().coach;
-        if (c != null) _fetchMedia(c);
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await context.read<SelectedCoachNotifier>().fetchCoach(widget.coachId);
+      if (!mounted) return;
+      final c = context.read<SelectedCoachNotifier>().coach;
+      if (c != null) _fetchMedia(c);
       // Listen to Stripe payment state changes for snackbar feedback
       context.read<StripePaymentNotifier>().addListener(_onStripeStateChange);
     });

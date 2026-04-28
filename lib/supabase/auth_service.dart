@@ -1,4 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import 'supabase_config.dart';
 
 class AuthService {
@@ -38,15 +40,51 @@ class AuthService {
     }
   }
 
-  // Sign in with Google
-  Future<void> signInWithGoogle() async {
+  // Sign in with Google (Native Flow)
+  Future<AuthResponse> signInWithGoogle() async {
     try {
-      await _client.auth.signInWithOAuth(
-        OAuthProvider.google,
-        redirectTo: 'io.supabase.coregym://login-callback/',
+      // NOTE: Replace with your actual WEB Client ID from Google Cloud Console
+      // This is the one you pasted in Supabase Dashboard
+      const webClientId = '878197831804-50hoh253cbqhugc283bbuo6siujc9b9s.apps.googleusercontent.com'; 
+      
+      final googleSignIn = GoogleSignIn(
+        serverClientId: webClientId,
       );
+      
+      debugPrint("Starting Google Sign-In...");
+      final googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        debugPrint("Google User is NULL (canceled or failed)");
+        throw 'Google Sign-In canceled';
+      }
+
+      debugPrint("Google User: ${googleUser.email}");
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      final accessToken = googleAuth.accessToken;
+
+      debugPrint("ID Token length: ${idToken?.length ?? 0}");
+      debugPrint("Access Token length: ${accessToken?.length ?? 0}");
+
+      if (idToken == null) {
+        throw 'No ID Token found. Make sure you configured the Web Client ID correctly.';
+      }
+
+      debugPrint("Signing into Supabase with ID Token...");
+      final response = await _client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
+      );
+      debugPrint("Supabase Sign-In Successful: ${response.user?.id}");
+      return response;
     } on AuthException catch (e) {
       throw _handleAuthException(e);
+    } catch (e) {
+      if (e.toString().contains('network_error')) {
+        throw 'Network error. Please check your internet connection.';
+      }
+      throw e.toString();
     }
   }
 

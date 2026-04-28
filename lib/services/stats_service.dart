@@ -7,12 +7,14 @@ class StatsService {
     if (currentUserId == null) return _empty();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     try {
-      return await supabase
+      final res = await supabase
           .from('daily_summary')
           .select()
           .eq('user_id', currentUserId!)
           .eq('summary_date', today)
-          .single();
+          .maybeSingle();
+      if (res == null) return _empty();
+      return res;
     } on PostgrestException catch (e) {
       print('Supabase error getting today summary: ${e.message} | code: ${e.code}');
       return _empty();
@@ -64,11 +66,13 @@ class StatsService {
   Future<Map<String, dynamic>> getGoals() async {
     if (currentUserId == null) return _defaultGoals();
     try {
-      return await supabase
+      final res = await supabase
           .from('user_goals')
           .select()
           .eq('user_id', currentUserId!)
-          .single();
+          .maybeSingle();
+      if (res == null) return _defaultGoals();
+      return res;
     } on PostgrestException catch (e) {
       print('Supabase error getting goals: ${e.message} | code: ${e.code}');
       return _defaultGoals();

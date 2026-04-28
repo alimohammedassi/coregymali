@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'gender.dart';
 import 'theme/app_colors.dart';
-import 'theme/app_text.dart';
+import 'theme/auth_app_text.dart';
 import 'services/supabase_client.dart';
 
 import 'screens/onboarding_flow.dart';
@@ -200,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
                           // Top branding
                           Text(
                             'KINETIC SYSTEM V2.0',
-                            style: AppText.labelMd.copyWith(
+                            style: AuthAppText.labelMd.copyWith(
                               color: AppColors.primaryFixed,
                               letterSpacing: 3.0,
                             ),
@@ -245,7 +245,7 @@ class _SplashScreenState extends State<SplashScreen>
                           Center(
                             child: Text(
                               'CORE',
-                              style: AppText.displayLg.copyWith(
+                              style: AuthAppText.displayLg.copyWith(
                                 fontSize: 80,
                                 letterSpacing: -3,
                               ),
@@ -265,7 +265,7 @@ class _SplashScreenState extends State<SplashScreen>
                               ).createShader(bounds),
                               child: Text(
                                 'CORE',
-                                style: AppText.displayLg.copyWith(
+                                style: AuthAppText.displayLg.copyWith(
                                   fontSize: 64,
                                   letterSpacing: -3,
                                   color: Colors.white,
@@ -296,7 +296,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                                 child: Text(
                                   'INITIALIZING HIGH-PERFORMANCE MODULES',
-                                  style: AppText.labelMd.copyWith(
+                                  style: AuthAppText.labelMd.copyWith(
                                     color: AppColors.onSurfaceVariant,
                                   ),
                                   textAlign: TextAlign.center,
@@ -309,7 +309,7 @@ class _SplashScreenState extends State<SplashScreen>
                           // Progress section
                           Text(
                             'ELECTRIC VOLT ENGINE',
-                            style: AppText.labelMd.copyWith(
+                            style: AuthAppText.labelMd.copyWith(
                               color: AppColors.onSurfaceVariant,
                             ),
                           ),
@@ -319,7 +319,7 @@ class _SplashScreenState extends State<SplashScreen>
                             builder: (context, child) {
                               return Text(
                                 '${(_progressAnimation.value * 100).toInt()}%',
-                                style: AppText.headlineMd.copyWith(
+                                style: AuthAppText.headlineMd.copyWith(
                                   color: AppColors.primaryFixed,
                                 ),
                               );
@@ -362,8 +362,8 @@ class _SplashScreenState extends State<SplashScreen>
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('SYNCING BIO-METRICS', style: AppText.labelSm),
-                              Text('COREGYM', style: AppText.labelSm),
+                              Text('SYNCING BIO-METRICS', style: AuthAppText.labelSm),
+                              Text('COREGYM', style: AuthAppText.labelSm),
                             ],
                           ),
 
@@ -402,7 +402,7 @@ class _SplashScreenState extends State<SplashScreen>
                                       children: [
                                         Text(
                                           'STATUS',
-                                          style: AppText.labelMd.copyWith(
+                                          style: AuthAppText.labelMd.copyWith(
                                             color: AppColors.onSurface,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -410,7 +410,7 @@ class _SplashScreenState extends State<SplashScreen>
                                         const SizedBox(height: 2),
                                         Text(
                                           'READY FOR IGNITION',
-                                          style: AppText.labelSm.copyWith(
+                                          style: AuthAppText.labelSm.copyWith(
                                             color: AppColors.onSurfaceVariant,
                                           ),
                                         ),
@@ -443,7 +443,7 @@ class _SplashScreenState extends State<SplashScreen>
                                         const SizedBox(width: 6),
                                         Text(
                                           'LIVE',
-                                          style: AppText.labelMd.copyWith(
+                                          style: AuthAppText.labelMd.copyWith(
                                             color: AppColors.primaryFixed,
                                             fontWeight: FontWeight.w800,
                                           ),
@@ -571,7 +571,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 Text(
                   'KINETIC',
-                  style: AppText.headlineSm.copyWith(
+                  style: AuthAppText.headlineSm.copyWith(
                     color: AppColors.primaryFixed,
                     fontSize: 18,
                   ),
@@ -595,7 +595,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                       child: Text(
                         '${(currentPage + 1).toString().padLeft(2, '0')}/${onboardingData.length.toString().padLeft(2, '0')}',
-                        style: AppText.labelMd.copyWith(
+                        style: AuthAppText.labelMd.copyWith(
                           color: AppColors.primaryFixed,
                           fontWeight: FontWeight.w800,
                         ),
@@ -810,7 +810,7 @@ class OnboardingPage extends StatelessWidget {
 
                           Text(
                             data.description,
-                            style: AppText.bodyMd.copyWith(
+                            style: AuthAppText.bodyMd.copyWith(
                               color: AppColors.onSurfaceVariant,
                               height: 1.6,
                             ),
@@ -839,7 +839,7 @@ class OnboardingPage extends StatelessWidget {
                                     isLastPage
                                         ? 'INITIATE ENGINE'
                                         : 'NEXT',
-                                    style: AppText.buttonPrimary,
+                                    style: AuthAppText.buttonPrimary,
                                   ),
                                   const SizedBox(width: 10),
                                   Icon(
@@ -866,14 +866,14 @@ class OnboardingPage extends StatelessWidget {
                   onTap: onSkipPressed,
                   child: RichText(
                     text: TextSpan(
-                      style: AppText.labelMd.copyWith(
+                      style: AuthAppText.labelMd.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
                       children: [
                         const TextSpan(text: 'ALREADY A MEMBER? '),
                         TextSpan(
                           text: 'SIGN IN',
-                          style: AppText.labelMd.copyWith(
+                          style: AuthAppText.labelMd.copyWith(
                             color: AppColors.onSurface,
                             fontWeight: FontWeight.w800,
                           ),
@@ -899,7 +899,7 @@ class OnboardingPage extends StatelessWidget {
         for (int i = 0; i < words.length; i++)
           Text(
             words[i].toUpperCase(),
-            style: AppText.displaySm.copyWith(
+            style: AuthAppText.displaySm.copyWith(
               fontSize: i == 1 ? 44 : 38,
               color: i == 1 ? AppColors.primaryFixed : AppColors.onSurface,
             ),
@@ -955,13 +955,13 @@ class OnboardingPage extends StatelessWidget {
                     const SizedBox(height: 20),
                     Text(
                       data.placeholderText,
-                      style: AppText.titleMd,
+                      style: AuthAppText.titleMd,
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Image Placeholder',
-                      style: AppText.bodySm.copyWith(
+                      style: AuthAppText.bodySm.copyWith(
                         color: AppColors.onSurfaceVariant,
                       ),
                     ),
@@ -1043,10 +1043,10 @@ class LoginPlaceholder extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Text('CORE', style: AppText.displayMd),
+                    Text('CORE', style: AuthAppText.displayMd),
                     Text(
                       'GYM',
-                      style: AppText.labelLg.copyWith(
+                      style: AuthAppText.labelLg.copyWith(
                         color: AppColors.primaryFixed,
                         letterSpacing: 6,
                       ),
@@ -1068,11 +1068,11 @@ class LoginPlaceholder extends StatelessWidget {
                             size: 40,
                           ),
                           const SizedBox(height: 16),
-                          Text('Login Screen', style: AppText.headlineSm),
+                          Text('Login Screen', style: AuthAppText.headlineSm),
                           const SizedBox(height: 8),
                           Text(
                             'Replace this with your\nlogin page implementation',
-                            style: AppText.bodyMd,
+                            style: AuthAppText.bodyMd,
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -1100,7 +1100,7 @@ class LoginPlaceholder extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          child: Text('CONTINUE TO LOGIN', style: AppText.buttonPrimary),
+                          child: Text('CONTINUE TO LOGIN', style: AuthAppText.buttonPrimary),
                         ),
                       ),
                     ),

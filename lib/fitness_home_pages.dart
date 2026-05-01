@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:coregym2/chat/presentation/screens/chat_list_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'profile.dart';
@@ -70,6 +71,11 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       label: 'Workout',
     ),
     TabInfo(
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: 'Messages',
+    ),
+    TabInfo(
       icon: Icons.people_outline_rounded,
       activeIcon: Icons.people_rounded,
       label: 'Coaches',
@@ -98,6 +104,11 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       label: 'Workout',
     ),
     TabInfo(
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: 'Messages',
+    ),
+    TabInfo(
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard_rounded,
       label: 'Dashboard',
@@ -116,14 +127,22 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   }
 
   List<Widget> _buildChildren(bool isCoach) {
+    if (isCoach) {
+      return [
+        _HomeScreenCore(onNavigate: _onNavigate),
+        const NutritionScreen(),
+        const WorkoutScreen(),
+        const ChatListScreen(),
+        CoachDashboardProviders.provideAll(child: const CoachDashboardScreen()),
+        const ProfilePage(),
+      ];
+    }
     return [
       _HomeScreenCore(onNavigate: _onNavigate),
       const NutritionScreen(),
       const WorkoutScreen(),
-      if (isCoach)
-        CoachDashboardProviders.provideAll(child: const CoachDashboardScreen())
-      else
-        _buildCoachMarketplace(),
+      const ChatListScreen(),
+      _buildCoachMarketplace(),
       const ProfilePage(),
     ];
   }

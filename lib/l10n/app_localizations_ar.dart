@@ -566,4 +566,31 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get extraActive => 'نشاط مكثف';
+
+  @override
+  String get navMessages => 'الرسائل';
+
+  @override
+  String get chatTitle => 'الرسائل';
+
+  @override
+  String get noConversations => 'لا توجد محادثات بعد';
+
+  @override
+  String get noConversationsHint => 'اشترك في مدرب لبدء المحادثة';
+
+  @override
+  String get typeMessage => 'اكتب رسالة...';
+
+  @override
+  String get sayHello => 'قل مرحباً! 👋';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get coach => 'المدرب';
+
+  @override
+  String get client => 'العميل';
 }

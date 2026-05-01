@@ -96,8 +96,12 @@ class CoachRepositoryImpl implements ICoachRepository {
 
       await _client
           .from('profiles')
-          .update({'role': 'coach'})
-          .eq('id', userId);
+          .upsert({
+            'id': userId,
+            'role': 'coach',
+            'created_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          });
 
       return CoachModel.fromJson(response).toEntity();
     } on PostgrestException catch (e) {

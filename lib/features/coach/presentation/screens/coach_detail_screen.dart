@@ -9,6 +9,9 @@ import '../providers/stripe_provider.dart';
 import '../providers/subscription_providers.dart';
 import '../widgets/coach_shared.dart';
 import '../../domain/entities/coach_content_entity.dart';
+import '../../../../chat/data/repositories/chat_repository.dart';
+import '../../../../chat/presentation/providers/chat_providers.dart';
+import '../../../../chat/presentation/screens/chat_room_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -463,7 +466,22 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                       AppText.headlineSm.copyWith(color: kCoachGold)),
             ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 12),
+          if (isSubscribed)
+            GestureDetector(
+              onTap: () => _openChat(context, coach),
+              child: Container(
+                width: 48,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: kCoachCard2,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.chat_bubble_rounded,
+                    color: kCoachGold, size: 22),
+              ),
+            ),
+          if (isSubscribed) const SizedBox(width: 12),
           Expanded(
             child: Consumer<StripePaymentNotifier>(
               builder: (ctx, stripeN, _) => GestureDetector(
@@ -501,6 +519,28 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _openChat(BuildContext context, CoachEntity coach) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+
+    final repo = ChatRepository(Supabase.instance.client);
+    final conv = await repo.getOrCreateConversation(
+      clientId: userId,
+      coachId: coach.userId,
+      subscriptionId: context.read<ActiveSubscriptionNotifier>().subscription?.id,
+    );
+    if (conv == null || !context.mounted) return;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChangeNotifierProvider(
+          create: (_) => ChatNotifier(context.read<ChatRepoProvider>().repo, conv.id),
+          child: ChatRoomScreen(conversation: conv),
+        ),
       ),
     );
   }

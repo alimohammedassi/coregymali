@@ -209,5 +209,15 @@
   "lightlyActive": "نشاط خفيف",
   "moderatelyActive": "نشاط متوسط",
   "veryActive": "نشيط جداً",
-  "extraActive": "نشاط مكثف"
+  "extraActive": "نشاط مكثف",
+
+  "navMessages": "الرسائل",
+  "chatTitle": "الرسائل",
+  "noConversations": "لا توجد محادثات بعد",
+  "noConversationsHint": "اشترك في مدرب لبدء المحادثة",
+  "typeMessage": "اكتب رسالة...",
+  "sayHello": "قل مرحباً! 👋",
+  "retry": "إعادة المحاولة",
+  "coach": "المدرب",
+  "client": "العميل"
 }

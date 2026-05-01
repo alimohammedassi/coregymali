@@ -567,4 +567,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get extraActive => 'Extra Active';
+
+  @override
+  String get navMessages => 'Messages';
+
+  @override
+  String get chatTitle => 'Messages';
+
+  @override
+  String get noConversations => 'No conversations yet';
+
+  @override
+  String get noConversationsHint => 'Subscribe to a coach to start chatting';
+
+  @override
+  String get typeMessage => 'Type a message...';
+
+  @override
+  String get sayHello => 'Say hello! 👋';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get coach => 'Coach';
+
+  @override
+  String get client => 'Client';
 }

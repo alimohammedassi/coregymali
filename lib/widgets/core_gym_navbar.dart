@@ -32,6 +32,11 @@ class CoreGymNavBar extends StatelessWidget {
       label: 'Workout',
     ),
     _NavItem(
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: 'Messages',
+    ),
+    _NavItem(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
       label: 'Profile',

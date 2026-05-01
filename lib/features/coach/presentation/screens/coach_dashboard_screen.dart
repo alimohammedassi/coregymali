@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../supabase/auth_service.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
+import '../../../../l10n/app_localizations.dart';
 
 import '../../data/models/subscription_model.dart';
 import '../../data/models/phase_model.dart';
@@ -19,18 +22,18 @@ import '../providers/coach_media_provider.dart';
 import '../providers/coach_profile_provider.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const _kGold       = Color(0xFFC9A84C);
-const _kGoldDim    = Color(0xFFA07832);
-const _kGoldGlow   = Color(0x33C9A84C);
+const _kGold = Color(0xFFC9A84C);
+const _kGoldDim = Color(0xFFA07832);
+const _kGoldGlow = Color(0x33C9A84C);
 const _kGoldSubtle = Color(0x1AC9A84C);
-const _kSuccess    = Color(0xFF52B788);
-const _kWarning    = Color(0xFFFFC107);
-const _kBlue       = Color(0xFF64B5F6);
-const _kError      = Color(0xFFEF5350);
+const _kSuccess = Color(0xFF52B788);
+const _kWarning = Color(0xFFFFC107);
+const _kBlue = Color(0xFF64B5F6);
+const _kError = Color(0xFFEF5350);
 
-const _kCardR  = BorderRadius.all(Radius.circular(20));
+const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kBadgeR = BorderRadius.all(Radius.circular(8));
-const _kPillR  = BorderRadius.all(Radius.circular(12));
+const _kPillR = BorderRadius.all(Radius.circular(12));
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
@@ -136,8 +139,97 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
             ),
           ),
         ),
+        const SizedBox(width: 8),
+        _SignOutBtn(),
         const SizedBox(width: 12),
       ],
+    );
+  }
+}
+
+// ── Sign out button ─────────────────────────────────────────────────────────────
+
+class _SignOutBtn extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surfaceContainerLow.withOpacity(0.6),
+      borderRadius: const BorderRadius.all(Radius.circular(12)),
+      child: InkWell(
+        borderRadius: const BorderRadius.all(Radius.circular(12)),
+        onTap: () => _showSignOutDialog(context),
+        splashColor: const Color(0x33EF5350),
+        child: Container(
+          width: 40,
+          height: 40,
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.logout_rounded,
+            color: Color(0xFFEF5350),
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext ctx) {
+    final l = AppLocalizations.of(ctx)!;
+    showDialog(
+      context: ctx,
+      builder: (dCtx) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          l.signOutTitle,
+          style: AppText.headlineSm.copyWith(fontSize: 18),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          l.signOutConfirm,
+          style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dCtx),
+            child: Text(
+              'CANCEL', // TODO: l10n
+              style: AppText.labelMd.copyWith(
+                color: AppColors.onSurfaceVariant,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () async {
+              HapticFeedback.mediumImpact();
+              Navigator.pop(dCtx);
+              await AuthService().signOut();
+              if (ctx.mounted) {
+                Navigator.of(
+                  ctx,
+                ).pushNamedAndRemoveUntil('/login', (route) => false);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF5350),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              l.signOutTitle,
+              style: AppText.labelMd.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -190,10 +282,7 @@ class _SectionHeader extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Text(title, style: AppText.headlineMd),
-        if (trailing != null) ...[
-          const Spacer(),
-          trailing!,
-        ],
+        if (trailing != null) ...[const Spacer(), trailing!],
       ],
     );
   }
@@ -239,7 +328,9 @@ class _StatsRow extends StatelessWidget {
     }
 
     if (statsNotifier.error != null && stats == null) {
-      return _ErrorCard(message: 'Failed to load stats: ${statsNotifier.error}'); // TODO: l10n
+      return _ErrorCard(
+        message: 'Failed to load stats: ${statsNotifier.error}',
+      ); // TODO: l10n
     }
 
     return LayoutBuilder(
@@ -305,9 +396,10 @@ class _ShimmerStatsRowState extends State<_ShimmerStatsRow>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _anim = Tween<double>(begin: 0.3, end: 0.7).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 0.7,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -421,10 +513,10 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
   int _selectedTab = 0;
 
   static const _tabs = [
-    (label: 'All',     icon: Icons.grid_view_rounded),        // TODO: l10n
-    (label: 'Active',  icon: Icons.check_circle_outline),     // TODO: l10n
-    (label: 'Pending', icon: Icons.schedule_rounded),         // TODO: l10n
-    (label: 'Expired', icon: Icons.cancel_outlined),          // TODO: l10n
+    (label: 'All', icon: Icons.grid_view_rounded), // TODO: l10n
+    (label: 'Active', icon: Icons.check_circle_outline), // TODO: l10n
+    (label: 'Pending', icon: Icons.schedule_rounded), // TODO: l10n
+    (label: 'Expired', icon: Icons.cancel_outlined), // TODO: l10n
   ];
 
   @override
@@ -470,7 +562,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
   }
 
   Widget _buildFilterBar(CoachSubscriptionsNotifier notifier) {
-    final all   = notifier.subscriptions ?? [];
+    final all = notifier.subscriptions ?? [];
     final counts = [
       all.length,
       all.where((s) => s.status == 'active').length,
@@ -491,7 +583,10 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: selected ? _kGold : Colors.transparent,
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
@@ -508,33 +603,44 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
                     Icon(
                       tab.icon,
                       size: 14,
-                      color: selected ? Colors.black : AppColors.onSurfaceVariant,
+                      color: selected
+                          ? Colors.black
+                          : AppColors.onSurfaceVariant,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       tab.label,
                       style: AppText.bodySm.copyWith(
-                        color: selected ? Colors.black : AppColors.onSurfaceVariant,
-                        fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+                        color: selected
+                            ? Colors.black
+                            : AppColors.onSurfaceVariant,
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.normal,
                       ),
                     ),
                     if (counts[i] > 0) ...[
                       const SizedBox(width: 6),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: selected
                               ? Colors.black.withOpacity(0.2)
                               : AppColors.surfaceContainerHigh,
                           borderRadius: const BorderRadius.all(
-                              Radius.circular(6)),
+                            Radius.circular(6),
+                          ),
                         ),
                         child: Text(
                           '${counts[i]}',
                           style: AppText.labelSm.copyWith(
                             fontSize: 10,
-                            color: selected ? Colors.black : AppColors.onSurfaceVariant,
+                            color: selected
+                                ? Colors.black
+                                : AppColors.onSurfaceVariant,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -574,8 +680,11 @@ class _EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.glassBorder),
             ),
-            child: const Icon(Icons.group_off_rounded,
-                size: 34, color: AppColors.onSurfaceVariant),
+            child: const Icon(
+              Icons.group_off_rounded,
+              size: 34,
+              color: AppColors.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 20),
           Text('No subscribers yet', style: AppText.headlineMd), // TODO: l10n
@@ -599,7 +708,11 @@ class _EmptyState extends StatelessWidget {
                 ),
               );
             },
-            icon: const Icon(Icons.share_rounded, color: Colors.black, size: 18),
+            icon: const Icon(
+              Icons.share_rounded,
+              color: Colors.black,
+              size: 18,
+            ),
             label: Text(
               'Share Profile', // TODO: l10n
               style: AppText.labelLg.copyWith(color: Colors.black),
@@ -636,8 +749,11 @@ class _ErrorCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 20),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.error,
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -661,25 +777,25 @@ class _SubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalDays =
-        model.expiresAt.difference(model.startedAt).inDays.clamp(1, 99999);
-    final daysElapsed =
-        DateTime.now().difference(model.startedAt).inDays;
-    final daysLeft =
-        model.expiresAt.difference(DateTime.now()).inDays;
+    final totalDays = model.expiresAt
+        .difference(model.startedAt)
+        .inDays
+        .clamp(1, 99999);
+    final daysElapsed = DateTime.now().difference(model.startedAt).inDays;
+    final daysLeft = model.expiresAt.difference(DateTime.now()).inDays;
     final progressValue = (daysElapsed / totalDays).clamp(0.0, 1.0);
 
     final daysLeftText = daysLeft <= 0
         ? 'Expired' // TODO: l10n
         : daysLeft <= 7
-            ? '$daysLeft days left' // TODO: l10n
-            : '$daysLeft days remaining'; // TODO: l10n
+        ? '$daysLeft days left' // TODO: l10n
+        : '$daysLeft days remaining'; // TODO: l10n
 
     final daysLeftColor = daysLeft <= 0
         ? AppColors.error
         : daysLeft <= 7
-            ? Colors.orange
-            : AppColors.onSurfaceVariant;
+        ? Colors.orange
+        : AppColors.onSurfaceVariant;
 
     return Material(
       color: Colors.transparent,
@@ -694,7 +810,9 @@ class _SubscriptionCard extends StatelessWidget {
             MaterialPageRoute(
               builder: (_) => MultiProvider(
                 providers: [
-                  ChangeNotifierProvider(create: (_) => SelectedDateRangeNotifier()),
+                  ChangeNotifierProvider(
+                    create: (_) => SelectedDateRangeNotifier(),
+                  ),
                   ChangeNotifierProvider(
                     create: (_) => ClientDataNotifier(repoProvider.repository),
                   ),
@@ -803,8 +921,11 @@ class _CardHeader extends StatelessWidget {
                     : null,
                 backgroundColor: AppColors.surfaceContainerHigh,
                 child: model.clientAvatarUrl == null
-                    ? const Icon(Icons.person,
-                        color: AppColors.onSurfaceVariant, size: 22)
+                    ? const Icon(
+                        Icons.person,
+                        color: AppColors.onSurfaceVariant,
+                        size: 22,
+                      )
                     : null,
               ),
             ),
@@ -827,7 +948,9 @@ class _CardHeader extends StatelessWidget {
                   Flexible(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: _kGoldSubtle,
                         borderRadius: _kBadgeR,
@@ -835,7 +958,9 @@ class _CardHeader extends StatelessWidget {
                       child: Text(
                         model.planName,
                         style: AppText.labelSm.copyWith(
-                          color: _kGold, fontSize: 10),
+                          color: _kGold,
+                          fontSize: 10,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -844,7 +969,8 @@ class _CardHeader extends StatelessWidget {
                   Text(
                     '\$${model.priceUsd.toStringAsFixed(0)}/mo',
                     style: AppText.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant),
+                      color: AppColors.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -878,8 +1004,11 @@ class _DatePaymentRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.calendar_today_rounded,
-                    size: 12, color: _kGold),
+                const Icon(
+                  Icons.calendar_today_rounded,
+                  size: 12,
+                  color: _kGold,
+                ),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -947,8 +1076,11 @@ class _PhaseSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.route_rounded,
-                size: 13, color: AppColors.onSurfaceVariant),
+            const Icon(
+              Icons.route_rounded,
+              size: 13,
+              color: AppColors.onSurfaceVariant,
+            ),
             const SizedBox(width: 6),
             Text(
               'PLAN PHASES', // TODO: l10n
@@ -959,12 +1091,7 @@ class _PhaseSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                height: 1,
-                color: AppColors.glassBorder,
-              ),
-            ),
+            Expanded(child: Container(height: 1, color: AppColors.glassBorder)),
           ],
         ),
         const SizedBox(height: 12),
@@ -1006,8 +1133,11 @@ class _ProgressSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.timer_outlined,
-                    size: 13, color: AppColors.onSurfaceVariant),
+                const Icon(
+                  Icons.timer_outlined,
+                  size: 13,
+                  color: AppColors.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   daysLeftText,
@@ -1018,7 +1148,10 @@ class _ProgressSection extends StatelessWidget {
             Text(
               '${(progressValue * 100).toStringAsFixed(0)}%',
               style: AppText.labelSm.copyWith(
-                color: _kGold, fontSize: 10, fontWeight: FontWeight.w700),
+                color: _kGold,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -1046,11 +1179,36 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg, label, icon) = switch (status) {
-      'active'    => (const Color(0xFF1B4332), _kSuccess,  'Active',    Icons.check_circle_rounded),    // TODO: l10n
-      'pending'   => (const Color(0xFF3D2B00), _kWarning,  'Pending',   Icons.schedule_rounded),        // TODO: l10n
-      'paused'    => (const Color(0xFF003060), _kBlue,     'Paused',    Icons.pause_circle_rounded),    // TODO: l10n
-      'expired'   => (const Color(0xFF3B0000), _kError,    'Expired',   Icons.cancel_rounded),          // TODO: l10n
-      _           => (const Color(0xFF1A1A1A), AppColors.onSurfaceVariant, 'Cancelled', Icons.block_rounded), // TODO: l10n
+      'active' => (
+        const Color(0xFF1B4332),
+        _kSuccess,
+        'Active',
+        Icons.check_circle_rounded,
+      ), // TODO: l10n
+      'pending' => (
+        const Color(0xFF3D2B00),
+        _kWarning,
+        'Pending',
+        Icons.schedule_rounded,
+      ), // TODO: l10n
+      'paused' => (
+        const Color(0xFF003060),
+        _kBlue,
+        'Paused',
+        Icons.pause_circle_rounded,
+      ), // TODO: l10n
+      'expired' => (
+        const Color(0xFF3B0000),
+        _kError,
+        'Expired',
+        Icons.cancel_rounded,
+      ), // TODO: l10n
+      _ => (
+        const Color(0xFF1A1A1A),
+        AppColors.onSurfaceVariant,
+        'Cancelled',
+        Icons.block_rounded,
+      ), // TODO: l10n
     };
 
     return Container(
@@ -1081,10 +1239,18 @@ class _PaymentBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color, label) = switch (status) {
-      'paid'     => (Icons.check_circle_rounded,  _kSuccess, 'Paid'),     // TODO: l10n
-      'unpaid'   => (Icons.warning_amber_rounded, _kWarning, 'Unpaid'),   // TODO: l10n
-      'refunded' => (Icons.replay_rounded,        _kBlue,    'Refunded'), // TODO: l10n
-      _          => (Icons.help_outline_rounded,  AppColors.onSurfaceVariant, 'Unknown'), // TODO: l10n
+      'paid' => (Icons.check_circle_rounded, _kSuccess, 'Paid'), // TODO: l10n
+      'unpaid' => (
+        Icons.warning_amber_rounded,
+        _kWarning,
+        'Unpaid',
+      ), // TODO: l10n
+      'refunded' => (Icons.replay_rounded, _kBlue, 'Refunded'), // TODO: l10n
+      _ => (
+        Icons.help_outline_rounded,
+        AppColors.onSurfaceVariant,
+        'Unknown',
+      ), // TODO: l10n
     };
 
     return Container(
@@ -1124,10 +1290,10 @@ class _PhaseStep extends StatelessWidget {
   });
 
   IconData _typeIcon(String type) => switch (type) {
-    'workout'   => Icons.fitness_center_rounded,
+    'workout' => Icons.fitness_center_rounded,
     'nutrition' => Icons.restaurant_rounded,
-    'combined'  => Icons.auto_awesome_rounded,
-    _           => Icons.circle_outlined,
+    'combined' => Icons.auto_awesome_rounded,
+    _ => Icons.circle_outlined,
   };
 
   String _weekLabel() {
@@ -1142,7 +1308,9 @@ class _PhaseStep extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (!isFirst && prevStatus != null)
-          _StepLine(active: prevStatus == 'completed' || prevStatus == 'in_progress'),
+          _StepLine(
+            active: prevStatus == 'completed' || prevStatus == 'in_progress',
+          ),
         SizedBox(
           width: 72,
           child: Column(
@@ -1162,8 +1330,7 @@ class _PhaseStep extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
                     _weekLabel(),
-                    style: AppText.bodySm.copyWith(
-                      color: _kGold, fontSize: 9),
+                    style: AppText.bodySm.copyWith(color: _kGold, fontSize: 9),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -1172,7 +1339,8 @@ class _PhaseStep extends StatelessWidget {
         ),
         if (!isLast)
           _StepLine(
-            active: phase.status == 'completed' || phase.status == 'in_progress',
+            active:
+                phase.status == 'completed' || phase.status == 'in_progress',
           ),
       ],
     );
@@ -1188,48 +1356,41 @@ class _StepCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (phase.status) {
       'completed' => Container(
-          width: 32,
-          height: 32,
-          decoration: const BoxDecoration(
-            color: _kGold,
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.check_rounded, color: Colors.black, size: 16),
-        ),
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(color: _kGold, shape: BoxShape.circle),
+        child: const Icon(Icons.check_rounded, color: Colors.black, size: 16),
+      ),
       'in_progress' => Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            shape: BoxShape.circle,
-            border: Border.all(color: _kGold, width: 2),
-            boxShadow: const [
-              BoxShadow(
-                color: _kGoldGlow,
-                blurRadius: 10,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Icon(icon, color: _kGold, size: 15),
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(color: _kGold, width: 2),
+          boxShadow: const [
+            BoxShadow(color: _kGoldGlow, blurRadius: 10, spreadRadius: 2),
+          ],
         ),
+        child: Icon(icon, color: _kGold, size: 15),
+      ),
       _ => Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: Colors.transparent,
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.onSurfaceVariant.withOpacity(0.3),
-              width: 2,
-            ),
-          ),
-          child: Icon(
-            icon,
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(
             color: AppColors.onSurfaceVariant.withOpacity(0.3),
-            size: 15,
+            width: 2,
           ),
         ),
+        child: Icon(
+          icon,
+          color: AppColors.onSurfaceVariant.withOpacity(0.3),
+          size: 15,
+        ),
+      ),
     };
   }
 }

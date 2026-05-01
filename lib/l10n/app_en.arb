@@ -209,5 +209,15 @@
   "lightlyActive": "Lightly Active",
   "moderatelyActive": "Moderately Active",
   "veryActive": "Very Active",
-  "extraActive": "Extra Active"
+  "extraActive": "Extra Active",
+
+  "navMessages": "Messages",
+  "chatTitle": "Messages",
+  "noConversations": "No conversations yet",
+  "noConversationsHint": "Subscribe to a coach to start chatting",
+  "typeMessage": "Type a message...",
+  "sayHello": "Say hello! 👋",
+  "retry": "Retry",
+  "coach": "Coach",
+  "client": "Client"
 }

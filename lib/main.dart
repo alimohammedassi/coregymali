@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'chat/presentation/providers/chat_providers.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,6 +28,15 @@ void main() async {
         providers: [
           ChangeNotifierProvider(create: (_) => LocaleProvider()),
           ChangeNotifierProvider(create: (_) => ProfileProvider()),
+          ChangeNotifierProvider(create: (_) => ChatRepoProvider()),
+          ChangeNotifierProxyProvider<ChatRepoProvider, ConversationsNotifier>(
+            create: (context) => ConversationsNotifier(context.read<ChatRepoProvider>().repo),
+            update: (context, chatRepo, previous) => previous ?? ConversationsNotifier(chatRepo.repo),
+          ),
+          ChangeNotifierProxyProvider<ChatRepoProvider, UnreadCountNotifier>(
+            create: (context) => UnreadCountNotifier(context.read<ChatRepoProvider>().repo),
+            update: (context, chatRepo, previous) => previous ?? UnreadCountNotifier(chatRepo.repo),
+          ),
         ],
         child: const MyApp(),
       ),

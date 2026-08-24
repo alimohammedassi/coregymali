@@ -29,14 +29,14 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
     'beginner': Color(0xFF34D399),
     'intermediate': Color(0xFFFBBF24),
     'advanced': Color(0xFFF87171),
-    'All': Color(0xFFD4FF57),
+    'All': AppColors.primaryFixed,
   };
 
   static const Map<String, Color> _goalColors = {
     'strength': Color(0xFFFF6B35),
     'muscle gain': Color(0xFF7C3AED),
     'weight loss': Color(0xFF06B6D4),
-    'All': Color(0xFFD4FF57),
+    'All': AppColors.primaryFixed,
   };
 
   @override
@@ -101,7 +101,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle, color: Color(0xFFD4FF57), size: 20),
+              const Icon(Icons.check_circle, color: AppColors.primaryFixed, size: 20),
               const SizedBox(width: 12),
               Text('${program['name']} activated!',
                   style: const TextStyle(fontWeight: FontWeight.w600)),
@@ -187,17 +187,17 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4FF57).withOpacity(0.1),
+                    color: AppColors.primaryFixed.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                        color: const Color(0xFFD4FF57).withOpacity(0.3)),
+                        color: AppColors.primaryFixed.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     children: [
                       Text(
                         '${program['duration_weeks']}',
                         style: const TextStyle(
-                          color: Color(0xFFD4FF57),
+                          color: AppColors.primaryFixed,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           height: 1,
@@ -206,7 +206,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
                       const Text(
                         'WEEKS',
                         style:
-                            TextStyle(color: Color(0xFFD4FF57), fontSize: 10),
+                            TextStyle(color: AppColors.primaryFixed, fontSize: 10),
                       ),
                     ],
                   ),
@@ -283,7 +283,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
                 width: double.infinity,
                 height: 58,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD4FF57),
+                  color: AppColors.primaryFixed,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Row(
@@ -320,10 +320,10 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white60, size: 13),
+          Icon(icon, color: Colors.white.withOpacity(0.85), size: 13),
           const SizedBox(width: 6),
           Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -371,12 +371,12 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFFD4FF57)
+                        ? AppColors.primaryFixed
                         : const Color(0xFF2C2C2E),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
-                          ? const Color(0xFFD4FF57)
+                          ? AppColors.primaryFixed
                           : Colors.transparent,
                       width: 1,
                     ),
@@ -466,7 +466,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
           child: _isLoading
               ? const Center(
                   child: CircularProgressIndicator(
-                    color: Color(0xFFD4FF57),
+                    color: AppColors.primaryFixed,
                     strokeWidth: 2,
                   ),
                 )
@@ -479,7 +479,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
                       final program = _programs[index];
                       final level = program['level'] ?? '';
                       final levelColor =
-                          _levelColors[level] ?? const Color(0xFFD4FF57);
+                          _levelColors[level] ?? AppColors.primaryFixed;
                       final goal = program['goal']?.toLowerCase() ?? '';
                       final goalColor =
                           _goalColors[goal] ?? const Color(0xFF7C3AED);

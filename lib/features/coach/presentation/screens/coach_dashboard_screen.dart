@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../supabase/auth_service.dart';
 import '../../../../theme/app_colors.dart';
@@ -22,14 +21,14 @@ import '../providers/coach_media_provider.dart';
 import '../providers/coach_profile_provider.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const _kGold = Color(0xFFC9A84C);
-const _kGoldDim = Color(0xFFA07832);
+const _kGold = AppColors.tertiary;
+const _kGoldDim = AppColors.tertiaryDim;
 const _kGoldGlow = Color(0x33C9A84C);
 const _kGoldSubtle = Color(0x1AC9A84C);
-const _kSuccess = Color(0xFF52B788);
-const _kWarning = Color(0xFFFFC107);
-const _kBlue = Color(0xFF64B5F6);
-const _kError = Color(0xFFEF5350);
+const _kSuccess = AppColors.greenAccent;
+const _kWarning = AppColors.orangeAccent;
+const _kBlue = AppColors.secondary;
+const _kError = AppColors.error;
 
 const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kBadgeR = BorderRadius.all(Radius.circular(8));

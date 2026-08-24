@@ -1,5 +1,5 @@
-name: coregym2
-description: "A new Flutter project."
+name: core
+description: "core - Your fitness companion"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -35,6 +35,10 @@ dependencies:
   uuid: ^4.5.3
   flutter_riverpod: ^3.3.1
   google_fonts: ^8.1.0
+  health: ^13.1.2
+  permission_handler: ^11.3.1
+  record: ^6.2.1
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

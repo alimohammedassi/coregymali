@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:coregym2/supabase/supabase_config.dart';
+import 'supabase/supabase_config.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'splashScreen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/locale_provider.dart';
 import 'providers/profile_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chat/presentation/providers/chat_providers.dart';
+import 'chat/data/repositories/notification_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,11 @@ void main() async {
           ChangeNotifierProxyProvider<ChatRepoProvider, UnreadCountNotifier>(
             create: (context) => UnreadCountNotifier(context.read<ChatRepoProvider>().repo),
             update: (context, chatRepo, previous) => previous ?? UnreadCountNotifier(chatRepo.repo),
+          ),
+          ChangeNotifierProvider(
+            create: (_) => NotificationNotifier(
+              NotificationRepository(Supabase.instance.client),
+            ),
           ),
         ],
         child: const MyApp(),
@@ -69,8 +75,16 @@ class MyApp extends StatelessWidget {
       },
       title: 'Core Gym',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        textTheme: GoogleFonts.soraTextTheme(),
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF7F9F8),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF18A957),
+          primary: const Color(0xFF18A957),
+          surface: const Color(0xFFFFFFFF),
+        ),
+        textTheme: localeProvider.isArabic
+            ? GoogleFonts.cairoTextTheme()
+            : GoogleFonts.poppinsTextTheme(),
       ),
       home: const SplashScreen(),
       debugShowCheckedModeBanner: false,

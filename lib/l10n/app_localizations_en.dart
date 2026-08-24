@@ -24,6 +24,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navProfile => 'Profile';
 
   @override
+  String get navMessages => 'Messages';
+
+  @override
+  String get navCoaches => 'Coaches';
+
+  @override
+  String get navDashboard => 'Dashboard';
+
+  @override
   String get goodMorning => 'Good morning';
 
   @override
@@ -31,6 +40,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get goodEvening => 'Good evening';
+
+  @override
+  String get readyConquer => 'Ready to conquer your fitness goals today?';
+
+  @override
+  String get calorieGoalReached => 'Calorie goal reached! Peak performance! 🔥';
+
+  @override
+  String calorieProgressMsg(int pct) {
+    return 'Completed $pct% of daily energy target';
+  }
+
+  @override
+  String daysStreak(int count) {
+    return '$count DAYS';
+  }
+
+  @override
+  String get dailyMetrics => 'DAILY METRIC MATRIX';
+
+  @override
+  String get details => 'Details';
 
   @override
   String get todayCalories => 'Calories Today';
@@ -42,7 +73,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get caloriesOver => 'over';
 
   @override
+  String get kcalLeft => 'KCAL LEFT';
+
+  @override
+  String get kcalOver => 'KCAL OVER';
+
+  @override
   String get kcal => 'kcal';
+
+  @override
+  String get eaten => 'Eaten';
+
+  @override
+  String get burned => 'Burned';
 
   @override
   String get protein => 'Protein';
@@ -54,7 +97,114 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fat => 'Fat';
 
   @override
+  String get quickAddWater => '+250ml';
+
+  @override
+  String get quickWorkout => 'Workout';
+
+  @override
+  String get setGoalsTitle => 'Personalize Your Target Goals';
+
+  @override
+  String get setGoalsSubtitle =>
+      'Set calories, macros & water for tailored tracking';
+
+  @override
+  String get moodSectionTitle => 'Choose Your Mood';
+
+  @override
+  String get moodTired => 'Tired';
+
+  @override
+  String get moodLight => 'Light';
+
+  @override
+  String get moodMedium => 'Medium';
+
+  @override
+  String get moodActive => 'Active';
+
+  @override
+  String get moodFull => 'Full Power';
+
+  @override
+  String get muscleGroupsTitle => 'Muscle Groups';
+
+  @override
+  String get muscleChest => 'Chest';
+
+  @override
+  String get muscleArms => 'Arms';
+
+  @override
+  String get muscleLegs => 'Legs';
+
+  @override
+  String get muscleCore => 'Core';
+
+  @override
+  String get aiWorkoutCta => 'Generate Your AI Workout';
+
+  @override
+  String get aiWorkoutSub => 'Smart Trainer — 45 min';
+
+  @override
+  String caloriesOf(int goal) {
+    return 'of $goal';
+  }
+
+  @override
+  String caloriesRemainingMsg(int remaining) {
+    return '$remaining kcal remaining';
+  }
+
+  @override
+  String caloriesOverMsg(int over) {
+    return '$over kcal over goal';
+  }
+
+  @override
+  String get addMeal => '+ Add Meal';
+
+  @override
+  String get scanAi => 'AI Scan';
+
+  @override
+  String get voiceLog => 'Voice';
+
+  @override
+  String get barcodeScan => 'Barcode';
+
+  @override
+  String get quickText => 'Text';
+
+  @override
+  String get dailyQuests => 'Daily Quests';
+
+  @override
+  String get hydrationHero => 'Hydration Hero';
+
+  @override
+  String get proteinChampion => 'Protein Champion';
+
+  @override
+  String get streakMaster => 'Streak Master';
+
+  @override
+  String xpEarned(int count) {
+    return '+$count XP';
+  }
+
+  @override
+  String levelLabel(int lvl) {
+    return 'LVL $lvl';
+  }
+
+  @override
   String get todayMeals => 'Today\'s Meals';
+
+  @override
+  String get todaysFueling => 'Today\'s Fueling';
 
   @override
   String get addFood => '+ Add Food';
@@ -66,7 +216,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logFirstMeal => 'Log your first meal today';
 
   @override
-  String get logMeal => '+ Log Meal';
+  String get logMeal => 'Log Meal';
 
   @override
   String get breakfast => 'Breakfast';
@@ -95,6 +245,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get activeProgram => 'ACTIVE PROGRAM';
 
   @override
+  String get activeTrainingProgram => 'ACTIVE TRAINING PROGRAM';
+
+  @override
   String get noActiveProgram => 'No active program';
 
   @override
@@ -110,6 +263,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ofWord => 'of';
 
   @override
+  String weekOfTotal(int current, int total) {
+    return 'Week $current of $total';
+  }
+
+  @override
+  String percentComplete(int pct) {
+    return '$pct% complete';
+  }
+
+  @override
   String get beginner => 'BEGINNER';
 
   @override
@@ -120,6 +283,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lastWorkout => 'Last Workout';
+
+  @override
+  String get lastWorkoutUpper => 'LAST WORKOUT';
 
   @override
   String get noWorkoutsYet => 'No workouts logged yet';
@@ -140,7 +306,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get water => 'Water';
 
   @override
+  String get glasses => 'glasses';
+
+  @override
   String get ofGlasses => 'of 8 glasses';
+
+  @override
+  String get ofGlassesGoal => 'of 8 goal';
 
   @override
   String get steps => 'Steps';
@@ -149,7 +321,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ofSteps => 'of 10,000 steps';
 
   @override
+  String ofStepsGoal(int pct) {
+    return '$pct% of 10k';
+  }
+
+  @override
   String get kcalBurned => 'kcal burned';
+
+  @override
+  String get burnedToday => 'burned today';
 
   @override
   String get updateSteps => 'Update Steps';
@@ -159,6 +339,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get coachBannerTitle => 'Level up with a Pro Coach';
+
+  @override
+  String get coachBannerSubtitle =>
+      'Certified coaches available · Personalized plans';
 
   @override
   String get completeProfile =>
@@ -569,9 +756,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get extraActive => 'Extra Active';
 
   @override
-  String get navMessages => 'Messages';
-
-  @override
   String get chatTitle => 'Messages';
 
   @override
@@ -594,4 +778,143 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get client => 'Client';
+
+  @override
+  String get scanTitle => 'AI Food Scan';
+
+  @override
+  String get scanSubtitle => 'Snap your food, we\'ll do the rest';
+
+  @override
+  String get scanSaveToMeal => 'Log this meal to';
+
+  @override
+  String get scanIdleHint =>
+      'One photo is all it takes — we\'ll detect each item, its weight and calories automatically.';
+
+  @override
+  String get scanCameraCta => 'Scan your food';
+
+  @override
+  String get scanGalleryCta => 'Choose from gallery';
+
+  @override
+  String get scanAnalyzingTitle => 'Analyzing your photo…';
+
+  @override
+  String get scanAnalyzingSubtitle => 'Detecting items, weight & macros';
+
+  @override
+  String get scanItemsHeader => 'Detected items';
+
+  @override
+  String get scanConfidenceHigh => 'High accuracy';
+
+  @override
+  String get scanConfidenceMedium => 'Medium accuracy';
+
+  @override
+  String get scanConfidenceLow => 'Low accuracy';
+
+  @override
+  String scanLogToMeal(String meal) {
+    return 'Log to $meal';
+  }
+
+  @override
+  String get scanErrorTitle => 'Oops!';
+
+  @override
+  String get scanRetrySamePhoto => 'Retry same photo';
+
+  @override
+  String get scanNewPhoto => 'New photo';
+
+  @override
+  String get scanErrorNetwork =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get scanErrorUnauthorized =>
+      'Please sign in first to use the scanner.';
+
+  @override
+  String get scanErrorNotFood =>
+      'No clear food in the photo. Try another angle.';
+
+  @override
+  String get scanErrorAnalysis =>
+      'We couldn\'t analyze the photo. Please try again.';
+
+  @override
+  String get scanErrorPersist =>
+      'The photo was analyzed but saving failed. Please try again.';
+
+  @override
+  String get scanErrorUnknown =>
+      'Something unexpected went wrong. Please try again.';
+
+  @override
+  String get voiceTitle => 'Voice Food Log';
+
+  @override
+  String get voiceSubtitle => 'Just say what you ate';
+
+  @override
+  String get voiceIdleHint =>
+      'Describe your meal in one sentence — we\'ll transcribe it and estimate the calories automatically.';
+
+  @override
+  String get voiceRecordCta => 'Start recording';
+
+  @override
+  String get voiceStopCta => 'Stop & analyze';
+
+  @override
+  String get voiceRecordingHint =>
+      'Listening… tap stop when you\'re done describing your meal.';
+
+  @override
+  String get voiceAnalyzingTitle => 'Analyzing your recording…';
+
+  @override
+  String get voiceTranscriptLabel => 'You said';
+
+  @override
+  String get voiceRetrySameAudio => 'Retry same recording';
+
+  @override
+  String get voiceNewRecording => 'New recording';
+
+  @override
+  String get voiceErrorNetwork =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get voiceErrorUnauthorized =>
+      'Please sign in first to use the voice logger.';
+
+  @override
+  String get voiceErrorMicrophone =>
+      'Microphone access is needed. Enable it in Settings and try again.';
+
+  @override
+  String get voiceErrorNotFood =>
+      'We couldn\'t hear any food in that recording. Try describing your meal again.';
+
+  @override
+  String get voiceErrorAnalysis =>
+      'We couldn\'t understand that recording. Please try again.';
+
+  @override
+  String get voiceErrorPersist =>
+      'The recording was analyzed but saving failed. Please try again.';
+
+  @override
+  String get voiceErrorUnknown =>
+      'Something unexpected went wrong. Please try again.';
+
+  @override
+  String get profileFirstRunNudge =>
+      'Log your first workout to start ranking up!';
 }

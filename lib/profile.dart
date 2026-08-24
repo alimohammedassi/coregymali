@@ -1,14 +1,13 @@
 import 'dart:math';
-import 'dart:ui';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
-import 'package:coregym2/supabase/auth_service.dart';
-import 'package:coregym2/supabase/profile_service.dart';
-import 'package:coregym2/supabase/supabase_config.dart';
+import 'l10n/app_localizations.dart';
+import 'supabase/auth_service.dart';
+import 'supabase/profile_service.dart';
+import 'supabase/supabase_config.dart';
 import 'services/stats_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme/app_colors.dart';
@@ -16,69 +15,6 @@ import 'theme/app_text.dart';
 import 'login_sign_up.dart';
 import 'widgets/language_toggle.dart';
 import 'features/coach/presentation/screens/coach_registration_screen.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// DESIGN TOKENS  (single source of truth)
-// ─────────────────────────────────────────────────────────────────────────────
-abstract class _D {
-  // ── 4/8dp spacing grid ──────────────────────────────────────────────────
-  static const double sp2 = 2;
-  static const double sp4 = 4;
-  static const double sp6 = 6;
-  static const double sp8 = 8;
-  static const double sp10 = 10;
-  static const double sp12 = 12;
-  static const double sp16 = 16;
-  static const double sp20 = 20;
-  static const double sp24 = 24;
-  static const double sp32 = 32;
-  static const double sp48 = 48;
-
-  // ── Radius scale ─────────────────────────────────────────────────────────
-  static const double r6 = 6;
-  static const double r8 = 8;
-  static const double r12 = 12;
-  static const double r16 = 16;
-  static const double r20 = 20;
-  static const double r24 = 24;
-  static const double r28 = 28;
-
-  // ── Icon scale (consistent stroke-weight family) ─────────────────────────
-  static const double iconXs = 14;
-  static const double iconSm = 16;
-  static const double iconMd = 20;
-  static const double iconLg = 24;
-
-  // ── Touch targets ────────────────────────────────────────────────────────
-  static const double touch = 44; // Apple HIG / Material minimum
-
-  // ── Semantic brand colours ───────────────────────────────────────────────
-  static const Color gold = Color(0xFFC9A84C);
-  static const Color red = Color(0xFFFF6B6B);
-  static const Color green = Color(0xFF50C878);
-  static const Color blue = Color(0xFF6C9BF5);
-
-  // ── Opacity scale ────────────────────────────────────────────────────────
-  static const double o03 = 0.03;
-  static const double o05 = 0.05;
-  static const double o07 = 0.07;
-  static const double o10 = 0.10;
-  static const double o15 = 0.15;
-  static const double o20 = 0.20;
-  static const double o25 = 0.25;
-  static const double o40 = 0.40;
-  static const double o50 = 0.50;
-  static const double o55 = 0.55;
-  static const double o70 = 0.70;
-
-  // ── Duration scale ───────────────────────────────────────────────────────
-  static const Duration t100 = Duration(milliseconds: 100);
-  static const Duration t150 = Duration(milliseconds: 150);
-  static const Duration t200 = Duration(milliseconds: 200);
-  static const Duration t300 = Duration(milliseconds: 300);
-  static const Duration t1000 = Duration(milliseconds: 1000);
-  static const Duration bgLoop = Duration(seconds: 18);
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -134,12 +70,12 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     super.initState();
 
-    _bgCtrl = AnimationController(vsync: this, duration: _D.bgLoop)
+    _bgCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 18))
       ..repeat(reverse: true);
 
-    _entryCtrl = AnimationController(vsync: this, duration: _D.t1000);
+    _entryCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
 
-    _avatarCtrl = AnimationController(vsync: this, duration: _D.t150);
+    _avatarCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
     _avatarScale = Tween<double>(
       begin: 1.0,
       end: 0.93,
@@ -350,7 +286,7 @@ class _ProfilePageState extends State<ProfilePage>
       _toast(
         'Profile photo updated',
         Icons.check_circle_outline_rounded,
-        _D.green,
+        AppColors.greenAccent,
       );
     } catch (_) {
       if (!mounted) return;
@@ -371,23 +307,24 @@ class _ProfilePageState extends State<ProfilePage>
           content: Row(
             children: [
               Icon(icon, color: color, size: 18),
-              const SizedBox(width: _D.sp12),
+              const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   msg,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
             ],
           ),
-          backgroundColor: AppColors.surfaceContainer,
+          backgroundColor: AppColors.surfaceContainerHigh,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(_D.r12),
-            side: BorderSide(color: color.withOpacity(.3)),
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: color.withValues(alpha: .3)),
           ),
           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           duration: const Duration(seconds: 3),
@@ -403,13 +340,13 @@ class _ProfilePageState extends State<ProfilePage>
     if (_isLoading) return _buildSkeleton();
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: AppColors.background,
       body: Stack(
         children: [
           _buildAmbientBg(),
           RefreshIndicator(
-            color: AppColors.primaryFixed,
-            backgroundColor: AppColors.surfaceContainer,
+            color: AppColors.primary,
+            backgroundColor: AppColors.surface,
             displacement: 60,
             onRefresh: _loadData,
             child: CustomScrollView(
@@ -418,9 +355,9 @@ class _ProfilePageState extends State<ProfilePage>
                 _buildAppBar(),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(
-                    _D.sp20,
-                    _D.sp8,
-                    _D.sp20,
+                    20,
+                    8,
+                    20,
                     120,
                   ),
                   sliver: SliverList(
@@ -437,48 +374,44 @@ class _ProfilePageState extends State<ProfilePage>
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   Widget _buildSkeleton() => Scaffold(
-    backgroundColor: AppColors.surface,
+    backgroundColor: AppColors.background,
     body: SafeArea(
       child: Column(
         children: [
-          const SizedBox(height: _D.sp32),
-          Center(child: _Shimmer(width: 86, height: 86, radius: 43)),
-          const SizedBox(height: _D.sp16),
-          Center(child: _Shimmer(width: 140, height: 14, radius: _D.r8)),
-          const SizedBox(height: _D.sp8),
-          Center(child: _Shimmer(width: 100, height: 10, radius: _D.r6)),
-          const SizedBox(height: _D.sp32),
+          const SizedBox(height: 32),
+          const Center(child: _Shimmer(width: 86, height: 86, radius: 43)),
+          const SizedBox(height: 16),
+          const Center(child: _Shimmer(width: 140, height: 14, radius: 8)),
+          const SizedBox(height: 8),
+          const Center(child: _Shimmer(width: 100, height: 10, radius: 6)),
+          const SizedBox(height: 32),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _D.sp20),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
               children: List.generate(
                 3,
                 (i) => Expanded(
                   child: Padding(
-                    padding: EdgeInsets.only(left: i == 0 ? 0 : _D.sp8),
-                    child: _Shimmer(
+                    padding: EdgeInsets.only(left: i == 0 ? 0 : 8),
+                    child: const _Shimmer(
                       width: double.infinity,
                       height: 80,
-                      radius: _D.r16,
+                      radius: 16,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: _D.sp16),
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _D.sp20),
-            child: _Shimmer(width: double.infinity, height: 72, radius: _D.r16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _Shimmer(width: double.infinity, height: 72, radius: 16),
           ),
-          const SizedBox(height: _D.sp16),
+          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: _D.sp20),
-            child: _Shimmer(
-              width: double.infinity,
-              height: 160,
-              radius: _D.r16,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: _Shimmer(width: double.infinity, height: 160, radius: 16),
           ),
         ],
       ),
@@ -495,22 +428,19 @@ class _ProfilePageState extends State<ProfilePage>
           Positioned(
             top: -80 + 30 * sin(t * pi),
             right: -60 + 18 * cos(t * pi * 1.3),
-            child: _Orb(
-              size: 280,
-              color: AppColors.primaryFixed.withOpacity(.06),
-            ),
+            child: _Orb(size: 280, color: AppColors.primary.withValues(alpha: .07)),
           ),
           Positioned(
             bottom: -50 + 24 * cos(t * pi * .7),
             left: -60,
-            child: _Orb(size: 220, color: AppColors.secondary.withOpacity(.04)),
+            child: _Orb(size: 220, color: AppColors.secondary.withValues(alpha: .05)),
           ),
           Positioned(
             top:
                 MediaQuery.of(context).size.height * .42 +
                 18 * sin(t * pi * 1.1),
             right: -30,
-            child: _Orb(size: 150, color: _D.gold.withOpacity(.025)),
+            child: _Orb(size: 150, color: AppColors.tertiary.withValues(alpha: .04)),
           ),
         ],
       );
@@ -526,18 +456,18 @@ class _ProfilePageState extends State<ProfilePage>
     elevation: 0,
     actions: [
       SizedBox(
-        height: _D.touch,
+        height: 44,
         child: const LanguageToggle(compact: true),
       ),
-      const SizedBox(width: _D.sp4),
+      const SizedBox(width: 4),
       Semantics(
         label: 'Refresh profile',
         button: true,
         child: IconButton(
           icon: Icon(
             Icons.refresh_rounded,
-            color: AppColors.outline,
-            size: _D.iconMd,
+            color: AppColors.textSecondary,
+            size: 20,
           ),
           onPressed: () {
             HapticFeedback.lightImpact();
@@ -547,7 +477,7 @@ class _ProfilePageState extends State<ProfilePage>
           splashRadius: 20,
         ),
       ),
-      const SizedBox(width: _D.sp8),
+      const SizedBox(width: 8),
     ],
     flexibleSpace: FlexibleSpaceBar(
       collapseMode: CollapseMode.pin,
@@ -561,7 +491,7 @@ class _ProfilePageState extends State<ProfilePage>
           gradient: LinearGradient(
             colors: [
               Colors.transparent,
-              Colors.white.withOpacity(.06),
+              AppColors.borderSubtle,
               Colors.transparent,
             ],
           ),
@@ -571,20 +501,22 @@ class _ProfilePageState extends State<ProfilePage>
   );
 
   // ── Rank Calculation ──────────────────────────────────────────────────────
+  // Tiered brand colors — the top tier wears the primary accent (the app's
+  // "volt"), lower tiers step down through cyan / amber / silver / muted.
   ({String label, Color color}) _getRank() {
     if (_totalWorkoutsAllTime < 5) {
-      return (label: 'ROOKIE', color: AppColors.onSurfaceVariant);
+      return (label: 'ROOKIE', color: AppColors.textMuted);
     }
     if (_totalWorkoutsAllTime < 20) {
-      return (label: 'IRON', color: Colors.blueGrey);
+      return (label: 'IRON', color: AppColors.secondary);
     }
     if (_totalWorkoutsAllTime < 50) {
-      return (label: 'BRONZE', color: const Color(0xFFCD7F32));
+      return (label: 'BRONZE', color: AppColors.tertiary);
     }
     if (_totalWorkoutsAllTime < 100) {
-      return (label: 'SILVER', color: const Color(0xFFE5E4E2));
+      return (label: 'SILVER', color: AppColors.outlineVariant);
     }
-    return (label: 'GOLD', color: _D.gold);
+    return (label: 'GOLD', color: AppColors.primary);
   }
 
   // ── Date Formatter ────────────────────────────────────────────────────────
@@ -627,12 +559,12 @@ class _ProfilePageState extends State<ProfilePage>
             },
             child: Row(
               children: [
-                Icon(Icons.fullscreen_rounded, color: AppColors.primaryFixed),
-                const SizedBox(width: _D.sp16),
+                Icon(Icons.fullscreen_rounded, color: AppColors.primary),
+                const SizedBox(width: 16),
                 Text(
                   'View Photo',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
                   ),
@@ -640,7 +572,7 @@ class _ProfilePageState extends State<ProfilePage>
               ],
             ),
           ),
-          const SizedBox(height: _D.sp12),
+          const SizedBox(height: 12),
         ],
         _PressCard(
           padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
@@ -650,12 +582,12 @@ class _ProfilePageState extends State<ProfilePage>
           },
           child: Row(
             children: [
-              Icon(Icons.photo_library_rounded, color: AppColors.primaryFixed),
-              const SizedBox(width: _D.sp16),
+              Icon(Icons.photo_library_rounded, color: AppColors.primary),
+              const SizedBox(width: 16),
               Text(
                 hasAvatar ? 'Change Photo' : 'Upload Photo',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                   fontSize: 15,
                 ),
@@ -670,7 +602,7 @@ class _ProfilePageState extends State<ProfilePage>
   void _showFullScreenAvatar() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.9),
+      barrierColor: Colors.black.withValues(alpha: 0.9),
       builder: (ctx) => GestureDetector(
         onTap: () => Navigator.pop(ctx),
         child: Material(
@@ -679,7 +611,7 @@ class _ProfilePageState extends State<ProfilePage>
             child: Hero(
               tag: 'profile_avatar_hero',
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(_D.r24),
+                borderRadius: BorderRadius.circular(24),
                 child: Image.network(
                   _avatarUrl,
                   width: MediaQuery.of(ctx).size.width * 0.85,
@@ -704,7 +636,7 @@ class _ProfilePageState extends State<ProfilePage>
       color: AppColors.surface,
       child: Stack(
         children: [
-          // Gold accent stripe at the top
+          // Primary accent stripe at the top
           Positioned(
             top: 0,
             left: 0,
@@ -715,7 +647,7 @@ class _ProfilePageState extends State<ProfilePage>
                 gradient: LinearGradient(
                   colors: [
                     Colors.transparent,
-                    AppColors.primaryFixed.withOpacity(.75),
+                    AppColors.primary.withValues(alpha: .75),
                     Colors.transparent,
                   ],
                 ),
@@ -726,11 +658,11 @@ class _ProfilePageState extends State<ProfilePage>
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: _D.sp20),
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: _D.sp20),
+                  const SizedBox(height: 20),
 
                   // ── Avatar ──────────────────────────────────────────────
                   Semantics(
@@ -759,22 +691,20 @@ class _ProfilePageState extends State<ProfilePage>
                                   shape: BoxShape.circle,
                                   gradient: RadialGradient(
                                     colors: [
-                                      AppColors.primaryFixed.withOpacity(.18),
+                                      AppColors.primary.withValues(alpha: .16),
                                       Colors.transparent,
                                     ],
                                   ),
                                 ),
                               ),
-                              // Gold ring
+                              // Primary ring
                               Container(
                                 width: 98,
                                 height: 98,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppColors.primaryFixed.withOpacity(
-                                      .5,
-                                    ),
+                                    color: AppColors.primary.withValues(alpha: .45),
                                     width: 1.5,
                                   ),
                                 ),
@@ -796,7 +726,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ? Text(
                                           initial,
                                           style: TextStyle(
-                                            color: AppColors.primaryFixed,
+                                            color: AppColors.primary,
                                             fontWeight: FontWeight.w800,
                                             fontSize: 30,
                                           ),
@@ -811,7 +741,7 @@ class _ProfilePageState extends State<ProfilePage>
                                   height: 86,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: Colors.black.withOpacity(.5),
+                                    color: Colors.black.withValues(alpha: .5),
                                   ),
                                   child: const Center(
                                     child: SizedBox(
@@ -833,7 +763,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     width: 30,
                                     height: 30,
                                     decoration: BoxDecoration(
-                                      color: AppColors.primaryFixed,
+                                      color: AppColors.primary,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: AppColors.surface,
@@ -841,8 +771,8 @@ class _ProfilePageState extends State<ProfilePage>
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.primaryFixed
-                                              .withOpacity(.45),
+                                          color: AppColors.primary
+                                              .withValues(alpha: .35),
                                           blurRadius: 10,
                                           offset: const Offset(0, 2),
                                         ),
@@ -862,7 +792,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ),
                   ),
 
-                  const SizedBox(height: _D.sp16),
+                  const SizedBox(height: 16),
 
                   // ── Name ────────────────────────────────────────────────
                   Text(
@@ -871,16 +801,17 @@ class _ProfilePageState extends State<ProfilePage>
                       letterSpacing: 2.0,
                       fontSize: 20,
                       height: 1.1,
+                      color: AppColors.textPrimary,
                     ),
                   ),
 
-                  const SizedBox(height: _D.sp10),
+                  const SizedBox(height: 10),
 
                   // ── Badges Row ──────────────────────────────────────────
                   Wrap(
                     alignment: WrapAlignment.center,
-                    spacing: _D.sp8,
-                    runSpacing: _D.sp8,
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       _Pill(
                         icon: Icons.military_tech_rounded,
@@ -897,7 +828,7 @@ class _ProfilePageState extends State<ProfilePage>
                     ],
                   ),
 
-                  const SizedBox(height: _D.sp20),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -912,91 +843,140 @@ class _ProfilePageState extends State<ProfilePage>
     final l10n = AppLocalizations.of(context)!;
     return [
       _A(0, _buildStatsRow()),
-      const SizedBox(height: _D.sp20),
+      if (_totalWorkoutsAllTime == 0) ...[
+        const SizedBox(height: 10),
+        _A(0, _buildFirstRunNudge()),
+      ],
+      const SizedBox(height: 20),
 
       _A(1, _buildProgramBanner()),
-      const SizedBox(height: _D.sp20),
+      const SizedBox(height: 20),
 
+      _A(2, _SectionHeader(title: l10n.operativeData)),
+      const SizedBox(height: 10),
       _A(
         2,
-        _SectionHeader(
-          title: l10n.operativeData,
-          action: _HeaderAction(
-            label: 'Edit',
-            icon: Icons.edit_rounded,
-            onTap: () => _showEditDataSheet(context),
-          ),
+        _ProfileCard(
+          onTap: () => _showEditDataSheet(context),
+          semanticLabel: 'Edit body data',
+          showEditBadge: true,
+          child: _buildMetricsRows(),
         ),
       ),
-      const SizedBox(height: _D.sp10),
-      _A(2, _buildMetricsCard()),
-      const SizedBox(height: _D.sp20),
+      const SizedBox(height: 20),
 
+      _A(3, _SectionHeader(title: l10n.dailyTargets)),
+      const SizedBox(height: 10),
       _A(
         3,
-        _SectionHeader(
-          title: l10n.dailyTargets,
-          action: _HeaderAction(
-            label: 'Edit',
-            icon: Icons.tune_rounded,
-            onTap: () => _showEditGoalsSheet(context),
-          ),
+        _ProfileCard(
+          onTap: () => _showEditGoalsSheet(context),
+          semanticLabel: 'Edit daily targets',
+          showEditBadge: true,
+          child: _buildTargetRows(),
         ),
       ),
-      const SizedBox(height: _D.sp10),
-      _A(3, _buildTargetsRow()),
-      const SizedBox(height: _D.sp20),
+      const SizedBox(height: 20),
 
       _A(4, _SectionHeader(title: l10n.thisMonth)),
-      const SizedBox(height: _D.sp10),
-      _A(4, _buildMonthCard()),
-      const SizedBox(height: _D.sp20),
+      const SizedBox(height: 10),
+      _A(4, _ProfileCard(child: _buildMonthRows())),
+      const SizedBox(height: 20),
 
       if (_exerciseProgress.isNotEmpty) ...[
         _A(5, _SectionHeader(title: l10n.rmProgress)),
-        const SizedBox(height: _D.sp10),
+        const SizedBox(height: 10),
         _A(5, _buildProgressChart()),
-        const SizedBox(height: _D.sp20),
+        const SizedBox(height: 20),
       ],
 
       _A(6, _GradientDivider()),
-      const SizedBox(height: _D.sp24),
+      const SizedBox(height: 24),
 
       _A(7, _buildCoachCta()),
-      const SizedBox(height: _D.sp10),
+      const SizedBox(height: 10),
 
       _A(8, _buildSignOutBtn()),
     ];
   }
 
-  // ── Stats row ─────────────────────────────────────────────────────────────
-  Widget _buildStatsRow() {
+  // ── First-run nudge ───────────────────────────────────────────────────────
+  Widget _buildFirstRunNudge() {
     final l10n = AppLocalizations.of(context)!;
-    return Row(
-      children: [
-        _StatChip(
-          value: '$_totalWorkoutsAllTime',
-          label: l10n.totalWorkouts,
-          icon: Icons.fitness_center_rounded,
-          color: AppColors.primaryFixed,
+    return Semantics(
+      label: l10n.profileFirstRunNudge,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.tertiary.withValues(alpha: .08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.tertiary.withValues(alpha: .3)),
         ),
-        const SizedBox(width: _D.sp8),
-        _StatChip(
-          value: '$_totalWorkoutsThisMonth',
-          label: l10n.thisMonthWorkouts,
-          icon: Icons.calendar_month_rounded,
-          color: _D.blue,
+        child: Row(
+          children: [
+            Icon(Icons.emoji_events_outlined,
+                size: 18, color: AppColors.tertiary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.profileFirstRunNudge,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: _D.sp8),
-        _StatChip(
-          value: '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k',
-          label: l10n.kcalLogged,
-          icon: Icons.local_fire_department_rounded,
-          color: _D.red,
-        ),
-      ],
+      ),
     );
   }
+
+  // ── Stats row — deliberately quiet: one compact borderless strip so the
+  // program banner and daily targets read as the primary content.
+  Widget _buildStatsRow() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh.withValues(alpha: .6),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          _InlineStat(
+            value: '$_totalWorkoutsAllTime',
+            label: l10n.totalWorkouts,
+            icon: Icons.fitness_center_rounded,
+            color: AppColors.primary,
+          ),
+          _statDivider(),
+          _InlineStat(
+            value: '$_totalWorkoutsThisMonth',
+            label: l10n.thisMonthWorkouts,
+            icon: Icons.calendar_month_rounded,
+            color: AppColors.secondary,
+          ),
+          _statDivider(),
+          _InlineStat(
+            value: '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k',
+            label: l10n.kcalLogged,
+            icon: Icons.local_fire_department_rounded,
+            color: AppColors.accentCalories,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statDivider() => Container(
+        width: 1,
+        height: 26,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        color: AppColors.borderSubtle,
+      );
 
   // ── Program banner ────────────────────────────────────────────────────────
   Widget _buildProgramBanner() => _PressCard(
@@ -1008,16 +988,16 @@ class _ProfilePageState extends State<ProfilePage>
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.primaryFixed.withOpacity(_D.o15),
-            borderRadius: BorderRadius.circular(_D.r12),
+            color: AppColors.primary.withValues(alpha: .12),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.bolt_rounded,
-            color: AppColors.primaryFixed,
-            size: _D.iconLg,
+            color: AppColors.primary,
+            size: 24,
           ),
         ),
-        const SizedBox(width: _D.sp16),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1026,7 +1006,7 @@ class _ProfilePageState extends State<ProfilePage>
                 AppLocalizations.of(context)!.activeProgram2.toUpperCase(),
                 style: TextStyle(
                   fontSize: 9,
-                  color: AppColors.primaryFixed,
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.8,
                 ),
@@ -1037,6 +1017,7 @@ class _ProfilePageState extends State<ProfilePage>
                 style: AppText.titleSm.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -1044,149 +1025,170 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         Icon(
           Icons.chevron_right_rounded,
-          color: AppColors.primaryFixed.withOpacity(_D.o70),
-          size: _D.iconMd,
+          color: AppColors.textSecondary.withValues(alpha: .7),
+          size: 20,
         ),
       ],
     ),
   );
 
-  // ── Metrics card ──────────────────────────────────────────────────────────
-  Widget _buildMetricsCard() {
-    final l10n = AppLocalizations.of(context)!;
-    final rows = [
-      _MetricRow(Icons.cake_outlined, l10n.age, _age, _D.blue),
-      _MetricRow(Icons.monitor_weight_outlined, l10n.weight, _weight, _D.red),
-      _MetricRow(Icons.height_outlined, l10n.height, _height, _D.green),
-      _MetricRow(
-        Icons.track_changes_outlined,
-        l10n.goal,
-        _goal,
-        AppColors.primaryFixed,
-      ),
-    ];
-    return _GlassCard(
-      child: Column(
-        children: rows.asMap().entries.map((entry) {
-          final index = entry.key;
-          final row = entry.value;
-          final isLast = index == rows.length - 1;
-          return Column(
+  // ── Unified metric-row list pattern ───────────────────────────────────────
+  // One consistent card language for all "a few numbers" sections
+  // (body data, daily targets, this month): icon chip · label · value.
+  Widget _metricListRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+    String? unit,
+    bool isLast = false,
+  }) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          child: Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 13),
-                child: Row(
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: color, size: 17),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppText.bodySm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              RichText(
+                text: TextSpan(
                   children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: row.color.withOpacity(_D.o10),
-                        borderRadius: BorderRadius.circular(_D.r8),
-                      ),
-                      child: Icon(row.icon, color: row.color, size: _D.iconSm),
-                    ),
-                    const SizedBox(width: _D.sp12),
-                    Text(
-                      row.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.onSurfaceVariant,
-                        letterSpacing: .3,
+                    TextSpan(
+                      text: value,
+                      style: AppText.metricMd.copyWith(
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    const Spacer(),
-                    Text(
-                      row.value,
-                      style: AppText.titleSm.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                    if (unit != null && unit.isNotEmpty)
+                      TextSpan(
+                        text: ' $unit',
+                        style: AppText.bodySm.copyWith(
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
-              if (!isLast)
-                Divider(height: 1, color: Colors.white.withOpacity(.05)),
             ],
-          );
-        }).toList(),
-      ),
+          ),
+        ),
+        if (!isLast) Divider(height: 1, color: AppColors.borderLight),
+      ],
     );
   }
 
-  // ── Daily targets ─────────────────────────────────────────────────────────
-  Widget _buildTargetsRow() {
+  Widget _buildMetricsRows() {
     final l10n = AppLocalizations.of(context)!;
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _TargetTile(
-            icon: Icons.local_fire_department_rounded,
-            value: '$_dailyCalories',
-            unit: l10n.kcal,
-            label: l10n.caloriesLabel,
-            color: AppColors.primaryFixed,
-          ),
+        _metricListRow(
+          icon: Icons.cake_outlined,
+          color: AppColors.secondary,
+          label: l10n.age,
+          value: _age == '--' ? '--' : _age,
+          unit: _age == '--' ? null : 'yrs',
         ),
-        const SizedBox(width: _D.sp8),
-        Expanded(
-          child: _TargetTile(
-            icon: Icons.egg_alt_outlined,
-            value: '$_dailyProtein',
-            unit: 'g',
-            label: l10n.proteinGoal,
-            color: _D.red,
-          ),
+        _metricListRow(
+          icon: Icons.monitor_weight_outlined,
+          color: AppColors.purpleAccent,
+          label: l10n.weight,
+          value: _weight == '--' ? '--' : _weight.replaceAll(' kg', ''),
+          unit: _weight == '--' ? null : 'kg',
         ),
-        const SizedBox(width: _D.sp8),
-        Expanded(
-          child: _TargetTile(
-            icon: Icons.fitness_center_rounded,
-            value: '$_weeklyWorkouts',
-            unit: '×/wk',
-            label: l10n.workoutsLabel,
-            color: _D.green,
-          ),
+        _metricListRow(
+          icon: Icons.height_outlined,
+          color: AppColors.tertiary,
+          label: l10n.height,
+          value: _height == '--' ? '--' : _height.replaceAll(' cm', ''),
+          unit: _height == '--' ? null : 'cm',
+        ),
+        _metricListRow(
+          icon: Icons.track_changes_outlined,
+          color: AppColors.primary,
+          label: l10n.goal,
+          value: _goal,
+          isLast: true,
         ),
       ],
     );
   }
 
-  // ── Month card ────────────────────────────────────────────────────────────
-  Widget _buildMonthCard() {
+  Widget _buildTargetRows() {
     final l10n = AppLocalizations.of(context)!;
-    return _GlassCard(
-      child: Row(
-        children: [
-          Expanded(
-            child: _MonthCell(
-              icon: Icons.fitness_center_rounded,
-              value: '$_totalWorkoutsThisMonth',
-              label: l10n.workoutsLabel,
-              color: AppColors.primaryFixed,
-            ),
-          ),
-          Container(width: 1, height: 60, color: Colors.white.withOpacity(.07)),
-          Expanded(
-            child: _MonthCell(
-              icon: Icons.local_fire_department_rounded,
-              value: _totalCaloriesThisMonth > 0
-                  ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
-                  : '0',
-              label: l10n.caloriesLabel,
-              color: _D.red,
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        _metricListRow(
+          icon: Icons.local_fire_department_rounded,
+          color: AppColors.accentCalories,
+          label: l10n.caloriesLabel,
+          value: '$_dailyCalories',
+          unit: l10n.kcal,
+        ),
+        _metricListRow(
+          icon: Icons.egg_alt_outlined,
+          color: AppColors.accentProtein,
+          label: l10n.proteinGoal,
+          value: '$_dailyProtein',
+          unit: 'g',
+        ),
+        _metricListRow(
+          icon: Icons.fitness_center_rounded,
+          color: AppColors.primary,
+          label: l10n.workoutsLabel,
+          value: '$_weeklyWorkouts',
+          unit: '×/wk',
+          isLast: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMonthRows() {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      children: [
+        _metricListRow(
+          icon: Icons.fitness_center_rounded,
+          color: AppColors.primary,
+          label: l10n.workoutsLabel,
+          value: '$_totalWorkoutsThisMonth',
+        ),
+        _metricListRow(
+          icon: Icons.local_fire_department_rounded,
+          color: AppColors.accentCalories,
+          label: l10n.caloriesLabel,
+          value: _totalCaloriesThisMonth > 0
+              ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
+              : '0',
+          unit: _totalCaloriesThisMonth > 0 ? 'kcal' : null,
+          isLast: true,
+        ),
+      ],
     );
   }
 
   // ── Progress chart ────────────────────────────────────────────────────────
   Widget _buildProgressChart() {
     if (_exerciseProgress.isEmpty) {
-      return _GlassCard(
+      return _ProfileCard(
         child: _EmptyState(
           icon: Icons.show_chart_rounded,
           label: 'No progress data yet',
@@ -1207,7 +1209,7 @@ class _ProfilePageState extends State<ProfilePage>
     minY = (minY - 10).clamp(0.0, double.infinity);
     maxY += 10;
 
-    return _GlassCard(
+    return _ProfileCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1217,11 +1219,11 @@ class _ProfilePageState extends State<ProfilePage>
                 width: 3,
                 height: 14,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryFixed,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(width: _D.sp8),
+              const SizedBox(width: 8),
               Text(
                 AppLocalizations.of(context)!.estimatedOneRM,
                 style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
@@ -1230,7 +1232,7 @@ class _ProfilePageState extends State<ProfilePage>
               _Pill(label: '${spots.length} sessions'),
             ],
           ),
-          const SizedBox(height: _D.sp20),
+          const SizedBox(height: 20),
           Semantics(
             label:
                 '1RM progress line chart — ${spots.length} sessions recorded.',
@@ -1242,7 +1244,7 @@ class _ProfilePageState extends State<ProfilePage>
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (_) => FlLine(
-                      color: Colors.white.withOpacity(.04),
+                      color: AppColors.borderLight,
                       strokeWidth: 1,
                     ),
                   ),
@@ -1255,7 +1257,7 @@ class _ProfilePageState extends State<ProfilePage>
                           '${v.toInt()}',
                           style: TextStyle(
                             fontSize: 9,
-                            color: AppColors.onSurfaceVariant,
+                            color: AppColors.textMuted,
                           ),
                         ),
                       ),
@@ -1292,9 +1294,7 @@ class _ProfilePageState extends State<ProfilePage>
                             child: Text(
                               _formatDate(rawDate),
                               style: TextStyle(
-                                color: AppColors.onSurfaceVariant.withOpacity(
-                                  .8,
-                                ),
+                                color: AppColors.textSecondary,
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -1313,13 +1313,13 @@ class _ProfilePageState extends State<ProfilePage>
                     touchTooltipData: LineTouchTooltipData(
                       // Compatible with fl_chart ≥ 0.67 — uses getTooltipColor
                       // instead of the deprecated tooltipBgColor field.
-                      getTooltipColor: (_) => AppColors.surfaceContainer,
+                      getTooltipColor: (_) => AppColors.surfaceContainerHigh,
                       getTooltipItems: (touchedSpots) => touchedSpots
                           .map(
                             (spot) => LineTooltipItem(
                               '${spot.y.toInt()} kg',
                               TextStyle(
-                                color: AppColors.primaryFixed,
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 12,
                               ),
@@ -1333,13 +1333,13 @@ class _ProfilePageState extends State<ProfilePage>
                       spots: spots,
                       isCurved: true,
                       curveSmoothness: .35,
-                      color: AppColors.primaryFixed,
+                      color: AppColors.primary,
                       barWidth: 2.5,
                       dotData: FlDotData(
                         show: true,
                         getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
                           radius: 3.5,
-                          color: AppColors.primaryFixed,
+                          color: AppColors.primary,
                           strokeWidth: 2,
                           strokeColor: AppColors.surface,
                         ),
@@ -1350,8 +1350,8 @@ class _ProfilePageState extends State<ProfilePage>
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            AppColors.primaryFixed.withOpacity(.18),
-                            AppColors.primaryFixed.withOpacity(0),
+                            AppColors.primary.withValues(alpha: .16),
+                            AppColors.primary.withValues(alpha: 0),
                           ],
                         ),
                       ),
@@ -1366,7 +1366,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  // ── Coach CTA ─────────────────────────────────────────────────────────────
+  // ── Coach CTA — premium in-brand moment using the shared action gradient ──
   Widget _buildCoachCta() => Semantics(
     button: true,
     label: 'Become a Coach',
@@ -1379,19 +1379,21 @@ class _ProfilePageState extends State<ProfilePage>
       },
       padding: EdgeInsets.zero,
       child: Container(
-        constraints: const BoxConstraints(minHeight: _D.touch),
+        constraints: const BoxConstraints(minHeight: 44),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_D.r16),
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            colors: [_D.gold.withOpacity(.22), _D.gold.withOpacity(.10)],
-          ),
-          border: Border.all(color: _D.gold.withOpacity(.45), width: 1),
+          borderRadius: BorderRadius.circular(16),
+          gradient: AppColors.primaryActionGradient,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: .30),
+              blurRadius: 14,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         padding: const EdgeInsets.symmetric(
-          vertical: _D.sp16,
-          horizontal: _D.sp20,
+          vertical: 16,
+          horizontal: 20,
         ),
         child: Row(
           children: [
@@ -1399,25 +1401,25 @@ class _ProfilePageState extends State<ProfilePage>
               width: 42,
               height: 42,
               decoration: BoxDecoration(
-                color: _D.gold.withOpacity(_D.o15),
-                borderRadius: BorderRadius.circular(_D.r12),
+                color: Colors.white.withValues(alpha: .18),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.workspace_premium_rounded,
-                color: _D.gold,
-                size: _D.iconLg,
+                color: Colors.white,
+                size: 24,
               ),
             ),
-            const SizedBox(width: _D.sp16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'BECOME A COACH',
                     style: TextStyle(
-                      fontSize: 10,
-                      color: _D.gold,
+                      fontSize: 11,
+                      color: Colors.white,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 2.0,
                     ),
@@ -1427,7 +1429,7 @@ class _ProfilePageState extends State<ProfilePage>
                     'Unlock coaching tools & clients',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withOpacity(.55),
+                      color: Colors.white.withValues(alpha: .85),
                     ),
                   ),
                 ],
@@ -1435,7 +1437,7 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: _D.gold.withOpacity(.7),
+              color: Colors.white.withValues(alpha: .9),
               size: 14,
             ),
           ],
@@ -1474,25 +1476,25 @@ class _ProfilePageState extends State<ProfilePage>
           unit: 'yrs',
           ctrl: ageCtrl,
           icon: Icons.cake_outlined,
-          color: _D.blue,
+          color: AppColors.secondary,
         ),
-        const SizedBox(height: _D.sp12),
+        const SizedBox(height: 12),
         _FieldInput(
           label: AppLocalizations.of(context)!.weight,
           unit: AppLocalizations.of(context)!.kg,
           ctrl: weightCtrl,
           icon: Icons.monitor_weight_outlined,
-          color: _D.red,
+          color: AppColors.accentProtein,
         ),
-        const SizedBox(height: _D.sp12),
+        const SizedBox(height: 12),
         _FieldInput(
           label: AppLocalizations.of(context)!.height,
           unit: 'cm',
           ctrl: heightCtrl,
           icon: Icons.height_outlined,
-          color: _D.green,
+          color: AppColors.primary,
         ),
-        const SizedBox(height: _D.sp12),
+        const SizedBox(height: 12),
         _FieldDropdown(
           value: goal,
           items: {
@@ -1506,7 +1508,7 @@ class _ProfilePageState extends State<ProfilePage>
             if (v != null) setState(() => goal = v);
           },
         ),
-        const SizedBox(height: _D.sp24),
+        const SizedBox(height: 24),
         _SaveBtn(
           label: 'SAVE DATA',
           onPressed: () async {
@@ -1549,25 +1551,25 @@ class _ProfilePageState extends State<ProfilePage>
           unit: l10n.kcal,
           ctrl: calCtrl,
           icon: Icons.local_fire_department_rounded,
-          color: AppColors.primaryFixed,
+          color: AppColors.accentCalories,
         ),
-        const SizedBox(height: _D.sp12),
+        const SizedBox(height: 12),
         _FieldInput(
           label: l10n.dailyProtein,
           unit: 'g',
           ctrl: proCtrl,
           icon: Icons.egg_alt_outlined,
-          color: _D.red,
+          color: AppColors.accentProtein,
         ),
-        const SizedBox(height: _D.sp12),
+        const SizedBox(height: 12),
         _FieldInput(
           label: l10n.weeklyWorkoutsLabel,
           unit: '×',
           ctrl: wkCtrl,
           icon: Icons.fitness_center_rounded,
-          color: _D.green,
+          color: AppColors.primary,
         ),
-        const SizedBox(height: _D.sp24),
+        const SizedBox(height: 24),
         _SaveBtn(
           label: 'SAVE GOALS',
           onPressed: () async {
@@ -1606,7 +1608,7 @@ class _ProfilePageState extends State<ProfilePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(_D.o50),
+      barrierColor: Colors.black.withOpacity(0.5),
       enableDrag: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, ss) => Padding(
@@ -1624,20 +1626,20 @@ class _ProfilePageState extends State<ProfilePage>
     final l10n = AppLocalizations.of(ctx)!;
     showDialog(
       context: ctx,
-      barrierColor: Colors.black.withOpacity(_D.o55),
+      barrierColor: Colors.black.withOpacity(0.55),
       builder: (dCtx) => AlertDialog(
-        backgroundColor: AppColors.surfaceContainer,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_D.r20),
-          side: BorderSide(color: AppColors.error.withOpacity(.25)),
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: AppColors.error.withValues(alpha: .25)),
         ),
         contentPadding: const EdgeInsets.fromLTRB(
-          _D.sp24,
-          _D.sp20,
-          _D.sp24,
-          _D.sp24,
+          24,
+          20,
+          24,
+          24,
         ),
-        titlePadding: const EdgeInsets.fromLTRB(_D.sp24, _D.sp24, _D.sp24, 0),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
         icon: Container(
           width: 52,
           height: 52,
@@ -1648,45 +1650,48 @@ class _ProfilePageState extends State<ProfilePage>
           child: Icon(
             Icons.logout_rounded,
             color: AppColors.error,
-            size: _D.iconLg,
+            size: 24,
           ),
         ),
         title: Text(
           l10n.signOutTitle,
-          style: AppText.headlineSm.copyWith(fontSize: 18),
+          style: AppText.headlineSm.copyWith(
+            fontSize: 18,
+            color: AppColors.textPrimary,
+          ),
           textAlign: TextAlign.center,
         ),
         content: Text(
           l10n.signOutConfirm,
           style: AppText.bodyMd.copyWith(
-            color: AppColors.onSurfaceVariant,
+            color: AppColors.textSecondary,
             height: 1.5,
           ),
           textAlign: TextAlign.center,
         ),
         actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(_D.sp16, 0, _D.sp16, _D.sp20),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
         actions: [
           SizedBox(
-            height: _D.touch,
+            height: 44,
             child: TextButton(
               onPressed: () => Navigator.pop(dCtx),
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: _D.sp24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_D.r12),
-                  side: BorderSide(color: Colors.white.withOpacity(.1)),
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: AppColors.borderSubtle),
                 ),
               ),
               child: Text(
                 l10n.cancel,
-                style: AppText.labelMd.copyWith(color: AppColors.outline),
+                style: AppText.labelMd.copyWith(color: AppColors.textSecondary),
               ),
             ),
           ),
-          const SizedBox(width: _D.sp12),
+          const SizedBox(width: 12),
           SizedBox(
-            height: _D.touch,
+            height: 44,
             child: ElevatedButton(
               onPressed: () async {
                 HapticFeedback.mediumImpact();
@@ -1712,9 +1717,9 @@ class _ProfilePageState extends State<ProfilePage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.error,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: _D.sp24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(_D.r12),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
@@ -1733,36 +1738,11 @@ class _ProfilePageState extends State<ProfilePage>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DATA MODELS
-// ─────────────────────────────────────────────────────────────────────────────
-class _MetricRow {
-  final IconData icon;
-  final String label, value;
-  final Color color;
-  const _MetricRow(this.icon, this.label, this.value, this.color);
-}
 
-class _HeaderAction {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-  const _HeaderAction({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SHARED WIDGETS
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Section header with optional trailing text-icon action
+/// Section header — quiet eyebrow label
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final _HeaderAction? action;
-  const _SectionHeader({required this.title, this.action});
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1773,73 +1753,95 @@ class _SectionHeader extends StatelessWidget {
           width: 3,
           height: 12,
           decoration: BoxDecoration(
-            color: AppColors.primaryFixed.withOpacity(.7),
+            color: AppColors.primary.withValues(alpha: .8),
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: _D.sp8),
+        const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
           style: const TextStyle(
             fontSize: 10,
-            color: AppColors.onSurfaceVariant,
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w700,
             letterSpacing: 2,
           ),
         ),
-        if (action != null) ...[
-          const Spacer(),
-          SizedBox(
-            height: _D.touch,
-            child: TextButton.icon(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                action!.onTap();
-              },
-              icon: Icon(action!.icon, size: 13, color: AppColors.primaryFixed),
-              label: Text(
-                action!.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.primaryFixed,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: .5,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: _D.sp12),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ),
-        ],
       ],
     ),
   );
 }
 
-/// Glassmorphism card base
-class _GlassCard extends StatelessWidget {
+/// Flat card base — the shared CoreGym card language (white surface,
+/// subtle border, soft shadow). Optionally tappable with an inline edit
+/// badge so editability is discoverable on the data itself.
+class _ProfileCard extends StatelessWidget {
   final Widget child;
-  const _GlassCard({required this.child});
+  final VoidCallback? onTap;
+  final String? semanticLabel;
+  final bool showEditBadge;
+  const _ProfileCard({
+    required this.child,
+    this.onTap,
+    this.semanticLabel,
+    this.showEditBadge = false,
+  });
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(_D.r16),
-    child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-      child: Container(
-        padding: const EdgeInsets.all(_D.sp16),
-        decoration: BoxDecoration(
-          color: AppColors.glass1,
-          borderRadius: BorderRadius.circular(_D.r16),
-          border: Border.all(color: AppColors.glassBorder),
-        ),
-        child: child,
+  Widget build(BuildContext context) {
+    final card = Container(
+      padding: EdgeInsets.only(
+        top: showEditBadge ? 10 : 16,
+        bottom: 16,
+        left: 16,
+        right: 16,
       ),
-    ),
-  );
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .03),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: child,
+    );
+
+    if (onTap == null) return card;
+
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          card,
+          if (showEditBadge)
+            Positioned(
+              top: 10,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                child: Icon(
+                  Icons.edit_rounded,
+                  size: 13,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Pressable card with scale micro-interaction
@@ -1866,7 +1868,7 @@ class _PressCardState extends State<_PressCard>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: _D.t150);
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
     _s = Tween<double>(
       begin: 1.0,
       end: .98,
@@ -1895,13 +1897,11 @@ class _PressCardState extends State<_PressCard>
         child: widget.padding != null
             ? Padding(padding: widget.padding!, child: widget.child)
             : Container(
-                padding: const EdgeInsets.all(_D.sp16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryFixed.withOpacity(_D.o07),
-                  borderRadius: BorderRadius.circular(_D.r16),
-                  border: Border.all(
-                    color: AppColors.primaryFixed.withOpacity(_D.o20),
-                  ),
+                  color: AppColors.surfaceContainerHigh.withValues(alpha: .6),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: widget.child,
               ),
@@ -1910,12 +1910,12 @@ class _PressCardState extends State<_PressCard>
   );
 }
 
-/// Stat chip (3 across in a row)
-class _StatChip extends StatelessWidget {
+/// Compact inline stat for the de-emphasized stats strip
+class _InlineStat extends StatelessWidget {
   final String value, label;
   final IconData icon;
   final Color color;
-  const _StatChip({
+  const _InlineStat({
     required this.value,
     required this.label,
     required this.icon,
@@ -1926,150 +1926,44 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
     child: Semantics(
       label: '$value $label',
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(_D.r16),
-          border: Border.all(color: Colors.white.withOpacity(.06)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: _D.iconMd),
-            const SizedBox(height: _D.sp8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                height: 1,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                color: AppColors.onSurfaceVariant,
-                letterSpacing: .4,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-/// Daily target tile
-class _TargetTile extends StatelessWidget {
-  final IconData icon;
-  final String value, unit, label;
-  final Color color;
-  const _TargetTile({
-    required this.icon,
-    required this.value,
-    required this.unit,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: '$value $unit $label',
-    child: Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(_D.o07),
-        borderRadius: BorderRadius.circular(_D.r16),
-        border: Border.all(color: color.withOpacity(.2)),
-      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: _D.iconMd),
-          const SizedBox(height: _D.sp8),
-          FittedBox(
-            child: RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: value,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                    height: 1,
                   ),
-                  TextSpan(
-                    text: unit,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 9,
-              color: color,
-              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
               letterSpacing: .3,
+              height: 1.3,
             ),
             textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
-    ),
-  );
-}
-
-/// Month stat cell
-class _MonthCell extends StatelessWidget {
-  final IconData icon;
-  final String value, label;
-  final Color color;
-  const _MonthCell({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    label: '$value $label',
-    child: Column(
-      children: [
-        Icon(icon, color: color, size: _D.iconLg),
-        const SizedBox(height: _D.sp8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            height: 1,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 9,
-            color: AppColors.onSurfaceVariant,
-            letterSpacing: 1.5,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ],
     ),
   );
 }
@@ -2098,7 +1992,7 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: _D.t150);
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
     _s = Tween<double>(
       begin: 1.0,
       end: .97,
@@ -2113,7 +2007,7 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
 
   @override
   Widget build(BuildContext context) {
-    final c = widget.isDestructive ? AppColors.error : AppColors.primaryFixed;
+    final c = widget.isDestructive ? AppColors.error : AppColors.primary;
     return Semantics(
       button: true,
       label: widget.label,
@@ -2128,21 +2022,21 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
           },
           onTapCancel: () => _c.reverse(),
           child: Container(
-            constraints: const BoxConstraints(minHeight: _D.touch),
+            constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.symmetric(
-              vertical: _D.sp16,
-              horizontal: _D.sp20,
+              vertical: 16,
+              horizontal: 20,
             ),
             decoration: BoxDecoration(
-              color: c.withOpacity(_D.o07),
-              borderRadius: BorderRadius.circular(_D.r16),
+              color: c.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(color: c.withOpacity(.22)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(widget.icon, color: c, size: _D.iconMd),
-                const SizedBox(width: _D.sp12),
+                Icon(widget.icon, color: c, size: 20),
+                const SizedBox(width: 12),
                 Text(
                   widget.label.toUpperCase(),
                   style: AppText.labelMd.copyWith(
@@ -2176,18 +2070,18 @@ class _Pill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = colorOverride ?? AppColors.primaryFixed;
+    final baseColor = colorOverride ?? AppColors.primary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: subtle
-            ? Colors.white.withOpacity(.05)
-            : baseColor.withOpacity(.10),
+            ? AppColors.surfaceContainerHigh
+            : baseColor.withValues(alpha: .10),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: subtle
-              ? Colors.white.withOpacity(.09)
-              : baseColor.withOpacity(.18),
+              ? AppColors.borderSubtle
+              : baseColor.withValues(alpha: .25),
         ),
       ),
       child: Row(
@@ -2197,7 +2091,7 @@ class _Pill extends StatelessWidget {
             Icon(
               icon,
               size: 11,
-              color: subtle ? AppColors.onSurfaceVariant : baseColor,
+              color: subtle ? AppColors.textSecondary : baseColor,
             ),
             const SizedBox(width: 5),
           ],
@@ -2205,7 +2099,7 @@ class _Pill extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: subtle ? 11 : 10,
-              color: subtle ? AppColors.onSurfaceVariant : baseColor,
+              color: subtle ? AppColors.textSecondary : baseColor,
               fontWeight: FontWeight.w700,
               letterSpacing: .5,
             ),
@@ -2225,11 +2119,11 @@ class _Sheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
-      color: AppColors.surfaceContainer,
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(_D.r24)),
-      border: Border.all(color: Colors.white.withOpacity(.07)),
+      color: AppColors.surface,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      border: Border.all(color: AppColors.borderSubtle),
     ),
-    padding: const EdgeInsets.fromLTRB(_D.sp24, 0, _D.sp24, _D.sp32),
+    padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
     child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2237,11 +2131,11 @@ class _Sheet extends StatelessWidget {
         // Drag handle
         Center(
           child: Container(
-            margin: const EdgeInsets.only(top: 12, bottom: _D.sp20),
+            margin: const EdgeInsets.only(top: 12, bottom: 20),
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(.15),
+              color: AppColors.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -2252,21 +2146,22 @@ class _Sheet extends StatelessWidget {
               width: 3,
               height: 18,
               decoration: BoxDecoration(
-                color: AppColors.primaryFixed,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            const SizedBox(width: _D.sp12),
+            const SizedBox(width: 12),
             Text(
               title,
               style: AppText.headlineSm.copyWith(
                 fontSize: 16,
                 letterSpacing: 1.8,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: _D.sp24),
+        const SizedBox(height: 24),
         ...children,
       ],
     ),
@@ -2291,37 +2186,37 @@ class _FieldInput extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(_D.r12),
+      borderRadius: BorderRadius.circular(12),
       border: Border.all(color: color.withOpacity(.2)),
     ),
     child: TextField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      style: const TextStyle(
-        color: Colors.white,
+      style: TextStyle(
+        color: AppColors.textPrimary,
         fontWeight: FontWeight.w600,
         fontSize: 15,
       ),
       decoration: InputDecoration(
         prefixIcon: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: _D.sp12),
-          child: Icon(icon, color: color, size: _D.iconSm),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Icon(icon, color: color, size: 16),
         ),
         prefixIconConstraints: const BoxConstraints(
-          minWidth: _D.touch,
-          minHeight: _D.touch,
+          minWidth: 44,
+          minHeight: 44,
         ),
         labelText: label,
-        labelStyle: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 12),
+        labelStyle: TextStyle(color: AppColors.textMuted, fontSize: 12),
         suffixText: unit,
-        suffixStyle: TextStyle(color: AppColors.onSurfaceVariant, fontSize: 12),
+        suffixStyle: TextStyle(color: AppColors.textMuted, fontSize: 12),
         filled: false,
         border: InputBorder.none,
         enabledBorder: InputBorder.none,
         focusedBorder: InputBorder.none,
         contentPadding: const EdgeInsets.symmetric(
-          vertical: _D.sp16,
-          horizontal: _D.sp16,
+          vertical: 16,
+          horizontal: 16,
         ),
       ),
     ),
@@ -2341,11 +2236,11 @@ class _FieldDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: _D.sp16),
+    padding: const EdgeInsets.symmetric(horizontal: 16),
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
-      borderRadius: BorderRadius.circular(_D.r12),
-      border: Border.all(color: Colors.white.withOpacity(.08)),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.borderSubtle),
     ),
     child: DropdownButtonHideUnderline(
       child: DropdownButton<String>(
@@ -2354,10 +2249,10 @@ class _FieldDropdown extends StatelessWidget {
         dropdownColor: AppColors.surfaceContainerHigh,
         icon: const Icon(
           Icons.keyboard_arrow_down_rounded,
-          color: AppColors.onSurfaceVariant,
+          color: AppColors.textSecondary,
         ),
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: AppColors.textPrimary,
           fontWeight: FontWeight.w600,
           fontSize: 14,
         ),
@@ -2383,19 +2278,16 @@ class _SaveBtn extends StatelessWidget {
     child: ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryFixed,
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_D.r16),
+          borderRadius: BorderRadius.circular(14),
         ),
         elevation: 0,
       ),
       child: Text(
         label,
-        style: AppText.buttonPrimary.copyWith(
-          color: Colors.white,
-          letterSpacing: 1.5,
-        ),
+        style: AppText.buttonPrimary.copyWith(letterSpacing: 1.5),
       ),
     ),
   );
@@ -2410,7 +2302,7 @@ class _GradientDivider extends StatelessWidget {
       gradient: LinearGradient(
         colors: [
           Colors.transparent,
-          Colors.white.withOpacity(.08),
+          AppColors.borderSubtle,
           Colors.transparent,
         ],
       ),
@@ -2444,7 +2336,7 @@ class _ShimmerState extends State<_Shimmer>
     )..repeat(reverse: true);
     _a = Tween<double>(
       begin: .04,
-      end: .10,
+      end: .09,
     ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
   }
 
@@ -2461,7 +2353,7 @@ class _ShimmerState extends State<_Shimmer>
       width: widget.width,
       height: widget.height,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(_a.value),
+        color: Colors.black.withValues(alpha: _a.value),
         borderRadius: BorderRadius.circular(widget.radius),
       ),
     ),
@@ -2497,7 +2389,7 @@ class _EmptyStateState extends State<_EmptyState>
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: _D.sp32),
+    padding: const EdgeInsets.symmetric(vertical: 32),
     child: Center(
       child: AnimatedBuilder(
         animation: _c,
@@ -2506,16 +2398,26 @@ class _EmptyStateState extends State<_EmptyState>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                widget.icon,
-                color: AppColors.onSurfaceVariant.withOpacity(.7),
-                size: 36,
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.borderSubtle),
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  widget.icon,
+                  color: AppColors.textMuted,
+                  size: 26,
+                ),
               ),
-              const SizedBox(height: _D.sp12),
+              const SizedBox(height: 12),
               Text(
                 widget.label,
                 style: TextStyle(
-                  color: AppColors.onSurfaceVariant.withOpacity(.8),
+                  color: AppColors.textSecondary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   letterSpacing: .3,

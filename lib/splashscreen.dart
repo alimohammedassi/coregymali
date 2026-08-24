@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: AppColors.surfaceLowest,
       body: Stack(
         children: [
-          // Background gym image with dark overlay
+          // Background image with dark overlay
           Positioned.fill(
             child: Image.asset(
               'assets/images/coreGym.png',
@@ -175,6 +175,26 @@ class _SplashScreenState extends State<SplashScreen>
                   gradient: RadialGradient(
                     colors: [
                       AppColors.glowOrbPrimary,
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Secondary glow orb bottom-left
+          Positioned(
+            bottom: -100,
+            left: -80,
+            child: IgnorePointer(
+              child: Container(
+                width: 280,
+                height: 280,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.glowOrbSecondary,
                       Colors.transparent,
                     ],
                   ),

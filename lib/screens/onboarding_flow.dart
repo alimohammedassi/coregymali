@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../services/onboarding_service.dart';
 import '../theme/app_colors.dart';
 import '../fitness_home_pages.dart';

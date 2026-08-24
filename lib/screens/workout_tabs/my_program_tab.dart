@@ -73,7 +73,7 @@ class _MyProgramTabState extends State<MyProgramTab>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: Color(0xFFD4FF57),
+          color: AppColors.primaryFixed,
           strokeWidth: 2,
         ),
       );
@@ -96,7 +96,7 @@ class _MyProgramTabState extends State<MyProgramTab>
       'intermediate': const Color(0xFFFBBF24),
       'advanced': const Color(0xFFF87171),
     };
-    final levelColor = levelColors[level] ?? const Color(0xFFD4FF57);
+    final levelColor = levelColors[level] ?? AppColors.primaryFixed;
 
     return FadeTransition(
       opacity: _heroFade,
@@ -132,7 +132,7 @@ class _MyProgramTabState extends State<MyProgramTab>
                       Icons.timelapse_rounded, const Color(0xFF06B6D4)),
                   const SizedBox(width: 12),
                   _statCard('${(progress * 100).round()}%', 'Complete',
-                      Icons.pie_chart_rounded, const Color(0xFFD4FF57)),
+                      Icons.pie_chart_rounded, AppColors.primaryFixed),
                 ],
               ),
 
@@ -175,11 +175,11 @@ class _MyProgramTabState extends State<MyProgramTab>
                   width: double.infinity,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD4FF57),
+                    color: AppColors.primaryFixed,
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4FF57).withOpacity(0.3),
+                        color: AppColors.primaryFixed.withValues(alpha: 0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 6),
                       ),
@@ -420,12 +420,12 @@ class _MyProgramTabState extends State<MyProgramTab>
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD4FF57).withOpacity(0.12),
+                      color: AppColors.primaryFixed.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
                       Icons.fitness_center_rounded,
-                      color: Color(0xFFD4FF57),
+                      color: AppColors.primaryFixed,
                       size: 22,
                     ),
                   ),
@@ -489,7 +489,7 @@ class _MyProgramTabState extends State<MyProgramTab>
                   height: 42,
                   decoration: BoxDecoration(
                     color: isToday
-                        ? const Color(0xFFD4FF57)
+                        ? AppColors.primaryFixed
                         : isDone
                             ? const Color(0xFF2C2C2E)
                             : isWorkout
@@ -512,11 +512,11 @@ class _MyProgramTabState extends State<MyProgramTab>
                                 size: 14,
                                 color: isToday
                                     ? Colors.black
-                                    : Colors.white38,
+                                    : const Color(0xFF8E8E93),
                               )
                             : const Text('—',
                                 style: TextStyle(
-                                    color: Color(0xFF3A3A3C), fontSize: 12)),
+                                    color: Color(0xFF636366), fontSize: 12)),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -524,8 +524,8 @@ class _MyProgramTabState extends State<MyProgramTab>
                   days[i],
                   style: TextStyle(
                     color: isToday
-                        ? const Color(0xFFD4FF57)
-                        : const Color(0xFF636366),
+                        ? AppColors.primaryFixed
+                        : const Color(0xFF8E8E93),
                     fontSize: 11,
                     fontWeight:
                         isToday ? FontWeight.w700 : FontWeight.w500,
@@ -648,7 +648,7 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Full Body',
           'id': 'full_body',
           'icon': Icons.accessibility_new,
-          'color': const Color(0xFFD4FF57)
+          'color': AppColors.primaryFixed
         },
         {
           'label': 'Core / Abs',

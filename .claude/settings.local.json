@@ -11,7 +11,14 @@
       "Bash(flutter build:*)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(npx supabase *)"
+      "Bash(npx supabase *)",
+      "Bash(grep -E \"^\\\\\\\\s*\\(error|warning\\)\")",
+      "Bash(grep -E \"^\\\\\\\\s*error\")",
+      "mcp__supabase__get_project_url"
     ]
-  }
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

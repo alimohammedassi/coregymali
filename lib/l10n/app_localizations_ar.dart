@@ -24,6 +24,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navProfile => 'الملف الشخصي';
 
   @override
+  String get navMessages => 'الرسائل';
+
+  @override
+  String get navCoaches => 'المدربون';
+
+  @override
+  String get navDashboard => 'لوحة التحكم';
+
+  @override
   String get goodMorning => 'صباح الخير';
 
   @override
@@ -33,28 +42,168 @@ class AppLocalizationsAr extends AppLocalizations {
   String get goodEvening => 'مساء النور';
 
   @override
+  String get readyConquer => 'جاهز لتحقيق أهدافك الرياضية اليوم؟';
+
+  @override
+  String get calorieGoalReached => 'تم الوصول لهدف السعرات! أداء مذهل! 🔥';
+
+  @override
+  String calorieProgressMsg(int pct) {
+    return 'أنجزت $pct٪ من هدف الطاقة اليومي';
+  }
+
+  @override
+  String daysStreak(int count) {
+    return '$count أيام';
+  }
+
+  @override
+  String get dailyMetrics => 'مؤشرات اليوم';
+
+  @override
+  String get details => 'التفاصيل';
+
+  @override
   String get todayCalories => 'سعرات اليوم';
 
   @override
   String get caloriesRemaining => 'متبقي';
 
   @override
-  String get caloriesOver => 'زيادة';
+  String get caloriesOver => 'فائض';
+
+  @override
+  String get kcalLeft => 'سعرة متبقية';
+
+  @override
+  String get kcalOver => 'سعرة فائضة';
 
   @override
   String get kcal => 'سعرة';
 
   @override
-  String get protein => 'بروتين';
+  String get eaten => 'المستهلك';
 
   @override
-  String get carbs => 'كربوهيدرات';
+  String get burned => 'المحروق';
 
   @override
-  String get fat => 'دهون';
+  String get protein => 'البروتين';
+
+  @override
+  String get carbs => 'الكربوهيدرات';
+
+  @override
+  String get fat => 'الدهون';
+
+  @override
+  String get quickAddWater => '+٢٥٠ مل';
+
+  @override
+  String get quickWorkout => 'تمرين';
+
+  @override
+  String get setGoalsTitle => 'تحديد أهدافك الرياضية';
+
+  @override
+  String get setGoalsSubtitle => 'خصص السعرات والماكروز لمتابعة أدق';
+
+  @override
+  String get moodSectionTitle => 'اختار مزاجك';
+
+  @override
+  String get moodTired => 'تعبان';
+
+  @override
+  String get moodLight => 'خفيف';
+
+  @override
+  String get moodMedium => 'متوسط';
+
+  @override
+  String get moodActive => 'نشيط';
+
+  @override
+  String get moodFull => 'فل باور';
+
+  @override
+  String get muscleGroupsTitle => 'مجموعات العضلات';
+
+  @override
+  String get muscleChest => 'الصدر';
+
+  @override
+  String get muscleArms => 'الذراعين';
+
+  @override
+  String get muscleLegs => 'الأرجل';
+
+  @override
+  String get muscleCore => 'الكور';
+
+  @override
+  String get aiWorkoutCta => 'ولّد تمرينك بالذكاء الاصطناعي';
+
+  @override
+  String get aiWorkoutSub => 'Smart Trainer — ٤٥ دقيقة';
+
+  @override
+  String caloriesOf(int goal) {
+    return 'من $goal';
+  }
+
+  @override
+  String caloriesRemainingMsg(int remaining) {
+    return 'باقي $remaining سعرة للهدف';
+  }
+
+  @override
+  String caloriesOverMsg(int over) {
+    return 'تجاوزت الهدف بـ $over سعرة';
+  }
+
+  @override
+  String get addMeal => '+ تسجيل وجبة';
+
+  @override
+  String get scanAi => 'مسح ذكي';
+
+  @override
+  String get voiceLog => 'صوتي';
+
+  @override
+  String get barcodeScan => 'باركود';
+
+  @override
+  String get quickText => 'نصي';
+
+  @override
+  String get dailyQuests => 'مهام وتحديات اليوم';
+
+  @override
+  String get hydrationHero => 'بطل الترطيب';
+
+  @override
+  String get proteinChampion => 'بطل البروتين';
+
+  @override
+  String get streakMaster => 'سيد الاستمرارية';
+
+  @override
+  String xpEarned(int count) {
+    return '+$count نقطة';
+  }
+
+  @override
+  String levelLabel(int lvl) {
+    return 'مستوى $lvl';
+  }
 
   @override
   String get todayMeals => 'وجبات اليوم';
+
+  @override
+  String get todaysFueling => 'وجبات وتغذية اليوم';
 
   @override
   String get addFood => '+ إضافة طعام';
@@ -66,7 +215,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logFirstMeal => 'سجّل أول وجبة لك اليوم';
 
   @override
-  String get logMeal => '+ سجّل وجبة';
+  String get logMeal => 'تسجيل وجبة';
 
   @override
   String get breakfast => 'الإفطار';
@@ -78,7 +227,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dinner => 'العشاء';
 
   @override
-  String get snack => 'وجبة خفيفة';
+  String get snack => 'سناك';
 
   @override
   String get notLogged => 'لم تُسجَّل';
@@ -89,10 +238,13 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get yourProgram => 'برنامجك';
+  String get yourProgram => 'برنامجك التدريبي';
 
   @override
   String get activeProgram => 'البرنامج النشط';
+
+  @override
+  String get activeTrainingProgram => 'البرنامج التدريبي النشط';
 
   @override
   String get noActiveProgram => 'لا يوجد برنامج نشط';
@@ -110,6 +262,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ofWord => 'من';
 
   @override
+  String weekOfTotal(int current, int total) {
+    return 'الأسبوع $current من $total';
+  }
+
+  @override
+  String percentComplete(int pct) {
+    return 'مكتمل بنسبة $pct٪';
+  }
+
+  @override
   String get beginner => 'مبتدئ';
 
   @override
@@ -120,6 +282,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get lastWorkout => 'آخر تمرين';
+
+  @override
+  String get lastWorkoutUpper => 'آخر تمرين';
 
   @override
   String get noWorkoutsYet => 'لم تسجّل أي تمرين بعد';
@@ -140,7 +305,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get water => 'الماء';
 
   @override
+  String get glasses => 'أكواب';
+
+  @override
   String get ofGlasses => 'من ٨ أكواب';
+
+  @override
+  String get ofGlassesGoal => 'من هدف ٨';
 
   @override
   String get steps => 'الخطوات';
@@ -149,7 +320,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ofSteps => 'من ١٠٬٠٠٠ خطوة';
 
   @override
+  String ofStepsGoal(int pct) {
+    return '$pct٪ من ١٠ آلاف';
+  }
+
+  @override
   String get kcalBurned => 'سعرة محروقة';
+
+  @override
+  String get burnedToday => 'محروقة اليوم';
 
   @override
   String get updateSteps => 'تحديث الخطوات';
@@ -159,6 +338,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get save => 'حفظ';
+
+  @override
+  String get coachBannerTitle => 'ارتقِ بمستواك مع مدرب محترف';
+
+  @override
+  String get coachBannerSubtitle => 'مدربون معتمدون · برامج تدريب وتغذية مخصصة';
 
   @override
   String get completeProfile => 'أكمل ملفك الشخصي لعرض أهداف مخصصة.';
@@ -260,10 +445,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get legs => 'أرجل';
 
   @override
-  String get core => 'منطقة وسطى';
+  String get core => 'عضلات البطن';
 
   @override
-  String get fullBody => 'الجسم كامل';
+  String get fullBody => 'كامل الجسم';
 
   @override
   String get activeWorkout => 'التمرين الحالي';
@@ -568,9 +753,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get extraActive => 'نشاط مكثف';
 
   @override
-  String get navMessages => 'الرسائل';
-
-  @override
   String get chatTitle => 'الرسائل';
 
   @override
@@ -593,4 +775,137 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get client => 'العميل';
+
+  @override
+  String get scanTitle => 'المسح الذكي للطعام';
+
+  @override
+  String get scanSubtitle => 'صوّر أكلك وسيبه علينا';
+
+  @override
+  String get scanSaveToMeal => 'هتحفظ الوجبة في';
+
+  @override
+  String get scanIdleHint =>
+      'صورة واحدة تكفي — هنحدد الأصناف والوزن والسعرات تلقائيًا';
+
+  @override
+  String get scanCameraCta => 'صوّر الأكل';
+
+  @override
+  String get scanGalleryCta => 'اختر من المعرض';
+
+  @override
+  String get scanAnalyzingTitle => 'بحلل الصورة…';
+
+  @override
+  String get scanAnalyzingSubtitle => 'بنحدد الأصناف والوزن والماكروز';
+
+  @override
+  String get scanItemsHeader => 'الأصناف المكتشفة';
+
+  @override
+  String get scanConfidenceHigh => 'دقة عالية';
+
+  @override
+  String get scanConfidenceMedium => 'دقة متوسطة';
+
+  @override
+  String get scanConfidenceLow => 'دقة منخفضة';
+
+  @override
+  String scanLogToMeal(String meal) {
+    return 'سجّل في $meal';
+  }
+
+  @override
+  String get scanErrorTitle => 'عذرًا!';
+
+  @override
+  String get scanRetrySamePhoto => 'جرب تاني بنفس الصورة';
+
+  @override
+  String get scanNewPhoto => 'صورة جديدة';
+
+  @override
+  String get scanErrorNetwork =>
+      'مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني';
+
+  @override
+  String get scanErrorUnauthorized =>
+      'لازم تسجل دخول الأول قبل ما تستخدم السكانر';
+
+  @override
+  String get scanErrorNotFood =>
+      'مش شايف أكل واضح في الصورة، جرب صورة تانية من زاوية أحسن';
+
+  @override
+  String get scanErrorAnalysis => 'حصلت مشكلة في تحليل الصورة، جرب تاني';
+
+  @override
+  String get scanErrorPersist =>
+      'الصورة اتحللت بس حصلت مشكلة في الحفظ، جرب تاني';
+
+  @override
+  String get scanErrorUnknown => 'حصلت مشكلة غير متوقعة، جرب تاني';
+
+  @override
+  String get voiceTitle => 'تسجيل الأكل بالصوت';
+
+  @override
+  String get voiceSubtitle => 'قول بس أكلت إيه وإحنا نعمل الباقي';
+
+  @override
+  String get voiceIdleHint =>
+      'اوصف وجبتك في جملة واحدة — هنحول كلامك لنص ونحسب السعرات تلقائيًا';
+
+  @override
+  String get voiceRecordCta => 'ابدأ التسجيل';
+
+  @override
+  String get voiceStopCta => 'وقف وحلّل';
+
+  @override
+  String get voiceRecordingHint => 'بسمعك… دوس وقف لما تخلص توصيف الوجبة';
+
+  @override
+  String get voiceAnalyzingTitle => 'بحلل التسجيل…';
+
+  @override
+  String get voiceTranscriptLabel => 'إنت قلت';
+
+  @override
+  String get voiceRetrySameAudio => 'جرب تاني بنفس التسجيل';
+
+  @override
+  String get voiceNewRecording => 'تسجيل جديد';
+
+  @override
+  String get voiceErrorNetwork =>
+      'مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني';
+
+  @override
+  String get voiceErrorUnauthorized =>
+      'لازم تسجل دخول الأول قبل ما تستخدم تسجيل الصوت';
+
+  @override
+  String get voiceErrorMicrophone =>
+      'محتاجين إذن المايك، فعّله من الإعدادات وجرب تاني';
+
+  @override
+  String get voiceErrorNotFood =>
+      'مسمعناش وصف أكل واضح في التسجيل، جرب توصف وجبتك تاني';
+
+  @override
+  String get voiceErrorAnalysis => 'حصلت مشكلة في فهم التسجيل، جرب تاني';
+
+  @override
+  String get voiceErrorPersist =>
+      'التسجيل اتحلل بس حصلت مشكلة في الحفظ، جرب تاني';
+
+  @override
+  String get voiceErrorUnknown => 'حصلت مشكلة غير متوقعة، جرب تاني';
+
+  @override
+  String get profileFirstRunNudge => 'سجّل أول تمرين لتبدأ في جمع الرانك!';
 }

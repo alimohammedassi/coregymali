@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../data/repositories/coach_repository_impl.dart';
 import '../../domain/entities/coach_entity.dart';
@@ -81,7 +82,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Welcome to CoreGym Coaches!'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.greenAccent,
         ),
       );
 
@@ -337,13 +338,13 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                   decoration: BoxDecoration(
                     color: const Color(0x33FF7351),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFF7351)),
+                    border: Border.all(color: AppColors.error),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.error_outline_rounded,
-                        color: Color(0xFFFF7351),
+                        color: AppColors.error,
                         size: 20,
                       ),
                       const SizedBox(width: 12),
@@ -351,7 +352,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                         child: Text(
                           _error!,
                           style: AppText.bodySm.copyWith(
-                            color: const Color(0xFFFF7351),
+                            color: AppColors.error,
                           ),
                         ),
                       ),
@@ -444,11 +445,11 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF7351), width: 1),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFFF7351), width: 1.5),
+          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
         ),
         contentPadding: const EdgeInsets.all(16),
       ),

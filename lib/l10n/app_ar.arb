@@ -7,44 +7,151 @@
   "navNutrition": "التغذية",
   "navWorkout": "التمرين",
   "navProfile": "الملف الشخصي",
+  "navMessages": "الرسائل",
+  "navCoaches": "المدربون",
+  "navDashboard": "لوحة التحكم",
 
   "goodMorning": "صباح الخير",
   "goodAfternoon": "مساء الخير",
   "goodEvening": "مساء النور",
+  "readyConquer": "جاهز لتحقيق أهدافك الرياضية اليوم؟",
+  "calorieGoalReached": "تم الوصول لهدف السعرات! أداء مذهل! 🔥",
+  "calorieProgressMsg": "أنجزت {pct}٪ من هدف الطاقة اليومي",
+  "@calorieProgressMsg": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
 
+  "daysStreak": "{count} أيام",
+  "@daysStreak": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "dailyMetrics": "مؤشرات اليوم",
+  "details": "التفاصيل",
   "todayCalories": "سعرات اليوم",
   "caloriesRemaining": "متبقي",
-  "caloriesOver": "زيادة",
+  "caloriesOver": "فائض",
+  "kcalLeft": "سعرة متبقية",
+  "kcalOver": "سعرة فائضة",
   "kcal": "سعرة",
-  "protein": "بروتين",
-  "carbs": "كربوهيدرات",
-  "fat": "دهون",
+  "eaten": "المستهلك",
+  "burned": "المحروق",
+  "protein": "البروتين",
+  "carbs": "الكربوهيدرات",
+  "fat": "الدهون",
+
+  "quickAddWater": "+٢٥٠ مل",
+  "quickWorkout": "تمرين",
+  "setGoalsTitle": "تحديد أهدافك الرياضية",
+  "setGoalsSubtitle": "خصص السعرات والماكروز لمتابعة أدق",
+
+  "moodSectionTitle": "اختار مزاجك",
+  "moodTired": "تعبان",
+  "moodLight": "خفيف",
+  "moodMedium": "متوسط",
+  "moodActive": "نشيط",
+  "moodFull": "فل باور",
+
+  "muscleGroupsTitle": "مجموعات العضلات",
+  "muscleChest": "الصدر",
+  "muscleArms": "الذراعين",
+  "muscleLegs": "الأرجل",
+  "muscleCore": "الكور",
+
+  "aiWorkoutCta": "ولّد تمرينك بالذكاء الاصطناعي",
+  "aiWorkoutSub": "Smart Trainer — ٤٥ دقيقة",
+
+  "caloriesOf": "من {goal}",
+  "@caloriesOf": {
+    "placeholders": {
+      "goal": { "type": "int" }
+    }
+  },
+  "caloriesRemainingMsg": "باقي {remaining} سعرة للهدف",
+  "@caloriesRemainingMsg": {
+    "placeholders": {
+      "remaining": { "type": "int" }
+    }
+  },
+  "caloriesOverMsg": "تجاوزت الهدف بـ {over} سعرة",
+  "@caloriesOverMsg": {
+    "placeholders": {
+      "over": { "type": "int" }
+    }
+  },
+
+  "addMeal": "+ تسجيل وجبة",
+  "scanAi": "مسح ذكي",
+  "voiceLog": "صوتي",
+  "barcodeScan": "باركود",
+  "quickText": "نصي",
+  "dailyQuests": "مهام وتحديات اليوم",
+  "hydrationHero": "بطل الترطيب",
+  "proteinChampion": "بطل البروتين",
+  "streakMaster": "سيد الاستمرارية",
+  "xpEarned": "+{count} نقطة",
+  "@xpEarned": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "levelLabel": "مستوى {lvl}",
+  "@levelLabel": {
+    "placeholders": {
+      "lvl": { "type": "int" }
+    }
+  },
+  "@caloriesOverMsg": {
+    "placeholders": {
+      "over": { "type": "int" }
+    }
+  },
 
   "todayMeals": "وجبات اليوم",
+  "todaysFueling": "وجبات وتغذية اليوم",
   "addFood": "+ إضافة طعام",
   "noMealsYet": "لم تسجّل أي وجبة بعد",
   "logFirstMeal": "سجّل أول وجبة لك اليوم",
-  "logMeal": "+ سجّل وجبة",
+  "logMeal": "تسجيل وجبة",
   "breakfast": "الإفطار",
   "lunch": "الغداء",
   "dinner": "العشاء",
-  "snack": "وجبة خفيفة",
+  "snack": "سناك",
   "notLogged": "لم تُسجَّل",
   "items": "{count} عناصر",
   "@items": { "placeholders": { "count": { "type": "int" } } },
 
-  "yourProgram": "برنامجك",
+  "yourProgram": "برنامجك التدريبي",
   "activeProgram": "البرنامج النشط",
+  "activeTrainingProgram": "البرنامج التدريبي النشط",
   "noActiveProgram": "لا يوجد برنامج نشط",
   "browsePrograms": "تصفّح البرامج ←",
   "startTodaysWorkout": "ابدأ تمرين اليوم",
   "week": "الأسبوع",
   "ofWord": "من",
+  "weekOfTotal": "الأسبوع {current} من {total}",
+  "@weekOfTotal": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "percentComplete": "مكتمل بنسبة {pct}٪",
+  "@percentComplete": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
   "beginner": "مبتدئ",
   "intermediate": "متوسط",
   "advanced": "متقدم",
 
   "lastWorkout": "آخر تمرين",
+  "lastWorkoutUpper": "آخر تمرين",
   "noWorkoutsYet": "لم تسجّل أي تمرين بعد",
   "logFirstWorkout": "سجّل أول تمرين ←",
   "history": "السجل",
@@ -52,13 +159,25 @@
   "kgVolume": "كجم حجم",
 
   "water": "الماء",
+  "glasses": "أكواب",
   "ofGlasses": "من ٨ أكواب",
+  "ofGlassesGoal": "من هدف ٨",
   "steps": "الخطوات",
   "ofSteps": "من ١٠٬٠٠٠ خطوة",
+  "ofStepsGoal": "{pct}٪ من ١٠ آلاف",
+  "@ofStepsGoal": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
   "kcalBurned": "سعرة محروقة",
+  "burnedToday": "محروقة اليوم",
   "updateSteps": "تحديث الخطوات",
   "cancel": "إلغاء",
   "save": "حفظ",
+
+  "coachBannerTitle": "ارتقِ بمستواك مع مدرب محترف",
+  "coachBannerSubtitle": "مدربون معتمدون · برامج تدريب وتغذية مخصصة",
 
   "completeProfile": "أكمل ملفك الشخصي لعرض أهداف مخصصة.",
   "fix": "إصلاح ←",
@@ -95,8 +214,8 @@
   "shoulders": "أكتاف",
   "arms": "أذرع",
   "legs": "أرجل",
-  "core": "منطقة وسطى",
-  "fullBody": "الجسم كامل",
+  "core": "عضلات البطن",
+  "fullBody": "كامل الجسم",
 
   "activeWorkout": "التمرين الحالي",
   "finish": "إنهاء",
@@ -211,7 +330,6 @@
   "veryActive": "نشيط جداً",
   "extraActive": "نشاط مكثف",
 
-  "navMessages": "الرسائل",
   "chatTitle": "الرسائل",
   "noConversations": "لا توجد محادثات بعد",
   "noConversationsHint": "اشترك في مدرب لبدء المحادثة",
@@ -219,5 +337,49 @@
   "sayHello": "قل مرحباً! 👋",
   "retry": "إعادة المحاولة",
   "coach": "المدرب",
-  "client": "العميل"
+  "client": "العميل",
+
+  "scanTitle": "المسح الذكي للطعام",
+  "scanSubtitle": "صوّر أكلك وسيبه علينا",
+  "scanSaveToMeal": "هتحفظ الوجبة في",
+  "scanIdleHint": "صورة واحدة تكفي — هنحدد الأصناف والوزن والسعرات تلقائيًا",
+  "scanCameraCta": "صوّر الأكل",
+  "scanGalleryCta": "اختر من المعرض",
+  "scanAnalyzingTitle": "بحلل الصورة…",
+  "scanAnalyzingSubtitle": "بنحدد الأصناف والوزن والماكروز",
+  "scanItemsHeader": "الأصناف المكتشفة",
+  "scanConfidenceHigh": "دقة عالية",
+  "scanConfidenceMedium": "دقة متوسطة",
+  "scanConfidenceLow": "دقة منخفضة",
+  "scanLogToMeal": "سجّل في {meal}",
+  "@scanLogToMeal": { "placeholders": { "meal": { "type": "String" } } },
+  "scanErrorTitle": "عذرًا!",
+  "scanRetrySamePhoto": "جرب تاني بنفس الصورة",
+  "scanNewPhoto": "صورة جديدة",
+  "scanErrorNetwork": "مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني",
+  "scanErrorUnauthorized": "لازم تسجل دخول الأول قبل ما تستخدم السكانر",
+  "scanErrorNotFood": "مش شايف أكل واضح في الصورة، جرب صورة تانية من زاوية أحسن",
+  "scanErrorAnalysis": "حصلت مشكلة في تحليل الصورة، جرب تاني",
+  "scanErrorPersist": "الصورة اتحللت بس حصلت مشكلة في الحفظ، جرب تاني",
+  "scanErrorUnknown": "حصلت مشكلة غير متوقعة، جرب تاني",
+
+  "voiceTitle": "تسجيل الأكل بالصوت",
+  "voiceSubtitle": "قول بس أكلت إيه وإحنا نعمل الباقي",
+  "voiceIdleHint": "اوصف وجبتك في جملة واحدة — هنحول كلامك لنص ونحسب السعرات تلقائيًا",
+  "voiceRecordCta": "ابدأ التسجيل",
+  "voiceStopCta": "وقف وحلّل",
+  "voiceRecordingHint": "بسمعك… دوس وقف لما تخلص توصيف الوجبة",
+  "voiceAnalyzingTitle": "بحلل التسجيل…",
+  "voiceTranscriptLabel": "إنت قلت",
+  "voiceRetrySameAudio": "جرب تاني بنفس التسجيل",
+  "voiceNewRecording": "تسجيل جديد",
+  "voiceErrorNetwork": "مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني",
+  "voiceErrorUnauthorized": "لازم تسجل دخول الأول قبل ما تستخدم تسجيل الصوت",
+  "voiceErrorMicrophone": "محتاجين إذن المايك، فعّله من الإعدادات وجرب تاني",
+  "voiceErrorNotFood": "مسمعناش وصف أكل واضح في التسجيل، جرب توصف وجبتك تاني",
+  "voiceErrorAnalysis": "حصلت مشكلة في فهم التسجيل، جرب تاني",
+  "voiceErrorPersist": "التسجيل اتحلل بس حصلت مشكلة في الحفظ، جرب تاني",
+  "voiceErrorUnknown": "حصلت مشكلة غير متوقعة، جرب تاني",
+
+  "profileFirstRunNudge": "سجّل أول تمرين لتبدأ في جمع الرانك!"
 }

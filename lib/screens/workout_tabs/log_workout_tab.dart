@@ -13,7 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 const _kSurface = Color(0xFF111113);
 const _kCard = Color(0xFF1C1C1E);
 const _kCard2 = Color(0xFF2C2C2E);
-const _kAccent = Color(0xFFD4FF57);
+const _kAccent = AppColors.primaryFixed;
 const _kMuted = Color(0xFF8E8E93);
 const _kSubtle = Color(0xFF636366);
 
@@ -24,7 +24,7 @@ const Map<String, Color> _muscleColors = {
   'Arms': Color(0xFFFBBF24),
   'Legs': Color(0xFF34D399),
   'Core': Color(0xFFFF6B35),
-  'Full Body': Color(0xFFD4FF57),
+  'Full Body': AppColors.primaryFixed,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1101,7 +1101,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
           ),
           decoration: InputDecoration(
             hintText: unit,
-            hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+            hintStyle: const TextStyle(color: _kMuted),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,

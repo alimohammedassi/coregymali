@@ -7,24 +7,116 @@
   "navNutrition": "Nutrition",
   "navWorkout": "Workout",
   "navProfile": "Profile",
+  "navMessages": "Messages",
+  "navCoaches": "Coaches",
+  "navDashboard": "Dashboard",
 
   "goodMorning": "Good morning",
   "goodAfternoon": "Good afternoon",
   "goodEvening": "Good evening",
+  "readyConquer": "Ready to conquer your fitness goals today?",
+  "calorieGoalReached": "Calorie goal reached! Peak performance! 🔥",
+  "calorieProgressMsg": "Completed {pct}% of daily energy target",
+  "@calorieProgressMsg": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
 
+  "daysStreak": "{count} DAYS",
+  "@daysStreak": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "dailyMetrics": "DAILY METRIC MATRIX",
+  "details": "Details",
   "todayCalories": "Calories Today",
   "caloriesRemaining": "remaining",
   "caloriesOver": "over",
+  "kcalLeft": "KCAL LEFT",
+  "kcalOver": "KCAL OVER",
   "kcal": "kcal",
+  "eaten": "Eaten",
+  "burned": "Burned",
   "protein": "Protein",
   "carbs": "Carbs",
   "fat": "Fat",
 
+  "quickAddWater": "+250ml",
+  "quickWorkout": "Workout",
+  "setGoalsTitle": "Personalize Your Target Goals",
+  "setGoalsSubtitle": "Set calories, macros & water for tailored tracking",
+
+  "moodSectionTitle": "Choose Your Mood",
+  "moodTired": "Tired",
+  "moodLight": "Light",
+  "moodMedium": "Medium",
+  "moodActive": "Active",
+  "moodFull": "Full Power",
+
+  "muscleGroupsTitle": "Muscle Groups",
+  "muscleChest": "Chest",
+  "muscleArms": "Arms",
+  "muscleLegs": "Legs",
+  "muscleCore": "Core",
+
+  "aiWorkoutCta": "Generate Your AI Workout",
+  "aiWorkoutSub": "Smart Trainer — 45 min",
+
+  "caloriesOf": "of {goal}",
+  "@caloriesOf": {
+    "placeholders": {
+      "goal": { "type": "int" }
+    }
+  },
+  "caloriesRemainingMsg": "{remaining} kcal remaining",
+  "@caloriesRemainingMsg": {
+    "placeholders": {
+      "remaining": { "type": "int" }
+    }
+  },
+  "caloriesOverMsg": "{over} kcal over goal",
+  "@caloriesOverMsg": {
+    "placeholders": {
+      "over": { "type": "int" }
+    }
+  },
+
+  "addMeal": "+ Add Meal",
+  "scanAi": "AI Scan",
+  "voiceLog": "Voice",
+  "barcodeScan": "Barcode",
+  "quickText": "Text",
+  "dailyQuests": "Daily Quests",
+  "hydrationHero": "Hydration Hero",
+  "proteinChampion": "Protein Champion",
+  "streakMaster": "Streak Master",
+  "xpEarned": "+{count} XP",
+  "@xpEarned": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "levelLabel": "LVL {lvl}",
+  "@levelLabel": {
+    "placeholders": {
+      "lvl": { "type": "int" }
+    }
+  },
+  "@caloriesOverMsg": {
+    "placeholders": {
+      "over": { "type": "int" }
+    }
+  },
+
   "todayMeals": "Today's Meals",
+  "todaysFueling": "Today's Fueling",
   "addFood": "+ Add Food",
   "noMealsYet": "No meals logged yet",
   "logFirstMeal": "Log your first meal today",
-  "logMeal": "+ Log Meal",
+  "logMeal": "Log Meal",
   "breakfast": "Breakfast",
   "lunch": "Lunch",
   "dinner": "Dinner",
@@ -35,16 +127,31 @@
 
   "yourProgram": "Your Program",
   "activeProgram": "ACTIVE PROGRAM",
+  "activeTrainingProgram": "ACTIVE TRAINING PROGRAM",
   "noActiveProgram": "No active program",
   "browsePrograms": "Browse Programs →",
   "startTodaysWorkout": "Start Today's Workout",
   "week": "Week",
   "ofWord": "of",
+  "weekOfTotal": "Week {current} of {total}",
+  "@weekOfTotal": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "percentComplete": "{pct}% complete",
+  "@percentComplete": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
   "beginner": "BEGINNER",
   "intermediate": "INTERMEDIATE",
   "advanced": "ADVANCED",
 
   "lastWorkout": "Last Workout",
+  "lastWorkoutUpper": "LAST WORKOUT",
   "noWorkoutsYet": "No workouts logged yet",
   "logFirstWorkout": "Log Your First Workout →",
   "history": "History",
@@ -52,13 +159,25 @@
   "kgVolume": "kg volume",
 
   "water": "Water",
+  "glasses": "glasses",
   "ofGlasses": "of 8 glasses",
+  "ofGlassesGoal": "of 8 goal",
   "steps": "Steps",
   "ofSteps": "of 10,000 steps",
+  "ofStepsGoal": "{pct}% of 10k",
+  "@ofStepsGoal": {
+    "placeholders": {
+      "pct": { "type": "int" }
+    }
+  },
   "kcalBurned": "kcal burned",
+  "burnedToday": "burned today",
   "updateSteps": "Update Steps",
   "cancel": "Cancel",
   "save": "Save",
+
+  "coachBannerTitle": "Level up with a Pro Coach",
+  "coachBannerSubtitle": "Certified coaches available · Personalized plans",
 
   "completeProfile": "Complete your profile to see personalized goals.",
   "fix": "Fix →",
@@ -211,7 +330,6 @@
   "veryActive": "Very Active",
   "extraActive": "Extra Active",
 
-  "navMessages": "Messages",
   "chatTitle": "Messages",
   "noConversations": "No conversations yet",
   "noConversationsHint": "Subscribe to a coach to start chatting",
@@ -219,5 +337,49 @@
   "sayHello": "Say hello! 👋",
   "retry": "Retry",
   "coach": "Coach",
-  "client": "Client"
+  "client": "Client",
+
+  "scanTitle": "AI Food Scan",
+  "scanSubtitle": "Snap your food, we'll do the rest",
+  "scanSaveToMeal": "Log this meal to",
+  "scanIdleHint": "One photo is all it takes — we'll detect each item, its weight and calories automatically.",
+  "scanCameraCta": "Scan your food",
+  "scanGalleryCta": "Choose from gallery",
+  "scanAnalyzingTitle": "Analyzing your photo…",
+  "scanAnalyzingSubtitle": "Detecting items, weight & macros",
+  "scanItemsHeader": "Detected items",
+  "scanConfidenceHigh": "High accuracy",
+  "scanConfidenceMedium": "Medium accuracy",
+  "scanConfidenceLow": "Low accuracy",
+  "scanLogToMeal": "Log to {meal}",
+  "@scanLogToMeal": { "placeholders": { "meal": { "type": "String" } } },
+  "scanErrorTitle": "Oops!",
+  "scanRetrySamePhoto": "Retry same photo",
+  "scanNewPhoto": "New photo",
+  "scanErrorNetwork": "No internet connection. Check your network and try again.",
+  "scanErrorUnauthorized": "Please sign in first to use the scanner.",
+  "scanErrorNotFood": "No clear food in the photo. Try another angle.",
+  "scanErrorAnalysis": "We couldn't analyze the photo. Please try again.",
+  "scanErrorPersist": "The photo was analyzed but saving failed. Please try again.",
+  "scanErrorUnknown": "Something unexpected went wrong. Please try again.",
+
+  "voiceTitle": "Voice Food Log",
+  "voiceSubtitle": "Just say what you ate",
+  "voiceIdleHint": "Describe your meal in one sentence — we'll transcribe it and estimate the calories automatically.",
+  "voiceRecordCta": "Start recording",
+  "voiceStopCta": "Stop & analyze",
+  "voiceRecordingHint": "Listening… tap stop when you're done describing your meal.",
+  "voiceAnalyzingTitle": "Analyzing your recording…",
+  "voiceTranscriptLabel": "You said",
+  "voiceRetrySameAudio": "Retry same recording",
+  "voiceNewRecording": "New recording",
+  "voiceErrorNetwork": "No internet connection. Check your network and try again.",
+  "voiceErrorUnauthorized": "Please sign in first to use the voice logger.",
+  "voiceErrorMicrophone": "Microphone access is needed. Enable it in Settings and try again.",
+  "voiceErrorNotFood": "We couldn't hear any food in that recording. Try describing your meal again.",
+  "voiceErrorAnalysis": "We couldn't understand that recording. Please try again.",
+  "voiceErrorPersist": "The recording was analyzed but saving failed. Please try again.",
+  "voiceErrorUnknown": "Something unexpected went wrong. Please try again.",
+
+  "profileFirstRunNudge": "Log your first workout to start ranking up!"
 }

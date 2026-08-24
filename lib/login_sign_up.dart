@@ -1,8 +1,8 @@
 import 'dart:ui';
-import 'package:coregym2/fitness_home_pages.dart';
 import 'package:flutter/material.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
-import 'package:coregym2/supabase/supabase_exports.dart';
+import 'fitness_home_pages.dart';
+import 'l10n/app_localizations.dart';
+import 'supabase/supabase_exports.dart';
 import 'providers/profile_provider.dart';
 import 'services/supabase_client.dart';
 import 'screens/onboarding_flow.dart';
@@ -18,7 +18,7 @@ import 'widgets/language_toggle.dart';
 import 'widgets/premium_glass_bg.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Auth Wrapper
+// Auth Wrapper — Glassmorphism dark auth
 // ─────────────────────────────────────────────────────────────────────────────
 
 class AuthWrapper extends StatefulWidget {

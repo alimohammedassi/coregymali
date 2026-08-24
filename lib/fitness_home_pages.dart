@@ -1,48 +1,149 @@
 import 'dart:math';
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:coregym2/chat/presentation/screens/chat_list_screen.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'profile.dart';
-import 'screens/nutrition_screen.dart';
-import 'screens/workout_screen.dart';
-import 'theme/app_colors.dart';
-import 'theme/app_text.dart';
-import 'services/supabase_client.dart';
-import 'widgets/home_header.dart';
-import 'widgets/app_background.dart';
-import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
-import 'features/coach/presentation/screens/coach_dashboard_screen.dart';
-import 'features/coach/presentation/providers/coach_providers.dart';
-import 'features/coach/presentation/providers/subscription_providers.dart';
-import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
+import 'chat/presentation/screens/chat_list_screen.dart';
 import 'features/coach/data/repositories/coach_repository_impl.dart';
 import 'features/coach/data/repositories/subscription_repository_impl.dart';
+import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
+import 'features/coach/presentation/providers/coach_providers.dart';
+import 'features/coach/presentation/providers/subscription_providers.dart';
+import 'features/coach/presentation/screens/coach_dashboard_screen.dart';
+import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
+import 'l10n/app_localizations.dart';
+import 'profile.dart';
 import 'providers/profile_provider.dart';
+import 'screens/food_scan_screen.dart';
+import 'screens/nutrition_screen.dart';
+import 'screens/voice_food_log_screen.dart';
+import 'screens/workout_screen.dart';
+import 'services/stats_service.dart';
+import 'services/supabase_client.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_text.dart';
+import 'widgets/add_food_sheet.dart';
+import 'widgets/app_background.dart';
+import 'widgets/food_logging_modal.dart';
+import 'widgets/pixel_art_icons.dart';
+import 'features/health/presentation/widgets/today_activity_card.dart';
 
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-// Inspired by: Nike Training Club, Whoop, Strava premium dark aesthetic
-const _kGold = Color(0xFFC9A84C);
-const _kGoldDim = Color(0xFF8A6B2E);
-const _kSurface1 = Color(0xFF0E0E12);
-const _kSurface2 = Color(0xFF16161D);
-const _kSurface3 = Color(0xFF1E1E28);
-const _kBorderSubtle = Color(0xFF2A2A35);
-const _kTextPrimary = Colors.white;
-const _kTextSecondary = Color(0xFF8B8B9A);
-const _kTextTertiary = Color(0xFF55555F);
-const _kBlue = Color(0xFF4A9EFF);
-const _kGreen = Color(0xFF34D399);
-const _kOrange = Color(0xFFF97316);
-const _kRed = Color(0xFFEF4444);
+// ─── Interactive Micro-Widgets ────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Root scaffold — role-aware (unchanged logic)
-// ─────────────────────────────────────────────────────────────────────────────
+class _InteractiveScaleDetector extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final double scaleFactor;
+
+  const _InteractiveScaleDetector({
+    required this.child,
+    this.onTap,
+    this.scaleFactor = 0.96,
+  });
+
+  @override
+  State<_InteractiveScaleDetector> createState() =>
+      _InteractiveScaleDetectorState();
+}
+
+class _InteractiveScaleDetectorState extends State<_InteractiveScaleDetector>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor)
+        .animate(
+          CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+        );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails _) {
+    if (widget.onTap != null) _controller.forward();
+  }
+
+  void _handleTapUp(TapUpDetails _) {
+    if (widget.onTap != null) {
+      _controller.reverse();
+      HapticFeedback.lightImpact();
+      widget.onTap!();
+    }
+  }
+
+  void _handleTapCancel() {
+    if (widget.onTap != null) _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Clean soft-rounded white card with subtle outline and soft shadow
+class _ModernPlayfulCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double borderRadius;
+  final Color? borderColor;
+  final Color? backgroundColor;
+
+  const _ModernPlayfulCard({
+    required this.child,
+    this.padding,
+    this.borderRadius = 22,
+    this.borderColor,
+    this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding ?? const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: backgroundColor ?? AppColors.surface,
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: borderColor ?? AppColors.borderSubtle,
+          width: 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 14,
+            spreadRadius: 0,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+// ─── Root Scaffold ───────────────────────────────────────────────────────────
 
 class FitnessHomePage extends StatefulWidget {
   const FitnessHomePage({super.key});
@@ -54,166 +155,138 @@ class FitnessHomePage extends StatefulWidget {
 class _FitnessHomePageState extends State<FitnessHomePage> {
   int _currentIndex = 0;
 
-  final _clientTabs = const [
+  final GlobalKey<NutritionScreenState> _nutritionScreenKey =
+      GlobalKey<NutritionScreenState>();
+
+  void _onNutritionChanged() {
+    _nutritionScreenKey.currentState?.refreshAfterExternalSave();
+  }
+
+  List<TabInfo> _getClientTabs(AppLocalizations l10n) => [
     TabInfo(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Home',
+      label: l10n.navHome,
     ),
     TabInfo(
       icon: Icons.restaurant_outlined,
       activeIcon: Icons.restaurant_rounded,
-      label: 'Nutrition',
+      label: l10n.navNutrition,
     ),
     TabInfo(
       icon: Icons.fitness_center_outlined,
       activeIcon: Icons.fitness_center,
-      label: 'Workout',
+      label: l10n.navWorkout,
     ),
     TabInfo(
       icon: Icons.chat_bubble_outline_rounded,
       activeIcon: Icons.chat_bubble_rounded,
-      label: 'Messages',
+      label: l10n.navMessages,
     ),
     TabInfo(
       icon: Icons.people_outline_rounded,
       activeIcon: Icons.people_rounded,
-      label: 'Coaches',
+      label: l10n.navCoaches,
     ),
     TabInfo(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      label: 'Profile',
+      label: l10n.navProfile,
     ),
   ];
 
-  final _coachTabs = const [
+  List<TabInfo> _getCoachTabs(AppLocalizations l10n) => [
     TabInfo(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Home',
-    ),
-    TabInfo(
-      icon: Icons.restaurant_outlined,
-      activeIcon: Icons.restaurant_rounded,
-      label: 'Nutrition',
-    ),
-    TabInfo(
-      icon: Icons.fitness_center_outlined,
-      activeIcon: Icons.fitness_center,
-      label: 'Workout',
-    ),
-    TabInfo(
-      icon: Icons.chat_bubble_outline_rounded,
-      activeIcon: Icons.chat_bubble_rounded,
-      label: 'Messages',
+      label: l10n.navHome,
     ),
     TabInfo(
       icon: Icons.dashboard_outlined,
       activeIcon: Icons.dashboard_rounded,
-      label: 'Dashboard',
+      label: l10n.navDashboard,
       isGold: true,
+    ),
+    TabInfo(
+      icon: Icons.fitness_center_outlined,
+      activeIcon: Icons.fitness_center,
+      label: l10n.navWorkout,
+    ),
+    TabInfo(
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: l10n.navMessages,
+    ),
+    TabInfo(
+      icon: Icons.people_outline_rounded,
+      activeIcon: Icons.people_rounded,
+      label: l10n.navCoaches,
     ),
     TabInfo(
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
-      label: 'Profile',
+      label: l10n.navProfile,
     ),
   ];
 
   void _onNavigate(int index) {
-    HapticFeedback.lightImpact();
+    if (_currentIndex == index) return;
+    HapticFeedback.selectionClick();
     setState(() => _currentIndex = index);
   }
 
   List<Widget> _buildChildren(bool isCoach) {
-    if (isCoach) {
-      return [
-        _HomeScreenCore(onNavigate: _onNavigate),
-        const NutritionScreen(),
-        const WorkoutScreen(),
-        const ChatListScreen(),
-        CoachDashboardProviders.provideAll(child: const CoachDashboardScreen()),
-        const ProfilePage(),
-      ];
-    }
+    final subRepo = SubscriptionRepositoryImpl();
+    final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
+      ..fetchActiveSubscription();
+    final subNotifier = SubscriptionNotifier(subRepo);
+
     return [
-      _HomeScreenCore(onNavigate: _onNavigate),
-      const NutritionScreen(),
+      _HomeScreenCore(
+        onNavigate: _onNavigate,
+        onNutritionChanged: _onNutritionChanged,
+      ),
+      if (isCoach)
+        CoachDashboardProviders.provideAll(
+          child: const CoachDashboardScreen(),
+        )
+      else
+        NutritionScreen(key: _nutritionScreenKey),
       const WorkoutScreen(),
       const ChatListScreen(),
-      _buildCoachMarketplace(),
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (_) =>
+                CoachListNotifier(CoachRepositoryImpl())..fetchCoaches(),
+          ),
+          ChangeNotifierProvider.value(value: activeSubNotifier),
+          ChangeNotifierProvider.value(value: subNotifier),
+        ],
+        child: const CoachMarketplaceScreen(),
+      ),
       const ProfilePage(),
     ];
   }
 
-  Widget _buildCoachMarketplace() {
-    return ChangeNotifierProvider(
-      create: (_) => CoachRepositoryProvider(),
-      child: Builder(
-        builder: (ctx) => MultiProvider(
-          providers: [
-            ChangeNotifierProxyProvider<
-              CoachRepositoryProvider,
-              CoachListNotifier
-            >(
-              create: (c) => CoachListNotifier(
-                c.read<CoachRepositoryProvider>().repository,
-              ),
-              update: (_, repo, prev) =>
-                  prev ?? CoachListNotifier(repo.repository),
-            ),
-            ChangeNotifierProvider(
-              create: (_) => SubscriptionRepositoryProvider(),
-            ),
-            ChangeNotifierProxyProvider<
-              SubscriptionRepositoryProvider,
-              ActiveSubscriptionNotifier
-            >(
-              create: (c) {
-                final n = ActiveSubscriptionNotifier(
-                  c.read<SubscriptionRepositoryProvider>().repository,
-                );
-                n.fetchActiveSubscription();
-                return n;
-              },
-              update: (_, repo, prev) =>
-                  prev ?? ActiveSubscriptionNotifier(repo.repository),
-            ),
-            ChangeNotifierProxyProvider<
-              SubscriptionRepositoryProvider,
-              SubscriptionNotifier
-            >(
-              create: (c) => SubscriptionNotifier(
-                c.read<SubscriptionRepositoryProvider>().repository,
-              ),
-              update: (_, repo, prev) =>
-                  prev ?? SubscriptionNotifier(repo.repository),
-            ),
-          ],
-          child: const CoachMarketplaceScreen(),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final profileProvider = context.watch<ProfileProvider>();
     final isCoach = profileProvider.isCoach;
-    final tabs = isCoach ? _coachTabs : _clientTabs;
+    final tabs = isCoach ? _getCoachTabs(l10n) : _getClientTabs(l10n);
 
     return Scaffold(
       extendBody: true,
       resizeToAvoidBottomInset: false,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.background,
       body: AppBackground(
         child: IndexedStack(
           index: _currentIndex,
           children: _buildChildren(isCoach),
         ),
       ),
-      bottomNavigationBar: _PremiumNavBar(
+      bottomNavigationBar: _PlayfulNavBar(
         currentIndex: _currentIndex,
         onTap: _onNavigate,
         tabs: tabs,
@@ -236,15 +309,15 @@ class TabInfo {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Premium Nav Bar — pill indicator style (Strava/Nike aesthetic)
+// Playful Bottom Navigation Bar
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PremiumNavBar extends StatelessWidget {
+class _PlayfulNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final List<TabInfo> tabs;
 
-  const _PremiumNavBar({
+  const _PlayfulNavBar({
     required this.currentIndex,
     required this.onTap,
     required this.tabs,
@@ -255,83 +328,87 @@ class _PremiumNavBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-            child: Container(
-              height: 72,
-              decoration: BoxDecoration(
-                color: _kSurface2.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: _kBorderSubtle, width: 1),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    blurRadius: 32,
-                    offset: const Offset(0, 12),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: List.generate(tabs.length, (i) {
-                  final tab = tabs[i];
-                  final isActive = currentIndex == i;
-                  final accentColor = tab.isGold
-                      ? _kGold
-                      : AppColors.primaryFixed;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        onTap(i);
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeOutCubic,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 250),
-                              curve: Curves.easeOutCubic,
-                              width: isActive ? 48 : 36,
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? accentColor.withValues(alpha: 0.15)
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                isActive ? tab.activeIcon : tab.icon,
-                                size: 22,
-                                color: isActive ? accentColor : _kTextTertiary,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 200),
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: isActive
-                                    ? FontWeight.w700
-                                    : FontWeight.w400,
-                                color: isActive ? accentColor : _kTextTertiary,
-                                letterSpacing: 0.2,
-                              ),
-                              child: Text(tab.label),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                }),
-              ),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: Container(
+          height: 68,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: AppColors.borderSubtle,
+              width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF000000).withValues(alpha: 0.06),
+                blurRadius: 20,
+                spreadRadius: 0,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: List.generate(tabs.length, (i) {
+              final tab = tabs[i];
+              final isActive = currentIndex == i;
+              final accentColor = tab.isGold
+                  ? AppColors.tertiaryFixed
+                  : AppColors.primaryGreen;
+
+              return Expanded(
+                child: _InteractiveScaleDetector(
+                  scaleFactor: 0.88,
+                  onTap: () => onTap(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    margin: const EdgeInsets.symmetric(
+                      vertical: 6,
+                      horizontal: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? accentColor.withValues(alpha: 0.10)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedScale(
+                          scale: isActive ? 1.15 : 1.0,
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutBack,
+                          child: Icon(
+                            isActive ? tab.activeIcon : tab.icon,
+                            size: 21,
+                            color: isActive
+                                ? accentColor
+                                : AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            tab.label,
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: isActive
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: isActive
+                                  ? accentColor
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -345,86 +422,92 @@ class _PremiumNavBar extends StatelessWidget {
 
 class _HomeScreenCore extends StatefulWidget {
   final Function(int) onNavigate;
-  const _HomeScreenCore({required this.onNavigate});
+  final VoidCallback? onNutritionChanged;
+  const _HomeScreenCore({required this.onNavigate, this.onNutritionChanged});
 
   @override
   State<_HomeScreenCore> createState() => _HomeScreenCoreState();
 }
 
 class _HomeScreenCoreState extends State<_HomeScreenCore>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _isLoading = true;
   bool _noGoalsSet = false;
+  DateTime _selectedDate = DateTime.now();
 
   Map<String, dynamic> _profile = {};
   Map<String, dynamic>? _goals;
   List<dynamic> _nutritionLogs = [];
-  Map<String, dynamic>? _activeProgram;
-  Map<String, dynamic>? _lastWorkout;
-  Map<String, dynamic>? _dailySummary;
 
-  double _totalCalories = 0, _goalCalories = 2000;
-  double _totalProtein = 0, _goalProtein = 150;
+  double _totalCalories = 0, _goalCalories = 2400;
+  double _totalProtein = 0, _goalProtein = 140;
   double _totalCarbs = 0, _goalCarbs = 250;
-  double _totalFat = 0, _goalFat = 65;
+  double _totalFat = 0, _goalFat = 80;
   int _waterGlasses = 0;
   int _stepsInt = 0;
   int _caloriesBurned = 0;
 
   late AnimationController _heroCtrl;
   late AnimationController _staggerCtrl;
-  late Animation<double> _heroAnim;
   late Animation<double> _ringAnim;
   late Animation<double> _macroAnim;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _heroCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1600),
+      duration: const Duration(milliseconds: 1000),
+      value: 1.0,
     );
-    _heroAnim = CurvedAnimation(parent: _heroCtrl, curve: Curves.easeOutCubic);
     _ringAnim = CurvedAnimation(
       parent: _heroCtrl,
-      curve: const Interval(0.2, 0.9, curve: Curves.easeOutCubic),
+      curve: const Interval(0.1, 0.85, curve: Curves.easeOutCubic),
     );
     _macroAnim = CurvedAnimation(
       parent: _heroCtrl,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
     );
     _staggerCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 800),
+      value: 1.0,
     );
-    _loadData();
+    _loadAll();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadAll();
+    }
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _heroCtrl.dispose();
     _staggerCtrl.dispose();
     super.dispose();
   }
 
-  double get _calorieProgress =>
-      _goalCalories > 0 ? (_totalCalories / _goalCalories).clamp(0.0, 1.0) : 0;
+  Future<void> _loadAll([DateTime? date]) async {
+    final targetDate = date ?? _selectedDate;
+    final dateStr = targetDate.toIso8601String().substring(0, 10);
 
-  Color get _ringColor {
-    if (_calorieProgress >= 1.0) return _kRed;
-    if (_calorieProgress > 0.8) return _kOrange;
-    return AppColors.primaryFixed;
-  }
+    if (currentUserId == null) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _heroCtrl.forward(from: 0.0);
+        _staggerCtrl.forward(from: 0.0);
+      }
+      return;
+    }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    _heroCtrl.reset();
-    _staggerCtrl.reset();
     try {
-      if (currentUserId == null) return;
-      final today = DateTime.now().toIso8601String().split('T')[0];
-      final results = await Future.wait([
-        supabase.from('profiles').select().eq('id', currentUserId!).single(),
+      final results = await Future.wait<dynamic>([
+        supabase.from('profiles').select().eq('id', currentUserId!).maybeSingle(),
         supabase
             .from('user_goals')
             .select()
@@ -434,38 +517,21 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             .from('nutrition_logs')
             .select()
             .eq('user_id', currentUserId!)
-            .eq('logged_date', today)
-            .order('logged_at'),
-        supabase
-            .from('workout_sessions')
-            .select()
-            .eq('user_id', currentUserId!)
-            .order('started_at', ascending: false)
-            .limit(1),
-        supabase
-            .from('user_active_program')
-            .select(
-              '*, training_programs(name, name_ar, level, duration_weeks)',
-            )
-            .eq('user_id', currentUserId!)
-            .maybeSingle(),
+            .eq('logged_date', dateStr),
         supabase
             .from('daily_summary')
             .select()
             .eq('user_id', currentUserId!)
-            .eq('summary_date', today)
+            .eq('summary_date', dateStr)
             .maybeSingle(),
       ]);
+
       if (!mounted) return;
-      _profile = results[0] as Map<String, dynamic>;
+      _profile = (results[0] as Map<String, dynamic>?) ?? {'name': 'Athlete'};
       _goals = results[1] as Map<String, dynamic>?;
-      _nutritionLogs = results[2] as List<dynamic>;
-      final workouts = results[3] as List<dynamic>;
-      _lastWorkout = workouts.isNotEmpty
-          ? workouts.first as Map<String, dynamic>
-          : null;
-      _activeProgram = results[4] as Map<String, dynamic>?;
-      _dailySummary = results[5] as Map<String, dynamic>?;
+      _nutritionLogs = (results[2] as List<dynamic>?) ?? [];
+      final summary = results[3] as Map<String, dynamic>?;
+
       _noGoalsSet = _goals == null;
       _totalCalories = _nutritionLogs.fold(
         0.0,
@@ -483,137 +549,238 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         0.0,
         (s, l) => s + ((l['fat_g'] as num?) ?? 0),
       );
+
       if (_goals != null) {
-        _goalCalories = (_goals!['daily_calories'] as num?)?.toDouble() ?? 2000;
-        _goalProtein = (_goals!['daily_protein_g'] as num?)?.toDouble() ?? 150;
+        _goalCalories = (_goals!['daily_calories'] as num?)?.toDouble() ?? 2400;
+        _goalProtein = (_goals!['daily_protein_g'] as num?)?.toDouble() ?? 140;
         _goalCarbs = (_goals!['daily_carbs_g'] as num?)?.toDouble() ?? 250;
-        _goalFat = (_goals!['daily_fat_g'] as num?)?.toDouble() ?? 65;
+        _goalFat = (_goals!['daily_fat_g'] as num?)?.toDouble() ?? 80;
       }
-      _waterGlasses = _dailySummary?['water_ml'] != null
-          ? (_dailySummary!['water_ml'] as num) ~/ 250
-          : 0;
-      _stepsInt = (_dailySummary?['steps'] as num?)?.toInt() ?? 0;
-      _caloriesBurned =
-          (_dailySummary?['calories_burned'] as num?)?.toInt() ?? 0;
-      setState(() => _isLoading = false);
-      _heroCtrl.forward();
-      await Future.delayed(const Duration(milliseconds: 300));
-      _staggerCtrl.forward();
+
+      if (summary != null) {
+        _waterGlasses = summary['water_ml'] != null
+            ? ((summary['water_ml'] as num) ~/ 250)
+            : 0;
+        _stepsInt = (summary['steps'] as num?)?.toInt() ?? 0;
+        _caloriesBurned = (summary['calories_burned'] as num?)?.toInt() ?? 0;
+      } else {
+        _waterGlasses = 0;
+        _stepsInt = 0;
+        _caloriesBurned = 0;
+      }
     } catch (e) {
       debugPrint('Home load error: $e');
-      if (mounted) setState(() => _isLoading = false);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _heroCtrl.forward(from: 0.0);
+        _staggerCtrl.forward(from: 0.0);
+      }
     }
   }
 
-  Future<void> _updateWater() async {
+  Future<void> _openFoodLogger({String mealType = 'breakfast', String? mode}) async {
+    final result = await FoodLoggingModal.show(
+      context,
+      initialMealType: mealType,
+      initialMode: mode,
+    );
+    if (result == true) {
+      await _loadAll();
+    }
+  }
+
+  // Add Meal entry point — opens the Supabase `foods` table browser
+  // (search + categories + smart serving). Same refresh flow as AI scan.
+  Future<void> _openFoodDatabase() async {
+    HapticFeedback.lightImpact();
+    final h = DateTime.now().hour;
+    final defaultMeal = h < 11
+        ? 'breakfast'
+        : h < 16
+            ? 'lunch'
+            : h < 22
+                ? 'dinner'
+                : 'snack';
+    await AddFoodSheet.show(
+      context,
+      preselectedMeal: defaultMeal,
+      onFoodLogged: () async {
+        await _refreshNutritionTotals();
+        widget.onNutritionChanged?.call();
+      },
+    );
+  }
+
+  // AI Food Scan entry point. On success, refresh only the daily nutrition
+  // totals (today's logs + summary) instead of re-fetching everything.
+  Future<void> _openFoodScan() async {
+    HapticFeedback.lightImpact();
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const FoodScanScreen()),
+    );
+    if (saved == true && mounted) {
+      await _refreshNutritionTotals();
+      widget.onNutritionChanged?.call();
+    }
+  }
+
+  // Voice Food Log entry point — same refresh flow as the AI scan.
+  Future<void> _openVoiceLog() async {
+    HapticFeedback.lightImpact();
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const VoiceFoodLogScreen()),
+    );
+    if (saved == true && mounted) {
+      await _refreshNutritionTotals();
+      widget.onNutritionChanged?.call();
+    }
+  }
+
+  Future<void> _refreshNutritionTotals() async {
     if (currentUserId == null) return;
-    final today = DateTime.now().toIso8601String().split('T')[0];
-    final current = (_dailySummary?['water_ml'] as num?)?.toInt() ?? 0;
+    final dateStr = _selectedDate.toIso8601String().substring(0, 10);
     try {
-      final res = await supabase
-          .from('daily_summary')
-          .upsert({
-            'user_id': currentUserId,
-            'summary_date': today,
-            'water_ml': current + 250,
-            'steps': _stepsInt,
-          }, onConflict: 'user_id,summary_date')
-          .select()
-          .single();
-      setState(() {
-        _dailySummary = res;
-        _waterGlasses = (res['water_ml'] as num) ~/ 250;
-      });
-      HapticFeedback.selectionClick();
+      final results = await Future.wait<dynamic>([
+        supabase
+            .from('nutrition_logs')
+            .select()
+            .eq('user_id', currentUserId!)
+            .eq('logged_date', dateStr),
+        supabase
+            .from('daily_summary')
+            .select()
+            .eq('user_id', currentUserId!)
+            .eq('summary_date', dateStr)
+            .maybeSingle(),
+      ]);
+
+      if (!mounted) return;
+      _nutritionLogs = (results[0] as List<dynamic>?) ?? [];
+      _totalCalories = _nutritionLogs.fold(
+        0.0,
+        (s, l) => s + ((l['calories'] as num?) ?? 0),
+      );
+      _totalProtein = _nutritionLogs.fold(
+        0.0,
+        (s, l) => s + ((l['protein_g'] as num?) ?? 0),
+      );
+      _totalCarbs = _nutritionLogs.fold(
+        0.0,
+        (s, l) => s + ((l['carbs_g'] as num?) ?? 0),
+      );
+      _totalFat = _nutritionLogs.fold(
+        0.0,
+        (s, l) => s + ((l['fat_g'] as num?) ?? 0),
+      );
+      setState(() {});
+      _heroCtrl.forward(from: 0.0);
+      _staggerCtrl.forward(from: 0.0);
     } catch (e) {
-      debugPrint('Water update error: $e');
+      debugPrint('Home nutrition refresh error: $e');
     }
   }
 
-  Future<void> _editSteps() async {
-    final ctrl = TextEditingController(text: _stepsInt.toString());
-    await showDialog(
+  Future<void> _addWater() async {
+    HapticFeedback.lightImpact();
+    final newGlasses = (_waterGlasses + 1).clamp(0, 20);
+    setState(() => _waterGlasses = newGlasses);
+    try {
+      await StatsService().updateTodaySummary({
+        'water_ml': newGlasses * 250,
+      });
+    } catch (e) {
+      debugPrint('Error updating water: $e');
+    }
+  }
+
+  Future<void> _promptUpdateSteps() async {
+    final ctrl = TextEditingController(text: '$_stepsInt');
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final result = await showDialog<int>(
       context: context,
-      builder: (c) => _StepsDialog(
-        controller: ctrl,
-        onSave: () async {
-          Navigator.pop(c);
-          final today = DateTime.now().toIso8601String().split('T')[0];
-          final newSteps = int.tryParse(ctrl.text) ?? _stepsInt;
-          final res = await supabase
-              .from('daily_summary')
-              .upsert({
-                'user_id': currentUserId,
-                'summary_date': today,
-                'water_ml': _waterGlasses * 250,
-                'steps': newSteps,
-              }, onConflict: 'user_id,summary_date')
-              .select()
-              .single();
-          setState(() {
-            _dailySummary = res;
-            _stepsInt = newSteps;
-          });
-        },
-        onCancel: () => Navigator.pop(c),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: Row(
+          children: [
+            const PixelArtIcon(type: PixelIconType.sneaker, size: 22),
+            const SizedBox(width: 10),
+            Text(
+              isArabic ? 'تسجيل خطوات اليوم' : 'Log Today\'s Steps',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+        content: TextField(
+          controller: ctrl,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText: '6000',
+            suffixText: isArabic ? 'خطوة' : 'steps',
+            filled: true,
+            fillColor: const Color(0xFFF7F9F8),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final steps = int.tryParse(ctrl.text);
+              Navigator.pop(ctx, steps);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryGreen,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(isArabic ? 'حفظ' : 'Save'),
+          ),
+        ],
       ),
     );
+
+    if (result != null) {
+      setState(() => _stepsInt = result);
+      await StatsService().updateTodaySummary({'steps': result});
+    }
   }
 
   Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: _kSurface3,
-      highlightColor: const Color(0xFF2E2E3A),
-      child: SingleChildScrollView(
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(20, 60, 20, 0),
+      baseColor: const Color(0xFFE8ECE9),
+      highlightColor: const Color(0xFFF7F9F8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                _shim(48, width: 48, radius: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _shim(10, width: 80, radius: 5),
-                      const SizedBox(height: 6),
-                      _shim(16, width: 160, radius: 5),
-                    ],
-                  ),
-                ),
-                _shim(36, width: 36, radius: 12),
-              ],
+            const SizedBox(height: 60),
+            Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
             ),
-            const SizedBox(height: 28),
-            _shim(280, radius: 24),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(child: _shim(100, radius: 18)),
-                const SizedBox(width: 10),
-                Expanded(child: _shim(100, radius: 18)),
-                const SizedBox(width: 10),
-                Expanded(child: _shim(100, radius: 18)),
-              ],
+            const SizedBox(height: 16),
+            Container(
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
-            const SizedBox(height: 28),
-            _shim(14, width: 110, radius: 5),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 88,
-              child: Row(
-                children: List.generate(
-                  4,
-                  (i) => Expanded(
-                    child: Padding(
-                      padding: EdgeInsets.only(right: i < 3 ? 12 : 0),
-                      child: _shim(88, radius: 18),
-                    ),
-                  ),
-                ),
+            const SizedBox(height: 16),
+            Container(
+              height: 110,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
               ),
             ),
           ],
@@ -622,182 +789,239 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     );
   }
 
-  Widget _shim(double h, {double? width, double radius = 12}) => Container(
-    width: width ?? double.infinity,
-    height: h,
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(radius),
-    ),
-  );
-
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(child: _buildShimmer()),
+        backgroundColor: AppColors.background,
+        body: _buildShimmer(),
       );
     }
 
+    final double calorieProgress = _goalCalories > 0
+        ? (_totalCalories / _goalCalories).clamp(0.0, 1.0)
+        : 0.0;
+
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.background,
       body: RefreshIndicator(
-        onRefresh: _loadData,
-        color: AppColors.primaryFixed,
-        backgroundColor: _kSurface2,
-        displacement: 60,
+        onRefresh: () async {
+          _heroCtrl.reset();
+          _staggerCtrl.reset();
+          await _loadAll();
+        },
+        color: AppColors.primaryGreen,
+        backgroundColor: Colors.white,
         child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(
+            parent: BouncingScrollPhysics(),
+          ),
           slivers: [
-            // ── Header ──
             SliverToBoxAdapter(
-              child: SafeArea(
-                bottom: false,
-                child: _PremiumHeader(
-                  profile: _profile,
-                  totalCalories: _totalCalories,
-                  goalCalories: _goalCalories,
-                ),
-              ),
+              child: SizedBox(height: MediaQuery.of(context).padding.top + 8),
             ),
 
-            // ── Goals banner ──
-            if (_noGoalsSet)
-              SliverToBoxAdapter(
-                child: _Stagger(
-                  ctrl: _staggerCtrl,
-                  index: 0,
-                  child: _GoalsBanner(onTap: () => widget.onNavigate(3)),
-                ),
-              ),
-
-            // ── Hero Calorie Ring Card ──
+            // ── 1. Top Greeting, Gamified Badges & Avatar ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
-                index: 1,
-                child: _HeroCalorieCard(
-                  ringAnim: _ringAnim,
-                  macroAnim: _macroAnim,
-                  progress: _calorieProgress,
-                  ringColor: _ringColor,
-                  totalCalories: _totalCalories,
-                  goalCalories: _goalCalories,
-                  caloriesBurned: _caloriesBurned,
-                  totalProtein: _totalProtein,
-                  goalProtein: _goalProtein,
-                  totalCarbs: _totalCarbs,
-                  goalCarbs: _goalCarbs,
-                  totalFat: _totalFat,
-                  goalFat: _goalFat,
+                index: 0,
+                child: _KaleeHeader(
+                  profile: _profile,
+                  isArabic: isArabic,
+                  onOpenProfile: () => widget.onNavigate(5),
+                  onOpenChat: () => widget.onNavigate(3),
                 ),
               ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
-            // ── Activity Ring Strip (Whoop-inspired) ──
+            // ── 2. Compact Interactive Date Selector Strip ──
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 1,
+                child: _CompactDateStrip(
+                  selectedDate: _selectedDate,
+                  isArabic: isArabic,
+                  onSelectDate: (d) {
+                    setState(() => _selectedDate = d);
+                    _loadAll(d);
+                  },
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // ── 3. Goals Alert if not set ──
+            if (_noGoalsSet)
+              SliverToBoxAdapter(
+                child: _Stagger(
+                  ctrl: _staggerCtrl,
+                  index: 2,
+                  child: _GoalsOnboardingBanner(
+                    isArabic: isArabic,
+                    onTap: () => widget.onNavigate(5),
+                  ),
+                ),
+              ),
+
+            // ── 4. Hero Today's Calories Card ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 2,
-                child: _ActivityRingStrip(
-                  waterGlasses: _waterGlasses,
-                  stepsInt: _stepsInt,
-                  caloriesBurned: _caloriesBurned,
-                  onAddWater: _updateWater,
-                  onEditSteps: _editSteps,
+                child: _HeroCalorieCard(
+                  ringAnim: _ringAnim,
+                  calorieProgress: calorieProgress,
+                  totalCalories: _totalCalories,
+                  goalCalories: _goalCalories,
+                  isArabic: isArabic,
+                  onOpenNutrition: () => _openFoodLogger(),
                 ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+            const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
-            // ── Today's Meals ──
+            // ── 5. Macro Breakdown 3-Pack ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 3,
-                child: _SectionHeader(
-                  title: "Today's Meals",
-                  action: AppLocalizations.of(context)!.addFood,
-                  onAction: () => widget.onNavigate(1),
+                child: _MacroCardsPack(
+                  macroAnim: _macroAnim,
+                  totalProtein: _totalProtein,
+                  goalProtein: _goalProtein,
+                  totalCarbs: _totalCarbs,
+                  goalCarbs: _goalCarbs,
+                  totalFat: _totalFat,
+                  goalFat: _goalFat,
+                  isArabic: isArabic,
+                  onTap: () => _openFoodLogger(),
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 18)),
+
+            // ── 6. 5-Second Daily Snapshot (Water, Steps, Burned) ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 4,
-                child: _nutritionLogs.isEmpty
-                    ? _EmptyMeals(onTap: () => widget.onNavigate(1))
-                    : _MealsRow(
-                        logs: _nutritionLogs,
-                        onTap: () => widget.onNavigate(1),
-                      ),
+                child: _DailySnapshotRow(
+                  waterGlasses: _waterGlasses,
+                  steps: _stepsInt,
+                  caloriesBurned: _caloriesBurned,
+                  isArabic: isArabic,
+                  onAddWater: _addWater,
+                  onStepsTap: _promptUpdateSteps,
+                  onWorkoutTap: () => widget.onNavigate(2),
+                ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-            // ── Training ──
+            // ── 6.5 Today's Smartwatch & Health Activity Card ──
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 4,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: TodayActivityCard(
+                    stepGoal: 10000,
+                    onSynced: () => _loadAll(),
+                  ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+            // ── 7. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 5,
-                child: _SectionHeader(
-                  title: AppLocalizations.of(context)!.yourProgram,
-                  action: '',
-                  onAction: null,
+                child: _QuickFoodLogHub(
+                  isArabic: isArabic,
+                  onAddMeal: _openFoodDatabase,
+                  onAiScan: _openFoodScan,
+                  onVoice: _openVoiceLog,
+                  onText: () => _openFoodLogger(mode: 'quick'),
+                  onBarcode: () => _openFoodLogger(mode: 'search'),
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+
+            // ── 8. Today's Fueling / Meals Feed ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 6,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _ProgramCard(
-                    activeProgram: _activeProgram,
-                    onTap: () => widget.onNavigate(2),
-                  ),
+                child: _SectionHeader(
+                  title: l10n.todaysFueling,
+                  actionText: l10n.addFood,
+                  isArabic: isArabic,
+                  onAction: () => _openFoodLogger(),
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            const SliverToBoxAdapter(child: SizedBox(height: 10)),
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 7,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _LastWorkoutCard(
-                    lastWorkout: _lastWorkout,
-                    onTap: () => widget.onNavigate(2),
-                  ),
+                child: _MealsFeed(
+                  logs: _nutritionLogs,
+                  isArabic: isArabic,
+                  onTapMeal: (mealType) => _openFoodLogger(mealType: mealType),
                 ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+            const SliverToBoxAdapter(child: SizedBox(height: 22)),
 
-            // ── Coach Banner ──
+            // ── 9. Gamified Daily Quests & Challenges ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 8,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: const _CoachBanner(),
+                child: _DailyQuestsCard(
+                  waterGlasses: _waterGlasses,
+                  totalProtein: _totalProtein,
+                  goalProtein: _goalProtein,
+                  isArabic: isArabic,
                 ),
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 140)),
+            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+
+            // ── 10. Pro Coach Mentorship Banner ──
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 9,
+                child: _ProCoachBanner(isArabic: isArabic),
+              ),
+            ),
+
+            // Bottom buffer to prevent navbar overlap
+            SliverToBoxAdapter(
+              child: SizedBox(height: 90 + bottomInset),
+            ),
           ],
         ),
       ),
@@ -806,372 +1030,480 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Premium Header — greeting + streak + notification bell
+// 1. Top Header with Greeting, Level/XP, Streak & Avatar
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PremiumHeader extends StatelessWidget {
+class _KaleeHeader extends StatelessWidget {
   final Map<String, dynamic> profile;
-  final double totalCalories, goalCalories;
+  final bool isArabic;
+  final VoidCallback onOpenProfile;
+  final VoidCallback onOpenChat;
 
-  const _PremiumHeader({
+  const _KaleeHeader({
     required this.profile,
-    required this.totalCalories,
-    required this.goalCalories,
+    required this.isArabic,
+    required this.onOpenProfile,
+    required this.onOpenChat,
   });
 
-  String get _greeting {
+  String _getGreeting(AppLocalizations l10n) {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return l10n.goodMorning;
+    if (hour < 17) return l10n.goodAfternoon;
+    return l10n.goodEvening;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final name = profile['name'] as String? ?? 'Athlete';
     final firstName = name.split(' ').first;
     final avatarUrl = profile['avatar_url'] as String? ?? '';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          // Avatar with online ring
-          Stack(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [_kGold, Color(0xFF7B5A1E)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+          // Avatar with green border ring
+          _InteractiveScaleDetector(
+            onTap: onOpenProfile,
+            child: Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.primaryGreen,
+                  width: 2.2,
                 ),
-                padding: const EdgeInsets.all(2),
-                child: ClipOval(
-                  child: avatarUrl.isNotEmpty
-                      ? Image.network(avatarUrl, fit: BoxFit.cover)
-                      : Container(
-                          color: _kSurface3,
-                          child: Center(
-                            child: Text(
-                              firstName.isNotEmpty
-                                  ? firstName[0].toUpperCase()
-                                  : 'A',
-                              style: const TextStyle(
-                                color: _kGold,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w800,
-                              ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(2),
+              child: ClipOval(
+                child: avatarUrl.isNotEmpty
+                    ? Image.network(avatarUrl, fit: BoxFit.cover)
+                    : Container(
+                        color: AppColors.lightGreen,
+                        child: Center(
+                          child: Text(
+                            firstName.isNotEmpty
+                                ? firstName[0].toUpperCase()
+                                : 'A',
+                            style: TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: AppText.fontFamily(isArabic: isArabic),
                             ),
                           ),
                         ),
-                ),
+                      ),
               ),
-              Positioned(
-                bottom: 1,
-                right: 1,
-                child: Container(
-                  width: 12,
-                  height: 12,
-                  decoration: BoxDecoration(
-                    color: _kGreen,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: _kSurface1, width: 2),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
+
           const SizedBox(width: 12),
+
+          // Greeting & Name
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _greeting,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: _kTextSecondary,
-                    fontWeight: FontWeight.w400,
-                    letterSpacing: 0.2,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      _getGreeting(l10n),
+                      style: AppText.styledBodySm(
+                        isArabic: isArabic,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text('👋', style: TextStyle(fontSize: 13)),
+                  ],
                 ),
                 const SizedBox(height: 1),
                 Text(
                   firstName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: _kTextPrimary,
+                  style: AppText.styledHeadlineMd(
+                    isArabic: isArabic,
+                    color: AppColors.textPrimary,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Streak Pill with Pixel Fire
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E0),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFB74D).withValues(alpha: 0.4),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const PixelArtIcon(
+                  type: PixelIconType.fire,
+                  size: 14,
+                  animate: true,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  l10n.daysStreak(7),
+                  style: TextStyle(
+                    color: const Color(0xFFE65100),
+                    fontSize: 11,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    height: 1.1,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
                   ),
                 ),
               ],
             ),
           ),
-          // Notification button
-          _HeaderBtn(icon: Icons.notifications_outlined, onTap: () {}),
+
+          const SizedBox(width: 8),
+
+          // Chat Button
+          _InteractiveScaleDetector(
+            onTap: onOpenChat,
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.borderSubtle),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.chat_bubble_outline_rounded,
+                color: AppColors.textPrimary,
+                size: 18,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-class _HeaderBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _HeaderBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: _kSurface3,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _kBorderSubtle),
-      ),
-      child: Icon(icon, color: _kTextSecondary, size: 20),
-    ),
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Goals banner — compact inline nudge
+// 2. Compact Daily Date Selector Strip
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _GoalsBanner extends StatelessWidget {
-  final VoidCallback onTap;
-  const _GoalsBanner({required this.onTap});
+class _CompactDateStrip extends StatelessWidget {
+  final DateTime selectedDate;
+  final bool isArabic;
+  final ValueChanged<DateTime> onSelectDate;
+
+  const _CompactDateStrip({
+    required this.selectedDate,
+    required this.isArabic,
+    required this.onSelectDate,
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-    child: GestureDetector(
-      onTap: onTap,
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+
+    final enDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final arDays = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
+    final weekdays = isArabic ? arDays : enDays;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: _kOrange.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _kOrange.withValues(alpha: 0.25)),
-        ),
-        child: Row(
-          children: [
-            const Text('⚡', style: TextStyle(fontSize: 16)),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                'Set your goals to unlock personalized tracking',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: _kOrange.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: _kOrange.withValues(alpha: 0.6),
-              size: 18,
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cardShadow,
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
+        child: Row(
+          children: List.generate(7, (i) {
+            final dayDate = startOfWeek.add(Duration(days: i));
+            final isSelected =
+                dayDate.day == selectedDate.day &&
+                dayDate.month == selectedDate.month &&
+                dayDate.year == selectedDate.year;
+
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  onSelectDate(dayDate);
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primaryGreen
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primaryGreen.withValues(
+                                alpha: 0.28,
+                              ),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        weekdays[i],
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textSecondary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${dayDate.day}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: isSelected
+                              ? FontWeight.w800
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? Colors.white
+                              : AppColors.textPrimary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hero Calorie Card — Arc + 3 macro pills (Nike-inspired)
+// 3. Goals Alert Banner
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _GoalsOnboardingBanner extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onTap;
+
+  const _GoalsOnboardingBanner({required this.isArabic, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+      child: _InteractiveScaleDetector(
+        onTap: onTap,
+        child: _ModernPlayfulCard(
+          backgroundColor: const Color(0xFFFFF8E1),
+          borderColor: const Color(0xFFFFD54F),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              const PixelArtIcon(type: PixelIconType.star, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.setGoalsTitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFFE65100),
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                    ),
+                    Text(
+                      l10n.setGoalsSubtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: const Color(0xFFF57C00),
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: Color(0xFFE65100),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. Hero Today's Calories Card
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _HeroCalorieCard extends StatelessWidget {
-  final Animation<double> ringAnim, macroAnim;
-  final double progress, totalCalories, goalCalories;
-  final double totalProtein,
-      goalProtein,
-      totalCarbs,
-      goalCarbs,
-      totalFat,
-      goalFat;
-  final int caloriesBurned;
-  final Color ringColor;
+  final Animation<double> ringAnim;
+  final double calorieProgress;
+  final double totalCalories, goalCalories;
+  final bool isArabic;
+  final VoidCallback onOpenNutrition;
 
   const _HeroCalorieCard({
     required this.ringAnim,
-    required this.macroAnim,
-    required this.progress,
-    required this.ringColor,
+    required this.calorieProgress,
     required this.totalCalories,
     required this.goalCalories,
-    required this.caloriesBurned,
-    required this.totalProtein,
-    required this.goalProtein,
-    required this.totalCarbs,
-    required this.goalCarbs,
-    required this.totalFat,
-    required this.goalFat,
+    required this.isArabic,
+    required this.onOpenNutrition,
   });
 
   bool get _isOver => totalCalories > goalCalories;
   double get _remaining =>
-      (_isOver ? totalCalories - goalCalories : goalCalories - totalCalories)
+      (_isOver
+              ? totalCalories - goalCalories
+              : goalCalories - totalCalories)
           .abs();
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          color: _kSurface2,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(
-            color: _isOver ? _kRed.withValues(alpha: 0.3) : _kBorderSubtle,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: ringColor.withValues(alpha: 0.08),
-              blurRadius: 40,
-              spreadRadius: -8,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // ── Top: ring + stats ──
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-              child: Row(
+      child: _InteractiveScaleDetector(
+        onTap: onOpenNutrition,
+        child: _ModernPlayfulCard(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Header title + Pixel Fire Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Ring
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF3E0),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const PixelArtIcon(
+                          type: PixelIconType.fire,
+                          size: 16,
+                          animate: true,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        l10n.todayCalories.toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textSecondary,
+                          letterSpacing: 0.8,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textMuted,
+                    size: 20,
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              // Gauge & Main Counter
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Circular Progress Gauge
                   SizedBox(
-                    width: 140,
-                    height: 140,
+                    width: 96,
+                    height: 96,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         AnimatedBuilder(
                           animation: ringAnim,
-                          builder: (_, __) => TweenAnimationBuilder<Color?>(
-                            tween: ColorTween(end: ringColor),
-                            duration: const Duration(milliseconds: 600),
-                            builder: (_, c, __) => CustomPaint(
-                              size: const Size(140, 140),
-                              painter: _FullRingPainter(
-                                progress: progress * ringAnim.value,
-                                color: c ?? AppColors.primaryFixed,
-                              ),
+                          builder: (_, __) => CustomPaint(
+                            size: const Size(96, 96),
+                            painter: _CalorieGaugePainter(
+                              progress: (calorieProgress * ringAnim.value)
+                                  .clamp(0.0, 1.0),
+                              isOver: _isOver,
                             ),
                           ),
                         ),
-                        AnimatedBuilder(
-                          animation: ringAnim,
-                          builder: (_, __) => Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              TweenAnimationBuilder<Color?>(
-                                tween: ColorTween(end: ringColor),
-                                duration: const Duration(milliseconds: 500),
-                                builder: (_, c, __) => Text(
-                                  '${(_remaining * ringAnim.value).toInt()}',
-                                  style: TextStyle(
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.w900,
-                                    color: _isOver
-                                        ? (c ?? _kRed)
-                                        : _kTextPrimary,
-                                    height: 1,
-                                    letterSpacing: -1.5,
-                                    fontFeatures: const [
-                                      FontFeature.tabularFigures(),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _isOver ? 'OVER' : 'KCAL LEFT',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: _isOver
-                                      ? _kRed.withValues(alpha: 0.7)
-                                      : _kTextSecondary,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  // Stats column
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _StatRow(
-                          label: 'Goal',
-                          value: '${goalCalories.toInt()}',
-                          unit: 'kcal',
-                          color: _kTextSecondary,
-                          icon: Icons.flag_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        _StatRow(
-                          label: 'Eaten',
-                          value: '${totalCalories.toInt()}',
-                          unit: 'kcal',
-                          color: AppColors.primaryFixed,
-                          icon: Icons.restaurant_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        _StatRow(
-                          label: 'Burned',
-                          value: '$caloriesBurned',
-                          unit: 'kcal',
-                          color: _kOrange,
-                          icon: Icons.local_fire_department_outlined,
-                        ),
-                        const SizedBox(height: 12),
-                        // Mini progress bar
                         Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
-                              '${(progress * 100).toInt()}% of daily goal',
-                              style: const TextStyle(
-                                fontSize: 10,
-                                color: _kTextTertiary,
-                                fontWeight: FontWeight.w500,
-                              ),
+                            const PixelArtIcon(
+                              type: PixelIconType.fire,
+                              size: 18,
                             ),
-                            const SizedBox(height: 5),
-                            AnimatedBuilder(
-                              animation: ringAnim,
-                              builder: (_, __) => ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: LinearProgressIndicator(
-                                  value: (progress * ringAnim.value).clamp(
-                                    0.0,
-                                    1.0,
-                                  ),
-                                  minHeight: 4,
-                                  backgroundColor: _kSurface3,
-                                  valueColor: AlwaysStoppedAnimation(ringColor),
-                                ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${((calorieProgress * 100).toInt())}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: _isOver
+                                    ? AppColors.accentProtein
+                                    : AppColors.accentCalories,
+                                fontFamily: AppText.fontFamily(isArabic: isArabic),
                               ),
                             ),
                           ],
@@ -1179,53 +1511,196 @@ class _HeroCalorieCard extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  const SizedBox(width: 20),
+
+                  // Numbers & Target Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnimatedBuilder(
+                          animation: ringAnim,
+                          builder: (_, __) => Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '${(totalCalories * ringAnim.value).toInt()}',
+                                style: AppText.styledDisplayMd(
+                                  isArabic: isArabic,
+                                  color: _isOver
+                                      ? AppColors.accentProtein
+                                      : AppColors.textPrimary,
+                                ),
+                              ),
+                              Text(
+                                ' / ${goalCalories.toInt()} ${l10n.kcal}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                  fontFamily: AppText.fontFamily(
+                                    isArabic: isArabic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        // Remaining Pill Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _isOver
+                                ? const Color(0xFFFEE2E2)
+                                : AppColors.lightGreen,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Text(
+                            _isOver
+                                ? l10n.caloriesOverMsg(_remaining.toInt())
+                                : l10n.caloriesRemainingMsg(_remaining.toInt()),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: _isOver
+                                  ? const Color(0xFFB91C1C)
+                                  : AppColors.onPrimaryContainer,
+                              fontFamily: AppText.fontFamily(
+                                isArabic: isArabic,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CalorieGaugePainter extends CustomPainter {
+  final double progress;
+  final bool isOver;
+
+  const _CalorieGaugePainter({required this.progress, required this.isOver});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 6;
+    const strokeWidth = 8.5;
+
+    // Track Background
+    final bgPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..color = const Color(0xFFF0F3F1);
+    canvas.drawCircle(center, radius, bgPaint);
+
+    if (progress <= 0) return;
+
+    // Active Track with Rounded Cap
+    final activePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..color = isOver ? AppColors.accentProtein : AppColors.accentCalories;
+
+    final sweep = 2 * pi * progress.clamp(0.0, 1.0);
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    canvas.drawArc(rect, -pi / 2, sweep, false, activePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CalorieGaugePainter old) =>
+      old.progress != progress || old.isOver != isOver;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Macro Breakdown 3-Pack (Protein, Carbs, Fat)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _MacroCardsPack extends StatelessWidget {
+  final Animation<double> macroAnim;
+  final double totalProtein, goalProtein;
+  final double totalCarbs, goalCarbs;
+  final double totalFat, goalFat;
+  final bool isArabic;
+  final VoidCallback onTap;
+
+  const _MacroCardsPack({
+    required this.macroAnim,
+    required this.totalProtein,
+    required this.goalProtein,
+    required this.totalCarbs,
+    required this.goalCarbs,
+    required this.totalFat,
+    required this.goalFat,
+    required this.isArabic,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: AnimatedBuilder(
+        animation: macroAnim,
+        builder: (_, __) => Row(
+          children: [
+            // Protein Card (Chicken)
+            Expanded(
+              child: _MacroCard(
+                title: l10n.protein,
+                iconType: PixelIconType.chicken,
+                current: (totalProtein * macroAnim.value).toInt(),
+                goal: goalProtein.toInt(),
+                accentColor: AppColors.accentProtein,
+                lightBgColor: const Color(0xFFFEE2E2),
+                isArabic: isArabic,
+                onTap: onTap,
+              ),
             ),
-
-            const SizedBox(height: 20),
-
-            // ── Divider ──
-            Container(height: 1, color: _kBorderSubtle),
-
-            // ── Macro pills row ──
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: AnimatedBuilder(
-                animation: macroAnim,
-                builder: (_, __) => Row(
-                  children: [
-                    Expanded(
-                      child: _MacroPill(
-                        label: 'Carbs',
-                        emoji: '🌾',
-                        current: totalCarbs * macroAnim.value,
-                        goal: goalCarbs,
-                        color: _kBlue,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MacroPill(
-                        label: 'Protein',
-                        emoji: '🥩',
-                        current: totalProtein * macroAnim.value,
-                        goal: goalProtein,
-                        color: const Color(0xFFFF6B6B),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MacroPill(
-                        label: 'Fat',
-                        emoji: '🫙',
-                        current: totalFat * macroAnim.value,
-                        goal: goalFat,
-                        color: const Color(0xFFFFD166),
-                      ),
-                    ),
-                  ],
-                ),
+            const SizedBox(width: 10),
+            // Carbs Card (Grain)
+            Expanded(
+              child: _MacroCard(
+                title: l10n.carbs,
+                iconType: PixelIconType.grain,
+                current: (totalCarbs * macroAnim.value).toInt(),
+                goal: goalCarbs.toInt(),
+                accentColor: AppColors.accentCarbs,
+                lightBgColor: const Color(0xFFDBEAFE),
+                isArabic: isArabic,
+                onTap: onTap,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Fat Card (Avocado)
+            Expanded(
+              child: _MacroCard(
+                title: l10n.fat,
+                iconType: PixelIconType.avocado,
+                current: (totalFat * macroAnim.value).toInt(),
+                goal: goalFat.toInt(),
+                accentColor: AppColors.accentFat,
+                lightBgColor: const Color(0xFFDCFCE7),
+                isArabic: isArabic,
+                onTap: onTap,
               ),
             ),
           ],
@@ -1235,475 +1710,531 @@ class _HeroCalorieCard extends StatelessWidget {
   }
 }
 
-class _StatRow extends StatelessWidget {
-  final String label, value, unit;
-  final Color color;
-  final IconData icon;
-  const _StatRow({
-    required this.label,
-    required this.value,
-    required this.unit,
-    required this.color,
-    required this.icon,
-  });
+class _MacroCard extends StatelessWidget {
+  final String title;
+  final PixelIconType iconType;
+  final int current, goal;
+  final Color accentColor;
+  final Color lightBgColor;
+  final bool isArabic;
+  final VoidCallback onTap;
 
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: color, size: 14),
-      ),
-      const SizedBox(width: 8),
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 10,
-              color: _kTextTertiary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: _kTextPrimary,
-                    fontWeight: FontWeight.w800,
-                    fontFeatures: [FontFeature.tabularFigures()],
-                  ),
-                ),
-                TextSpan(
-                  text: ' $unit',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _kTextSecondary,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-class _MacroPill extends StatelessWidget {
-  final String label, emoji;
-  final double current, goal;
-  final Color color;
-  const _MacroPill({
-    required this.label,
-    required this.emoji,
+  const _MacroCard({
+    required this.title,
+    required this.iconType,
     required this.current,
     required this.goal,
-    required this.color,
+    required this.accentColor,
+    required this.lightBgColor,
+    required this.isArabic,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final prog = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
-    final isOver = current > goal;
+    final double pct = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: isOver ? 0.4 : 0.15)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 12)),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: _kTextSecondary,
-                    fontWeight: FontWeight.w600,
+    return _InteractiveScaleDetector(
+      onTap: onTap,
+      scaleFactor: 0.94,
+      child: _ModernPlayfulCard(
+        padding: const EdgeInsets.all(12),
+        borderRadius: 18,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: lightBgColor,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  overflow: TextOverflow.ellipsis,
+                  child: PixelArtIcon(type: iconType, size: 16),
                 ),
+                Text(
+                  '${(pct * 100).toInt()}%',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: prog,
-              minHeight: 3,
-              backgroundColor: Colors.white.withValues(alpha: 0.06),
-              valueColor: AlwaysStoppedAnimation(isOver ? _kRed : color),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            '${current.toInt()}/${goal.toInt()}g',
-            style: TextStyle(
-              fontSize: 11,
-              color: isOver ? _kRed : _kTextPrimary,
-              fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
+            const SizedBox(height: 2),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${current}g',
+                    style: TextStyle(
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                    ),
+                  ),
+                  TextSpan(
+                    text: ' / ${goal}g',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: pct,
+                minHeight: 4,
+                backgroundColor: const Color(0xFFF1F5F3),
+                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Activity Ring Strip — Apple Watch ring-inspired compact cards
+// 6. 5-Second Daily Snapshot (Water, Steps, Burned)
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ActivityRingStrip extends StatelessWidget {
-  final int waterGlasses, stepsInt, caloriesBurned;
-  final VoidCallback onAddWater, onEditSteps;
+class _DailySnapshotRow extends StatelessWidget {
+  final int waterGlasses;
+  final int steps;
+  final int caloriesBurned;
+  final bool isArabic;
+  final VoidCallback onAddWater;
+  final VoidCallback onStepsTap;
+  final VoidCallback onWorkoutTap;
 
-  const _ActivityRingStrip({
+  const _DailySnapshotRow({
     required this.waterGlasses,
-    required this.stepsInt,
+    required this.steps,
     required this.caloriesBurned,
+    required this.isArabic,
     required this.onAddWater,
-    required this.onEditSteps,
+    required this.onStepsTap,
+    required this.onWorkoutTap,
   });
 
   String _formatSteps(int steps) =>
       steps >= 1000 ? '${(steps / 1000).toStringAsFixed(1)}k' : '$steps';
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Row(
-      children: [
-        Expanded(
-          child: _ActivityTile(
-            icon: '💧',
-            value: '$waterGlasses',
-            unit: 'glasses',
-            subtitle: 'of 8 goal',
-            color: _kBlue,
-            progress: waterGlasses / 8,
-            onAction: onAddWater,
-            actionIcon: Icons.add_rounded,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActivityTile(
-            icon: '👟',
-            value: _formatSteps(stepsInt),
-            unit: 'steps',
-            subtitle: '${((stepsInt / 10000) * 100).toInt()}% of 10k',
-            color: _kGreen,
-            progress: stepsInt / 10000,
-            onAction: onEditSteps,
-            actionIcon: Icons.edit_rounded,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _ActivityTile(
-            icon: '🔥',
-            value: '$caloriesBurned',
-            unit: 'kcal',
-            subtitle: 'burned today',
-            color: _kOrange,
-            progress: (caloriesBurned / 500).clamp(0.0, 1.0),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
 
-class _ActivityTile extends StatelessWidget {
-  final String icon, value, unit, subtitle;
-  final Color color;
-  final double progress;
-  final VoidCallback? onAction;
-  final IconData? actionIcon;
-
-  const _ActivityTile({
-    required this.icon,
-    required this.value,
-    required this.unit,
-    required this.subtitle,
-    required this.color,
-    required this.progress,
-    this.onAction,
-    this.actionIcon,
-  });
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: _kSurface2,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: _kBorderSubtle),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 20)),
-            if (onAction != null)
-              GestureDetector(
-                onTap: onAction,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(actionIcon, color: color, size: 12),
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        // Mini ring + value side by side
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 32,
-              height: 32,
-              child: CustomPaint(
-                painter: _MiniRingPainter(
-                  progress: progress.clamp(0.0, 1.0),
-                  color: color,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          // Water Card (Interactive Tap)
+          Expanded(
+            child: _InteractiveScaleDetector(
+              onTap: onAddWater,
+              child: _ModernPlayfulCard(
+                padding: const EdgeInsets.all(12),
+                borderRadius: 18,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const PixelArtIcon(
+                          type: PixelIconType.waterDrop,
+                          size: 16,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 5,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE0F2FE),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Text(
+                            '+250ml',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0284C7),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.water,
+                      style: AppText.styledBodySm(
+                        isArabic: isArabic,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '$waterGlasses / 8',
+                      style: AppText.styledTitleMd(
+                        isArabic: isArabic,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: _kTextPrimary,
-                      height: 1,
-                      fontFeatures: [FontFeature.tabularFigures()],
+          ),
+          const SizedBox(width: 10),
+          // Steps Card (Interactive Tap)
+          Expanded(
+            child: _InteractiveScaleDetector(
+              onTap: onStepsTap,
+              child: _ModernPlayfulCard(
+                padding: const EdgeInsets.all(12),
+                borderRadius: 18,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const PixelArtIcon(type: PixelIconType.sneaker, size: 16),
+                        const Icon(Icons.edit_outlined, size: 13, color: AppColors.textMuted),
+                      ],
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.steps,
+                      style: AppText.styledBodySm(
+                        isArabic: isArabic,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      _formatSteps(steps),
+                      style: AppText.styledTitleMd(
+                        isArabic: isArabic,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          // Workout / Burned Card
+          Expanded(
+            child: _InteractiveScaleDetector(
+              onTap: onWorkoutTap,
+              child: _ModernPlayfulCard(
+                padding: const EdgeInsets.all(12),
+                borderRadius: 18,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const PixelArtIcon(type: PixelIconType.dumbbell, size: 16),
+                    const SizedBox(height: 8),
+                    Text(
+                      l10n.burned,
+                      style: AppText.styledBodySm(
+                        isArabic: isArabic,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '$caloriesBurned kcal',
+                      style: AppText.styledTitleMd(
+                        isArabic: isArabic,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. Quick Food Logging Hub (+ Add Meal & AI Scan)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _QuickFoodLogHub extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onAddMeal;
+  final VoidCallback onAiScan;
+  final VoidCallback onVoice;
+  final VoidCallback onText;
+  final VoidCallback onBarcode;
+
+  const _QuickFoodLogHub({
+    required this.isArabic,
+    required this.onAddMeal,
+    required this.onAiScan,
+    required this.onVoice,
+    required this.onText,
+    required this.onBarcode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          // Primary Green CTA Button
+          _InteractiveScaleDetector(
+            onTap: onAddMeal,
+            scaleFactor: 0.97,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryActionGradient,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.28),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const PixelArtIcon(
+                    type: PixelIconType.robot,
+                    size: 20,
+                    animate: true,
+                  ),
+                  const SizedBox(width: 10),
                   Text(
-                    unit,
+                    l10n.addMeal,
                     style: TextStyle(
-                      fontSize: 9,
-                      color: color,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.3,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          subtitle,
-          style: const TextStyle(
-            fontSize: 9,
-            color: _kTextTertiary,
-            fontWeight: FontWeight.w400,
           ),
-        ),
-      ],
-    ),
-  );
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Section Header
-// ─────────────────────────────────────────────────────────────────────────────
+          const SizedBox(height: 10),
 
-class _SectionHeader extends StatelessWidget {
-  final String title, action;
-  final VoidCallback? onAction;
-  const _SectionHeader({
-    required this.title,
-    required this.action,
-    required this.onAction,
-  });
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Row(
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: _kTextPrimary,
-            letterSpacing: -0.4,
+          // 4 Quick Options (AI Scan, Voice, Text, Barcode)
+          Row(
+            children: [
+              _buildQuickOption(
+                icon: Icons.camera_alt_rounded,
+                label: l10n.scanAi,
+                onTap: onAiScan,
+              ),
+              const SizedBox(width: 8),
+              _buildQuickOption(
+                icon: Icons.mic_rounded,
+                label: l10n.voiceLog,
+                onTap: onVoice,
+              ),
+              const SizedBox(width: 8),
+              _buildQuickOption(
+                icon: Icons.edit_note_rounded,
+                label: l10n.quickText,
+                onTap: onText,
+              ),
+              const SizedBox(width: 8),
+              _buildQuickOption(
+                icon: Icons.qr_code_scanner_rounded,
+                label: l10n.barcodeScan,
+                onTap: onBarcode,
+              ),
+            ],
           ),
-        ),
-        const Spacer(),
-        if (action.isNotEmpty && onAction != null)
-          GestureDetector(
-            onTap: onAction,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  action,
-                  style: TextStyle(
-                    fontSize: 13,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: _InteractiveScaleDetector(
+        onTap: onTap,
+        scaleFactor: 0.90,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, size: 18, color: AppColors.primaryGreen),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryFixed,
+                    color: AppColors.textSecondary,
                   ),
                 ),
-                const SizedBox(width: 2),
-                Icon(
-                  Icons.add_rounded,
-                  size: 16,
-                  color: AppColors.primaryFixed,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-      ],
-    ),
-  );
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Meals Row — horizontal compact tiles (Cronometer-inspired)
+// 8. Today's Fueling / Meals Feed
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MealsRow extends StatelessWidget {
+class _MealsFeed extends StatelessWidget {
   final List<dynamic> logs;
-  final VoidCallback onTap;
-  const _MealsRow({required this.logs, required this.onTap});
+  final bool isArabic;
+  final Function(String mealType) onTapMeal;
+
+  const _MealsFeed({
+    required this.logs,
+    required this.isArabic,
+    required this.onTapMeal,
+  });
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final meals = [
-      ('breakfast', l10n.breakfast, '🍳', 600.0),
-      ('lunch', l10n.lunch, '🥗', 700.0),
-      ('dinner', l10n.dinner, '🍽', 700.0),
-      ('snack', l10n.snack, '🥜', 300.0),
+    final mealSlots = [
+      ('breakfast', l10n.breakfast, PixelIconType.egg, 550.0),
+      ('lunch', l10n.lunch, PixelIconType.plate, 750.0),
+      ('dinner', l10n.dinner, PixelIconType.apple, 650.0),
+      ('snack', l10n.snack, PixelIconType.avocado, 300.0),
     ];
 
     return SizedBox(
-      height: 106,
+      height: 116,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        itemCount: meals.length,
+        itemCount: mealSlots.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (_, i) {
-          final (type, label, emoji, targetKcal) = meals[i];
+          final (type, label, iconType, targetKcal) = mealSlots[i];
           final mLogs = logs.where((l) => l['meal_type'] == type).toList();
           final kcal = mLogs.fold(
             0.0,
             (s, l) => s + ((l['calories'] as num?) ?? 0),
           );
-          final has = mLogs.isNotEmpty;
-          final prog = (kcal / targetKcal).clamp(0.0, 1.0);
+          final hasLogs = mLogs.isNotEmpty;
 
-          return GestureDetector(
-            onTap: onTap,
-            child: Container(
-              width: 84,
+          return _InteractiveScaleDetector(
+            onTap: () => onTapMeal(type),
+            child: _ModernPlayfulCard(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: has
-                    ? AppColors.primaryFixed.withValues(alpha: 0.08)
-                    : _kSurface2,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: has
-                      ? AppColors.primaryFixed.withValues(alpha: 0.25)
-                      : _kBorderSubtle,
-                  width: has ? 1.5 : 1,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(emoji, style: const TextStyle(fontSize: 18)),
-                      Container(
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: has ? AppColors.primaryFixed : _kSurface3,
-                          shape: BoxShape.circle,
+              borderRadius: 18,
+              borderColor: hasLogs
+                  ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                  : AppColors.borderSubtle,
+              child: SizedBox(
+                width: 90,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        PixelArtIcon(type: iconType, size: 18),
+                        Container(
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: hasLogs
+                                ? AppColors.primaryGreen
+                                : const Color(0xFFF1F5F3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            hasLogs ? Icons.check_rounded : Icons.add_rounded,
+                            size: 11,
+                            color: hasLogs
+                                ? Colors.white
+                                : AppColors.textSecondary,
+                          ),
                         ),
-                        child: Icon(
-                          has ? Icons.check_rounded : Icons.add_rounded,
-                          size: 9,
-                          color: Colors.white,
-                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Text(
+                      label,
+                      style: AppText.styledLabelLg(
+                        isArabic: isArabic,
+                        color: AppColors.textPrimary,
                       ),
-                    ],
-                  ),
-                  const Spacer(),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(2),
-                    child: LinearProgressIndicator(
-                      value: prog,
-                      minHeight: 2,
-                      backgroundColor: Colors.white.withValues(alpha: 0.07),
-                      color: has ? AppColors.primaryFixed : _kTextTertiary,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: has ? _kTextPrimary : _kTextSecondary,
-                      fontWeight: FontWeight.w700,
+                    const SizedBox(height: 1),
+                    Text(
+                      hasLogs
+                          ? '${kcal.toInt()} ${l10n.kcal}'
+                          : '${targetKcal.toInt()} ${l10n.kcal}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: hasLogs
+                            ? AppColors.primaryGreen
+                            : AppColors.textMuted,
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    has ? '${kcal.toInt()} cal' : '—',
-                    style: TextStyle(
-                      fontSize: 9,
-                      color: has
-                          ? AppColors.primaryFixed.withValues(alpha: 0.8)
-                          : _kTextTertiary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
@@ -1713,831 +2244,315 @@ class _MealsRow extends StatelessWidget {
   }
 }
 
-class _EmptyMeals extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EmptyMeals({required this.onTap});
+// ─────────────────────────────────────────────────────────────────────────────
+// 9. Gamified Daily Quests & Challenges
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DailyQuestsCard extends StatelessWidget {
+  final int waterGlasses;
+  final double totalProtein, goalProtein;
+  final bool isArabic;
+
+  const _DailyQuestsCard({
+    required this.waterGlasses,
+    required this.totalProtein,
+    required this.goalProtein,
+    required this.isArabic,
+  });
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: _kSurface2,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.primaryFixed.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isWaterDone = waterGlasses >= 8;
+    final isProteinDone = goalProtein > 0 && totalProtein >= goalProtein;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: _ModernPlayfulCard(
+        backgroundColor: const Color(0xFFF9FAFB),
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.restaurant_outlined,
-                color: AppColors.primaryFixed.withValues(alpha: 0.7),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.noMealsYet,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: _kTextPrimary,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const PixelArtIcon(type: PixelIconType.trophy, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.dailyQuests,
+                      style: AppText.styledTitleSm(
+                        isArabic: isArabic,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'Tap to log your first meal today',
-                    style: TextStyle(fontSize: 12, color: _kTextSecondary),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      const PixelArtIcon(type: PixelIconType.star, size: 12),
+                      const SizedBox(width: 4),
+                      Text(
+                        l10n.xpEarned(120),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                color: AppColors.primaryFixed,
-                size: 18,
-              ),
+            const SizedBox(height: 12),
+            _buildQuestTile(
+              title: l10n.hydrationHero,
+              progressText: '$waterGlasses / 8',
+              isCompleted: isWaterDone,
+              iconType: PixelIconType.waterDrop,
+            ),
+            const SizedBox(height: 8),
+            _buildQuestTile(
+              title: l10n.proteinChampion,
+              progressText: '${totalProtein.toInt()} / ${goalProtein.toInt()}g',
+              isCompleted: isProteinDone,
+              iconType: PixelIconType.chicken,
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
+
+  Widget _buildQuestTile({
+    required String title,
+    required String progressText,
+    required bool isCompleted,
+    required PixelIconType iconType,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Row(
+        children: [
+          PixelArtIcon(type: iconType, size: 14),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
+              ),
+            ),
+          ),
+          Text(
+            progressText,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: isCompleted
+                  ? AppColors.primaryGreen
+                  : AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Icon(
+            isCompleted
+                ? Icons.check_circle_rounded
+                : Icons.radio_button_unchecked_rounded,
+            size: 16,
+            color: isCompleted ? AppColors.primaryGreen : AppColors.textMuted,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Program Card — Strava activity card style
+// 10. Pro Coach Mentorship Banner
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _ProgramCard extends StatelessWidget {
-  final Map<String, dynamic>? activeProgram;
-  final VoidCallback onTap;
-  const _ProgramCard({required this.activeProgram, required this.onTap});
+class _ProCoachBanner extends StatelessWidget {
+  final bool isArabic;
+
+  const _ProCoachBanner({required this.isArabic});
 
   @override
   Widget build(BuildContext context) {
-    if (activeProgram == null) {
-      return _EmptyProgramCard(onTap: onTap);
-    }
-    final prog = activeProgram!['training_programs'] as Map<String, dynamic>;
-    final name = prog['name'] as String? ?? '';
-    final level = (prog['level'] as String? ?? '').toUpperCase();
-    final totalWeeks = (prog['duration_weeks'] as num?)?.toInt() ?? 12;
-    final currentWeek = (activeProgram!['current_week'] as num?)?.toInt() ?? 1;
-    final pct = ((currentWeek - 1) / totalWeeks).clamp(0.0, 1.0);
+    final l10n = AppLocalizations.of(context)!;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: _kSurface2,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.primaryFixed.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: _InteractiveScaleDetector(
+        onTap: () {
+          final subRepo = SubscriptionRepositoryImpl();
+          final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
+            ..fetchActiveSubscription();
+          final subNotifier = SubscriptionNotifier(subRepo);
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => MultiProvider(
+                providers: [
+                  ChangeNotifierProvider(
+                    create: (_) =>
+                        CoachListNotifier(CoachRepositoryImpl())
+                          ..fetchCoaches(),
+                  ),
+                  ChangeNotifierProvider.value(value: activeSubNotifier),
+                  ChangeNotifierProvider.value(value: subNotifier),
+                ],
+                child: const CoachMarketplaceScreen(),
+              ),
+            ),
+          );
+        },
+        child: _ModernPlayfulCard(
+          backgroundColor: AppColors.lightGreen,
+          borderColor: AppColors.primaryGreen.withValues(alpha: 0.3),
+          padding: const EdgeInsets.all(16),
+          child: Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryGreen.withValues(alpha: 0.15),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: PixelArtIcon(type: PixelIconType.trophy, size: 22),
+                ),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ACTIVE PROGRAM',
+                      l10n.coachBannerTitle,
                       style: TextStyle(
-                        fontSize: 9,
-                        letterSpacing: 1.8,
-                        color: AppColors.primaryFixed,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontSize: 18,
+                        color: AppColors.onPrimaryContainer,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
-                        color: _kTextPrimary,
-                        letterSpacing: -0.3,
-                        height: 1.2,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      l10n.coachBannerSubtitle,
+                      style: TextStyle(
+                        color: AppColors.primaryGreen,
+                        fontSize: 11,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                width: 28,
+                height: 28,
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  shape: BoxShape.circle,
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryFixed.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.primaryFixed.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Text(
-                  level,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primaryFixed,
-                    letterSpacing: 0.5,
-                  ),
+                child: const Icon(
+                  Icons.arrow_forward_rounded,
+                  color: Colors.white,
+                  size: 15,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Progress segmented bar
-          _SegmentedProgress(
-            current: currentWeek - 1,
-            total: totalWeeks,
-            color: AppColors.primaryFixed,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Week $currentWeek of $totalWeeks',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: _kTextSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              Text(
-                '${(pct * 100).toInt()}% complete',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.primaryFixed,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryFixed,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                elevation: 0,
-              ),
-              child: const Text(
-                "Start Today's Workout",
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _SegmentedProgress extends StatelessWidget {
-  final int current, total;
-  final Color color;
-  const _SegmentedProgress({
-    required this.current,
-    required this.total,
-    required this.color,
+// ─────────────────────────────────────────────────────────────────────────────
+// Section Header
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String actionText;
+  final bool isArabic;
+  final VoidCallback? onAction;
+
+  const _SectionHeader({
+    required this.title,
+    required this.actionText,
+    required this.isArabic,
+    this.onAction,
   });
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (_, constraints) {
-      final segW = (constraints.maxWidth - (total - 1) * 3) / total;
-      return Row(
-        children: List.generate(total, (i) {
-          final filled = i < current;
-          final partial = i == current;
-          return Padding(
-            padding: EdgeInsets.only(right: i < total - 1 ? 3 : 0),
-            child: Container(
-              width: segW,
-              height: 5,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(3),
-                color: filled
-                    ? color
-                    : partial
-                    ? color.withValues(alpha: 0.35)
-                    : Colors.white.withValues(alpha: 0.07),
-              ),
-            ),
-          );
-        }),
-      );
-    },
-  );
-}
-
-class _EmptyProgramCard extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EmptyProgramCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: _kSurface2,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: _kBorderSubtle),
-    ),
-    child: Row(
-      children: [
-        const Text('🎯', style: TextStyle(fontSize: 28)),
-        const SizedBox(width: 14),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'No active program',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: _kTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Pick a training plan to track your progress',
-                style: TextStyle(fontSize: 12, color: _kTextSecondary),
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.primaryFixed.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: AppColors.primaryFixed.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              AppLocalizations.of(context)!.browsePrograms,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryFixed,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Last Workout Card
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _LastWorkoutCard extends StatelessWidget {
-  final Map<String, dynamic>? lastWorkout;
-  final VoidCallback onTap;
-  const _LastWorkoutCard({required this.lastWorkout, required this.onTap});
-
-  @override
   Widget build(BuildContext context) {
-    if (lastWorkout == null) return _EmptyWorkoutCard(onTap: onTap);
-    final name =
-        lastWorkout!['session_name'] as String? ??
-        AppLocalizations.of(context)!.navWorkout;
-    final date = lastWorkout!['session_date'] as String? ?? '';
-    final duration = (lastWorkout!['duration_min'] as num?)?.toInt() ?? 0;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _kSurface2,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _kBorderSubtle),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: _kSurface3,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: Text('💪', style: TextStyle(fontSize: 22)),
+          Text(
+            title,
+            style: AppText.styledHeadlineSm(
+              isArabic: isArabic,
+              color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'LAST WORKOUT',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: _kTextTertiary,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: _kTextPrimary,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    if (date.isNotEmpty) ...[
-                      const Icon(
-                        Icons.calendar_today_outlined,
-                        size: 10,
-                        color: _kTextTertiary,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        date,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: _kTextTertiary,
-                        ),
-                      ),
-                    ],
-                    if (duration > 0) ...[
-                      const Text(
-                        ' · ',
-                        style: TextStyle(color: _kTextTertiary),
-                      ),
-                      const Icon(
-                        Icons.timer_outlined,
-                        size: 10,
-                        color: _kTextTertiary,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '$duration min',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: _kTextTertiary,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onTap,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-              decoration: BoxDecoration(
-                color: _kSurface3,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _kBorderSubtle),
-              ),
+          if (actionText.isNotEmpty && onAction != null)
+            GestureDetector(
+              onTap: onAction,
               child: Text(
-                AppLocalizations.of(context)!.history,
-                style: const TextStyle(
+                actionText,
+                style: TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: _kTextSecondary,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryGreen,
+                  fontFamily: AppText.fontFamily(isArabic: isArabic),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 }
 
-class _EmptyWorkoutCard extends StatelessWidget {
-  final VoidCallback onTap;
-  const _EmptyWorkoutCard({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: _kSurface2,
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: _kBorderSubtle),
-    ),
-    child: Row(
-      children: [
-        const Text('🏋️', style: TextStyle(fontSize: 26)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'No workouts logged yet',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: _kTextPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Start your first session',
-                style: TextStyle(fontSize: 12, color: _kTextSecondary),
-              ),
-            ],
-          ),
-        ),
-        GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-            decoration: BoxDecoration(
-              color: AppColors.primaryFixed.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppColors.primaryFixed.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              AppLocalizations.of(context)!.logFirstWorkout,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryFixed,
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Coach Banner — elevated gold premium
+// Stagger Animation Component
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _CoachBanner extends StatelessWidget {
-  const _CoachBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        // Instantiate concretely — avoids ChangeNotifierProxyProvider
-        // read-at-create-time ProviderNotFoundException.
-        final subRepo = SubscriptionRepositoryImpl();
-        final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
-          ..fetchActiveSubscription();
-        final subNotifier = SubscriptionNotifier(subRepo);
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => MultiProvider(
-              providers: [
-                ChangeNotifierProvider(
-                  create: (_) => CoachListNotifier(CoachRepositoryImpl())
-                    ..fetchCoaches(),
-                ),
-                ChangeNotifierProvider.value(value: activeSubNotifier),
-                ChangeNotifierProvider.value(value: subNotifier),
-              ],
-              child: const CoachMarketplaceScreen(),
-            ),
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            stops: [0, 0.6, 1],
-            colors: [Color(0xFF2C2010), Color(0xFF1A1508), _kSurface1],
-          ),
-          border: Border.all(color: _kGold.withValues(alpha: 0.25), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: _kGold.withValues(alpha: 0.06),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                color: _kGold.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _kGold.withValues(alpha: 0.25)),
-              ),
-              child: const Icon(
-                Icons.workspace_premium_rounded,
-                color: _kGold,
-                size: 26,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Level up with a Pro Coach',
-                    style: TextStyle(
-                      color: _kTextPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Certified coaches available · Plans from \$29/mo',
-                    style: TextStyle(
-                      color: _kGold.withValues(alpha: 0.7),
-                      fontSize: 12,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: _kGold.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.arrow_forward_rounded,
-                color: _kGold.withValues(alpha: 0.8),
-                size: 18,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Steps Dialog
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _StepsDialog extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onSave, onCancel;
-  const _StepsDialog({
-    required this.controller,
-    required this.onSave,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    backgroundColor: _kSurface2,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-    title: Text(
-      AppLocalizations.of(context)!.updateSteps,
-      style: const TextStyle(
-        color: _kTextPrimary,
-        fontSize: 17,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-    content: TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      autofocus: true,
-      style: const TextStyle(color: _kTextPrimary, fontSize: 16),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: _kSurface3,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: AppColors.primaryFixed.withValues(alpha: 0.6),
-            width: 1.5,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
-        ),
-        suffixText: 'steps',
-        suffixStyle: const TextStyle(color: _kTextSecondary, fontSize: 13),
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: onCancel,
-        child: Text(
-          AppLocalizations.of(context)!.cancel,
-          style: const TextStyle(color: _kTextSecondary),
-        ),
-      ),
-      FilledButton(
-        onPressed: onSave,
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primaryFixed,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(AppLocalizations.of(context)!.save),
-      ),
-    ],
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Painters
-// ─────────────────────────────────────────────────────────────────────────────
-
-/// Full 360° progress ring (activity ring style)
-class _FullRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  const _FullRingPainter({required this.progress, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 12;
-    const strokeW = 10.0;
-
-    // Track
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeW
-        ..color = Colors.white.withValues(alpha: 0.07),
-    );
-
-    if (progress <= 0) return;
-
-    // Outer glow
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -pi / 2,
-      2 * pi * progress.clamp(0, 1),
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeW + 12
-        ..strokeCap = StrokeCap.round
-        ..color = color.withValues(alpha: 0.12)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
-
-    // Main arc with gradient
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(
-      rect,
-      -pi / 2,
-      2 * pi * progress.clamp(0, 1),
-      false,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeW
-        ..strokeCap = StrokeCap.round
-        ..shader = SweepGradient(
-          colors: [color.withValues(alpha: 0.5), color],
-          startAngle: -pi / 2,
-          endAngle: -pi / 2 + 2 * pi,
-          transform: const GradientRotation(-pi / 2),
-        ).createShader(rect),
-    );
-
-    // Tip dot
-    final tipAngle = -pi / 2 + 2 * pi * progress.clamp(0, 1);
-    final tipX = center.dx + radius * cos(tipAngle);
-    final tipY = center.dy + radius * sin(tipAngle);
-    canvas.drawCircle(Offset(tipX, tipY), 5, Paint()..color = color);
-    canvas.drawCircle(
-      Offset(tipX, tipY),
-      8,
-      Paint()
-        ..color = color.withValues(alpha: 0.25)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _FullRingPainter o) =>
-      o.progress != progress || o.color != color;
-}
-
-/// Mini activity tile ring
-class _MiniRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  const _MiniRingPainter({required this.progress, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 3;
-    const strokeW = 3.5;
-
-    canvas.drawCircle(
-      center,
-      radius,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeW
-        ..color = Colors.white.withValues(alpha: 0.07),
-    );
-
-    if (progress > 0) {
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        -pi / 2,
-        2 * pi * progress,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = strokeW
-          ..strokeCap = StrokeCap.round
-          ..color = color,
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _MiniRingPainter o) =>
-      o.progress != progress || o.color != color;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stagger animation — cleaner implementation
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _Stagger extends StatefulWidget {
+class _Stagger extends StatelessWidget {
   final Widget child;
   final int index;
   final AnimationController ctrl;
@@ -2549,33 +2564,26 @@ class _Stagger extends StatefulWidget {
   });
 
   @override
-  State<_Stagger> createState() => _StaggerState();
-}
-
-class _StaggerState extends State<_Stagger> {
-  late final Animation<double> _anim;
-
-  @override
-  void initState() {
-    super.initState();
-    final start = (widget.index * 0.08).clamp(0.0, 0.7);
-    final end = (start + 0.35).clamp(0.0, 1.0);
-    _anim = CurvedAnimation(
-      parent: widget.ctrl,
-      curve: Interval(start, end, curve: Curves.easeOutCubic),
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: ctrl,
+      builder: (_, c) {
+        final start = (index * 0.04).clamp(0.0, 0.6);
+        final end = (start + 0.35).clamp(0.0, 1.0);
+        final curved = CurvedAnimation(
+          parent: ctrl,
+          curve: Interval(start, end, curve: Curves.easeOutCubic),
+        );
+        final val = curved.value;
+        return Opacity(
+          opacity: val.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, 12 * (1 - val)),
+            child: c,
+          ),
+        );
+      },
+      child: child,
     );
   }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _anim,
-    builder: (_, child) => Opacity(
-      opacity: _anim.value,
-      child: Transform.translate(
-        offset: Offset(0, 20 * (1 - _anim.value)),
-        child: child,
-      ),
-    ),
-    child: widget.child,
-  );
 }

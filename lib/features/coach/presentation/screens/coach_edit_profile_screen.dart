@@ -175,7 +175,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Profile updated'),
-          backgroundColor: Colors.green,
+          backgroundColor: AppColors.greenAccent,
         ),
       );
       Navigator.pop(context);
@@ -190,7 +190,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
       return Scaffold(
         backgroundColor: AppColors.surfaceLowest,
         body: const Center(
-          child: CircularProgressIndicator(color: Color(0xFFC9A84C)),
+          child: CircularProgressIndicator(color: AppColors.tertiary),
         ),
       );
     }
@@ -289,7 +289,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                         child: ElevatedButton(
                           onPressed: notifier.isLoading ? null : _submit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC9A84C),
+                            backgroundColor: AppColors.tertiary,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -353,7 +353,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                   Text(
                     'EDIT COACH PROFILE',
                     style: AppText.labelLg.copyWith(
-                      color: const Color(0xFFC9A84C),
+                      color: AppColors.tertiary,
                       letterSpacing: 2,
                     ),
                   ),
@@ -375,7 +375,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
     return Text(
       title,
       style: AppText.labelMd.copyWith(
-        color: const Color(0xFFC9A84C),
+        color: AppColors.tertiary,
         letterSpacing: 2,
       ),
     );
@@ -404,7 +404,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC9A84C),
+                  color: AppColors.tertiary,
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.surfaceLowest, width: 2),
                 ),
@@ -444,11 +444,11 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFC9A84C).withValues(alpha: 0.15)
+              ? AppColors.tertiary.withValues(alpha: 0.15)
               : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected ? const Color(0xFFC9A84C) : AppColors.outline.withValues(alpha: 0.3),
+            color: selected ? AppColors.tertiary : AppColors.outline.withValues(alpha: 0.3),
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -456,7 +456,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
           child: Text(
             label,
             style: AppText.labelMd.copyWith(
-              color: selected ? const Color(0xFFC9A84C) : AppColors.onSurfaceVariant,
+              color: selected ? AppColors.tertiary : AppColors.onSurfaceVariant,
               letterSpacing: 1,
             ),
           ),
@@ -499,7 +499,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFC9A84C), width: 1.5),
+              borderSide: const BorderSide(color: AppColors.tertiary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -522,16 +522,16 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                 style: AppText.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
             const Spacer(),
             Text('$_yearsExp',
-                style: AppText.titleMd.copyWith(color: const Color(0xFFC9A84C))),
+                style: AppText.titleMd.copyWith(color: AppColors.tertiary)),
           ],
         ),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: const Color(0xFFC9A84C),
+            activeTrackColor: AppColors.tertiary,
             inactiveTrackColor: AppColors.surfaceContainer,
-            thumbColor: const Color(0xFFC9A84C),
-            overlayColor: const Color(0xFFC9A84C).withValues(alpha: 0.15),
+            thumbColor: AppColors.tertiary,
+            overlayColor: AppColors.tertiary.withValues(alpha: 0.15),
           ),
           child: Slider(
             value: _yearsExp.toDouble(),
@@ -630,7 +630,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFC9A84C),
+                  color: AppColors.tertiary,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.add_rounded, color: Colors.black, size: 18),
@@ -677,7 +677,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                 style: AppText.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
             const SizedBox(width: 8),
             Text('*Required',
-                style: AppText.labelSm.copyWith(color: const Color(0xFFC9A84C))),
+                style: AppText.labelSm.copyWith(color: AppColors.tertiary)),
           ],
         ),
         const SizedBox(height: 8),
@@ -706,7 +706,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFC9A84C), width: 1.5),
+              borderSide: const BorderSide(color: AppColors.tertiary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -729,16 +729,16 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                 style: AppText.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
             const Spacer(),
             Text('${_maxClients.round()}',
-                style: AppText.titleMd.copyWith(color: const Color(0xFFC9A84C))),
+                style: AppText.titleMd.copyWith(color: AppColors.tertiary)),
           ],
         ),
         const SizedBox(height: 8),
         SliderTheme(
           data: SliderThemeData(
-            activeTrackColor: const Color(0xFFC9A84C),
+            activeTrackColor: AppColors.tertiary,
             inactiveTrackColor: AppColors.surfaceContainer,
-            thumbColor: const Color(0xFFC9A84C),
-            overlayColor: const Color(0xFFC9A84C).withValues(alpha: 0.15),
+            thumbColor: AppColors.tertiary,
+            overlayColor: AppColors.tertiary.withValues(alpha: 0.15),
           ),
           child: Slider(
             value: _maxClients,
@@ -800,7 +800,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
         children: [
           Icon(
             source.toLowerCase().endsWith('.pdf') ? Icons.picture_as_pdf_rounded : Icons.image_rounded,
-            color: const Color(0xFFC9A84C),
+            color: AppColors.tertiary,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -828,16 +828,16 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFC9A84C).withValues(alpha: 0.5), width: 1),
+          border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.5), width: 1),
           borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFFC9A84C).withValues(alpha: 0.05),
+          color: AppColors.tertiary.withValues(alpha: 0.05),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFFC9A84C), size: 20),
+            Icon(icon, color: AppColors.tertiary, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: AppText.labelLg.copyWith(color: const Color(0xFFC9A84C))),
+            Text(label, style: AppText.labelLg.copyWith(color: AppColors.tertiary)),
           ],
         ),
       ),
@@ -852,12 +852,12 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? const Color(0xFFC9A84C).withValues(alpha: 0.15)
+              ? AppColors.tertiary.withValues(alpha: 0.15)
               : AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: selected
-                ? const Color(0xFFC9A84C)
+                ? AppColors.tertiary
                 : AppColors.outline.withValues(alpha: 0.3),
             width: selected ? 1.5 : 1,
           ),
@@ -867,13 +867,13 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
           children: [
             if (selected)
               const Icon(Icons.check_rounded,
-                  color: Color(0xFFC9A84C), size: 14),
+                  color: AppColors.tertiary, size: 14),
             if (selected) const SizedBox(width: 4),
             Text(
               label.toUpperCase(),
               style: AppText.labelMd.copyWith(
                 color: selected
-                    ? const Color(0xFFC9A84C)
+                    ? AppColors.tertiary
                     : AppColors.onSurfaceVariant,
                 letterSpacing: 0.5,
                 fontSize: 10,

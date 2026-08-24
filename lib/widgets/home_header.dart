@@ -1,9 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/language_toggle.dart';
+import 'package:provider/provider.dart';
+import '../chat/presentation/providers/chat_providers.dart';
+import '../features/notifications/presentation/notification_list_screen.dart';
 
 class HomeHeader extends StatelessWidget {
   final String userName;
@@ -87,6 +90,8 @@ class HomeHeader extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const LanguageToggle(compact: true),
+          const SizedBox(width: 8),
+          const _NotificationBell(),
           const SizedBox(width: 12),
           // Avatar
           _Avatar(name: firstName, avatarUrl: avatarUrl),
@@ -143,6 +148,57 @@ class _DayPill extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Notification Bell ────────────────────────────────────────────────────────
+
+class _NotificationBell extends StatelessWidget {
+  const _NotificationBell();
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<NotificationNotifier>(
+      builder: (context, notifier, child) {
+        final unreadCount = notifier.unreadCount;
+        return Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 26),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationListScreen()),
+                );
+              },
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                right: 6,
+                top: 6,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Text(
+                    unreadCount > 9 ? '9+' : unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      height: 1,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

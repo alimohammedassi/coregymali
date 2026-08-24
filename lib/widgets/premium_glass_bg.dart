@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
 
 class PremiumGlassmorphismBg extends StatefulWidget {
   final Widget child;
@@ -35,7 +36,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
       backgroundColor: const Color(0xFF050505), // Deep obsidian black base
       body: Stack(
         children: [
-          // Soft volumetric god-rays from lower-left
+          // Soft volumetric glow orb bottom-left — Electric Volt
           Positioned(
             bottom: -150,
             left: -100,
@@ -46,7 +47,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00FF87).withOpacity(0.15),
+                    AppColors.primaryFixed.withOpacity(0.12),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.7],
@@ -70,7 +71,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        const Color(0xFF39FF14).withOpacity(0.12 * (0.8 + 0.2 * cos(t * pi))),
+                        AppColors.secondary.withOpacity(0.08 * (0.8 + 0.2 * cos(t * pi))),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.7],
@@ -78,7 +79,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                   ),
                 ),
               );
-            }
+            },
           ),
 
           // Abstract organic shapes (amoeba-like blobs)
@@ -88,58 +89,58 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
               final t = _animController.value;
               return Stack(
                 children: [
-                  // Blob 1
+                  // Blob 1 — primary fixed lime
                   Positioned(
                     top: MediaQuery.of(context).size.height * 0.2 + 50 * sin(t * pi),
                     left: 50 * cos(t * pi),
                     child: _BlurredBlob(
                       width: 250,
                       height: 350,
-                      color: const Color(0xFF00FF87).withOpacity(0.20),
+                      color: AppColors.primaryFixed.withOpacity(0.16),
                       sigma: 70,
                     ),
                   ),
-                  // Blob 2
+                  // Blob 2 — secondary cyan
                   Positioned(
                     bottom: MediaQuery.of(context).size.height * 0.15 + 60 * cos(t * pi * 1.5),
                     right: 40 * sin(t * pi * 1.2),
                     child: _BlurredBlob(
                       width: 300,
                       height: 250,
-                      color: const Color(0xFF39FF14).withOpacity(0.15),
+                      color: AppColors.secondary.withOpacity(0.10),
                       sigma: 80,
                     ),
                   ),
-                  // Blob 3
+                  // Blob 3 — tertiary gold
                   Positioned(
                     top: MediaQuery.of(context).size.height * 0.4 + 40 * cos(t * pi * 0.8),
                     left: MediaQuery.of(context).size.width * 0.4 + 30 * sin(t * pi * 1.1),
                     child: _BlurredBlob(
                       width: 200,
                       height: 250,
-                      color: const Color(0xFF00FF87).withOpacity(0.10),
+                      color: AppColors.tertiary.withOpacity(0.08),
                       sigma: 60,
                     ),
                   ),
                 ],
               );
-            }
+            },
           ),
 
           // Layered Frosted Glass Panels underneath content
           Positioned.fill(
             child: ClipRect(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40), // Backdrop filter blur
+                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08), // 8-12% opacity
+                    color: AppColors.glass2,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.15), // 1px borders at 15% white opacity
+                      color: AppColors.glassBorder,
                       width: 1,
                     ),
                   ),
-                  child: widget.child, // The foreground UI (Login form, etc.)
+                  child: widget.child,
                 ),
               ),
             ),

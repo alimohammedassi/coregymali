@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
-import 'package:coregym2/supabase/supabase_exports.dart';
+import 'supabase/supabase_exports.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';

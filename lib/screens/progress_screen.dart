@@ -331,7 +331,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         content: TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: AppText.bodyLg.copyWith(color: Colors.white),
+          style: AppText.bodyLg.copyWith(color: AppColors.textPrimary),
           decoration: InputDecoration(
             labelText: 'Weight (kg)',
             labelStyle: AppText.labelSm.copyWith(color: AppColors.onSurfaceVariant),
@@ -873,7 +873,7 @@ class _UpdateMeasurementsSheetState extends State<_UpdateMeasurementsSheet> {
       child: TextField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: AppText.bodyLg.copyWith(color: Colors.white),
+        style: AppText.bodyLg.copyWith(color: AppColors.textPrimary),
         decoration: InputDecoration(
           labelText: label,
           labelStyle: AppText.labelSm.copyWith(color: AppColors.onSurfaceVariant),

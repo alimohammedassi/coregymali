@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:coregym2/l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'workout_tabs/my_program_tab.dart';

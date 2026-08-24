@@ -128,6 +128,24 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get navProfile;
 
+  /// No description provided for @navMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'Messages'**
+  String get navMessages;
+
+  /// No description provided for @navCoaches.
+  ///
+  /// In en, this message translates to:
+  /// **'Coaches'**
+  String get navCoaches;
+
+  /// No description provided for @navDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get navDashboard;
+
   /// No description provided for @goodMorning.
   ///
   /// In en, this message translates to:
@@ -145,6 +163,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Good evening'**
   String get goodEvening;
+
+  /// No description provided for @readyConquer.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to conquer your fitness goals today?'**
+  String get readyConquer;
+
+  /// No description provided for @calorieGoalReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Calorie goal reached! Peak performance! 🔥'**
+  String get calorieGoalReached;
+
+  /// No description provided for @calorieProgressMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed {pct}% of daily energy target'**
+  String calorieProgressMsg(int pct);
+
+  /// No description provided for @daysStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} DAYS'**
+  String daysStreak(int count);
+
+  /// No description provided for @dailyMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'DAILY METRIC MATRIX'**
+  String get dailyMetrics;
+
+  /// No description provided for @details.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get details;
 
   /// No description provided for @todayCalories.
   ///
@@ -164,11 +218,35 @@ abstract class AppLocalizations {
   /// **'over'**
   String get caloriesOver;
 
+  /// No description provided for @kcalLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'KCAL LEFT'**
+  String get kcalLeft;
+
+  /// No description provided for @kcalOver.
+  ///
+  /// In en, this message translates to:
+  /// **'KCAL OVER'**
+  String get kcalOver;
+
   /// No description provided for @kcal.
   ///
   /// In en, this message translates to:
   /// **'kcal'**
   String get kcal;
+
+  /// No description provided for @eaten.
+  ///
+  /// In en, this message translates to:
+  /// **'Eaten'**
+  String get eaten;
+
+  /// No description provided for @burned.
+  ///
+  /// In en, this message translates to:
+  /// **'Burned'**
+  String get burned;
 
   /// No description provided for @protein.
   ///
@@ -188,11 +266,203 @@ abstract class AppLocalizations {
   /// **'Fat'**
   String get fat;
 
+  /// No description provided for @quickAddWater.
+  ///
+  /// In en, this message translates to:
+  /// **'+250ml'**
+  String get quickAddWater;
+
+  /// No description provided for @quickWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout'**
+  String get quickWorkout;
+
+  /// No description provided for @setGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Personalize Your Target Goals'**
+  String get setGoalsTitle;
+
+  /// No description provided for @setGoalsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set calories, macros & water for tailored tracking'**
+  String get setGoalsSubtitle;
+
+  /// No description provided for @moodSectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Your Mood'**
+  String get moodSectionTitle;
+
+  /// No description provided for @moodTired.
+  ///
+  /// In en, this message translates to:
+  /// **'Tired'**
+  String get moodTired;
+
+  /// No description provided for @moodLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get moodLight;
+
+  /// No description provided for @moodMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get moodMedium;
+
+  /// No description provided for @moodActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get moodActive;
+
+  /// No description provided for @moodFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Power'**
+  String get moodFull;
+
+  /// No description provided for @muscleGroupsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Muscle Groups'**
+  String get muscleGroupsTitle;
+
+  /// No description provided for @muscleChest.
+  ///
+  /// In en, this message translates to:
+  /// **'Chest'**
+  String get muscleChest;
+
+  /// No description provided for @muscleArms.
+  ///
+  /// In en, this message translates to:
+  /// **'Arms'**
+  String get muscleArms;
+
+  /// No description provided for @muscleLegs.
+  ///
+  /// In en, this message translates to:
+  /// **'Legs'**
+  String get muscleLegs;
+
+  /// No description provided for @muscleCore.
+  ///
+  /// In en, this message translates to:
+  /// **'Core'**
+  String get muscleCore;
+
+  /// No description provided for @aiWorkoutCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate Your AI Workout'**
+  String get aiWorkoutCta;
+
+  /// No description provided for @aiWorkoutSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart Trainer — 45 min'**
+  String get aiWorkoutSub;
+
+  /// No description provided for @caloriesOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of {goal}'**
+  String caloriesOf(int goal);
+
+  /// No description provided for @caloriesRemainingMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'{remaining} kcal remaining'**
+  String caloriesRemainingMsg(int remaining);
+
+  /// No description provided for @caloriesOverMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'{over} kcal over goal'**
+  String caloriesOverMsg(int over);
+
+  /// No description provided for @addMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add Meal'**
+  String get addMeal;
+
+  /// No description provided for @scanAi.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Scan'**
+  String get scanAi;
+
+  /// No description provided for @voiceLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice'**
+  String get voiceLog;
+
+  /// No description provided for @barcodeScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Barcode'**
+  String get barcodeScan;
+
+  /// No description provided for @quickText.
+  ///
+  /// In en, this message translates to:
+  /// **'Text'**
+  String get quickText;
+
+  /// No description provided for @dailyQuests.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Quests'**
+  String get dailyQuests;
+
+  /// No description provided for @hydrationHero.
+  ///
+  /// In en, this message translates to:
+  /// **'Hydration Hero'**
+  String get hydrationHero;
+
+  /// No description provided for @proteinChampion.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein Champion'**
+  String get proteinChampion;
+
+  /// No description provided for @streakMaster.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak Master'**
+  String get streakMaster;
+
+  /// No description provided for @xpEarned.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} XP'**
+  String xpEarned(int count);
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'LVL {lvl}'**
+  String levelLabel(int lvl);
+
   /// No description provided for @todayMeals.
   ///
   /// In en, this message translates to:
   /// **'Today\'s Meals'**
   String get todayMeals;
+
+  /// No description provided for @todaysFueling.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Fueling'**
+  String get todaysFueling;
 
   /// No description provided for @addFood.
   ///
@@ -215,7 +485,7 @@ abstract class AppLocalizations {
   /// No description provided for @logMeal.
   ///
   /// In en, this message translates to:
-  /// **'+ Log Meal'**
+  /// **'Log Meal'**
   String get logMeal;
 
   /// No description provided for @breakfast.
@@ -266,6 +536,12 @@ abstract class AppLocalizations {
   /// **'ACTIVE PROGRAM'**
   String get activeProgram;
 
+  /// No description provided for @activeTrainingProgram.
+  ///
+  /// In en, this message translates to:
+  /// **'ACTIVE TRAINING PROGRAM'**
+  String get activeTrainingProgram;
+
   /// No description provided for @noActiveProgram.
   ///
   /// In en, this message translates to:
@@ -296,6 +572,18 @@ abstract class AppLocalizations {
   /// **'of'**
   String get ofWord;
 
+  /// No description provided for @weekOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {current} of {total}'**
+  String weekOfTotal(int current, int total);
+
+  /// No description provided for @percentComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% complete'**
+  String percentComplete(int pct);
+
   /// No description provided for @beginner.
   ///
   /// In en, this message translates to:
@@ -319,6 +607,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last Workout'**
   String get lastWorkout;
+
+  /// No description provided for @lastWorkoutUpper.
+  ///
+  /// In en, this message translates to:
+  /// **'LAST WORKOUT'**
+  String get lastWorkoutUpper;
 
   /// No description provided for @noWorkoutsYet.
   ///
@@ -356,11 +650,23 @@ abstract class AppLocalizations {
   /// **'Water'**
   String get water;
 
+  /// No description provided for @glasses.
+  ///
+  /// In en, this message translates to:
+  /// **'glasses'**
+  String get glasses;
+
   /// No description provided for @ofGlasses.
   ///
   /// In en, this message translates to:
   /// **'of 8 glasses'**
   String get ofGlasses;
+
+  /// No description provided for @ofGlassesGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'of 8 goal'**
+  String get ofGlassesGoal;
 
   /// No description provided for @steps.
   ///
@@ -374,11 +680,23 @@ abstract class AppLocalizations {
   /// **'of 10,000 steps'**
   String get ofSteps;
 
+  /// No description provided for @ofStepsGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% of 10k'**
+  String ofStepsGoal(int pct);
+
   /// No description provided for @kcalBurned.
   ///
   /// In en, this message translates to:
   /// **'kcal burned'**
   String get kcalBurned;
+
+  /// No description provided for @burnedToday.
+  ///
+  /// In en, this message translates to:
+  /// **'burned today'**
+  String get burnedToday;
 
   /// No description provided for @updateSteps.
   ///
@@ -397,6 +715,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @coachBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Level up with a Pro Coach'**
+  String get coachBannerTitle;
+
+  /// No description provided for @coachBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Certified coaches available · Personalized plans'**
+  String get coachBannerSubtitle;
 
   /// No description provided for @completeProfile.
   ///
@@ -1208,12 +1538,6 @@ abstract class AppLocalizations {
   /// **'Extra Active'**
   String get extraActive;
 
-  /// No description provided for @navMessages.
-  ///
-  /// In en, this message translates to:
-  /// **'Messages'**
-  String get navMessages;
-
   /// No description provided for @chatTitle.
   ///
   /// In en, this message translates to:
@@ -1261,6 +1585,246 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Client'**
   String get client;
+
+  /// No description provided for @scanTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Food Scan'**
+  String get scanTitle;
+
+  /// No description provided for @scanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap your food, we\'ll do the rest'**
+  String get scanSubtitle;
+
+  /// No description provided for @scanSaveToMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Log this meal to'**
+  String get scanSaveToMeal;
+
+  /// No description provided for @scanIdleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'One photo is all it takes — we\'ll detect each item, its weight and calories automatically.'**
+  String get scanIdleHint;
+
+  /// No description provided for @scanCameraCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan your food'**
+  String get scanCameraCta;
+
+  /// No description provided for @scanGalleryCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from gallery'**
+  String get scanGalleryCta;
+
+  /// No description provided for @scanAnalyzingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing your photo…'**
+  String get scanAnalyzingTitle;
+
+  /// No description provided for @scanAnalyzingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Detecting items, weight & macros'**
+  String get scanAnalyzingSubtitle;
+
+  /// No description provided for @scanItemsHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected items'**
+  String get scanItemsHeader;
+
+  /// No description provided for @scanConfidenceHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High accuracy'**
+  String get scanConfidenceHigh;
+
+  /// No description provided for @scanConfidenceMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium accuracy'**
+  String get scanConfidenceMedium;
+
+  /// No description provided for @scanConfidenceLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low accuracy'**
+  String get scanConfidenceLow;
+
+  /// No description provided for @scanLogToMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Log to {meal}'**
+  String scanLogToMeal(String meal);
+
+  /// No description provided for @scanErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Oops!'**
+  String get scanErrorTitle;
+
+  /// No description provided for @scanRetrySamePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry same photo'**
+  String get scanRetrySamePhoto;
+
+  /// No description provided for @scanNewPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'New photo'**
+  String get scanNewPhoto;
+
+  /// No description provided for @scanErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get scanErrorNetwork;
+
+  /// No description provided for @scanErrorUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in first to use the scanner.'**
+  String get scanErrorUnauthorized;
+
+  /// No description provided for @scanErrorNotFood.
+  ///
+  /// In en, this message translates to:
+  /// **'No clear food in the photo. Try another angle.'**
+  String get scanErrorNotFood;
+
+  /// No description provided for @scanErrorAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t analyze the photo. Please try again.'**
+  String get scanErrorAnalysis;
+
+  /// No description provided for @scanErrorPersist.
+  ///
+  /// In en, this message translates to:
+  /// **'The photo was analyzed but saving failed. Please try again.'**
+  String get scanErrorPersist;
+
+  /// No description provided for @scanErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected went wrong. Please try again.'**
+  String get scanErrorUnknown;
+
+  /// No description provided for @voiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Food Log'**
+  String get voiceTitle;
+
+  /// No description provided for @voiceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Just say what you ate'**
+  String get voiceSubtitle;
+
+  /// No description provided for @voiceIdleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe your meal in one sentence — we\'ll transcribe it and estimate the calories automatically.'**
+  String get voiceIdleHint;
+
+  /// No description provided for @voiceRecordCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Start recording'**
+  String get voiceRecordCta;
+
+  /// No description provided for @voiceStopCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop & analyze'**
+  String get voiceStopCta;
+
+  /// No description provided for @voiceRecordingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening… tap stop when you\'re done describing your meal.'**
+  String get voiceRecordingHint;
+
+  /// No description provided for @voiceAnalyzingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing your recording…'**
+  String get voiceAnalyzingTitle;
+
+  /// No description provided for @voiceTranscriptLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You said'**
+  String get voiceTranscriptLabel;
+
+  /// No description provided for @voiceRetrySameAudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry same recording'**
+  String get voiceRetrySameAudio;
+
+  /// No description provided for @voiceNewRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'New recording'**
+  String get voiceNewRecording;
+
+  /// No description provided for @voiceErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get voiceErrorNetwork;
+
+  /// No description provided for @voiceErrorUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in first to use the voice logger.'**
+  String get voiceErrorUnauthorized;
+
+  /// No description provided for @voiceErrorMicrophone.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is needed. Enable it in Settings and try again.'**
+  String get voiceErrorMicrophone;
+
+  /// No description provided for @voiceErrorNotFood.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t hear any food in that recording. Try describing your meal again.'**
+  String get voiceErrorNotFood;
+
+  /// No description provided for @voiceErrorAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t understand that recording. Please try again.'**
+  String get voiceErrorAnalysis;
+
+  /// No description provided for @voiceErrorPersist.
+  ///
+  /// In en, this message translates to:
+  /// **'The recording was analyzed but saving failed. Please try again.'**
+  String get voiceErrorPersist;
+
+  /// No description provided for @voiceErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected went wrong. Please try again.'**
+  String get voiceErrorUnknown;
+
+  /// No description provided for @profileFirstRunNudge.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your first workout to start ranking up!'**
+  String get profileFirstRunNudge;
 }
 
 class _AppLocalizationsDelegate

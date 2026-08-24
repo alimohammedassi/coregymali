@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
 
@@ -16,10 +17,10 @@ class StatsService {
       if (res == null) return _empty();
       return res;
     } on PostgrestException catch (e) {
-      print('Supabase error getting today summary: ${e.message} | code: ${e.code}');
+      debugPrint('Supabase error getting today summary: ${e.message} | code: ${e.code}');
       return _empty();
     } catch (e) {
-      print('Error getting today summary: $e');
+      debugPrint('Error getting today summary: $e');
       return _empty();
     }
   }
@@ -36,9 +37,9 @@ class StatsService {
         'updated_at': DateTime.now().toIso8601String(),
       }, onConflict: 'user_id,summary_date');
     } on PostgrestException catch (e) {
-      print('Supabase error updating today summary: ${e.message} | code: ${e.code}');
+      debugPrint('Supabase error updating today summary: ${e.message} | code: ${e.code}');
     } catch (e) {
-      print('Error updating today summary: $e');
+      debugPrint('Error updating today summary: $e');
     }
   }
 
@@ -54,10 +55,10 @@ class StatsService {
           .gte('summary_date', from.toIso8601String().substring(0, 10))
           .order('summary_date');
     } on PostgrestException catch (e) {
-      print('Supabase error getting weekly progress: ${e.message} | code: ${e.code}');
+      debugPrint('Supabase error getting weekly progress: ${e.message} | code: ${e.code}');
       return [];
     } catch (e) {
-      print('Error getting weekly progress: $e');
+      debugPrint('Error getting weekly progress: $e');
       return [];
     }
   }
@@ -74,12 +75,36 @@ class StatsService {
       if (res == null) return _defaultGoals();
       return res;
     } on PostgrestException catch (e) {
-      print('Supabase error getting goals: ${e.message} | code: ${e.code}');
+      debugPrint('Supabase error getting goals: ${e.message} | code: ${e.code}');
       return _defaultGoals();
     } catch (e) {
-      print('Error getting goals: $e');
+      debugPrint('Error getting goals: $e');
       return _defaultGoals();
     }
+  }
+
+  // Update user goals
+  Future<bool> updateGoals(Map<String, dynamic> goals) async {
+    if (currentUserId == null) return false;
+    try {
+      await supabase.from('user_goals').upsert({
+        'user_id': currentUserId,
+        ...goals,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'user_id');
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint('Supabase error updating goals: ${e.message} | code: ${e.code}');
+      return false;
+    } catch (e) {
+      debugPrint('Error updating goals: $e');
+      return false;
+    }
+  }
+
+  // Update today's water intake
+  Future<void> updateWater(int waterMl) async {
+    await updateTodaySummary({'water_ml': waterMl});
   }
 
   Map<String, dynamic> _empty() => {

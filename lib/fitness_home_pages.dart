@@ -151,6 +151,11 @@ class FitnessHomePage extends StatefulWidget {
   State<FitnessHomePage> createState() => _FitnessHomePageState();
 }
 
+/// Semantic identity of every bottom-navigation destination. Tabs and their
+/// screens are both derived from this single enum, so the visible tab list and
+/// the IndexedStack children can never drift out of sync again.
+enum _TabId { home, nutrition, dashboard, workout, coaches, profile }
+
 class _FitnessHomePageState extends State<FitnessHomePage> {
   int _currentIndex = 0;
 
@@ -161,70 +166,73 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
     _nutritionScreenKey.currentState?.refreshAfterExternalSave();
   }
 
-  List<TabInfo> _getClientTabs(AppLocalizations l10n) => [
-    TabInfo(
+  /// Single source of truth for the bottom bar. Both roles share Home /
+  /// Nutrition / Workout / Coaches / Profile; coaches additionally get the
+  /// gold Dashboard tab. A coach is also a CoreGym user who tracks their own
+  /// food, so Nutrition stays a first-class tab for them too.
+  List<_TabInfo> _tabsFor(bool isCoach, AppLocalizations l10n) => [
+    _TabInfo(
+      id: _TabId.home,
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
       label: l10n.navHome,
     ),
-    TabInfo(
+    _TabInfo(
+      id: _TabId.nutrition,
       icon: Icons.restaurant_outlined,
       activeIcon: Icons.restaurant_rounded,
       label: l10n.navNutrition,
     ),
-    TabInfo(
+    if (isCoach)
+      _TabInfo(
+        id: _TabId.dashboard,
+        icon: Icons.dashboard_outlined,
+        activeIcon: Icons.dashboard_rounded,
+        label: l10n.navDashboard,
+        isGold: true,
+      ),
+    _TabInfo(
+      id: _TabId.workout,
       icon: Icons.fitness_center_outlined,
       activeIcon: Icons.fitness_center,
       label: l10n.navWorkout,
     ),
-    TabInfo(
+    _TabInfo(
+      id: _TabId.coaches,
       icon: Icons.people_outline_rounded,
       activeIcon: Icons.people_rounded,
       label: l10n.navCoaches,
     ),
-    TabInfo(
+    _TabInfo(
+      id: _TabId.profile,
       icon: Icons.person_outline_rounded,
       activeIcon: Icons.person_rounded,
       label: l10n.navProfile,
     ),
   ];
 
-  List<TabInfo> _getCoachTabs(AppLocalizations l10n) => [
-    TabInfo(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
-      label: l10n.navHome,
-    ),
-    TabInfo(
-      icon: Icons.dashboard_outlined,
-      activeIcon: Icons.dashboard_rounded,
-      label: l10n.navDashboard,
-      isGold: true,
-    ),
-    TabInfo(
-      icon: Icons.fitness_center_outlined,
-      activeIcon: Icons.fitness_center,
-      label: l10n.navWorkout,
-    ),
-    TabInfo(
-      icon: Icons.people_outline_rounded,
-      activeIcon: Icons.people_rounded,
-      label: l10n.navCoaches,
-    ),
-    TabInfo(
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: l10n.navProfile,
-    ),
-  ];
+  int _indexOf(List<_TabInfo> tabs, _TabId id) =>
+      tabs.indexWhere((t) => t.id == id);
 
-  void _onNavigate(int index) {
-    if (_currentIndex == index) return;
-    HapticFeedback.selectionClick();
-    setState(() => _currentIndex = index);
+  Widget _screenFor(_TabInfo tab, List<_TabInfo> tabs) {
+    return switch (tab.id) {
+      _TabId.home => _HomeScreenCore(
+        onNavigate: _onNavigate,
+        onNutritionChanged: _onNutritionChanged,
+        workoutTabIndex: _indexOf(tabs, _TabId.workout),
+        profileTabIndex: _indexOf(tabs, _TabId.profile),
+      ),
+      _TabId.nutrition => NutritionScreen(key: _nutritionScreenKey),
+      _TabId.dashboard => CoachDashboardProviders.provideAll(
+        child: const CoachDashboardScreen(),
+      ),
+      _TabId.workout => const WorkoutScreen(),
+      _TabId.coaches => _buildCoachesScreen(),
+      _TabId.profile => const ProfilePage(),
+    };
   }
 
-  List<Widget> _buildChildren(bool isCoach) {
+  Widget _buildCoachesScreen() {
     final subRepo = SubscriptionRepositoryImpl();
     final activeSubNotifier = ActiveSubscriptionNotifier(subRepo);
     final subNotifier = SubscriptionNotifier(subRepo);
@@ -236,34 +244,28 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       activeSubNotifier.fetchActiveSubscription();
     });
 
-    return [
-      _HomeScreenCore(
-        onNavigate: _onNavigate,
-        onNutritionChanged: _onNutritionChanged,
-      ),
-      if (isCoach)
-        CoachDashboardProviders.provideAll(child: const CoachDashboardScreen())
-      else
-        NutritionScreen(key: _nutritionScreenKey),
-      const WorkoutScreen(),
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider(
-            create: (_) {
-              final n = CoachListNotifier(CoachRepositoryImpl());
-              WidgetsBinding.instance.addPostFrameCallback(
-                (_) => n.fetchCoaches(),
-              );
-              return n;
-            },
-          ),
-          ChangeNotifierProvider.value(value: activeSubNotifier),
-          ChangeNotifierProvider.value(value: subNotifier),
-        ],
-        child: const CoachMarketplaceScreen(),
-      ),
-      const ProfilePage(),
-    ];
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) {
+            final n = CoachListNotifier(CoachRepositoryImpl());
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => n.fetchCoaches(),
+            );
+            return n;
+          },
+        ),
+        ChangeNotifierProvider.value(value: activeSubNotifier),
+        ChangeNotifierProvider.value(value: subNotifier),
+      ],
+      child: const CoachMarketplaceScreen(),
+    );
+  }
+
+  void _onNavigate(int index) {
+    if (_currentIndex == index) return;
+    HapticFeedback.selectionClick();
+    setState(() => _currentIndex = index);
   }
 
   @override
@@ -271,17 +273,15 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
     final l10n = AppLocalizations.of(context)!;
     final profileProvider = context.watch<ProfileProvider>();
     final isCoach = profileProvider.isCoach;
-    final tabs = isCoach ? _getCoachTabs(l10n) : _getClientTabs(l10n);
+    final tabs = _tabsFor(isCoach, l10n);
+    final children = tabs.map((t) => _screenFor(t, tabs)).toList();
 
     return Scaffold(
       extendBody: true,
       resizeToAvoidBottomInset: false,
       backgroundColor: AppColors.background,
       body: AppBackground(
-        child: IndexedStack(
-          index: _currentIndex,
-          children: _buildChildren(isCoach),
-        ),
+        child: IndexedStack(index: _currentIndex, children: children),
       ),
       bottomNavigationBar: _PlayfulNavBar(
         currentIndex: _currentIndex,
@@ -292,12 +292,14 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   }
 }
 
-class TabInfo {
+class _TabInfo {
+  final _TabId id;
   final IconData icon;
   final IconData activeIcon;
   final String label;
   final bool isGold;
-  const TabInfo({
+  const _TabInfo({
+    required this.id,
     required this.icon,
     required this.activeIcon,
     required this.label,
@@ -312,7 +314,7 @@ class TabInfo {
 class _PlayfulNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
-  final List<TabInfo> tabs;
+  final List<_TabInfo> tabs;
 
   const _PlayfulNavBar({
     required this.currentIndex,
@@ -417,7 +419,16 @@ class _PlayfulNavBar extends StatelessWidget {
 class _HomeScreenCore extends StatefulWidget {
   final Function(int) onNavigate;
   final VoidCallback? onNutritionChanged;
-  const _HomeScreenCore({required this.onNavigate, this.onNutritionChanged});
+  /// Resolved by the parent from the active tab list so home-screen shortcuts
+  /// land on the right destination for both client and coach layouts.
+  final int workoutTabIndex;
+  final int profileTabIndex;
+  const _HomeScreenCore({
+    required this.onNavigate,
+    this.onNutritionChanged,
+    required this.workoutTabIndex,
+    required this.profileTabIndex,
+  });
 
   @override
   State<_HomeScreenCore> createState() => _HomeScreenCoreState();
@@ -915,7 +926,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   isArabic: isArabic,
                   streakCount: _streakStatus.currentStreak,
                   streakLoggedToday: _streakStatus.loggedToday,
-                  onOpenProfile: () => widget.onNavigate(4),
+                  onOpenProfile: () =>
+                      widget.onNavigate(widget.profileTabIndex),
                   onOpenChat: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -965,7 +977,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   index: 2,
                   child: _GoalsOnboardingBanner(
                     isArabic: isArabic,
-                    onTap: () => widget.onNavigate(4),
+                    onTap: () => widget.onNavigate(widget.profileTabIndex),
                   ),
                 ),
               ),
@@ -1021,7 +1033,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   isArabic: isArabic,
                   onAddWater: _addWater,
                   onStepsTap: _promptUpdateSteps,
-                  onWorkoutTap: () => widget.onNavigate(2),
+                  onWorkoutTap: () =>
+                      widget.onNavigate(widget.workoutTabIndex),
                 ),
               ),
             ),

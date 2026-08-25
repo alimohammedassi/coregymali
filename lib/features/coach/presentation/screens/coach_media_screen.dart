@@ -22,7 +22,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
 
   Future<void> _pickAndUploadImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024);
-    if (picked != null) {
+    if (picked != null && mounted) {
       context.read<CoachMediaNotifier>().addGalleryImage(File(picked.path));
     }
   }
@@ -58,7 +58,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
       allowedExtensions: ['pdf'],
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.files.single.path != null && mounted) {
       final file = File(result.files.single.path!);
       
       final titleCtrl = TextEditingController();
@@ -92,7 +92,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
         ),
       );
 
-      if (confirm == true && titleCtrl.text.trim().isNotEmpty) {
+      if (confirm == true && mounted && titleCtrl.text.trim().isNotEmpty) {
         context.read<CoachMediaNotifier>().addPdf(file, titleCtrl.text.trim());
       }
     }
@@ -147,7 +147,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
                     SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(16),
-                        color: AppColors.error.withOpacity(0.1),
+                        color: AppColors.error.withValues(alpha: 0.1),
                         child: Text(state.error!, style: AppText.bodySm.copyWith(color: AppColors.error)),
                       ),
                     ),
@@ -225,7 +225,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.tertiary.withOpacity(0.4), width: 1),
+          border: Border.all(color: AppColors.tertiary.withValues(alpha: 0.4), width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -297,13 +297,13 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.outline.withOpacity(0.1)),
+        border: Border.all(color: AppColors.outline.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
             child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 24),
           ),
           const SizedBox(width: 12),

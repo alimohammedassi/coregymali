@@ -1825,6 +1825,34 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log your first workout to start ranking up!'**
   String get profileFirstRunNudge;
+
+  // ── Coach dashboard ──
+  String get dashboardEyebrow;
+  String get dashboardOverview;
+  String get dashboardSubscribers;
+  String subscriberCount(int count);
+  String get statActiveSubscribers;
+  String get statAvgRating;
+  String get statMonthlyRevenue;
+  String get statOpenSlots;
+  String get filterAll;
+  String get filterActive;
+  String get filterPending;
+  String get filterExpired;
+  String get noSubscribersYet;
+  String get completeProfileHint;
+  String get completeProfileCta;
+  String failedToLoadStats(Object error);
+  String daysLeft(int n);
+  String daysRemaining(int n);
+  String get statusExpired;
+  String get planPhases;
+  String get paymentPaid;
+  String get paymentUnpaid;
+  String get paymentRefunded;
+  String get statusPaused;
+  String get statusCancelled;
+  String phaseWeek(int w);
 }
 
 class _AppLocalizationsDelegate
@@ -1860,3 +1888,4 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     'that was used.',
   );
 }
+

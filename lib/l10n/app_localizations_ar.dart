@@ -908,4 +908,94 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileFirstRunNudge => 'سجّل أول تمرين لتبدأ في جمع الرانك!';
+
+  // ── لوحة تحكم المدرب ──
+  @override
+  String get dashboardEyebrow => 'لوحتي';
+
+  @override
+  String get dashboardOverview => 'نظرة عامة';
+
+  @override
+  String get dashboardSubscribers => 'المشتركون';
+
+  @override
+  String subscriberCount(int count) {
+    return 'الإجمالي $count';
+  }
+
+  @override
+  String get statActiveSubscribers => 'المشتركون\nالنشطون';
+
+  @override
+  String get statAvgRating => 'متوسط\nالتقييم';
+
+  @override
+  String get statMonthlyRevenue => 'الإيراد\nالشهري';
+
+  @override
+  String get statOpenSlots => 'الأماكن\nالمتاحة';
+
+  @override
+  String get filterAll => 'الكل';
+
+  @override
+  String get filterActive => 'نشط';
+
+  @override
+  String get filterPending => 'معلق';
+
+  @override
+  String get filterExpired => 'منتهي';
+
+  @override
+  String get noSubscribersYet => 'لا يوجد مشتركون بعد';
+
+  @override
+  String get completeProfileHint =>
+      'أكمل ملفك كمدرب ليجدك العملاء ويشتركوا معك.';
+
+  @override
+  String get completeProfileCta => 'أكمل ملفك الشخصي';
+
+  @override
+  String failedToLoadStats(Object error) {
+    return 'فشل تحميل الإحصائيات: $error';
+  }
+
+  @override
+  String daysLeft(int n) {
+    return 'باقي $n أيام';
+  }
+
+  @override
+  String daysRemaining(int n) {
+    return 'متبقي $n يوم';
+  }
+
+  @override
+  String get statusExpired => 'منتهي';
+
+  @override
+  String get planPhases => 'مراحل الخطة';
+
+  @override
+  String get paymentPaid => 'مدفوع';
+
+  @override
+  String get paymentUnpaid => 'غير مدفوع';
+
+  @override
+  String get paymentRefunded => 'مسترجع';
+
+  @override
+  String get statusPaused => 'متوقف مؤقتاً';
+
+  @override
+  String get statusCancelled => 'ملغي';
+
+  @override
+  String phaseWeek(int w) {
+    return 'الأسبوع $w';
+  }
 }

@@ -917,4 +917,94 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get profileFirstRunNudge =>
       'Log your first workout to start ranking up!';
+
+  // ── Coach dashboard ──
+  @override
+  String get dashboardEyebrow => 'MY DASHBOARD';
+
+  @override
+  String get dashboardOverview => 'Overview';
+
+  @override
+  String get dashboardSubscribers => 'Subscribers';
+
+  @override
+  String subscriberCount(int count) {
+    return '$count total';
+  }
+
+  @override
+  String get statActiveSubscribers => 'Active\nSubscribers';
+
+  @override
+  String get statAvgRating => 'Avg\nRating';
+
+  @override
+  String get statMonthlyRevenue => 'Monthly\nRevenue';
+
+  @override
+  String get statOpenSlots => 'Open\nSlots';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get filterActive => 'Active';
+
+  @override
+  String get filterPending => 'Pending';
+
+  @override
+  String get filterExpired => 'Expired';
+
+  @override
+  String get noSubscribersYet => 'No subscribers yet';
+
+  @override
+  String get completeProfileHint =>
+      'Complete your coach profile so clients can find and subscribe to you.';
+
+  @override
+  String get completeProfileCta => 'Complete Your Profile';
+
+  @override
+  String failedToLoadStats(Object error) {
+    return 'Failed to load stats: $error';
+  }
+
+  @override
+  String daysLeft(int n) {
+    return '$n days left';
+  }
+
+  @override
+  String daysRemaining(int n) {
+    return '$n days remaining';
+  }
+
+  @override
+  String get statusExpired => 'Expired';
+
+  @override
+  String get planPhases => 'PLAN PHASES';
+
+  @override
+  String get paymentPaid => 'Paid';
+
+  @override
+  String get paymentUnpaid => 'Unpaid';
+
+  @override
+  String get paymentRefunded => 'Refunded';
+
+  @override
+  String get statusPaused => 'Paused';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String phaseWeek(int w) {
+    return 'Week $w';
+  }
 }

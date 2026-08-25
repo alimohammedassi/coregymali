@@ -273,7 +273,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: Colors.redAccent.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: Colors.redAccent.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
                       child: const Icon(Icons.picture_as_pdf_rounded, color: Colors.redAccent, size: 24),
                     ),
                     const SizedBox(width: 16),
@@ -295,7 +295,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                     const SizedBox(width: 12),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: kCoachGold.withOpacity(0.15),
+                        backgroundColor: kCoachGold.withValues(alpha: 0.15),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -348,7 +348,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [kCoachGold.withOpacity(0.15), kCoachBg],
+                  colors: [kCoachGold.withValues(alpha: 0.15), kCoachBg],
                 ),
               ),
             ),
@@ -376,10 +376,10 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 5),
                       decoration: BoxDecoration(
-                        color: kCoachGold.withOpacity(0.15),
+                        color: kCoachGold.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                            color: kCoachGold.withOpacity(0.5)),
+                            color: kCoachGold.withValues(alpha: 0.5)),
                       ),
                       child: Text('✓ ACTIVE SUBSCRIPTION',
                           style: AppText.labelMd

@@ -55,9 +55,10 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: _buildAppBar(),
+      appBar: _buildAppBar(l10n),
       body: RefreshIndicator(
         color: _kGold,
         backgroundColor: AppColors.surfaceContainerLow,
@@ -78,7 +79,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
               const _StatsRow(),
               const SizedBox(height: 32),
               _SectionHeader(
-                title: 'Subscribers', // TODO: l10n
+                title: l10n.dashboardSubscribers,
                 trailing: _SubscriberCountBadge(),
               ),
               const SizedBox(height: 16),
@@ -90,7 +91,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
+  PreferredSizeWidget _buildAppBar(AppLocalizations l10n) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -99,7 +100,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'MY DASHBOARD', // TODO: l10n
+            l10n.dashboardEyebrow,
             style: AppText.labelSm.copyWith(
               color: _kGold,
               fontSize: 10,
@@ -108,7 +109,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
             ),
           ),
           const SizedBox(height: 2),
-          Text('Overview', style: AppText.headlineMd), // TODO: l10n
+          Text(l10n.dashboardOverview, style: AppText.headlineMd),
         ],
       ),
       actions: [
@@ -156,7 +157,7 @@ class _SignOutBtn extends StatelessWidget {
       button: true,
       label: AppLocalizations.of(context)?.signOut ?? 'Sign out',
       child: Material(
-        color: AppColors.surfaceContainerLow.withOpacity(0.6),
+        color: AppColors.surfaceContainerLow.withValues(alpha: 0.6),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(12)),
@@ -266,7 +267,7 @@ class _AppBarBtn extends StatelessWidget {
       button: true,
       label: semanticLabel,
       child: Material(
-        color: AppColors.surfaceContainerLow.withOpacity(0.6),
+        color: AppColors.surfaceContainerLow.withValues(alpha: 0.6),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(12)),
@@ -315,6 +316,7 @@ class _SectionHeader extends StatelessWidget {
 class _SubscriberCountBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Consumer<CoachSubscriptionsNotifier>(
       builder: (_, n, __) {
         final count = n.subscriptions?.length ?? 0;
@@ -323,10 +325,10 @@ class _SubscriberCountBadge extends StatelessWidget {
           decoration: BoxDecoration(
             color: _kGoldSubtle,
             borderRadius: _kBadgeR,
-            border: Border.all(color: _kGold.withOpacity(0.3)),
+            border: Border.all(color: _kGold.withValues(alpha: 0.3)),
           ),
           child: Text(
-            '$count total', // TODO: l10n
+            l10n.subscriberCount(count),
             style: AppText.labelSm.copyWith(color: _kGold, fontSize: 11),
           ),
         );
@@ -342,6 +344,7 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final statsNotifier = context.watch<CoachDashboardStatNotifier>();
     final stats = statsNotifier.stats;
 
@@ -351,7 +354,7 @@ class _StatsRow extends StatelessWidget {
 
     if (statsNotifier.error != null && stats == null) {
       return _ErrorCard(
-        message: 'Failed to load stats: ${statsNotifier.error}',
+        message: l10n.failedToLoadStats(statsNotifier.error!),
         onRetry: () => context.read<CoachDashboardStatNotifier>().fetch(),
       );
     }
@@ -365,28 +368,28 @@ class _StatsRow extends StatelessWidget {
           children: [
             _StatCard(
               width: cardWidth,
-              title: 'Active\nSubscribers', // TODO: l10n
+              title: l10n.statActiveSubscribers,
               value: stats?.activeSubscribers.toString() ?? '0',
               icon: Icons.people_rounded,
               accentColor: _kSuccess,
             ),
             _StatCard(
               width: cardWidth,
-              title: 'Avg\nRating', // TODO: l10n
+              title: l10n.statAvgRating,
               value: stats?.avgRating.toStringAsFixed(1) ?? '0.0',
               icon: Icons.star_rounded,
               accentColor: _kWarning,
             ),
             _StatCard(
               width: cardWidth,
-              title: 'Monthly\nRevenue', // TODO: l10n
+              title: l10n.statMonthlyRevenue,
               value: '\$${stats?.monthlyRevenue.toStringAsFixed(0) ?? '0'}',
               icon: Icons.attach_money_rounded,
               accentColor: _kGold,
             ),
             _StatCard(
               width: cardWidth,
-              title: 'Open\nSlots', // TODO: l10n
+              title: l10n.statOpenSlots,
               value: stats?.openSlots.toString() ?? '0',
               icon: Icons.event_seat_rounded,
               accentColor: _kBlue,
@@ -447,10 +450,10 @@ class _ShimmerStatsRowState extends State<_ShimmerStatsRow>
                 width: w,
                 height: 100,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerLow.withOpacity(_anim.value),
+                  color: AppColors.surfaceContainerLow.withValues(alpha: _anim.value),
                   borderRadius: _kCardR,
                   border: Border.all(
-                    color: _kGold.withOpacity(_anim.value * 0.3),
+                    color: _kGold.withValues(alpha: _anim.value * 0.3),
                   ),
                 ),
               ),
@@ -507,10 +510,10 @@ class _ShimmerListState extends State<_ShimmerList>
             height: 132,
             decoration: BoxDecoration(
               color:
-                  AppColors.surfaceContainerLow.withOpacity(_anim.value),
+                  AppColors.surfaceContainerLow.withValues(alpha: _anim.value),
               borderRadius: _kCardR,
               border: Border.all(
-                color: AppColors.glassBorder,
+                color: AppColors.borderSubtle,
               ),
             ),
           ),
@@ -542,9 +545,9 @@ class _StatCard extends StatelessWidget {
       width: width,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow.withOpacity(0.7),
+        color: AppColors.surfaceContainerLow.withValues(alpha: 0.7),
         borderRadius: _kCardR,
-        border: Border.all(color: accentColor.withOpacity(0.25)),
+        border: Border.all(color: accentColor.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -554,7 +557,7 @@ class _StatCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.12),
+              color: accentColor.withValues(alpha: 0.12),
               borderRadius: const BorderRadius.all(Radius.circular(12)),
             ),
             child: Icon(icon, color: accentColor, size: 22),
@@ -593,12 +596,12 @@ class _SubscriptionsList extends StatefulWidget {
 class _SubscriptionsListState extends State<_SubscriptionsList> {
   int _selectedTab = 0;
 
-  static const _tabs = [
-    (label: 'All', icon: Icons.grid_view_rounded), // TODO: l10n
-    (label: 'Active', icon: Icons.check_circle_outline), // TODO: l10n
-    (label: 'Pending', icon: Icons.schedule_rounded), // TODO: l10n
-    (label: 'Expired', icon: Icons.cancel_outlined), // TODO: l10n
-  ];
+  List<(String, IconData)> _tabs(AppLocalizations l10n) => [
+        (l10n.filterAll, Icons.grid_view_rounded),
+        (l10n.filterActive, Icons.check_circle_outline),
+        (l10n.filterPending, Icons.schedule_rounded),
+        (l10n.filterExpired, Icons.cancel_outlined),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -637,6 +640,8 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
   }
 
   Widget _buildFilterBar(CoachSubscriptionsNotifier notifier) {
+    final l10n = AppLocalizations.of(context)!;
+    final tabs = _tabs(l10n);
     final all = notifier.subscriptions ?? [];
     final counts = [
       all.length,
@@ -648,48 +653,53 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
-        children: List.generate(_tabs.length, (i) {
+        children: List.generate(tabs.length, (i) {
           final selected = _selectedTab == i;
-          final tab = _tabs[i];
+          final (label, icon) = tabs[i];
           return Padding(
-            padding: EdgeInsets.only(right: i < _tabs.length - 1 ? 8 : 0),
-            child: GestureDetector(
-              onTap: () => setState(() => _selectedTab = i),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: selected ? _kGold : Colors.transparent,
-                  borderRadius: const BorderRadius.all(Radius.circular(20)),
-                  border: selected
-                      ? null
-                      : Border.all(color: AppColors.glassBorder),
-                  boxShadow: selected
-                      ? [BoxShadow(color: _kGoldGlow, blurRadius: 10)]
-                      : null,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      tab.icon,
-                      size: 14,
-                      color: selected
-                          ? Colors.black
-                          : AppColors.onSurfaceVariant,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      tab.label,
-                      style: AppText.bodySm.copyWith(
+            padding: EdgeInsets.only(right: i < tabs.length - 1 ? 8 : 0),
+            child: Semantics(
+              button: true,
+              selected: selected,
+              label: label,
+              child: GestureDetector(
+                onTap: () => setState(() => _selectedTab = i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected ? _kGold : Colors.transparent,
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(20)),
+                    border: selected
+                        ? null
+                        : Border.all(color: AppColors.borderSubtle),
+                    boxShadow: selected
+                        ? [BoxShadow(color: _kGoldGlow, blurRadius: 10)]
+                        : null,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        icon,
+                        size: 14,
                         color: selected
                             ? Colors.black
                             : AppColors.onSurfaceVariant,
-                        fontWeight: selected
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        label,
+                        style: AppText.bodySm.copyWith(
+                          color: selected
+                              ? Colors.black
+                              : AppColors.onSurfaceVariant,
+                          fontWeight: selected
                             ? FontWeight.w700
                             : FontWeight.normal,
                       ),
@@ -703,7 +713,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
                         ),
                         decoration: BoxDecoration(
                           color: selected
-                              ? Colors.black.withOpacity(0.2)
+                              ? Colors.black.withValues(alpha: 0.2)
                               : AppColors.surfaceContainerHigh,
                           borderRadius: const BorderRadius.all(
                             Radius.circular(6),
@@ -722,6 +732,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
                       ),
                     ],
                   ],
+                  ),
                 ),
               ),
             ),
@@ -733,7 +744,6 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
 }
 
 // ── Empty state ───────────────────────────────────────────────────────────────
-
 class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -741,9 +751,9 @@ class _EmptyState extends StatelessWidget {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow.withOpacity(0.4),
+        color: AppColors.surfaceContainerLow.withValues(alpha: 0.4),
         borderRadius: _kCardR,
-        border: Border.all(color: AppColors.glassBorder),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Column(
         children: [
@@ -753,7 +763,7 @@ class _EmptyState extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.surfaceContainerHigh,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.glassBorder),
+              border: Border.all(color: AppColors.borderSubtle),
             ),
             child: const Icon(
               Icons.group_off_rounded,
@@ -762,10 +772,11 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          Text('No subscribers yet', style: AppText.headlineMd), // TODO: l10n
+          Text(AppLocalizations.of(context)!.noSubscribersYet,
+              style: AppText.headlineMd),
           const SizedBox(height: 8),
           Text(
-            'Complete your coach profile so clients can find and subscribe to you.',
+            AppLocalizations.of(context)!.completeProfileHint,
             style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -788,7 +799,7 @@ class _EmptyState extends StatelessWidget {
               size: 18,
             ),
             label: Text(
-              'Complete Your Profile',
+              AppLocalizations.of(context)!.completeProfileCta,
               style: AppText.labelLg.copyWith(color: Colors.black),
             ),
             style: ElevatedButton.styleFrom(
@@ -818,9 +829,9 @@ class _ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: _kCardR,
-        border: Border.all(color: AppColors.error.withOpacity(0.4)),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
       ),
       child: Column(
         children: [
@@ -872,6 +883,7 @@ class _SubscriptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final totalDays = model.expiresAt
         .difference(model.startedAt)
         .inDays
@@ -881,10 +893,10 @@ class _SubscriptionCard extends StatelessWidget {
     final progressValue = (daysElapsed / totalDays).clamp(0.0, 1.0);
 
     final daysLeftText = daysLeft <= 0
-        ? 'Expired' // TODO: l10n
+        ? l10n.statusExpired
         : daysLeft <= 7
-        ? '$daysLeft days left' // TODO: l10n
-        : '$daysLeft days remaining'; // TODO: l10n
+        ? l10n.daysLeft(daysLeft)
+        : l10n.daysRemaining(daysLeft);
 
     final daysLeftColor = daysLeft <= 0
         ? AppColors.error
@@ -920,9 +932,9 @@ class _SubscriptionCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceContainerLow.withOpacity(0.5),
+            color: AppColors.surfaceContainerLow.withValues(alpha: 0.5),
             borderRadius: _kCardR,
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -933,7 +945,7 @@ class _SubscriptionCard extends StatelessWidget {
               // ② Divider
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 14),
-                child: Divider(color: AppColors.glassBorder, height: 1),
+                child: Divider(color: AppColors.borderSubtle, height: 1),
               ),
 
               // ③ Date + payment
@@ -1004,8 +1016,8 @@ class _CardHeader extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: model.status == 'active'
-                      ? _kGold.withOpacity(0.6)
-                      : AppColors.glassBorder,
+                      ? _kGold.withValues(alpha: 0.6)
+                      : AppColors.borderSubtle,
                   width: 2,
                 ),
               ),
@@ -1178,7 +1190,7 @@ class _PhaseSection extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              'PLAN PHASES', // TODO: l10n
+              AppLocalizations.of(context)!.planPhases,
               style: AppText.labelSm.copyWith(
                 color: AppColors.onSurfaceVariant,
                 fontSize: 9,
@@ -1186,7 +1198,7 @@ class _PhaseSection extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            Expanded(child: Container(height: 1, color: AppColors.glassBorder)),
+            Expanded(child: Container(height: 1, color: AppColors.borderSubtle)),
           ],
         ),
         const SizedBox(height: 12),
@@ -1273,37 +1285,38 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final (bg, fg, label, icon) = switch (status) {
       'active' => (
         _kSuccess.withValues(alpha: 0.12),
         _kSuccess,
-        'Active',
+        l10n.filterActive,
         Icons.check_circle_rounded,
-      ), // TODO: l10n
+      ),
       'pending' => (
         _kWarning.withValues(alpha: 0.12),
         _kWarning,
-        'Pending',
+        l10n.filterPending,
         Icons.schedule_rounded,
-      ), // TODO: l10n
+      ),
       'paused' => (
         _kBlue.withValues(alpha: 0.12),
         _kBlue,
-        'Paused',
+        l10n.statusPaused,
         Icons.pause_circle_rounded,
-      ), // TODO: l10n
+      ),
       'expired' => (
         AppColors.error.withValues(alpha: 0.12),
         AppColors.error,
-        'Expired',
+        l10n.statusExpired,
         Icons.cancel_rounded,
-      ), // TODO: l10n
+      ),
       _ => (
         AppColors.onSurfaceVariant.withValues(alpha: 0.12),
         AppColors.onSurfaceVariant,
-        'Cancelled',
+        l10n.statusCancelled,
         Icons.block_rounded,
-      ), // TODO: l10n
+      ),
     };
 
     return Container(
@@ -1311,7 +1324,7 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: _kBadgeR,
-        border: Border.all(color: fg.withOpacity(0.5)),
+        border: Border.all(color: fg.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1334,26 +1347,34 @@ class _PaymentBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, color, label) = switch (status) {
-      'paid' => (Icons.check_circle_rounded, _kSuccess, 'Paid'), // TODO: l10n
+      'paid' => (
+        Icons.check_circle_rounded,
+        _kSuccess,
+        AppLocalizations.of(context)!.paymentPaid,
+      ),
       'unpaid' => (
         Icons.warning_amber_rounded,
         _kWarning,
-        'Unpaid',
-      ), // TODO: l10n
-      'refunded' => (Icons.replay_rounded, _kBlue, 'Refunded'), // TODO: l10n
+        AppLocalizations.of(context)!.paymentUnpaid,
+      ),
+      'refunded' => (
+        Icons.replay_rounded,
+        _kBlue,
+        AppLocalizations.of(context)!.paymentRefunded,
+      ),
       _ => (
         Icons.help_outline_rounded,
         AppColors.onSurfaceVariant,
-        'Unknown',
-      ), // TODO: l10n
+        '?',
+      ),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: _kBadgeR,
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1391,10 +1412,10 @@ class _PhaseStep extends StatelessWidget {
     _ => Icons.circle_outlined,
   };
 
-  String _weekLabel() {
+  String _weekLabel(BuildContext context) {
     if (phase.startedAt == null) return '';
     final w = DateTime.now().difference(phase.startedAt!).inDays ~/ 7 + 1;
-    return 'Week $w'; // TODO: l10n
+    return AppLocalizations.of(context)!.phaseWeek(w);
   }
 
   @override
@@ -1424,7 +1445,7 @@ class _PhaseStep extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(
-                    _weekLabel(),
+                    _weekLabel(context),
                     style: AppText.bodySm.copyWith(color: _kGold, fontSize: 9),
                     textAlign: TextAlign.center,
                   ),
@@ -1476,13 +1497,13 @@ class _StepCircle extends StatelessWidget {
           color: Colors.transparent,
           shape: BoxShape.circle,
           border: Border.all(
-            color: AppColors.onSurfaceVariant.withOpacity(0.3),
+            color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
         child: Icon(
           icon,
-          color: AppColors.onSurfaceVariant.withOpacity(0.3),
+          color: AppColors.onSurfaceVariant.withValues(alpha: 0.3),
           size: 15,
         ),
       ),
@@ -1502,7 +1523,7 @@ class _StepLine extends StatelessWidget {
       height: 2,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(2),
-        color: active ? _kGold : AppColors.onSurfaceVariant.withOpacity(0.25),
+        color: active ? _kGold : AppColors.onSurfaceVariant.withValues(alpha: 0.25),
       ),
     );
   }

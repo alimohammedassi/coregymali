@@ -204,7 +204,7 @@ class _Header extends StatelessWidget {
                         borderRadius: const BorderRadius.all(
                           Radius.circular(6),
                         ),
-                        border: Border.all(color: _kGold.withOpacity(0.35)),
+                        border: Border.all(color: _kGold.withValues(alpha: 0.35)),
                       ),
                       child: Text(
                         'CLIENT DATA',
@@ -325,7 +325,7 @@ class _DateRangeBar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: kCoachCard,
                   borderRadius: const BorderRadius.all(Radius.circular(16)),
-                  border: Border.all(color: _kGold.withOpacity(0.25)),
+                  border: Border.all(color: _kGold.withValues(alpha: 0.25)),
                   boxShadow: [
                     BoxShadow(
                       color: _kGoldGlow,
@@ -375,11 +375,11 @@ class _DateRangeBar extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: _kGold.withOpacity(0.12),
+                        color: _kGold.withValues(alpha: 0.12),
                         borderRadius: const BorderRadius.all(
                           Radius.circular(8),
                         ),
-                        border: Border.all(color: _kGold.withOpacity(0.3)),
+                        border: Border.all(color: _kGold.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         children: [
@@ -601,10 +601,10 @@ class _NutritionSummaryCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_kGold.withOpacity(0.12), _kGold.withOpacity(0.04)],
+          colors: [_kGold.withValues(alpha: 0.12), _kGold.withValues(alpha: 0.04)],
         ),
         borderRadius: _kCardR,
-        border: Border.all(color: _kGold.withOpacity(0.3)),
+        border: Border.all(color: _kGold.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,14 +628,15 @@ class _NutritionSummaryCard extends StatelessWidget {
             children: [
               _SummaryMetric(
                 label: 'Total Calories',
-                value: '${calories.toStringAsFixed(0)}',
+                value: calories.toStringAsFixed(0),
                 unit: 'kcal',
                 color: _kGold,
               ),
               const SizedBox(width: 8),
               _SummaryMetric(
                 label: 'Avg / Day',
-                value: '${(calories / days.clamp(1, 999)).toStringAsFixed(0)}',
+                value:
+                    (calories / days.clamp(1, 999)).toStringAsFixed(0),
                 unit: 'kcal',
                 color: _kAmber,
               ),
@@ -673,9 +674,9 @@ class _SummaryMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: _kPillR,
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,7 +729,7 @@ class _MacroBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: _kPillR,
         ),
         child: Column(
@@ -800,9 +801,9 @@ class _DaySectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: _kGold.withOpacity(0.1),
+            color: _kGold.withValues(alpha: 0.1),
             borderRadius: _kBadgeR,
-            border: Border.all(color: _kGold.withOpacity(0.3)),
+            border: Border.all(color: _kGold.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
@@ -871,9 +872,9 @@ class _NutritionCard extends StatelessWidget {
             width: 46,
             height: 46,
             decoration: BoxDecoration(
-              color: _mealColor.withOpacity(0.1),
+              color: _mealColor.withValues(alpha: 0.1),
               borderRadius: const BorderRadius.all(Radius.circular(14)),
-              border: Border.all(color: _mealColor.withOpacity(0.25)),
+              border: Border.all(color: _mealColor.withValues(alpha: 0.25)),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -955,7 +956,7 @@ class _MacroChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.all(Radius.circular(6)),
       ),
       child: Text(
@@ -1040,9 +1041,9 @@ class _WorkoutCard extends StatelessWidget {
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: _kPurple.withOpacity(0.12),
+                    color: _kPurple.withValues(alpha: 0.12),
                     borderRadius: const BorderRadius.all(Radius.circular(14)),
-                    border: Border.all(color: _kPurple.withOpacity(0.25)),
+                    border: Border.all(color: _kPurple.withValues(alpha: 0.25)),
                   ),
                   child: const Icon(
                     Icons.fitness_center_rounded,
@@ -1070,7 +1071,7 @@ class _WorkoutCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: _kPurple.withOpacity(0.1),
+                          color: _kPurple.withValues(alpha: 0.1),
                           borderRadius: _kBadgeR,
                         ),
                         child: Text(
@@ -1096,7 +1097,7 @@ class _WorkoutCard extends StatelessWidget {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: _kPurple.withOpacity(0.12),
+                        color: _kPurple.withValues(alpha: 0.12),
                         borderRadius: _kBadgeR,
                       ),
                       child: Row(
@@ -1264,9 +1265,9 @@ class _MeasurePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: _kPillR,
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1359,10 +1360,10 @@ class _WeeklyOverviewCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [_kSuccess.withOpacity(0.1), _kBlue.withOpacity(0.05)],
+          colors: [_kSuccess.withValues(alpha: 0.1), _kBlue.withValues(alpha: 0.05)],
         ),
         borderRadius: _kCardR,
-        border: Border.all(color: _kSuccess.withOpacity(0.25)),
+        border: Border.all(color: _kSuccess.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1447,7 +1448,7 @@ class _OverviewMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: _kPillR,
         ),
         child: Column(
@@ -1501,7 +1502,7 @@ class _SummaryCard extends StatelessWidget {
         color: kCoachCard,
         borderRadius: _kCardR,
         border: Border.all(
-          color: s.workoutDone ? _kSuccess.withOpacity(0.3) : kCoachBorder,
+          color: s.workoutDone ? _kSuccess.withValues(alpha: 0.3) : kCoachBorder,
         ),
       ),
       child: Column(
@@ -1526,12 +1527,12 @@ class _SummaryCard extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: s.workoutDone
-                      ? _kSuccess.withOpacity(0.12)
+                      ? _kSuccess.withValues(alpha: 0.12)
                       : AppColors.surfaceContainerHigh,
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
                   border: Border.all(
                     color: s.workoutDone
-                        ? _kSuccess.withOpacity(0.3)
+                        ? _kSuccess.withValues(alpha: 0.3)
                         : AppColors.surfaceDim,
                   ),
                 ),
@@ -1616,7 +1617,7 @@ class _SummaryCard extends StatelessWidget {
                 value: (s.caloriesBurned / s.caloriesConsumed.clamp(1, 9999))
                     .clamp(0.0, 1.0),
                 minHeight: 5,
-                backgroundColor: _kGold.withOpacity(0.15),
+                backgroundColor: _kGold.withValues(alpha: 0.15),
                 valueColor: const AlwaysStoppedAnimation(_kBlue),
               ),
             ),
@@ -1644,7 +1645,7 @@ class _SumMetric extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
+          color: color.withValues(alpha: 0.08),
           borderRadius: const BorderRadius.all(Radius.circular(12)),
         ),
         child: Column(

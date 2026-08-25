@@ -120,9 +120,9 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: kCoachGold.withOpacity(0.12),
+                    color: kCoachGold.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: kCoachGold.withOpacity(0.3)),
+                    border: Border.all(color: kCoachGold.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [
@@ -239,7 +239,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                   activeTrackColor: kCoachGold,
                   inactiveTrackColor: kCoachCard2,
                   thumbColor: kCoachGold,
-                  overlayColor: kCoachGold.withOpacity(0.12),
+                  overlayColor: kCoachGold.withValues(alpha: 0.12),
                   rangeThumbShape: const RoundRangeSliderThumbShape(
                       enabledThumbRadius: 8),
                 ),
@@ -394,7 +394,7 @@ class CoachCard extends StatelessWidget {
           color: kCoachCard,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSubscribed ? kCoachGold.withOpacity(0.4) : kCoachBorder,
+            color: isSubscribed ? kCoachGold.withValues(alpha: 0.4) : kCoachBorder,
           ),
         ),
         child: Column(
@@ -434,7 +434,7 @@ class CoachCard extends StatelessWidget {
                   child: Center(
                     child: Text(
                       initials,
-                      style: AppText.headlineLg.copyWith(color: kCoachGold.withOpacity(0.6), fontSize: 40),
+                      style: AppText.headlineLg.copyWith(color: kCoachGold.withValues(alpha: 0.6), fontSize: 40),
                     ),
                   ),
                 );
@@ -468,11 +468,11 @@ class CoachCard extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: kCoachGold.withOpacity(0.15),
+                                      color: kCoachGold.withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                           color:
-                                              kCoachGold.withOpacity(0.4)),
+                                              kCoachGold.withValues(alpha: 0.4)),
                                     ),
                                     child: Text('ACTIVE',
                                         style: AppText.labelMd

@@ -153,6 +153,7 @@ class _Header extends StatelessWidget {
               _IconBtn(
                 icon: Icons.arrow_back_ios_new_rounded,
                 size: 18,
+                semanticLabel: 'Back',
                 onTap: () => Navigator.pop(context),
               ),
               const SizedBox(width: 14),
@@ -225,6 +226,7 @@ class _Header extends StatelessWidget {
                 icon: Icons.sync_rounded,
                 size: 20,
                 spinning: refreshing,
+                semanticLabel: 'Refresh client data',
                 onTap: onRefresh,
               ),
             ],
@@ -242,12 +244,14 @@ class _IconBtn extends StatelessWidget {
   final double size;
   final VoidCallback onTap;
   final bool spinning;
+  final String? semanticLabel;
 
   const _IconBtn({
     required this.icon,
     required this.size,
     required this.onTap,
     this.spinning = false,
+    this.semanticLabel,
   });
 
   @override
@@ -262,18 +266,22 @@ class _IconBtn extends StatelessWidget {
         child: iconWidget,
       );
     }
-    return Material(
-      color: kCoachCard2,
-      borderRadius: const BorderRadius.all(Radius.circular(14)),
-      child: InkWell(
-        onTap: onTap,
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Material(
+        color: kCoachCard2,
         borderRadius: const BorderRadius.all(Radius.circular(14)),
-        splashColor: _kGoldSubtle,
-        child: Container(
-          width: 44,
-          height: 44,
-          alignment: Alignment.center,
-          child: iconWidget,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: const BorderRadius.all(Radius.circular(14)),
+          splashColor: _kGoldSubtle,
+          child: Container(
+            width: 44,
+            height: 44,
+            alignment: Alignment.center,
+            child: iconWidget,
+          ),
         ),
       ),
     );

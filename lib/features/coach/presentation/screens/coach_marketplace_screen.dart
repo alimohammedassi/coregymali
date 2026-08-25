@@ -169,27 +169,32 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                 final active = spec == _selectedSpec;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() => _selectedSpec = spec);
-                      _fetch();
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: active ? kCoachGold : kCoachCard2,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: active ? kCoachGold : kCoachBorder,
+                  child: Semantics(
+                    button: true,
+                    selected: active,
+                    label: spec,
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() => _selectedSpec = spec);
+                        _fetch();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: active ? kCoachGold : kCoachCard2,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: active ? kCoachGold : kCoachBorder,
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        spec.toUpperCase(),
-                        style: AppText.labelMd.copyWith(
-                          color: active ? Colors.black : kCoachMuted,
-                          letterSpacing: 1,
+                        child: Text(
+                          spec.toUpperCase(),
+                          style: AppText.labelMd.copyWith(
+                            color: active ? Colors.black : kCoachMuted,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ),
                     ),

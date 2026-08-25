@@ -555,17 +555,21 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
           ),
           const SizedBox(width: 12),
           if (isSubscribed)
-            GestureDetector(
-              onTap: () => _openChat(context, coach),
-              child: Container(
-                width: 48,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: kCoachCard2,
-                  borderRadius: BorderRadius.circular(14),
+            Semantics(
+              button: true,
+              label: 'Message coach',
+              child: GestureDetector(
+                onTap: () => _openChat(context, coach),
+                child: Container(
+                  width: 48,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: kCoachCard2,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.chat_bubble_rounded,
+                      color: kCoachGold, size: 22),
                 ),
-                child: const Icon(Icons.chat_bubble_rounded,
-                    color: kCoachGold, size: 22),
               ),
             ),
           if (isSubscribed) const SizedBox(width: 12),

@@ -320,8 +320,13 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
         builder: (_) => MultiProvider(
           providers: [
             ChangeNotifierProvider(
-              create: (_) => SelectedCoachNotifier(CoachRepositoryImpl())
-                ..fetchCoach(coach.id),
+              create: (_) {
+                final n = SelectedCoachNotifier(CoachRepositoryImpl());
+                WidgetsBinding.instance.addPostFrameCallback(
+                  (_) => n.fetchCoach(coach.id),
+                );
+                return n;
+              },
             ),
             // Share the same instance so both the UI and StripePaymentNotifier
             // see subscription updates in real time.

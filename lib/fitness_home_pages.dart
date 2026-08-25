@@ -17,10 +17,12 @@ import 'l10n/app_localizations.dart';
 import 'profile.dart';
 import 'providers/profile_provider.dart';
 import 'screens/food_scan_screen.dart';
+import 'screens/barcode_scan_screen.dart';
 import 'screens/nutrition_screen.dart';
 import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/stats_service.dart';
+import 'services/streak_service.dart';
 import 'services/supabase_client.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
@@ -94,10 +96,7 @@ class _InteractiveScaleDetectorState extends State<_InteractiveScaleDetector>
       onTapDown: _handleTapDown,
       onTapUp: _handleTapUp,
       onTapCancel: _handleTapCancel,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
@@ -179,11 +178,6 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       label: l10n.navWorkout,
     ),
     TabInfo(
-      icon: Icons.chat_bubble_outline_rounded,
-      activeIcon: Icons.chat_bubble_rounded,
-      label: l10n.navMessages,
-    ),
-    TabInfo(
       icon: Icons.people_outline_rounded,
       activeIcon: Icons.people_rounded,
       label: l10n.navCoaches,
@@ -213,11 +207,6 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       label: l10n.navWorkout,
     ),
     TabInfo(
-      icon: Icons.chat_bubble_outline_rounded,
-      activeIcon: Icons.chat_bubble_rounded,
-      label: l10n.navMessages,
-    ),
-    TabInfo(
       icon: Icons.people_outline_rounded,
       activeIcon: Icons.people_rounded,
       label: l10n.navCoaches,
@@ -237,9 +226,15 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
 
   List<Widget> _buildChildren(bool isCoach) {
     final subRepo = SubscriptionRepositoryImpl();
-    final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
-      ..fetchActiveSubscription();
+    final activeSubNotifier = ActiveSubscriptionNotifier(subRepo);
     final subNotifier = SubscriptionNotifier(subRepo);
+
+    // Defer the fetch out of the build phase — it calls notifyListeners()
+    // synchronously, which would mark provider scopes dirty mid-build and
+    // throw "setState() called during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      activeSubNotifier.fetchActiveSubscription();
+    });
 
     return [
       _HomeScreenCore(
@@ -247,18 +242,20 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         onNutritionChanged: _onNutritionChanged,
       ),
       if (isCoach)
-        CoachDashboardProviders.provideAll(
-          child: const CoachDashboardScreen(),
-        )
+        CoachDashboardProviders.provideAll(child: const CoachDashboardScreen())
       else
         NutritionScreen(key: _nutritionScreenKey),
       const WorkoutScreen(),
-      const ChatListScreen(),
       MultiProvider(
         providers: [
           ChangeNotifierProvider(
-            create: (_) =>
-                CoachListNotifier(CoachRepositoryImpl())..fetchCoaches(),
+            create: (_) {
+              final n = CoachListNotifier(CoachRepositoryImpl());
+              WidgetsBinding.instance.addPostFrameCallback(
+                (_) => n.fetchCoaches(),
+              );
+              return n;
+            },
           ),
           ChangeNotifierProvider.value(value: activeSubNotifier),
           ChangeNotifierProvider.value(value: subNotifier),
@@ -334,10 +331,7 @@ class _PlayfulNavBar extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(30),
-            border: Border.all(
-              color: AppColors.borderSubtle,
-              width: 1.2,
-            ),
+            border: Border.all(color: AppColors.borderSubtle, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF000000).withValues(alpha: 0.06),
@@ -431,6 +425,11 @@ class _HomeScreenCore extends StatefulWidget {
 
 class _HomeScreenCoreState extends State<_HomeScreenCore>
     with TickerProviderStateMixin, WidgetsBindingObserver {
+  static bool _nudgeShownThisSession = false;
+
+  final StreakService _streakService = StreakService();
+  StreakStatus _streakStatus = StreakStatus.empty;
+
   bool _isLoading = true;
   bool _noGoalsSet = false;
   DateTime _selectedDate = DateTime.now();
@@ -474,7 +473,63 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       duration: const Duration(milliseconds: 800),
       value: 1.0,
     );
+    StreakService.milestoneReached.addListener(_showMilestoneDialog);
     _loadAll();
+  }
+
+  void _showMilestoneDialog() {
+    final days = StreakService.milestoneReached.value;
+    if (days == null || !mounted) return;
+    StreakService.milestoneReached.value = null;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('🔥', style: TextStyle(fontSize: 52)),
+            const SizedBox(height: 14),
+            Text(
+              '$days-day streak!',
+              textAlign: TextAlign.center,
+              style: AppText.headlineMd.copyWith(
+                fontWeight: FontWeight.w900,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Consistency is the real workout. Keep the flame alive!',
+              textAlign: TextAlign.center,
+              style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: AppColors.primaryActionGradient,
+                ),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text('Keep going!'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -487,6 +542,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    StreakService.milestoneReached.removeListener(_showMilestoneDialog);
     _heroCtrl.dispose();
     _staggerCtrl.dispose();
     super.dispose();
@@ -495,6 +551,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   Future<void> _loadAll([DateTime? date]) async {
     final targetDate = date ?? _selectedDate;
     final dateStr = targetDate.toIso8601String().substring(0, 10);
+
+    // Streak status — fire-and-forget refresh for the header badge.
+    _streakService.getStatus().then((s) {
+      if (mounted) setState(() => _streakStatus = s);
+    });
 
     if (currentUserId == null) {
       if (mounted) {
@@ -507,7 +568,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
     try {
       final results = await Future.wait<dynamic>([
-        supabase.from('profiles').select().eq('id', currentUserId!).maybeSingle(),
+        supabase
+            .from('profiles')
+            .select()
+            .eq('id', currentUserId!)
+            .maybeSingle(),
         supabase
             .from('user_goals')
             .select()
@@ -579,7 +644,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
   }
 
-  Future<void> _openFoodLogger({String mealType = 'breakfast', String? mode}) async {
+  Future<void> _openFoodLogger({
+    String mealType = 'breakfast',
+    String? mode,
+  }) async {
     final result = await FoodLoggingModal.show(
       context,
       initialMealType: mealType,
@@ -587,6 +655,18 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     );
     if (result == true) {
       await _loadAll();
+    }
+  }
+
+  // Barcode scanner entry point — same refresh flow as the AI scan.
+  Future<void> _openBarcodeScan() async {
+    HapticFeedback.lightImpact();
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
+    );
+    if (saved == true && mounted) {
+      await _refreshNutritionTotals();
+      widget.onNutritionChanged?.call();
     }
   }
 
@@ -598,10 +678,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     final defaultMeal = h < 11
         ? 'breakfast'
         : h < 16
-            ? 'lunch'
-            : h < 22
-                ? 'dinner'
-                : 'snack';
+        ? 'lunch'
+        : h < 22
+        ? 'dinner'
+        : 'snack';
     await AddFoodSheet.show(
       context,
       preselectedMeal: defaultMeal,
@@ -616,9 +696,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   // totals (today's logs + summary) instead of re-fetching everything.
   Future<void> _openFoodScan() async {
     HapticFeedback.lightImpact();
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const FoodScanScreen()),
-    );
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const FoodScanScreen()));
     if (saved == true && mounted) {
       await _refreshNutritionTotals();
       widget.onNutritionChanged?.call();
@@ -628,9 +708,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   // Voice Food Log entry point — same refresh flow as the AI scan.
   Future<void> _openVoiceLog() async {
     HapticFeedback.lightImpact();
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const VoiceFoodLogScreen()),
-    );
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const VoiceFoodLogScreen()));
     if (saved == true && mounted) {
       await _refreshNutritionTotals();
       widget.onNutritionChanged?.call();
@@ -686,9 +766,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     final newGlasses = (_waterGlasses + 1).clamp(0, 20);
     setState(() => _waterGlasses = newGlasses);
     try {
-      await StatsService().updateTodaySummary({
-        'water_ml': newGlasses * 250,
-      });
+      await StatsService().updateTodaySummary({'water_ml': newGlasses * 250});
     } catch (e) {
       debugPrint('Error updating water: $e');
     }
@@ -737,7 +815,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: Text(isArabic ? 'حفظ' : 'Save'),
           ),
@@ -833,13 +913,31 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 child: _KaleeHeader(
                   profile: _profile,
                   isArabic: isArabic,
-                  onOpenProfile: () => widget.onNavigate(5),
-                  onOpenChat: () => widget.onNavigate(3),
+                  streakCount: _streakStatus.currentStreak,
+                  streakLoggedToday: _streakStatus.loggedToday,
+                  onOpenProfile: () => widget.onNavigate(4),
+                  onOpenChat: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (_) => const ChatListScreen()),
+                    );
+                  },
                 ),
               ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
+
+            // ── 1b. Streak-at-risk nudge (once per app open) ──
+            if (_streakStatus.atRisk && !_nudgeShownThisSession)
+              SliverToBoxAdapter(
+                child: _StreakAtRiskBanner(
+                  streak: _streakStatus.currentStreak,
+                  isArabic: isArabic,
+                  onDismiss: () =>
+                      setState(() => _nudgeShownThisSession = true),
+                ),
+              ),
 
             // ── 2. Compact Interactive Date Selector Strip ──
             SliverToBoxAdapter(
@@ -867,7 +965,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   index: 2,
                   child: _GoalsOnboardingBanner(
                     isArabic: isArabic,
-                    onTap: () => widget.onNavigate(5),
+                    onTap: () => widget.onNavigate(4),
                   ),
                 ),
               ),
@@ -958,7 +1056,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   onAiScan: _openFoodScan,
                   onVoice: _openVoiceLog,
                   onText: () => _openFoodLogger(mode: 'quick'),
-                  onBarcode: () => _openFoodLogger(mode: 'search'),
+                  onBarcode: _openBarcodeScan,
                 ),
               ),
             ),
@@ -1019,9 +1117,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             ),
 
             // Bottom buffer to prevent navbar overlap
-            SliverToBoxAdapter(
-              child: SizedBox(height: 90 + bottomInset),
-            ),
+            SliverToBoxAdapter(child: SizedBox(height: 90 + bottomInset)),
           ],
         ),
       ),
@@ -1036,12 +1132,16 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 class _KaleeHeader extends StatelessWidget {
   final Map<String, dynamic> profile;
   final bool isArabic;
+  final int streakCount;
+  final bool streakLoggedToday;
   final VoidCallback onOpenProfile;
   final VoidCallback onOpenChat;
 
   const _KaleeHeader({
     required this.profile,
     required this.isArabic,
+    this.streakCount = 0,
+    this.streakLoggedToday = false,
     required this.onOpenProfile,
     required this.onOpenChat,
   });
@@ -1072,10 +1172,7 @@ class _KaleeHeader extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.primaryGreen,
-                  width: 2.2,
-                ),
+                border: Border.all(color: AppColors.primaryGreen, width: 2.2),
                 boxShadow: [
                   BoxShadow(
                     color: AppColors.primaryGreen.withValues(alpha: 0.18),
@@ -1099,7 +1196,9 @@ class _KaleeHeader extends StatelessWidget {
                               color: AppColors.primaryGreen,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              fontFamily: AppText.fontFamily(isArabic: isArabic),
+                              fontFamily: AppText.fontFamily(
+                                isArabic: isArabic,
+                              ),
                             ),
                           ),
                         ),
@@ -1144,30 +1243,45 @@ class _KaleeHeader extends StatelessWidget {
 
           const SizedBox(width: 8),
 
-          // Streak Pill with Pixel Fire
+          const SizedBox(width: 8),
+
+          // Streak Pill — server-computed (green when logged today, muted
+          // when the streak is at risk of breaking).
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0),
+              color: streakLoggedToday || streakCount == 0
+                  ? AppColors.lightGreen
+                  : AppColors.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: const Color(0xFFFFB74D).withValues(alpha: 0.4),
+                color: streakLoggedToday
+                    ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                    : AppColors.borderSubtle,
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const PixelArtIcon(
-                  type: PixelIconType.fire,
-                  size: 14,
-                  animate: true,
+                Icon(
+                  Icons.local_fire_department_rounded,
+                  size: 15,
+                  color: streakCount == 0
+                      ? AppColors.textMuted
+                      : (streakLoggedToday
+                          ? AppColors.primaryGreen
+                          : AppColors.textSecondary),
                 ),
                 const SizedBox(width: 5),
                 Text(
-                  l10n.daysStreak(7),
+                  l10n.daysStreak(streakCount),
                   style: TextStyle(
-                    color: const Color(0xFFE65100),
+                    color: streakCount == 0
+                        ? AppColors.textMuted
+                        : (streakLoggedToday
+                            ? AppColors.primaryGreen
+                            : AppColors.textSecondary),
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     fontFamily: AppText.fontFamily(isArabic: isArabic),
@@ -1203,6 +1317,65 @@ class _KaleeHeader extends StatelessWidget {
                 size: 18,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1b. Streak-at-risk nudge banner
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _StreakAtRiskBanner extends StatelessWidget {
+  final int streak;
+  final bool isArabic;
+  final VoidCallback onDismiss;
+
+  const _StreakAtRiskBanner({
+    required this.streak,
+    required this.isArabic,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+      padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.local_fire_department_rounded,
+              color: AppColors.primaryGreen, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'سجّل أي حاجة النهاردة قبل ما الستريك بتاعك يولّع ($streak أيام)!'
+                  : 'Log something today to keep your $streak-day streak alive!',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                height: 1.35,
+                color: AppColors.textPrimary,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
+              ),
+            ),
+          ),
+          IconButton(
+            visualDensity: VisualDensity.compact,
+            icon: Icon(Icons.close_rounded,
+                size: 16, color: AppColors.textSecondary),
+            onPressed: onDismiss,
           ),
         ],
       ),
@@ -1407,9 +1580,7 @@ class _HeroCalorieCard extends StatelessWidget {
 
   bool get _isOver => totalCalories > goalCalories;
   double get _remaining =>
-      (_isOver
-              ? totalCalories - goalCalories
-              : goalCalories - totalCalories)
+      (_isOver ? totalCalories - goalCalories : goalCalories - totalCalories)
           .abs();
 
   @override
@@ -1503,7 +1674,9 @@ class _HeroCalorieCard extends StatelessWidget {
                                 color: _isOver
                                     ? AppColors.accentProtein
                                     : AppColors.accentCalories,
-                                fontFamily: AppText.fontFamily(isArabic: isArabic),
+                                fontFamily: AppText.fontFamily(
+                                  isArabic: isArabic,
+                                ),
                               ),
                             ),
                           ],
@@ -1925,8 +2098,15 @@ class _DailySnapshotRow extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const PixelArtIcon(type: PixelIconType.sneaker, size: 16),
-                        const Icon(Icons.edit_outlined, size: 13, color: AppColors.textMuted),
+                        const PixelArtIcon(
+                          type: PixelIconType.sneaker,
+                          size: 16,
+                        ),
+                        const Icon(
+                          Icons.edit_outlined,
+                          size: 13,
+                          color: AppColors.textMuted,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -2415,9 +2595,14 @@ class _ProCoachBanner extends StatelessWidget {
               builder: (_) => MultiProvider(
                 providers: [
                   ChangeNotifierProvider(
-                    create: (_) =>
-                        CoachListNotifier(CoachRepositoryImpl())
-                          ..fetchCoaches(),
+                    create: (_) {
+                      final n =
+                          CoachListNotifier(CoachRepositoryImpl());
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => n.fetchCoaches(),
+                      );
+                      return n;
+                    },
                   ),
                   ChangeNotifierProvider.value(value: activeSubNotifier),
                   ChangeNotifierProvider.value(value: subNotifier),

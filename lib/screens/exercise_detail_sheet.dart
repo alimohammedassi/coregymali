@@ -155,7 +155,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: AppColors.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -195,7 +195,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     Text(
                       exercise.nameAr,
                       style: AppText.titleLg.copyWith(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
@@ -203,7 +203,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     Text(
                       exercise.nameEn,
                       style: AppText.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -339,13 +339,13 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           // Description
           Text(
             'الوصف',
-            style: AppText.titleSm.copyWith(color: Colors.white),
+            style: AppText.titleSm.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 8),
           Text(
             exercise.description,
             style: AppText.bodySm.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: AppColors.textSecondary,
               height: 1.6,
             ),
           ),
@@ -385,7 +385,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 Text(
                   exercise.formTips,
                   style: AppText.bodySm.copyWith(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     height: 1.5,
                   ),
                 ),
@@ -439,7 +439,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: Text(
                   widget.plannedExercise.exercise.nameAr,
                   style: AppText.titleLg.copyWith(
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -509,7 +509,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           if (_completedSets.isNotEmpty) ...[
             Text(
               'المجاميع المسجلة',
-              style: AppText.titleSm.copyWith(color: Colors.white),
+              style: AppText.titleSm.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: 12),
             ..._completedSets.asMap().entries.map((entry) {
@@ -553,7 +553,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                                 ? 'إحماء'
                                 : '${set.weight > 0 ? '${set.weight} كجم × ' : ''}${set.reps} تكرار',
                             style: AppText.bodySm.copyWith(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -585,7 +585,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           // Current Set Input
           Text(
             'المجموعة $_currentSet',
-            style: AppText.titleSm.copyWith(color: Colors.white),
+            style: AppText.titleSm.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: 16),
 
@@ -596,7 +596,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     labelText: 'الوزن (كجم)',
@@ -619,7 +619,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     labelText: 'التكرار',
@@ -678,16 +678,21 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFD4FF57), Color(0xFF9FFF00)],
-                ),
+                gradient: AppColors.primaryActionGradient,
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: .3),
+                    blurRadius: 14,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Center(
                 child: Text(
                   'تسجيل المجموعة',
                   style: AppText.titleSm.copyWith(
-                    color: Colors.black,
+                    color: Colors.white,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -744,7 +749,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
               Text(
                 value,
                 style: AppText.bodySm.copyWith(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -770,7 +775,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
             Text(
               text,
               style: const TextStyle(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

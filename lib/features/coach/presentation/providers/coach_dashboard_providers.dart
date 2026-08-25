@@ -132,7 +132,11 @@ class CoachDashboardProviders {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<CoachDashboardStatNotifier>(
-          create: (_) => CoachDashboardStatNotifier()..fetch(),
+          create: (_) {
+            final n = CoachDashboardStatNotifier();
+            WidgetsBinding.instance.addPostFrameCallback((_) => n.fetch());
+            return n;
+          },
         ),
         ChangeNotifierProvider<CoachDashboardRepositoryProvider>(
           create: (_) => CoachDashboardRepositoryProvider(),
@@ -143,7 +147,7 @@ class CoachDashboardProviders {
         ChangeNotifierProxyProvider<CoachDashboardRepositoryProvider, ActiveClientsNotifier>(
           create: (ctx) {
             final n = ActiveClientsNotifier(ctx.read<CoachDashboardRepositoryProvider>().repository);
-            n.fetch();
+            WidgetsBinding.instance.addPostFrameCallback((_) => n.fetch());
             return n;
           },
           update: (_, repoProvider, previous) => previous ?? ActiveClientsNotifier(repoProvider.repository),

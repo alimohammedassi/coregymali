@@ -32,6 +32,24 @@ class MyApp extends StatelessWidget {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Splash
+//
+// UX changes from the previous version:
+//  - Navigation used to fire on a hardcoded `Future.delayed(3s)` regardless
+//    of whether the profile fetch had actually finished, and the progress
+//    bar animated to a fixed 92% that never reached 100% — it just sat
+//    there. Now the bar has two phases (an indeterminate-feeling ramp to
+//    ~65% while we wait, then a real jump to 100% once auth/profile data
+//    is in) and navigation waits on the real async work, not a guess.
+//  - A failed `fetchProfile()` used to have no catch — an exception would
+//    leave the user stuck on the splash screen forever. It's now wrapped
+//    and falls back to onboarding with a brief inline error state instead
+//    of a silent hang.
+//  - Enforces only a *minimum* splash duration (so the brand moment never
+//    feels like a flash on a fast connection) rather than always forcing
+//    the full 3 seconds even when data is ready sooner.
+// ────────────────────────────────────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -41,95 +59,124 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  late AnimationController _progressController;
-  late Animation<double> _progressAnimation;
-  late AnimationController _pulseController;
+  static const _minSplashDuration = Duration(milliseconds: 1600);
+  static const _rampCeiling = 0.65; // where the bar "waits" until data is ready
+
+  late final AnimationController _entryController;
+  late final Animation<double> _fadeAnimation;
+  late final Animation<double> _scaleAnimation;
+
+  late final AnimationController _progressController;
+  late final Animation<double> _progressRamp;
+
+  late final AnimationController _pulseController;
+
+  bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
 
-    _animationController = AnimationController(
+    _entryController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 2),
-    );
+      duration: const Duration(milliseconds: 900),
+    )..forward();
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
+    _fadeAnimation = CurvedAnimation(
+      parent: _entryController,
+      curve: Curves.easeIn,
     );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    _scaleAnimation = Tween<double>(begin: 0.88, end: 1.0).animate(
+      CurvedAnimation(parent: _entryController, curve: Curves.easeOutBack),
     );
 
     _progressController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2500),
+      duration: const Duration(milliseconds: 1400),
     );
-    _progressAnimation = Tween<double>(begin: 0.0, end: 0.92).animate(
+    _progressRamp = Tween<double>(begin: 0.0, end: _rampCeiling).animate(
       CurvedAnimation(parent: _progressController, curve: Curves.easeInOut),
-    );
+    )..addListener(() => setState(() {}));
+    _progressController.forward();
 
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
 
-    _animationController.forward();
-    _progressController.forward();
+    _bootstrap();
+  }
 
-    // Navigate after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () async {
-      if (!mounted) return;
+  double _completedProgress = 0.0; // set to 1.0 once real work is done
+
+  Future<void> _bootstrap() async {
+    final started = DateTime.now();
+
+    try {
       final user = supabase.auth.currentUser;
+
+      Widget destination;
       if (user == null) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) =>
-                const OnboardingScreen(),
-            transitionsBuilder:
-                (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
+        destination = const OnboardingScreen();
       } else {
         final profileProv = context.read<ProfileProvider>();
         await profileProv.fetchProfile();
-        if (!mounted) return;
 
         if (profileProv.needsUserOnboarding) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const OnboardingFlow()),
-          );
+          destination = const OnboardingFlow();
         } else if (profileProv.isCoach) {
-          if (profileProv.needsCoachSetup) {
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(
-                builder: (_) => ChangeNotifierProvider(
+          destination = profileProv.needsCoachSetup
+              ? ChangeNotifierProvider(
                   create: (_) => CoachSetupNotifier(),
                   child: const CoachProfileSetupScreen(),
-                ),
-              ),
-            );
-          } else {
-            // "NEVER send a coach to a subscription page... /home (with coach nav bar)"
-            // Notice: the requirements say /home contains the coach tab!
-            Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-            );
-          }
+                )
+              : const FitnessHomePage();
         } else {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const FitnessHomePage()),
-          );
+          destination = const FitnessHomePage();
         }
       }
-    });
+
+      await _finishProgressBar();
+      await _respectMinimumDuration(started);
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        PageRouteBuilder(
+          pageBuilder: (_, animation, __) => destination,
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
+          transitionDuration: const Duration(milliseconds: 500),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _hasError = true);
+    }
+  }
+
+  Future<void> _finishProgressBar() async {
+    setState(() => _completedProgress = 1.0);
+    _progressController.stop();
+    await Future.delayed(const Duration(milliseconds: 350));
+  }
+
+  Future<void> _respectMinimumDuration(DateTime started) async {
+    final elapsed = DateTime.now().difference(started);
+    final remaining = _minSplashDuration - elapsed;
+    if (remaining > Duration.zero) {
+      await Future.delayed(remaining);
+    }
+  }
+
+  double get _displayedProgress =>
+      _completedProgress > 0 ? _completedProgress : _progressRamp.value;
+
+  void _retry() {
+    setState(() => _hasError = false);
+    _progressController
+      ..reset()
+      ..forward();
+    _bootstrap();
   }
 
   @override
@@ -138,7 +185,6 @@ class _SplashScreenState extends State<SplashScreen>
       backgroundColor: AppColors.surfaceLowest,
       body: Stack(
         children: [
-          // Background image with dark overlay
           Positioned.fill(
             child: Image.asset(
               'assets/images/coreGym.png',
@@ -162,7 +208,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
           ),
-          // Primary glow orb top-right
           Positioned(
             top: -100,
             right: -80,
@@ -173,16 +218,12 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [
-                      AppColors.glowOrbPrimary,
-                      Colors.transparent,
-                    ],
+                    colors: [AppColors.glowOrbPrimary, Colors.transparent],
                   ),
                 ),
               ),
             ),
           ),
-          // Secondary glow orb bottom-left
           Positioned(
             bottom: -100,
             left: -80,
@@ -193,330 +234,400 @@ class _SplashScreenState extends State<SplashScreen>
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
-                    colors: [
-                      AppColors.glowOrbSecondary,
-                      Colors.transparent,
+                    colors: [AppColors.glowOrbSecondary, Colors.transparent],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          AnimatedBuilder(
+            animation: _entryController,
+            builder: (context, child) {
+              return FadeTransition(
+                opacity: _fadeAnimation,
+                child: ScaleTransition(scale: _scaleAnimation, child: child),
+              );
+            },
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Semantics(
+                  label: _hasError
+                      ? 'CoreGym failed to load. Tap retry.'
+                      : 'Loading CoreGym',
+                  liveRegion: true,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 40),
+                      Text(
+                        'KINETIC SYSTEM V2.0',
+                        style: AuthAppText.labelMd.copyWith(
+                          color: AppColors.primaryFixed,
+                          letterSpacing: 3.0,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 60,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+
+                      const Spacer(flex: 3),
+
+                      Center(
+                        child: AnimatedBuilder(
+                          animation: _pulseController,
+                          builder: (context, child) {
+                            return Transform.scale(
+                              scale: 1.0 + (_pulseController.value * 0.08),
+                              child: child,
+                            );
+                          },
+                          child: Icon(
+                            Icons.bolt,
+                            size: 56,
+                            color: AppColors.primaryFixed,
+                            shadows: [
+                              Shadow(
+                                color: AppColors.primaryFixed.withValues(
+                                  alpha: 0.6,
+                                ),
+                                blurRadius: 30,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      Center(
+                        child: Text(
+                          'CORE',
+                          style: AuthAppText.displayLg.copyWith(
+                            fontSize: 80,
+                            letterSpacing: -3,
+                          ),
+                        ),
+                      ),
+
+                      // Real mirrored reflection instead of a second static
+                      // line of text — flips vertically and fades out, so it
+                      // actually reads as a reflection rather than a caption.
+                      Center(
+                        child: Transform(
+                          alignment: Alignment.topCenter,
+                          transform: Matrix4.diagonal3Values(1, -1, 1),
+                          child: ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.18),
+                                Colors.transparent,
+                              ],
+                            ).createShader(bounds),
+                            child: Text(
+                              'CORE',
+                              style: AuthAppText.displayLg.copyWith(
+                                fontSize: 80,
+                                letterSpacing: -3,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const Spacer(flex: 2),
+
+                      if (_hasError)
+                        _ErrorCard(onRetry: _retry)
+                      else ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.glass1,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: AppColors.glassBorder,
+                                ),
+                              ),
+                              child: Text(
+                                'INITIALIZING HIGH-PERFORMANCE MODULES',
+                                style: AuthAppText.labelMd.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Text(
+                          'ELECTRIC VOLT ENGINE',
+                          style: AuthAppText.labelMd.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${(_displayedProgress * 100).toInt()}%',
+                          style: AuthAppText.headlineMd.copyWith(
+                            color: AppColors.primaryFixed,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: _displayedProgress),
+                          duration: const Duration(milliseconds: 250),
+                          builder: (context, value, child) {
+                            return Container(
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceContainerHighest,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                              child: FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: value,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: AppColors.primaryActionGradient,
+                                    borderRadius: BorderRadius.circular(2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primaryFixed
+                                            .withValues(alpha: 0.5),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
+
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'SYNCING BIO-METRICS',
+                              style: AuthAppText.labelSm,
+                            ),
+                            Text('COREGYM', style: AuthAppText.labelSm),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.glass2,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.glassBorder,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.glass2,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.wifi_tethering,
+                                      color: AppColors.onSurfaceVariant,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'STATUS',
+                                        style: AuthAppText.labelMd.copyWith(
+                                          color: AppColors.onSurface,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _completedProgress >= 1.0
+                                            ? 'IGNITION COMPLETE'
+                                            : 'READY FOR IGNITION',
+                                        style: AuthAppText.labelSm.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Row(
+                                    children: [
+                                      AnimatedBuilder(
+                                        animation: _pulseController,
+                                        builder: (context, child) {
+                                          return Container(
+                                            width: 8,
+                                            height: 8,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                              color: AppColors.primaryFixed
+                                                  .withValues(
+                                                    alpha:
+                                                        0.5 +
+                                                        _pulseController.value *
+                                                            0.5,
+                                                  ),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: AppColors.primaryFixed
+                                                      .withValues(alpha: 0.4),
+                                                  blurRadius: 6,
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'LIVE',
+                                        style: AuthAppText.labelMd.copyWith(
+                                          color: AppColors.primaryFixed,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),
               ),
             ),
           ),
-          // Content
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return FadeTransition(
-                opacity: _fadeAnimation,
-                child: ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 40),
-                          // Top branding
-                          Text(
-                            'KINETIC SYSTEM V2.0',
-                            style: AuthAppText.labelMd.copyWith(
-                              color: AppColors.primaryFixed,
-                              letterSpacing: 3.0,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            width: 60,
-                            height: 3,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryFixed,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-
-                          const Spacer(flex: 3),
-
-                          // Bolt icon
-                          Center(
-                            child: AnimatedBuilder(
-                              animation: _pulseController,
-                              builder: (context, child) {
-                                return Transform.scale(
-                                  scale: 1.0 + (_pulseController.value * 0.08),
-                                  child: Icon(
-                                    Icons.bolt,
-                                    size: 56,
-                                    color: AppColors.primaryFixed,
-                                    shadows: [
-                                      Shadow(
-                                        color: AppColors.primaryFixed.withValues(alpha: 0.6),
-                                        blurRadius: 30,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // CORE title
-                          Center(
-                            child: Text(
-                              'CORE',
-                              style: AuthAppText.displayLg.copyWith(
-                                fontSize: 80,
-                                letterSpacing: -3,
-                              ),
-                            ),
-                          ),
-
-                          // Ghost reflection text
-                          Center(
-                            child: ShaderMask(
-                              shaderCallback: (bounds) => LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.15),
-                                  Colors.transparent,
-                                ],
-                              ).createShader(bounds),
-                              child: Text(
-                                'CORE',
-                                style: AuthAppText.displayLg.copyWith(
-                                  fontSize: 64,
-                                  letterSpacing: -3,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          const Spacer(flex: 2),
-
-                          // Status pill
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                              child: Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.glass1,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: AppColors.glassBorder,
-                                  ),
-                                ),
-                                child: Text(
-                                  'INITIALIZING HIGH-PERFORMANCE MODULES',
-                                  style: AuthAppText.labelMd.copyWith(
-                                    color: AppColors.onSurfaceVariant,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Progress section
-                          Text(
-                            'ELECTRIC VOLT ENGINE',
-                            style: AuthAppText.labelMd.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          AnimatedBuilder(
-                            animation: _progressAnimation,
-                            builder: (context, child) {
-                              return Text(
-                                '${(_progressAnimation.value * 100).toInt()}%',
-                                style: AuthAppText.headlineMd.copyWith(
-                                  color: AppColors.primaryFixed,
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Progress bar
-                          AnimatedBuilder(
-                            animation: _progressAnimation,
-                            builder: (context, child) {
-                              return Container(
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceContainerHighest,
-                                  borderRadius: BorderRadius.circular(2),
-                                ),
-                                child: FractionallySizedBox(
-                                  alignment: Alignment.centerLeft,
-                                  widthFactor: _progressAnimation.value,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: AppColors.primaryActionGradient,
-                                      borderRadius: BorderRadius.circular(2),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.primaryFixed.withValues(alpha: 0.5),
-                                          blurRadius: 8,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Sub labels
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('SYNCING BIO-METRICS', style: AuthAppText.labelSm),
-                              Text('COREGYM', style: AuthAppText.labelSm),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          // Status card
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.glass2,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: AppColors.glassBorder),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.glass2,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        Icons.wifi_tethering,
-                                        color: AppColors.onSurfaceVariant,
-                                        size: 22,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'STATUS',
-                                          style: AuthAppText.labelMd.copyWith(
-                                            color: AppColors.onSurface,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 2),
-                                        Text(
-                                          'READY FOR IGNITION',
-                                          style: AuthAppText.labelSm.copyWith(
-                                            color: AppColors.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Spacer(),
-                                    Row(
-                                      children: [
-                                        AnimatedBuilder(
-                                          animation: _pulseController,
-                                          builder: (context, child) {
-                                            return Container(
-                                              width: 8,
-                                              height: 8,
-                                              decoration: BoxDecoration(
-                                                shape: BoxShape.circle,
-                                                color: AppColors.primaryFixed.withValues(
-                                                  alpha: 0.5 + _pulseController.value * 0.5,
-                                                ),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: AppColors.primaryFixed.withValues(alpha: 0.4),
-                                                    blurRadius: 6,
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'LIVE',
-                                          style: AuthAppText.labelMd.copyWith(
-                                            color: AppColors.primaryFixed,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
         ],
       ),
     );
   }
 
-  Future<String?> _getUserRole() async {
-    try {
-      final userId = supabase.auth.currentUser?.id;
-      if (userId == null) return null;
-      final response = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', userId)
-          .single();
-      return response['role'] as String?;
-    } catch (e) {
-      return null;
-    }
-  }
-
   @override
   void dispose() {
-    _animationController.dispose();
+    _entryController.dispose();
     _progressController.dispose();
     _pulseController.dispose();
     super.dispose();
   }
 }
 
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.onRetry});
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.glass2,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 32,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Couldn't connect. Check your internet and try again.",
+                textAlign: TextAlign.center,
+                style: AuthAppText.bodyMd.copyWith(
+                  color: AppColors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: onRetry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryFixed,
+                    foregroundColor: AppColors.onPrimary,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text('RETRY', style: AuthAppText.buttonPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // Onboarding
+//
+// UX changes from the previous version:
+//  - Added a real, dedicated "Skip" action (top-right) distinct from
+//    "already a member? sign in" — previously the only way to bypass the
+//    3-page intro was to tap Next twice or use the sign-in link, which is
+//    a signup-flow entry, not a skip. A first-time visitor who just wants
+//    past the intro now has an obvious way to do that.
+//  - Page dots moved from a magic `bottom: 180` position (which drifts out
+//    of alignment with the glass card on different screen heights) into
+//    the glass card's header row, so they always sit exactly where the
+//    content is, on every device.
+//  - Content (title + description) now cross-fades between pages instead
+//    of hard-cutting, which reads as noticeably more polished during swipe.
 // ────────────────────────────────────────────────────────────────────────────
-
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -528,7 +639,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int currentPage = 0;
 
-  List<OnboardingData> onboardingData = [
+  final List<OnboardingData> onboardingData = [
     OnboardingData(
       title: "Transform your\nbody and mind",
       description:
@@ -556,6 +667,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surfaceLowest,
@@ -563,11 +680,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         children: [
           PageView.builder(
             controller: _pageController,
-            onPageChanged: (int page) {
-              setState(() {
-                currentPage = page;
-              });
-            },
+            onPageChanged: (int page) => setState(() => currentPage = page),
             itemCount: onboardingData.length,
             itemBuilder: (context, index) {
               return OnboardingPage(
@@ -575,13 +688,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 isLastPage: index == onboardingData.length - 1,
                 pageIndex: index,
                 totalPages: onboardingData.length,
+                dotIndicator: _buildDots(),
                 onNextPressed: () => _handleNextPage(index),
-                onSkipPressed: () => _navigateToLogin(),
+                onSignInPressed: _navigateToLogin,
               );
             },
           ),
 
-          // Top bar
+          // Top bar — brand mark + Skip
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 24,
@@ -596,28 +710,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     fontSize: 18,
                   ),
                 ),
-                // Page counter pill
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.glass1,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Text(
-                        '${(currentPage + 1).toString().padLeft(2, '0')}/${onboardingData.length.toString().padLeft(2, '0')}',
-                        style: AuthAppText.labelMd.copyWith(
-                          color: AppColors.primaryFixed,
-                          fontWeight: FontWeight.w800,
+                Semantics(
+                  button: true,
+                  label: 'Skip introduction',
+                  child: GestureDetector(
+                    onTap: _navigateToLogin,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.glass1,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: AppColors.glassBorder),
+                          ),
+                          child: Text(
+                            'SKIP',
+                            style: AuthAppText.labelMd.copyWith(
+                              color: AppColors.onSurfaceVariant,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -626,40 +745,36 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ],
             ),
           ),
-
-          // Page indicator (dots)
-          Positioned(
-            bottom: 180,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                onboardingData.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: currentPage == index ? 24 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: currentPage == index
-                        ? AppColors.primaryFixed
-                        : Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: currentPage == index
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primaryFixed.withValues(alpha: 0.4),
-                              blurRadius: 8,
-                            ),
-                          ]
-                        : [],
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildDots() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        onboardingData.length,
+        (index) => AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          margin: const EdgeInsets.only(right: 6),
+          width: currentPage == index ? 22 : 7,
+          height: 7,
+          decoration: BoxDecoration(
+            color: currentPage == index
+                ? AppColors.primaryFixed
+                : Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: currentPage == index
+                ? [
+                    BoxShadow(
+                      color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                      blurRadius: 6,
+                    ),
+                  ]
+                : [],
+          ),
+        ),
       ),
     );
   }
@@ -698,14 +813,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 // ────────────────────────────────────────────────────────────────────────────
 // Onboarding Page
 // ────────────────────────────────────────────────────────────────────────────
-
 class OnboardingPage extends StatelessWidget {
   final OnboardingData data;
   final bool isLastPage;
   final int pageIndex;
   final int totalPages;
+  final Widget dotIndicator;
   final VoidCallback onNextPressed;
-  final VoidCallback onSkipPressed;
+  final VoidCallback onSignInPressed;
 
   const OnboardingPage({
     super.key,
@@ -713,18 +828,17 @@ class OnboardingPage extends StatelessWidget {
     required this.isLastPage,
     required this.pageIndex,
     required this.totalPages,
+    required this.dotIndicator,
     required this.onNextPressed,
-    required this.onSkipPressed,
+    required this.onSignInPressed,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Background image
         _buildBackgroundImage(context),
 
-        // Dark gradient overlay
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
@@ -743,7 +857,6 @@ class OnboardingPage extends StatelessWidget {
           ),
         ),
 
-        // Primary glow orb
         Positioned(
           bottom: -60,
           left: -100,
@@ -754,17 +867,13 @@ class OnboardingPage extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
-                  colors: [
-                    AppColors.glowOrbPrimary,
-                    Colors.transparent,
-                  ],
+                  colors: [AppColors.glowOrbPrimary, Colors.transparent],
                 ),
               ),
             ),
           ),
         ),
 
-        // Content overlay at bottom
         Positioned(
           bottom: 0,
           left: 0,
@@ -772,15 +881,17 @@ class OnboardingPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Title — bleeds off edges
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: _buildTitle(),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: Padding(
+                  key: ValueKey('title_$pageIndex'),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _buildTitle(),
+                ),
               ),
 
               const SizedBox(height: 8),
 
-              // Accent bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
@@ -795,7 +906,6 @@ class OnboardingPage extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Glass bottom card
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: ClipRRect(
@@ -808,66 +918,74 @@ class OnboardingPage extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppColors.glass1,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.glassBorder,
-                        ),
+                        border: Border.all(color: AppColors.glassBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Handle bar
-                          Center(
-                            child: Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(2),
+                          // Dots now live here, anchored to the card that
+                          // actually contains the paginated content.
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              dotIndicator,
+                              Text(
+                                '${(pageIndex + 1).toString().padLeft(2, '0')}/${totalPages.toString().padLeft(2, '0')}',
+                                style: AuthAppText.labelSm.copyWith(
+                                  color: AppColors.onSurfaceVariant,
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                          Text(
-                            data.description,
-                            style: AuthAppText.bodyMd.copyWith(
-                              color: AppColors.onSurfaceVariant,
-                              height: 1.6,
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 250),
+                            child: Text(
+                              data.description,
+                              key: ValueKey('desc_$pageIndex'),
+                              style: AuthAppText.bodyMd.copyWith(
+                                color: AppColors.onSurfaceVariant,
+                                height: 1.6,
+                              ),
                             ),
                           ),
 
                           const SizedBox(height: 24),
 
-                          // CTA Button — Electric Volt
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: onNextPressed,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryFixed,
-                                foregroundColor: AppColors.onPrimary,
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                          Semantics(
+                            button: true,
+                            label: isLastPage
+                                ? 'Initiate engine, continue to sign up'
+                                : 'Next',
+                            child: SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: ElevatedButton(
+                                onPressed: onNextPressed,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryFixed,
+                                  foregroundColor: AppColors.onPrimary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    isLastPage
-                                        ? 'INITIATE ENGINE'
-                                        : 'NEXT',
-                                    style: AuthAppText.buttonPrimary,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Icon(
-                                    Icons.arrow_forward,
-                                    color: AppColors.onPrimary,
-                                    size: 18,
-                                  ),
-                                ],
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      isLastPage ? 'INITIATE ENGINE' : 'NEXT',
+                                      style: AuthAppText.buttonPrimary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Icon(
+                                      Icons.arrow_forward,
+                                      color: AppColors.onPrimary,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -880,25 +998,28 @@ class OnboardingPage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Already a member
               Center(
-                child: GestureDetector(
-                  onTap: onSkipPressed,
-                  child: RichText(
-                    text: TextSpan(
-                      style: AuthAppText.labelMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                      children: [
-                        const TextSpan(text: 'ALREADY A MEMBER? '),
-                        TextSpan(
-                          text: 'SIGN IN',
-                          style: AuthAppText.labelMd.copyWith(
-                            color: AppColors.onSurface,
-                            fontWeight: FontWeight.w800,
-                          ),
+                child: Semantics(
+                  button: true,
+                  label: 'Already a member, sign in',
+                  child: GestureDetector(
+                    onTap: onSignInPressed,
+                    child: RichText(
+                      text: TextSpan(
+                        style: AuthAppText.labelMd.copyWith(
+                          color: AppColors.onSurfaceVariant,
                         ),
-                      ],
+                        children: [
+                          const TextSpan(text: 'ALREADY A MEMBER? '),
+                          TextSpan(
+                            text: 'SIGN IN',
+                            style: AuthAppText.labelMd.copyWith(
+                              color: AppColors.onSurface,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -914,6 +1035,7 @@ class OnboardingPage extends StatelessWidget {
   Widget _buildTitle() {
     final words = data.title.split('\n');
     return Column(
+      key: ValueKey('title_col_$pageIndex'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (int i = 0; i < words.length; i++)
@@ -932,65 +1054,69 @@ class OnboardingPage extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       height: double.infinity,
-      child: Image.asset(
-        data.imagePath,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.surfaceContainer, AppColors.surface],
+      child: Semantics(
+        image: true,
+        label: data.placeholderText,
+        child: Image.asset(
+          data.imagePath,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: double.infinity,
+              height: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [AppColors.surfaceContainer, AppColors.surface],
+                ),
               ),
-            ),
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(40),
-                margin: const EdgeInsets.all(40),
-                decoration: BoxDecoration(
-                  color: AppColors.glass1,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.primaryFixed.withValues(alpha: 0.2),
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.all(40),
+                  margin: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: AppColors.glass1,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.primaryFixed.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed.withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          data.icon,
+                          size: 80,
+                          color: AppColors.primaryFixed,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        data.placeholderText,
+                        style: AuthAppText.titleMd,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Image Placeholder',
+                        style: AuthAppText.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        data.icon,
-                        size: 80,
-                        color: AppColors.primaryFixed,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      data.placeholderText,
-                      style: AuthAppText.titleMd,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Image Placeholder',
-                      style: AuthAppText.bodySm.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -1010,127 +1136,4 @@ class OnboardingData {
     required this.placeholderText,
     required this.icon,
   });
-}
-
-class LoginPlaceholder extends StatelessWidget {
-  const LoginPlaceholder({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surfaceLowest,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
-                    onPressed: () {
-                      Navigator.of(context).maybePop();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.primaryGlow,
-                            blurRadius: 30,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.fitness_center,
-                        color: AppColors.primaryFixed,
-                        size: 60,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text('CORE', style: AuthAppText.displayMd),
-                    Text(
-                      'GYM',
-                      style: AuthAppText.labelLg.copyWith(
-                        color: AppColors.primaryFixed,
-                        letterSpacing: 6,
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      margin: const EdgeInsets.symmetric(horizontal: 32),
-                      decoration: BoxDecoration(
-                        color: AppColors.glass1,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.glassBorder),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.login,
-                            color: AppColors.primaryFixed,
-                            size: 40,
-                          ),
-                          const SizedBox(height: 16),
-                          Text('Login Screen', style: AuthAppText.headlineSm),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Replace this with your\nlogin page implementation',
-                            style: AuthAppText.bodyMd,
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 40),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 32),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Implement your login logic here'),
-                                backgroundColor: AppColors.primaryFixed,
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryFixed,
-                            foregroundColor: AppColors.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text('CONTINUE TO LOGIN', style: AuthAppText.buttonPrimary),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

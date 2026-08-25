@@ -112,7 +112,8 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close, color: Colors.white),
+                icon: const Icon(Icons.close_rounded,
+                    color: AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               )
             ],
@@ -145,7 +146,7 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                 child: TextField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  style: AppText.bodyLg.copyWith(color: Colors.white),
+                  style: AppText.bodyLg.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Weight (kg)',
                     labelStyle: AppText.labelSm.copyWith(color: AppColors.onSurfaceVariant),
@@ -163,7 +164,7 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                  style: AppText.bodyLg.copyWith(color: Colors.white),
+                  style: AppText.bodyLg.copyWith(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Reps',
                     labelStyle: AppText.labelSm.copyWith(color: AppColors.onSurfaceVariant),
@@ -191,8 +192,10 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                 ),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.black)
-                  : Text('LOG SET', style: AppText.buttonPrimary.copyWith(color: Colors.black)),
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Text('LOG SET',
+                      style:
+                          AppText.buttonPrimary.copyWith(color: Colors.white)),
             ),
           ),
           const SizedBox(height: 24),

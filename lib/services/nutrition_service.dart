@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/food_scan_result.dart';
 import '../models/voice_food_log_result.dart';
+import 'streak_service.dart';
 import 'supabase_client.dart';
 
 class NutritionService {
+  final StreakService _streakService = StreakService();
+
   // Search foods
   Future<List<Map<String, dynamic>>> searchFoods(String query, {String category = 'all'}) async {
     List<Map<String, dynamic>> results = [];
@@ -90,6 +93,8 @@ class NutritionService {
 
       await supabase.from('nutrition_logs').insert(insertMap);
       await _updateDailySummary(d);
+      // Logged food → count today as active for the streak.
+      _streakService.recordActivity('nutrition');
       debugPrint('✅ nutrition_log inserted & daily_summary updated for $d');
       return true;
     } on PostgrestException catch (e) {
@@ -152,6 +157,8 @@ class NutritionService {
 
     if (savedCount > 0) {
       await _updateDailySummary(d);
+      // AI food scan → count today as active for the streak.
+      _streakService.recordActivity('nutrition');
       debugPrint('✅ saved $savedCount/${items.length} scanned items for $d');
       return true;
     }
@@ -209,6 +216,8 @@ class NutritionService {
 
     if (savedCount > 0) {
       await _updateDailySummary(d);
+      // Voice food log → count today as active for the streak.
+      _streakService.recordActivity('nutrition');
       debugPrint('✅ saved $savedCount/${items.length} voice items for $d');
       return true;
     }

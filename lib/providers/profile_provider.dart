@@ -16,16 +16,30 @@ class ProfileProvider extends ChangeNotifier {
   bool get isReady => !_isLoading && !_needsUserOnboarding && !_needsCoachSetup && !_needsRoleSelection;
   bool get isLoading => _isLoading;
 
+  /// Notifies listeners after the current frame (if any) completes.
+  ///
+  /// fetchProfile()/clear() can be entered synchronously from initState or
+  /// other code running inside the build phase; notifying immediately would
+  /// mark provider scopes dirty mid-build and throw
+  /// "setState() called during build". Deferring keeps behavior identical
+  /// (the UI rebuilds one frame later at most) while making every entry
+  /// point build-phase-safe.
+  void _notifySafe() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
   Future<void> fetchProfile() async {
     _isLoading = true;
-    notifyListeners();
+    _notifySafe();
 
     try {
       final user = supabase.auth.currentUser;
       debugPrint("ProfileProvider: Fetching for user ${user?.id}");
       if (user == null) {
         _isLoading = false;
-        notifyListeners();
+        _notifySafe();
         return;
       }
 
@@ -106,6 +120,6 @@ class ProfileProvider extends ChangeNotifier {
     _needsCoachSetup = false;
     _isCoach = false;
     _isLoading = true;
-    notifyListeners();
+    _notifySafe();
   }
 }

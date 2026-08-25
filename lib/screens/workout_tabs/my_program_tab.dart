@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../services/supabase_client.dart';
@@ -20,6 +21,13 @@ class _MyProgramTabState extends State<MyProgramTab>
   late AnimationController _heroController;
   late Animation<double> _heroFade;
   late Animation<Offset> _heroSlide;
+
+  // Consistent level accent mapping (same as Programs Library)
+  static const Map<String, Color> _levelColors = {
+    'beginner': Color(0xFF22A06B),
+    'intermediate': Color(0xFFF59E0B),
+    'advanced': Color(0xFFEF4444),
+  };
 
   @override
   void initState() {
@@ -73,7 +81,7 @@ class _MyProgramTabState extends State<MyProgramTab>
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(
-          color: AppColors.primaryFixed,
+          color: AppColors.primary,
           strokeWidth: 2,
         ),
       );
@@ -91,12 +99,7 @@ class _MyProgramTabState extends State<MyProgramTab>
     final int totalWeeks = progData['duration_weeks'] ?? 1;
     final double progress = (currentWeek / totalWeeks).clamp(0.0, 1.0);
 
-    final Map<String, Color> levelColors = {
-      'beginner': const Color(0xFF34D399),
-      'intermediate': const Color(0xFFFBBF24),
-      'advanced': const Color(0xFFF87171),
-    };
-    final levelColor = levelColors[level] ?? AppColors.primaryFixed;
+    final levelColor = _levelColors[level] ?? AppColors.primary;
 
     return FadeTransition(
       opacity: _heroFade,
@@ -120,49 +123,33 @@ class _MyProgramTabState extends State<MyProgramTab>
                 progData: progData,
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: 24),
 
               // ── Weekly snapshot ────────────────────────────
               Row(
                 children: [
                   _statCard('${progData['days_per_week'] ?? 4}', 'Days/Week',
-                      Icons.calendar_month_rounded, const Color(0xFF7C3AED)),
+                      Icons.calendar_month_rounded, AppColors.purpleAccent),
                   const SizedBox(width: 12),
                   _statCard('$totalWeeks', 'Total Weeks',
-                      Icons.timelapse_rounded, const Color(0xFF06B6D4)),
+                      Icons.timelapse_rounded, AppColors.secondary),
                   const SizedBox(width: 12),
                   _statCard('${(progress * 100).round()}%', 'Complete',
-                      Icons.pie_chart_rounded, AppColors.primaryFixed),
+                      Icons.pie_chart_rounded, AppColors.primary),
                 ],
               ),
 
               const SizedBox(height: 28),
 
               // ── Today's Workout ────────────────────────────
-              const Text(
-                'TODAY\'S WORKOUT',
-                style: TextStyle(
-                  color: Color(0xFF8E8E93),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
+              _sectionLabel('TODAY\'S WORKOUT'),
               const SizedBox(height: 12),
               _buildWorkoutCard(),
 
               const SizedBox(height: 28),
 
               // ── Weekly Schedule ────────────────────────────
-              const Text(
-                'THIS WEEK',
-                style: TextStyle(
-                  color: Color(0xFF8E8E93),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
+              _sectionLabel('THIS WEEK'),
               const SizedBox(height: 12),
               _buildWeekRow(currentWeek),
 
@@ -170,17 +157,20 @@ class _MyProgramTabState extends State<MyProgramTab>
 
               // ── CTA ────────────────────────────────────────
               GestureDetector(
-                onTap: () => _showMuscleSelection(context),
+                onTap: () {
+                  HapticFeedback.mediumImpact();
+                  _showMuscleSelection(context);
+                },
                 child: Container(
                   width: double.infinity,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryFixed,
+                    gradient: AppColors.primaryActionGradient,
                     borderRadius: BorderRadius.circular(18),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                        blurRadius: 20,
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 16,
                         offset: const Offset(0, 6),
                       ),
                     ],
@@ -189,12 +179,12 @@ class _MyProgramTabState extends State<MyProgramTab>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.play_arrow_rounded,
-                          color: Colors.black, size: 24),
+                          color: Colors.white, size: 24),
                       SizedBox(width: 8),
                       Text(
                         'START TODAY\'S WORKOUT',
                         style: TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 1,
@@ -211,6 +201,16 @@ class _MyProgramTabState extends State<MyProgramTab>
     );
   }
 
+  Widget _sectionLabel(String text) => Text(
+        text,
+        style: TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.5,
+        ),
+      );
+
   Widget _buildHeroCard({
     required String progName,
     required String progNameAr,
@@ -223,11 +223,18 @@ class _MyProgramTabState extends State<MyProgramTab>
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,9 +248,9 @@ class _MyProgramTabState extends State<MyProgramTab>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: levelColor.withOpacity(0.15),
+                  color: levelColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: levelColor.withOpacity(0.4)),
+                  border: Border.all(color: levelColor.withValues(alpha: 0.35)),
                 ),
                 child: Text(
                   level.toUpperCase(),
@@ -258,18 +265,18 @@ class _MyProgramTabState extends State<MyProgramTab>
               // Week counter
               Row(
                 children: [
-                  const Text(
+                  Text(
                     'WEEK',
                     style: TextStyle(
-                        color: Color(0xFF636366),
+                        color: AppColors.textMuted,
                         fontSize: 11,
                         letterSpacing: 1),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '$currentWeek/$totalWeeks',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: AppColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w800,
                     ),
@@ -283,9 +290,9 @@ class _MyProgramTabState extends State<MyProgramTab>
 
           Text(
             progName,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 25,
               fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
               height: 1.1,
@@ -296,8 +303,7 @@ class _MyProgramTabState extends State<MyProgramTab>
               padding: const EdgeInsets.only(top: 4),
               child: Text(
                 progNameAr,
-                style:
-                    const TextStyle(color: Color(0xFF8E8E93), fontSize: 14),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
               ),
             ),
 
@@ -305,8 +311,8 @@ class _MyProgramTabState extends State<MyProgramTab>
             const SizedBox(height: 12),
             Text(
               progData['description'],
-              style: const TextStyle(
-                color: Color(0xFF636366),
+              style: TextStyle(
+                color: AppColors.textSecondary,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -315,7 +321,7 @@ class _MyProgramTabState extends State<MyProgramTab>
             ),
           ],
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
           // Progress bar
           Column(
@@ -324,10 +330,10 @@ class _MyProgramTabState extends State<MyProgramTab>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'PROGRESS',
                     style: TextStyle(
-                      color: Color(0xFF8E8E93),
+                      color: AppColors.textMuted,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.5,
@@ -348,7 +354,7 @@ class _MyProgramTabState extends State<MyProgramTab>
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress,
-                  backgroundColor: Colors.white10,
+                  backgroundColor: AppColors.borderSubtle,
                   valueColor: AlwaysStoppedAnimation<Color>(levelColor),
                   minHeight: 6,
                 ),
@@ -366,9 +372,8 @@ class _MyProgramTabState extends State<MyProgramTab>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          color: AppColors.surfaceContainerHigh.withValues(alpha: .6),
+          borderRadius: BorderRadius.circular(14),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -377,9 +382,9 @@ class _MyProgramTabState extends State<MyProgramTab>
             const SizedBox(height: 8),
             Text(
               value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 19,
                 fontWeight: FontWeight.w800,
                 height: 1,
               ),
@@ -387,8 +392,8 @@ class _MyProgramTabState extends State<MyProgramTab>
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
-                color: Color(0xFF636366),
+              style: TextStyle(
+                color: AppColors.textMuted,
                 fontSize: 11,
               ),
             ),
@@ -401,65 +406,72 @@ class _MyProgramTabState extends State<MyProgramTab>
   Widget _buildWorkoutCard() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C1E),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .03),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
             onTap: () {},
-            splashColor: Colors.white.withOpacity(0.05),
+            splashColor: AppColors.primary.withValues(alpha: 0.05),
             child: Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Container(
-                    width: 48,
-                    height: 48,
+                    width: 46,
+                    height: 46,
                     decoration: BoxDecoration(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(13),
                     ),
                     child: const Icon(
                       Icons.fitness_center_rounded,
-                      color: AppColors.primaryFixed,
+                      color: AppColors.primary,
                       size: 22,
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  const Expanded(
+                  const SizedBox(width: 14),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Day 1 — Full Body',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           '5 exercises  •  ~45 min',
-                          style:
-                              TextStyle(color: Color(0xFF8E8E93), fontSize: 13),
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.surfaceContainerHigh,
+                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.chevron_right,
-                        color: Colors.white54, size: 18),
+                    child: Icon(Icons.chevron_right_rounded,
+                        color: AppColors.textSecondary, size: 18),
                   ),
                 ],
               ),
@@ -489,34 +501,35 @@ class _MyProgramTabState extends State<MyProgramTab>
                   height: 42,
                   decoration: BoxDecoration(
                     color: isToday
-                        ? AppColors.primaryFixed
+                        ? AppColors.primary
                         : isDone
-                            ? const Color(0xFF2C2C2E)
+                            ? AppColors.primary.withValues(alpha: .12)
                             : isWorkout
-                                ? const Color(0xFF2C2C2E)
-                                : const Color(0xFF1C1C1E),
+                                ? AppColors.surfaceContainerHigh
+                                : AppColors.background,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isWorkout && !isToday && !isDone
-                          ? Colors.white.withOpacity(0.15)
+                          ? AppColors.borderSubtle
                           : Colors.transparent,
                     ),
                   ),
                   child: Center(
                     child: isDone
                         ? const Icon(Icons.check_rounded,
-                            color: Color(0xFF34D399), size: 16)
+                            color: AppColors.greenAccent, size: 16)
                         : isWorkout
                             ? Icon(
                                 Icons.fitness_center_rounded,
                                 size: 14,
                                 color: isToday
-                                    ? Colors.black
-                                    : const Color(0xFF8E8E93),
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
                               )
-                            : const Text('—',
+                            : Text('—',
                                 style: TextStyle(
-                                    color: Color(0xFF636366), fontSize: 12)),
+                                    color: AppColors.outlineVariant,
+                                    fontSize: 12)),
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -524,8 +537,8 @@ class _MyProgramTabState extends State<MyProgramTab>
                   days[i],
                   style: TextStyle(
                     color: isToday
-                        ? AppColors.primaryFixed
-                        : const Color(0xFF8E8E93),
+                        ? AppColors.primary
+                        : AppColors.textMuted,
                     fontSize: 11,
                     fontWeight:
                         isToday ? FontWeight.w700 : FontWeight.w500,
@@ -550,31 +563,30 @@ class _MyProgramTabState extends State<MyProgramTab>
               width: 90,
               height: 90,
               decoration: BoxDecoration(
-                color: const Color(0xFF1C1C1E),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                color: AppColors.surfaceContainerHigh,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.borderSubtle),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.assignment_outlined,
-                size: 40,
-                color: Color(0xFF636366),
+                size: 38,
+                color: AppColors.textMuted,
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               'No Active Program',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
+              style: AppText.headlineMd.copyWith(
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Head to the Library tab to pick a program and start your journey.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF8E8E93),
+                color: AppColors.textSecondary,
                 fontSize: 15,
                 height: 1.5,
               ),
@@ -600,25 +612,25 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Push Day',
           'id': 'push',
           'icon': Icons.pan_tool,
-          'color': const Color(0xFFF87171)
+          'color': const Color(0xFFEF4444)
         },
         {
           'label': 'Pull Day',
           'id': 'pull',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFF7C3AED)
+          'color': const Color(0xFF8B5CF6)
         },
         {
           'label': 'Legs Day',
           'id': 'legs',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF34D399)
+          'color': const Color(0xFF22A06B)
         },
         {
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFFBBF24)
+          'color': const Color(0xFFF59E0B)
         },
       ];
     } else if (progName.contains('upper') || progName.contains('lower')) {
@@ -627,19 +639,19 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Upper Body',
           'id': 'upper',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFF7C3AED)
+          'color': const Color(0xFF8B5CF6)
         },
         {
           'label': 'Lower Body',
           'id': 'lower',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF34D399)
+          'color': const Color(0xFF22A06B)
         },
         {
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFFBBF24)
+          'color': const Color(0xFFF59E0B)
         },
       ];
     } else if (progName.contains('full')) {
@@ -648,13 +660,13 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Full Body',
           'id': 'full_body',
           'icon': Icons.accessibility_new,
-          'color': AppColors.primaryFixed
+          'color': AppColors.primary
         },
         {
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFFBBF24)
+          'color': const Color(0xFFF59E0B)
         },
       ];
     } else {
@@ -663,37 +675,37 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Chest',
           'id': 'chest',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFFF87171)
+          'color': const Color(0xFFEF4444)
         },
         {
           'label': 'Back',
           'id': 'back',
           'icon': Icons.airline_seat_flat_angled,
-          'color': const Color(0xFF7C3AED)
+          'color': const Color(0xFF8B5CF6)
         },
         {
           'label': 'Shoulders',
           'id': 'shoulders',
           'icon': Icons.accessibility,
-          'color': const Color(0xFF06B6D4)
+          'color': const Color(0xFF38BDF8)
         },
         {
           'label': 'Arms',
           'id': 'arms',
           'icon': Icons.sports_gymnastics,
-          'color': const Color(0xFFFBBF24)
+          'color': const Color(0xFFF59E0B)
         },
         {
           'label': 'Legs',
           'id': 'legs',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF34D399)
+          'color': const Color(0xFF22A06B)
         },
         {
           'label': 'Core',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFFF6B35)
+          'color': const Color(0xFFFF8A00)
         },
       ];
     }
@@ -704,9 +716,10 @@ class _MyProgramTabState extends State<MyProgramTab>
       isScrollControlled: true,
       builder: (BuildContext ctx) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Color(0xFF1C1C1E),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border.all(color: AppColors.borderSubtle),
           ),
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
           child: SafeArea(
@@ -720,27 +733,26 @@ class _MyProgramTabState extends State<MyProgramTab>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.white24,
+                      color: AppColors.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'SELECT TARGET',
                   style: TextStyle(
-                    color: Color(0xFF8E8E93),
+                    color: AppColors.textMuted,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'What are you training today?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                  style: AppText.headlineMd.copyWith(
+                    color: AppColors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -771,9 +783,9 @@ class _MyProgramTabState extends State<MyProgramTab>
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
+                          color: color.withValues(alpha: 0.08),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: color.withOpacity(0.25)),
+                          border: Border.all(color: color.withValues(alpha: 0.3)),
                         ),
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -782,12 +794,16 @@ class _MyProgramTabState extends State<MyProgramTab>
                             Icon(opt['icon'] as IconData,
                                 color: color, size: 20),
                             const SizedBox(width: 10),
-                            Text(
-                              opt['label'] as String,
-                              style: TextStyle(
-                                color: color,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                            Flexible(
+                              child: Text(
+                                opt['label'] as String,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: color,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                           ],

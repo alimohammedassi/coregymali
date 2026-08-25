@@ -1,7 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'streak_service.dart';
 import 'supabase_client.dart';
 
 class WorkoutService {
+  final StreakService _streakService = StreakService();
   // Start a new session
   Future<String?> startSession({
     required String muscleGroup,
@@ -60,6 +62,8 @@ class WorkoutService {
         'ended_at': DateTime.now().toIso8601String(),
         'duration_min': durationMin,
       }).eq('id', sessionId).eq('user_id', currentUserId!);
+      // Completed workout → count today as active for the streak.
+      _streakService.recordActivity('workout');
     } on PostgrestException catch (e) {
       print('Supabase error ending session: ${e.message} | code: ${e.code}');
     } catch (e) {

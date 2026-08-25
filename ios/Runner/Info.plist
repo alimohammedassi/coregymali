@@ -51,5 +51,7 @@
 	<string>CoreGym syncs your completed workouts and activity targets with Apple Health.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>CoreGym uses the microphone to record short voice notes describing your meals so it can log them for you.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>CoreGym uses the camera to scan food photos and product barcodes so it can log your meals.</string>
 </dict>
 </plist>

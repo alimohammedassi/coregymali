@@ -9,6 +9,7 @@ import 'supabase/auth_service.dart';
 import 'supabase/profile_service.dart';
 import 'supabase/supabase_config.dart';
 import 'services/stats_service.dart';
+import 'services/streak_service.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
@@ -30,10 +31,13 @@ class _ProfilePageState extends State<ProfilePage>
   // ── Services ──────────────────────────────────────────────────────────────
   final _profileService = ProfileService();
   final _statsService = StatsService();
+  final _streakService = StreakService();
 
   // ── State ─────────────────────────────────────────────────────────────────
   bool _isLoading = true;
   bool _isUploadingAvatar = false;
+  int _streakCount = 0;
+  bool _streakLoggedToday = false;
 
   // Profile
   String _userName = 'User';
@@ -129,6 +133,15 @@ class _ProfilePageState extends State<ProfilePage>
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     _entryCtrl.reset();
+    // Streak — fire-and-forget; badge updates when it lands.
+    _streakService.getStatus().then((s) {
+      if (mounted) {
+        setState(() {
+          _streakCount = s.currentStreak;
+          _streakLoggedToday = s.loggedToday;
+        });
+      }
+    });
     try {
       final results = await Future.wait([
         _profileService.getProfile(),
@@ -503,20 +516,21 @@ class _ProfilePageState extends State<ProfilePage>
   // ── Rank Calculation ──────────────────────────────────────────────────────
   // Tiered brand colors — the top tier wears the primary accent (the app's
   // "volt"), lower tiers step down through cyan / amber / silver / muted.
+  // All values are readable on light pill backgrounds.
   ({String label, Color color}) _getRank() {
     if (_totalWorkoutsAllTime < 5) {
       return (label: 'ROOKIE', color: AppColors.textMuted);
     }
     if (_totalWorkoutsAllTime < 20) {
-      return (label: 'IRON', color: AppColors.secondary);
+      return (label: 'IRON', color: AppColors.secondaryDim);
     }
     if (_totalWorkoutsAllTime < 50) {
-      return (label: 'BRONZE', color: AppColors.tertiary);
+      return (label: 'BRONZE', color: AppColors.tertiaryDim);
     }
     if (_totalWorkoutsAllTime < 100) {
-      return (label: 'SILVER', color: AppColors.outlineVariant);
+      return (label: 'SILVER', color: AppColors.textSecondary);
     }
-    return (label: 'GOLD', color: AppColors.primary);
+    return (label: 'GOLD', color: AppColors.primaryGreen);
   }
 
   // ── Date Formatter ────────────────────────────────────────────────────────
@@ -814,6 +828,12 @@ class _ProfilePageState extends State<ProfilePage>
                     runSpacing: 8,
                     children: [
                       _Pill(
+                        icon: Icons.local_fire_department_rounded,
+                        label: '$_streakCount',
+                        colorOverride:
+                            _streakLoggedToday ? AppColors.primary : null,
+                      ),
+                      _Pill(
                         icon: Icons.military_tech_rounded,
                         label: rank.label,
                         colorOverride: rank.color,
@@ -941,8 +961,9 @@ class _ProfilePageState extends State<ProfilePage>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh.withValues(alpha: .6),
+        color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         children: [
@@ -1790,12 +1811,7 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = Container(
-      padding: EdgeInsets.only(
-        top: showEditBadge ? 10 : 16,
-        bottom: 16,
-        left: 16,
-        right: 16,
-      ),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -1816,29 +1832,45 @@ class _ProfileCard extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          card,
-          if (showEditBadge)
-            Positioned(
-              top: 10,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.borderSubtle),
-                ),
-                child: Icon(
-                  Icons.edit_rounded,
-                  size: 13,
-                  color: AppColors.primary,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap!();
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            card,
+            // Floating edit badge straddles the card border so it can
+            // never overlap the data rows inside.
+            if (showEditBadge)
+              Positioned(
+                top: -9,
+                right: 14,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.surface, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: .3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.edit_rounded,
+                    size: 13,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }

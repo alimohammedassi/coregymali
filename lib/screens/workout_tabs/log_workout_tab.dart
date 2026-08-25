@@ -1,30 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
-import '../../theme/app_text.dart';
 import '../../services/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Design Tokens
+//  Design Tokens — mapped onto the shared CoreGym light system
 // ─────────────────────────────────────────────────────────────────────────────
-const _kSurface = Color(0xFF111113);
-const _kCard = Color(0xFF1C1C1E);
-const _kCard2 = Color(0xFF2C2C2E);
-const _kAccent = AppColors.primaryFixed;
-const _kMuted = Color(0xFF8E8E93);
-const _kSubtle = Color(0xFF636366);
+const _kSurface = AppColors.background;
+const _kCard = AppColors.surface;
+const _kCard2 = AppColors.surfaceContainerHigh;
+const _kAccent = AppColors.primary;
+const _kMuted = AppColors.textSecondary;
+const _kSubtle = AppColors.textMuted;
 
 const Map<String, Color> _muscleColors = {
-  'Chest': Color(0xFFF87171),
-  'Back': Color(0xFF7C3AED),
-  'Shoulders': Color(0xFF06B6D4),
-  'Arms': Color(0xFFFBBF24),
-  'Legs': Color(0xFF34D399),
-  'Core': Color(0xFFFF6B35),
-  'Full Body': AppColors.primaryFixed,
+  'Chest': Color(0xFFEF4444),
+  'Back': Color(0xFF8B5CF6),
+  'Shoulders': Color(0xFF38BDF8),
+  'Arms': Color(0xFFF59E0B),
+  'Legs': Color(0xFF22A06B),
+  'Core': Color(0xFFFF8A00),
+  'Full Body': AppColors.primary,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -331,11 +330,18 @@ class _ExerciseCardState extends State<_ExerciseCard>
           child: Container(
             decoration: BoxDecoration(
               color: _kCard,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withOpacity(0.06),
+                color: AppColors.borderSubtle,
                 width: 1,
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: .03),
+                  blurRadius: 12,
+                  offset: const Offset(0, 3),
+                ),
+              ],
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
@@ -419,7 +425,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
                       Text(
                         ex['name'] ?? '',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -0.2,
@@ -435,12 +441,12 @@ class _ExerciseCardState extends State<_ExerciseCard>
                         children: [
                           _badge(
                             ex['equipment'] ?? 'Bodyweight',
-                            const Color(0xFFFF6B35),
+                            const Color(0xFFFF8A00),
                           ),
                           const SizedBox(width: 6),
                           _badge(
                             ex['category'] ?? 'Strength',
-                            const Color(0xFF06B6D4),
+                            const Color(0xFF38BDF8),
                           ),
                           const Spacer(),
                           if (imageUrl == null &&
@@ -664,16 +670,18 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
             children: [
               Icon(Icons.check_circle_rounded, color: _accentColor, size: 20),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Workout logged!',
-                style: TextStyle(fontWeight: FontWeight.w600),
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
               ),
             ],
           ),
-          backgroundColor: _kCard,
+          backgroundColor: AppColors.surfaceContainerHigh,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: AppColors.borderSubtle),
           ),
         ),
       );
@@ -793,7 +801,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                   Text(
                     ex['name'] ?? '',
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
                       letterSpacing: -0.5,
@@ -813,12 +821,12 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                     children: [
                       _infoPill(
                         ex['equipment'] ?? 'Bodyweight',
-                        const Color(0xFFFF6B35),
+                        const Color(0xFFFF8A00),
                       ),
                       const SizedBox(width: 8),
                       _infoPill(
                         ex['category'] ?? 'Strength',
-                        const Color(0xFF06B6D4),
+                        const Color(0xFF38BDF8),
                       ),
                       const SizedBox(width: 8),
                       _infoPill(widget.defaultMuscleGroup, _accentColor),
@@ -844,13 +852,13 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                         color: _kCard,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.06),
+                          color: AppColors.borderSubtle,
                         ),
                       ),
                       child: Text(
                         ex['instructions_ar'],
-                        style: const TextStyle(
-                          color: Color(0xFFE5E5EA),
+                        style: TextStyle(
+                          color: AppColors.textPrimary,
                           fontSize: 14,
                           height: 1.7,
                         ),
@@ -859,16 +867,16 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                   ],
 
                   const SizedBox(height: 32),
-                  Container(height: 1, color: Colors.white.withOpacity(0.07)),
+                  Container(height: 1, color: AppColors.borderLight),
                   const SizedBox(height: 28),
 
                   // ── Log Sets Header ──
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'LOG SETS',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: AppColors.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
@@ -904,7 +912,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                     decoration: BoxDecoration(
                       color: _kCard,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: AppColors.borderSubtle),
                     ),
                     child: Row(
                       children: [
@@ -934,10 +942,17 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                               decoration: BoxDecoration(
                                 color: _accentColor,
                                 borderRadius: BorderRadius.circular(14),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: _accentColor.withValues(alpha: .3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               child: const Icon(
                                 Icons.add_rounded,
-                                color: Colors.black,
+                                color: Colors.white,
                                 size: 26,
                               ),
                             ),
@@ -1040,7 +1055,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                               width: 22,
                               height: 22,
                               child: CircularProgressIndicator(
-                                color: Colors.black,
+                                color: Colors.white,
                                 strokeWidth: 2.5,
                               ),
                             )
@@ -1049,14 +1064,14 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                               children: [
                                 Icon(
                                   Icons.save_alt_rounded,
-                                  color: Colors.black,
+                                  color: Colors.white,
                                   size: 20,
                                 ),
                                 SizedBox(width: 8),
                                 Text(
                                   'SAVE WORKOUT',
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 1,
@@ -1095,7 +1110,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
@@ -1155,7 +1170,8 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
     );
   }
 
-  Widget _volumeDiv() => Container(width: 1, height: 32, color: Colors.white10);
+  Widget _volumeDiv() =>
+      Container(width: 1, height: 32, color: AppColors.borderSubtle);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1179,7 +1195,7 @@ class _SetRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: _kCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
         children: [
@@ -1187,7 +1203,7 @@ class _SetRow extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.15),
+              color: accentColor.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
@@ -1207,16 +1223,16 @@ class _SetRow extends StatelessWidget {
               children: [
                 _setDetail('${set.weight}', 'kg'),
                 const SizedBox(width: 20),
-                const Text(
+                Text(
                   '×',
-                  style: TextStyle(color: _kSubtle, fontSize: 16),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 16),
                 ),
                 const SizedBox(width: 20),
                 _setDetail('${set.reps}', 'reps'),
                 const Spacer(),
                 Text(
                   '${(set.weight * set.reps).toStringAsFixed(0)} kg vol',
-                  style: const TextStyle(color: _kSubtle, fontSize: 12),
+                  style: TextStyle(color: AppColors.textMuted, fontSize: 12),
                 ),
               ],
             ),
@@ -1228,7 +1244,7 @@ class _SetRow extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Colors.redAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -1251,7 +1267,7 @@ class _SetRow extends StatelessWidget {
         Text(
           val,
           style: const TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),

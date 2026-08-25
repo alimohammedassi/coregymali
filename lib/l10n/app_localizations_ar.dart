@@ -33,6 +33,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navDashboard => 'لوحة التحكم';
 
   @override
+  String get dashboardOverview => 'نظرة عامة على لوحة التحكم';
+
+  @override
   String get goodMorning => 'صباح الخير';
 
   @override
@@ -909,12 +912,8 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get profileFirstRunNudge => 'سجّل أول تمرين لتبدأ في جمع الرانك!';
 
-  // ── لوحة تحكم المدرب ──
   @override
   String get dashboardEyebrow => 'لوحتي';
-
-  @override
-  String get dashboardOverview => 'نظرة عامة';
 
   @override
   String get dashboardSubscribers => 'المشتركون';
@@ -959,7 +958,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get completeProfileCta => 'أكمل ملفك الشخصي';
 
   @override
-  String failedToLoadStats(Object error) {
+  String failedToLoadStats(String error) {
     return 'فشل تحميل الإحصائيات: $error';
   }
 
@@ -977,6 +976,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get statusExpired => 'منتهي';
 
   @override
+  String get statusPaused => 'متوقف مؤقتاً';
+
+  @override
+  String get statusCancelled => 'ملغي';
+
+  @override
   String get planPhases => 'مراحل الخطة';
 
   @override
@@ -987,12 +992,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentRefunded => 'مسترجع';
-
-  @override
-  String get statusPaused => 'متوقف مؤقتاً';
-
-  @override
-  String get statusCancelled => 'ملغي';
 
   @override
   String phaseWeek(int w) {

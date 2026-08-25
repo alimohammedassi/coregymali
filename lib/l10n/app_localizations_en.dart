@@ -33,6 +33,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDashboard => 'Dashboard';
 
   @override
+  String get dashboardOverview => 'Dashboard Overview';
+
+  @override
   String get goodMorning => 'Good morning';
 
   @override
@@ -918,12 +921,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileFirstRunNudge =>
       'Log your first workout to start ranking up!';
 
-  // ── Coach dashboard ──
   @override
   String get dashboardEyebrow => 'MY DASHBOARD';
-
-  @override
-  String get dashboardOverview => 'Overview';
 
   @override
   String get dashboardSubscribers => 'Subscribers';
@@ -968,7 +967,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completeProfileCta => 'Complete Your Profile';
 
   @override
-  String failedToLoadStats(Object error) {
+  String failedToLoadStats(String error) {
     return 'Failed to load stats: $error';
   }
 
@@ -986,6 +985,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get statusExpired => 'Expired';
 
   @override
+  String get statusPaused => 'Paused';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
   String get planPhases => 'PLAN PHASES';
 
   @override
@@ -996,12 +1001,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentRefunded => 'Refunded';
-
-  @override
-  String get statusPaused => 'Paused';
-
-  @override
-  String get statusCancelled => 'Cancelled';
 
   @override
   String phaseWeek(int w) {

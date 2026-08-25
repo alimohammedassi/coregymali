@@ -146,6 +146,12 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get navDashboard;
 
+  /// No description provided for @dashboardOverview.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard Overview'**
+  String get dashboardOverview;
+
   /// No description provided for @goodMorning.
   ///
   /// In en, this message translates to:
@@ -1826,32 +1832,154 @@ abstract class AppLocalizations {
   /// **'Log your first workout to start ranking up!'**
   String get profileFirstRunNudge;
 
-  // ── Coach dashboard ──
+  /// No description provided for @dashboardEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'MY DASHBOARD'**
   String get dashboardEyebrow;
-  String get dashboardOverview;
+
+  /// No description provided for @dashboardSubscribers.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribers'**
   String get dashboardSubscribers;
+
+  /// No description provided for @subscriberCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total'**
   String subscriberCount(int count);
+
+  /// No description provided for @statActiveSubscribers.
+  ///
+  /// In en, this message translates to:
+  /// **'Active\nSubscribers'**
   String get statActiveSubscribers;
+
+  /// No description provided for @statAvgRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg\nRating'**
   String get statAvgRating;
+
+  /// No description provided for @statMonthlyRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly\nRevenue'**
   String get statMonthlyRevenue;
+
+  /// No description provided for @statOpenSlots.
+  ///
+  /// In en, this message translates to:
+  /// **'Open\nSlots'**
   String get statOpenSlots;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
   String get filterAll;
+
+  /// No description provided for @filterActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
   String get filterActive;
+
+  /// No description provided for @filterPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
   String get filterPending;
+
+  /// No description provided for @filterExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
   String get filterExpired;
+
+  /// No description provided for @noSubscribersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No subscribers yet'**
   String get noSubscribersYet;
+
+  /// No description provided for @completeProfileHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your coach profile so clients can find and subscribe to you.'**
   String get completeProfileHint;
+
+  /// No description provided for @completeProfileCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Your Profile'**
   String get completeProfileCta;
-  String failedToLoadStats(Object error);
+
+  /// No description provided for @failedToLoadStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load stats: {error}'**
+  String failedToLoadStats(String error);
+
+  /// No description provided for @daysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days left'**
   String daysLeft(int n);
+
+  /// No description provided for @daysRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days remaining'**
   String daysRemaining(int n);
+
+  /// No description provided for @statusExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Expired'**
   String get statusExpired;
-  String get planPhases;
-  String get paymentPaid;
-  String get paymentUnpaid;
-  String get paymentRefunded;
+
+  /// No description provided for @statusPaused.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
   String get statusPaused;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
   String get statusCancelled;
+
+  /// No description provided for @planPhases.
+  ///
+  /// In en, this message translates to:
+  /// **'PLAN PHASES'**
+  String get planPhases;
+
+  /// No description provided for @paymentPaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paymentPaid;
+
+  /// No description provided for @paymentUnpaid.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpaid'**
+  String get paymentUnpaid;
+
+  /// No description provided for @paymentRefunded.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunded'**
+  String get paymentRefunded;
+
+  /// No description provided for @phaseWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week {w}'**
   String phaseWeek(int w);
 }
 
@@ -1888,4 +2016,3 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
     'that was used.',
   );
 }
-

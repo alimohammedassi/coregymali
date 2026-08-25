@@ -335,6 +335,10 @@ class NutritionService {
     }
   }
 
+  /// Public wrapper so other logging entry points (e.g. the barcode scanner)
+  /// refresh the same daily-summary row without duplicating the logic.
+  Future<void> syncDailySummary(String dateStr) => _updateDailySummary(dateStr);
+
   // Add custom food
   Future<void> addCustomFood({
     required String name,

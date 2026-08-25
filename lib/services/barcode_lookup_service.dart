@@ -5,11 +5,13 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/barcode_product_result.dart';
+import 'nutrition_service.dart';
 import 'streak_service.dart';
 import 'supabase_client.dart';
 
 class BarcodeLookupService {
   final StreakService _streakService = StreakService();
+  final NutritionService _nutritionService = NutritionService();
   /// Looks up a product via the `lookup-barcode` Edge Function.
   ///
   /// Three-tier lookup happens server-side (shared cache → Open Food Facts →
@@ -96,6 +98,10 @@ class BarcodeLookupService {
 
       final logId = inserted['id']?.toString();
       debugPrint('✅ barcode "${product.barcode}" → nutrition_log $logId');
+
+      // Keep daily_summary in sync so the Nutrition tab / home ring reflect
+      // the barcode save immediately (same contract as every other logger).
+      await _nutritionService.syncDailySummary(d);
 
       // History is best-effort — never let it fail the save UX.
       try {

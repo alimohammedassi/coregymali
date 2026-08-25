@@ -1,15 +1,15 @@
 # CoreGym - Smart Fitness & Nutrition Tracker
 
 <div align="center">
-  <img src="assets/app_icon.png.png" alt="CoreGym Logo" width="120"/>
+  <img src="assets/images/coregym_logo.png" alt="CoreGym Logo" width="120"/>
   <p>
-    <strong>CoreGym</strong> — Your intelligent fitness companion with AI-powered workout generation
+    <strong>CoreGym</strong> — Your intelligent fitness companion with AI-powered workout generation and nutrition tracking
   </p>
   <p>
     <img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter" alt="Flutter">
     <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase" alt="Supabase">
-    <img src="https://img.shields.io/badge/Platform-Android-green?style=flat-square" alt="Platform">
-    <img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square" alt="Platform">
+    <img src="https://img.shields.io/badge/Platform-Android-green?style=flat-square" alt="Android">
+    <img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square" alt="iOS">
   </p>
 </div>
 
@@ -17,58 +17,98 @@
 
 ## Overview
 
-**CoreGym** is a comprehensive fitness and nutrition tracking application built with Flutter and Supabase. It provides an all-in-one solution for workout logging, nutrition tracking, progress visualization, and personalized AI-generated workout plans.
+**CoreGym** is a comprehensive fitness and nutrition application built with Flutter and Supabase. It combines AI-powered workout generation, smart food logging (photo, voice, and barcode), wearable health-data sync, and a built-in coach marketplace with chat and subscriptions into one all-in-one platform.
 
-The app supports **English and Arabic** languages out of the box, featuring a premium dark-themed glassmorphic UI with smooth animations and haptic feedback.
+The app supports **English and Arabic** out of the box with full RTL support.
 
 ---
 
 ## Features
 
-### 1. AI-Powered Smart Trainer
+### 1. AI Smart Trainer
 
-The standout feature of CoreGym is the **Smart Trainer** that generates personalized workout plans based on:
+Generates personalized workout plans based on:
 
-- **Mood Selection** — Choose from 5 energy levels (Tired, Light, Medium, Energetic, Full Power) to adjust workout intensity
+- **Mood Selection** — Choose from 5 energy levels (Tired → Full Power) to adjust workout intensity
 - **Target Muscles** — Multi-select from 8 muscle groups (Chest, Back, Shoulders, Biceps, Triceps, Legs, Abs, Cardio)
 - **Duration** — Select workout length (30, 45, 60, or 90 minutes)
 
-The AI automatically:
-- Selects appropriate exercises from a database of 48+ exercises
-- Adjusts sets, reps, and rest times based on your mood
-- Includes warm-up exercises
-- Provides motivational messages in Arabic
+The generator automatically selects exercises from a library of 48+ exercises, adjusts sets/reps/rest times based on mood, includes warm-ups, and provides motivational messages.
 
 ### 2. Workout Tracking
 
-- **Exercise Library** — Browse exercises organized by muscle group with YouTube video tutorials
+- **Exercise Library** — Browse exercises by muscle group with YouTube video tutorials
 - **My Program** — View and start your active workout program
-- **Programs Library** — Explore preset training programs (Push Pull Legs, Upper/Lower, Full Body, Bro Split)
-- **Detailed Logging** — Log sets, weights, and reps during workouts
-- **YouTube Integration** — Watch exercise tutorial videos directly in the app
+- **Programs Library** — Preset training programs (Push Pull Legs, Upper/Lower, Full Body, Bro Split)
+- **Detailed Logging** — Log sets, weights, reps, and durations during workouts
 - **Rest Timer** — Built-in countdown timer between sets
+- **Streaks** — Track workout streaks with badges
 
 ### 3. Nutrition Tracking
 
-- **Daily Macros Dashboard** — Track calories, protein, carbs, and fat against your goals
-- **Food Search** — Search the database for foods to log
-- **Meal Categorization** — Log meals into Breakfast, Lunch, Dinner, and Snacks
-- **Calorie Rings** — Beautiful animated progress rings showing daily consumption
-- **Weekly History** — View past 7 days of nutrition data with charts
+- **Daily Macros Dashboard** — Track calories, protein, carbs, and fat against your goals with animated rings
+- **Food Search** — Search a seeded food database plus user-created custom foods
+- **Meal Categorization** — Breakfast, Lunch, Dinner, Snacks
+- **Weekly History** — Past 7 days of nutrition data with charts
 
-### 4. Progress & Analytics
+#### Smart Food Logging (AI)
+
+| Method | How it works |
+|--------|--------------|
+| **Photo Scan** | Snap a picture of your meal — Gemini vision analyzes it and estimates weight, calories, and macros |
+| **Voice Logging** | Describe your meal by voice — Gemini understands the audio directly (no separate speech-to-text step) and extracts food items with nutrition |
+| **Barcode Scan** | Scan any product barcode for instant nutrition lookup |
+
+All three flows save directly to Supabase via Edge Functions.
+
+### 4. Health & Wearable Integration
+
+Syncs automatically with **Apple HealthKit** (iOS / Apple Watch) and **Google Health Connect** (Android / Galaxy Watch, Pixel Watch, Garmin, etc.) through the unified `health` package:
+
+- Step count toward daily goals
+- Active & total calories burned
+- Heart rate (real-time and resting average)
+- Workout minutes and exercise sessions
+
+Activity is synced to the `daily_activity` table and surfaced on the home dashboard and progress analytics. See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md) for platform setup details.
+
+### 5. Progress & Analytics
 
 - **Body Measurements** — Track weight, body fat %, and key metrics over time
-- **1RM Progress** — Monitor your estimated one-rep max improvements
-- **Workout History** — View completed workouts with detailed set logs
-- **Volume Tracking** — Calculate total training volume (kg)
+- **1RM / Personal Records** — Best weight per exercise, tracked automatically
+- **Workout History** — Completed sessions with full set logs
+- **Volume Tracking** — Total training volume per session
+- **Weekly Charts** — Calories, steps, and workouts with goal percentages
 
-### 5. Profile & Goals
+### 6. Coach Marketplace
 
-- **Personal Information** — Age, weight, height, gender
-- **Goal Setting** — Weight loss, muscle gain, endurance, flexibility, or general fitness
-- **Daily Targets** — Personalized calorie and protein goals
-- **Activity Level** — Sedentary to extra active settings
+A two-sided marketplace connecting members with fitness coaches:
+
+- **Coach Registration & Onboarding** — Coaches create profiles, add media/certifications, and publish their services
+- **Coach Marketplace** — Members browse coach profiles and details
+- **Coach Dashboard** — Client management, client data views, and earnings stats
+- **Client Assignment** — Coaches can view client progress data
+
+### 7. Chat & Notifications
+
+- **Real-time Chat** — Messaging between members and coaches (Supabase Realtime)
+- **Unread Counters** — Per-conversation and global unread message counts
+- **Notification Center** — In-app notifications list
+
+### 8. Subscriptions & Payments
+
+Stripe-powered subscriptions for premium/coach services:
+
+- Secure checkout via Stripe Checkout Sessions
+- Webhook-driven subscription status updates
+- Subscription status verification endpoint
+
+### 9. Profile & Goals
+
+- **Onboarding Flow** — Multi-step setup (personal info, body metrics with live BMI, goals, activity level, targets)
+- **TDEE-based Targets** — Automatic calorie/macro calculation from BMR × activity level, adjusted for goal
+- **Profile Management** — Age, weight, height, gender, avatar, fitness goal
+- **Authentication** — Email/password and Google Sign-In
 
 ---
 
@@ -76,15 +116,16 @@ The AI automatically:
 
 | Component | Technology |
 |-----------|------------|
-| **Framework** | Flutter 3.8+ |
-| **Language** | Dart |
-| **Backend** | Supabase (PostgreSQL, Auth, Realtime) |
-| **State Management** | Provider |
+| **Framework** | Flutter 3.8+ / Dart 3.8+ |
+| **Backend** | Supabase (PostgreSQL, Auth, Storage, Realtime, Edge Functions) |
+| **Payments** | Stripe (Checkout + webhooks) |
+| **AI** | Google Gemini (vision + audio food analysis) |
+| **State Management** | Provider + Riverpod |
 | **Charts** | fl_chart |
-| **Video** | youtube_player_flutter |
-| **Localization** | flutter_localizations + intl |
-| **Animations** | AnimationController, Built-in Flutter animations |
-| **UI** | Custom glassmorphic components, Material Design 3 |
+| **Health Data** | health (HealthKit / Health Connect) |
+| **Media** | youtube_player_flutter, image_picker, record, mobile_scanner, photo_view |
+| **Localization** | flutter_localizations + intl (EN / AR) |
+| **Fonts** | google_fonts |
 
 ---
 
@@ -92,81 +133,100 @@ The AI automatically:
 
 ```
 lib/
-├── main.dart                     # App entry point
-├── fitness_home_pages.dart       # Home screen with daily summary
-├── login_sign_up.dart            # Authentication screens
-├── profile.dart                  # User profile & settings
-├── progrems.dart                 # Programs browsing
-├── forgetpassword.dart           # Password recovery
-├── gender.dart                   # Gender selection
-├── splashscreen.dart            # Splash screen
+├── main.dart                        # App entry point (Supabase init, providers)
+├── fitness_home_pages.dart          # Home screen with daily summary
+├── login_sign_up.dart               # Authentication screens
+├── profile.dart                     # User profile & settings
+├── progrems.dart                    # Programs browsing
+├── splashscreen.dart                # Splash screen + auth/onboarding routing
+├── gender.dart                      # Gender selection
+├── forgetpassword.dart              # Password recovery
 │
-├── l10n/                        # Localization (ARB files)
-│   ├── app_en.arb               # English strings
-│   ├── app_ar.arb               # Arabic strings
-│   └── app_localizations.dart   # Generated localization
+├── l10n/                            # Localization (ARB files: EN, AR)
+├── theme/                           # Colors & typography
+├── providers/                       # Locale + profile state (Provider)
 │
-├── providers/                    # State management
-│   └── locale_provider.dart      # Language settings
+├── screens/                         # Main app screens
+│   ├── onboarding_flow.dart         # New user onboarding
+│   ├── nutrition_screen.dart        # Nutrition tracking
+│   ├── food_scan_screen.dart        # AI photo food scanner
+│   ├── voice_food_log_screen.dart   # AI voice food logging
+│   ├── barcode_scan_screen.dart     # Barcode scanner
+│   ├── workout_screen.dart          # Workout tab container
+│   ├── workout_tabs/                # Log workout / my program / programs library
+│   ├── active_workout_sheet.dart    # Live workout session sheet
+│   ├── exercise_detail_sheet.dart   # Exercise details + set logging
+│   ├── progress_screen.dart         # Progress & analytics
+│   └── fitness_coach_screen.dart    # AI workout generator
 │
-├── screens/                     # App screens
-│   ├── workout_screen.dart      # Workout tab container
-│   ├── workout_tabs/
-│   │   ├── log_workout_tab.dart     # Exercise logging
-│   │   ├── my_program_tab.dart       # Active program
-│   │   └── programs_library_tab.dart # Program browser
-│   ├── nutrition_screen.dart    # Nutrition tracking
-│   ├── progress_screen.dart      # Progress & analytics
-│   ├── onboarding_flow.dart      # New user onboarding
-│   ├── fitness_coach_screen.dart # AI workout generator
-│   └── exercise_detail_sheet.dart # Exercise details + logging
+├── features/
+│   ├── coach/                       # Coach marketplace (Clean Architecture)
+│   │   ├── domain/                  # Entities + repository interfaces
+│   │   ├── data/                    # Repository implementations
+│   │   └── presentation/            # Screens, providers (Riverpod)
+│   ├── health/                      # HealthKit / Health Connect integration
+│   └── notifications/               # Notification center UI
 │
-├── services/                    # Business logic
-│   ├── supabase_client.dart     # Supabase connection
-│   ├── supabase_config.dart     # Configuration
-│   ├── supabase_exports.dart    # Re-exports
-│   ├── auth_service.dart        # Authentication
-│   ├── profile_service.dart     # Profile management
-│   ├── stats_service.dart      # Statistics
-│   ├── workout_service.dart     # Workout operations
-│   ├── nutrition_service.dart    # Nutrition operations
-│   ├── measurements_service.dart # Body measurements
-│   ├── onboarding_service.dart  # Onboarding flow
-│   ├── fitness_plan_generator.dart # AI plan generation
-│   ├── fitness_coach_service.dart  # Coach utilities
-│   └── exercise_database.dart  # Exercise data
+├── chat/                            # Real-time chat (Clean Architecture)
+│   ├── domain/                      # Entities + repositories
+│   ├── data/                        # Models + repositories (Supabase Realtime)
+│   └── presentation/                # Chat list, chat room, providers
 │
-├── supabase/                   # Supabase related
-│   ├── supabase_config.dart
-│   ├── auth_service.dart
-│   ├── stats_service.dart
-│   ├── profile_service.dart
-│   └── supabase_exports.dart
-│
-├── theme/                      # UI theming
-│   ├── app_colors.dart         # Color palette
-│   └── app_text.dart           # Typography
-│
-└── widgets/                    # Reusable components
-    ├── core_gym_navbar.dart    # Bottom navigation
-    ├── home_header.dart        # Home screen header
-    └── language_toggle.dart    # Language switcher
+├── models/                          # Food scan / barcode / voice log results
+├── services/                        # Business logic (auth, workouts, nutrition,
+│                                    # stats, measurements, onboarding, health,
+│                                    # food scan, barcode, voice log, plan gen)
+├── supabase/                        # Supabase config + legacy services
+└── widgets/                         # Reusable components (navbar, charts, sheets)
 ```
 
 ---
 
-## Database Schema (Supabase)
+## Supabase Backend
 
-The app uses the following main tables:
+### Database Schema (main tables)
 
 - `profiles` — User profile data (weight, height, goals)
-- `exercises` — Exercise library with muscle groups
-- `workout_sessions` — Individual workout records
-- `workout_sets` — Sets logged within sessions
-- `nutrition_logs` — Food consumption entries
-- `daily_summary` — Aggregated daily stats
+- `onboarding` — Onboarding answers per user
+- `user_goals` — Daily targets (calories, protein, steps)
+- `daily_summary` — One row per user per day (auto-updated by triggers)
+- `nutrition_logs` — Food entries per meal per day
+- `foods` — Food database (seeded + custom)
+- `food_scans` — AI photo scan results
+- `voice_food_logs` / `voice_food_log_items` — Voice logging results
+- `workout_sessions` / `workout_sets` — Workout records
 - `body_measurements` — Body metric history
-- `personal_records` — 1RM and best records
+- `daily_activity` — Health-synced steps/calories/heart rate
+- `weekly_activity`, `streaks` — Activity charting and streaks
+- `coach_profiles`, `coach_media`, `client_assignments` — Coach marketplace
+- `conversations`, `messages` — Chat
+- `subscriptions` — Stripe subscription state
+- `notifications` — In-app notifications
+
+Views: `weekly_progress`, `weight_progress`, `personal_records`
+
+Migrations live in [`supabase/migrations/`](supabase/migrations/).
+
+### Edge Functions ([`supabase/functions/`](supabase/functions/))
+
+| Function | Purpose |
+|----------|---------|
+| `analyze-food` | Gemini vision analysis of meal photos |
+| `log-food-voice` | Gemini audio analysis; uploads audio + saves logs server-side |
+| `lookup-barcode` | Product lookup by barcode |
+| `create-checkout-session` | Create Stripe Checkout session |
+| `stripe-webhook` | Sync subscription state from Stripe events |
+| `get-subscription-status` | Verify current subscription |
+
+Deploy functions:
+
+```bash
+supabase functions deploy analyze-food
+supabase functions deploy log-food-voice
+# ...etc
+```
+
+Required secrets include `GEMINI_API_KEY` and Stripe keys.
 
 ---
 
@@ -175,8 +235,8 @@ The app uses the following main tables:
 ### Prerequisites
 
 - Flutter SDK >= 3.8.0
-- Dart SDK
-- A Supabase project with the required tables created
+- A Supabase project with migrations applied
+- Deployed Edge Functions (for AI features and payments)
 
 ### Setup
 
@@ -193,12 +253,12 @@ The app uses the following main tables:
 
 3. **Configure Supabase**
    - Create a project at [supabase.com](https://supabase.com)
-   - Run the SQL migrations to create required tables
-   - Update `lib/services/supabase_client.dart` with your project URL and anon key
+   - Apply the SQL migrations from `supabase/migrations/`
+   - Set credentials in `lib/supabase/supabase_config.dart`
 
-4. **Generate app icons** (optional)
+4. **Configure Edge Function secrets**
    ```bash
-   flutter pub run flutter_launcher_icons
+   supabase secrets set GEMINI_API_KEY=<your-key>
    ```
 
 5. **Run the app**
@@ -210,15 +270,10 @@ The app uses the following main tables:
 
 ## Localization
 
-The app is fully localized into **English** and **Arabic**. To add a new language:
+The app is fully localized into **English** and **Arabic** (with RTL layout switching). To add a new language:
 
 1. Create a new ARB file in `lib/l10n/` (e.g., `app_fr.arb`)
-2. Add the locale to `l10n.yaml`:
-   ```yaml
-   arb-dir: lib/l10n
-   template-arb-file: app_en.arb
-   output-localization-file: app_localizations.dart
-   ```
+2. Add the locale to `supportedLocales` in `lib/main.dart`
 3. Run `flutter gen-l10n` to regenerate localization files
 
 ---
@@ -235,28 +290,18 @@ flutter build apk --release
 flutter build ios --release
 ```
 
+> **Note:** Health integration requires the HealthKit capability (iOS) and Health Connect permissions declared in `AndroidManifest.xml` (Android). See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md).
+
 ---
 
-## Screenshots
+## Additional Documentation
 
-The app features:
-- 🎨 Dark theme with neon green accents (#D4FF57)
-- 🌊 Glassmorphic navigation bar
-- 📊 Animated progress charts and rings
-- 🎬 Embedded YouTube player for exercise tutorials
-- ⏱️ Rest timer with notifications
-- 🔄 Smooth page transitions and micro-animations
+- [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md) — Wearable/health data sync architecture and platform permissions
+- [VOICE_FOOD_LOG_SUPABASE_SETUP.md](VOICE_FOOD_LOG_SUPABASE_SETUP.md) — Voice food logging database schema and wiring guide
+- [MIGRATE_TO_SUPABASE.md](MIGRATE_TO_SUPABASE.md) — Backend migration notes
 
 ---
 
 ## License
 
 This project is proprietary and confidential. All rights reserved.
-
----
-
-## Author
-
-Developed with ❤️ using Flutter
-
-**CoreGym** — Ignite Your Fitness Journey 💪

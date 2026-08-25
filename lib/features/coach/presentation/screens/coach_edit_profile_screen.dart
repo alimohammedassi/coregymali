@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
-import '../../../../widgets/premium_glass_bg.dart';
 import '../providers/coach_profile_provider.dart';
 
 class CoachEditProfileScreen extends StatefulWidget {
@@ -197,7 +196,8 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.surfaceLowest,
-      body: PremiumGlassmorphismBg(
+      body: Container(
+        color: AppColors.surfaceLowest,
         child: SafeArea(
           child: Form(
             key: _formKey,

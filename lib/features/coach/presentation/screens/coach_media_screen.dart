@@ -84,7 +84,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
               child: Text('Cancel', style: AppText.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFC9A84C)),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.tertiary),
               onPressed: () => Navigator.pop(ctx, true),
               child: Text('Upload', style: AppText.bodySm.copyWith(color: Colors.black)),
             ),
@@ -140,7 +140,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
       ),
       body: PremiumGlassmorphismBg(
         child: state.isUploading
-            ? const Center(child: CircularProgressIndicator(color: Color(0xFFC9A84C)))
+            ? const Center(child: CircularProgressIndicator(color: AppColors.tertiary))
             : CustomScrollView(
                 slivers: [
                   if (state.error != null)
@@ -169,7 +169,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
                                 icon: Container(
                                   padding: const EdgeInsets.all(8),
                                   decoration: const BoxDecoration(
-                                    color: Color(0xFFC9A84C),
+                                    color: AppColors.tertiary,
                                     shape: BoxShape.circle,
                                   ),
                                   child: const Icon(Icons.upload_file_rounded, color: Colors.black, size: 20),
@@ -225,14 +225,14 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
         decoration: BoxDecoration(
           color: AppColors.surfaceContainer,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFC9A84C).withOpacity(0.4), width: 1),
+          border: Border.all(color: AppColors.tertiary.withOpacity(0.4), width: 1),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_photo_alternate_rounded, color: Color(0xFFC9A84C), size: 32),
+            const Icon(Icons.add_photo_alternate_rounded, color: AppColors.tertiary, size: 32),
             const SizedBox(height: 8),
-            Text('Add Photo', style: AppText.labelSm.copyWith(color: const Color(0xFFC9A84C))),
+            Text('Add Photo', style: AppText.labelSm.copyWith(color: AppColors.tertiary)),
           ],
         ),
       ),

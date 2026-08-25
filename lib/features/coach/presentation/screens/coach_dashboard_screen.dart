@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../supabase/auth_service.dart';
+import '../../../../login_sign_up.dart' show AuthWrapper;
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -22,13 +23,11 @@ import '../providers/coach_profile_provider.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 const _kGold = AppColors.tertiary;
-const _kGoldDim = AppColors.tertiaryDim;
-const _kGoldGlow = Color(0x33C9A84C);
-const _kGoldSubtle = Color(0x1AC9A84C);
+final _kGoldGlow = AppColors.tertiary.withValues(alpha: 0.20);
+final _kGoldSubtle = AppColors.tertiary.withValues(alpha: 0.10);
 const _kSuccess = AppColors.greenAccent;
 const _kWarning = AppColors.orangeAccent;
 const _kBlue = AppColors.secondary;
-const _kError = AppColors.error;
 
 const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kBadgeR = BorderRadius.all(Radius.circular(8));
@@ -115,6 +114,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
       actions: [
         _AppBarBtn(
           icon: Icons.photo_library_rounded,
+          semanticLabel: 'My media',
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -128,6 +128,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
         const SizedBox(width: 8),
         _AppBarBtn(
           icon: Icons.edit_rounded,
+          semanticLabel: 'Edit coach profile',
           onTap: () => Navigator.push(
             context,
             MaterialPageRoute(
@@ -151,21 +152,24 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> {
 class _SignOutBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceContainerLow.withOpacity(0.6),
-      borderRadius: const BorderRadius.all(Radius.circular(12)),
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: AppLocalizations.of(context)?.signOut ?? 'Sign out',
+      child: Material(
+        color: AppColors.surfaceContainerLow.withOpacity(0.6),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
-        onTap: () => _showSignOutDialog(context),
-        splashColor: const Color(0x33EF5350),
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          child: const Icon(
-            Icons.logout_rounded,
-            color: Color(0xFFEF5350),
-            size: 20,
+        child: InkWell(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          onTap: () => _showSignOutDialog(context),
+          splashColor: AppColors.error.withValues(alpha: 0.2),
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: const Icon(
+              Icons.logout_rounded,
+              color: AppColors.error,
+              size: 20,
+            ),
           ),
         ),
       ),
@@ -193,7 +197,7 @@ class _SignOutBtn extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(dCtx),
             child: Text(
-              'CANCEL', // TODO: l10n
+              l.cancel,
               style: AppText.labelMd.copyWith(
                 color: AppColors.onSurfaceVariant,
               ),
@@ -206,13 +210,24 @@ class _SignOutBtn extends StatelessWidget {
               Navigator.pop(dCtx);
               await AuthService().signOut();
               if (ctx.mounted) {
-                Navigator.of(
-                  ctx,
-                ).pushNamedAndRemoveUntil('/login', (route) => false);
+                // Same destination as the client sign-out flow — this app
+                // registers no named routes, so pushNamed('/login') throws.
+                Navigator.of(ctx).pushAndRemoveUntil(
+                  PageRouteBuilder(
+                    pageBuilder: (_, a, __) => const AuthWrapper(),
+                    transitionsBuilder: (_, a, __, child) => FadeTransition(
+                      opacity:
+                          CurvedAnimation(parent: a, curve: Curves.easeOut),
+                      child: child,
+                    ),
+                    transitionDuration: const Duration(milliseconds: 400),
+                  ),
+                  (route) => false,
+                );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF5350),
+              backgroundColor: AppColors.error,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -237,23 +252,31 @@ class _SignOutBtn extends StatelessWidget {
 
 class _AppBarBtn extends StatelessWidget {
   final IconData icon;
+  final String semanticLabel;
   final VoidCallback onTap;
-  const _AppBarBtn({required this.icon, required this.onTap});
+  const _AppBarBtn({
+    required this.icon,
+    required this.semanticLabel,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surfaceContainerLow.withOpacity(0.6),
-      borderRadius: const BorderRadius.all(Radius.circular(12)),
-      child: InkWell(
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: Material(
+        color: AppColors.surfaceContainerLow.withOpacity(0.6),
         borderRadius: const BorderRadius.all(Radius.circular(12)),
-        onTap: onTap,
-        splashColor: _kGoldSubtle,
-        child: Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          child: Icon(icon, color: AppColors.onSurfaceVariant, size: 20),
+        child: InkWell(
+          borderRadius: const BorderRadius.all(Radius.circular(12)),
+          onTap: onTap,
+          splashColor: _kGoldSubtle,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(icon, color: AppColors.onSurfaceVariant, size: 20),
+          ),
         ),
       ),
     );
@@ -329,7 +352,8 @@ class _StatsRow extends StatelessWidget {
     if (statsNotifier.error != null && stats == null) {
       return _ErrorCard(
         message: 'Failed to load stats: ${statsNotifier.error}',
-      ); // TODO: l10n
+        onRetry: () => context.read<CoachDashboardStatNotifier>().fetch(),
+      );
     }
 
     return LayoutBuilder(
@@ -438,6 +462,64 @@ class _ShimmerStatsRowState extends State<_ShimmerStatsRow>
   }
 }
 
+// ── Shimmer placeholder for the subscriptions list (matches stats shimmer) ───
+
+class _ShimmerList extends StatefulWidget {
+  const _ShimmerList();
+
+  @override
+  State<_ShimmerList> createState() => _ShimmerListState();
+}
+
+class _ShimmerListState extends State<_ShimmerList>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _anim = Tween<double>(
+      begin: 0.3,
+      end: 0.7,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => Column(
+        children: List.generate(
+          3,
+          (_) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            height: 132,
+            decoration: BoxDecoration(
+              color:
+                  AppColors.surfaceContainerLow.withOpacity(_anim.value),
+              borderRadius: _kCardR,
+              border: Border.all(
+                color: AppColors.glassBorder,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Stat card ─────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
@@ -489,7 +571,7 @@ class _StatCard extends StatelessWidget {
           Text(
             value,
             style: AppText.headlineLg.copyWith(
-              color: Colors.white,
+              color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -523,20 +605,14 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
     final notifier = context.watch<CoachSubscriptionsNotifier>();
 
     if (notifier.isLoading && notifier.subscriptions == null) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.only(top: 32),
-          child: CircularProgressIndicator(
-            color: _kGold,
-            strokeWidth: 2,
-            backgroundColor: _kGoldSubtle,
-          ),
-        ),
-      );
+      return const _ShimmerList();
     }
 
     if (notifier.error != null && notifier.subscriptions == null) {
-      return _ErrorCard(message: notifier.error!);
+      return _ErrorCard(
+        message: notifier.error!,
+        onRetry: () => context.read<CoachSubscriptionsNotifier>().fetch(),
+      );
     }
 
     final list = notifier.filtered(_selectedTab);
@@ -584,7 +660,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
                 curve: Curves.easeOut,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
-                  vertical: 9,
+                  vertical: 12,
                 ),
                 decoration: BoxDecoration(
                   color: selected ? _kGold : Colors.transparent,
@@ -593,7 +669,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
                       ? null
                       : Border.all(color: AppColors.glassBorder),
                   boxShadow: selected
-                      ? [const BoxShadow(color: _kGoldGlow, blurRadius: 10)]
+                      ? [BoxShadow(color: _kGoldGlow, blurRadius: 10)]
                       : null,
                 ),
                 child: Row(
@@ -689,31 +765,30 @@ class _EmptyState extends StatelessWidget {
           Text('No subscribers yet', style: AppText.headlineMd), // TODO: l10n
           const SizedBox(height: 8),
           Text(
-            'Share your profile link to start getting clients.', // TODO: l10n
+            'Complete your coach profile so clients can find and subscribe to you.',
             style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
           ElevatedButton.icon(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Profile link copied!'), // TODO: l10n
-                  behavior: SnackBarBehavior.floating,
-                  backgroundColor: AppColors.surfaceContainerHigh,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ChangeNotifierProvider(
+                    create: (_) => CoachProfileNotifier(),
+                    child: const CoachEditProfileScreen(),
                   ),
                 ),
               );
             },
             icon: const Icon(
-              Icons.share_rounded,
+              Icons.tune_rounded,
               color: Colors.black,
               size: 18,
             ),
             label: Text(
-              'Share Profile', // TODO: l10n
+              'Complete Your Profile',
               style: AppText.labelLg.copyWith(color: Colors.black),
             ),
             style: ElevatedButton.styleFrom(
@@ -735,7 +810,8 @@ class _EmptyState extends StatelessWidget {
 
 class _ErrorCard extends StatelessWidget {
   final String message;
-  const _ErrorCard({required this.message});
+  final VoidCallback? onRetry;
+  const _ErrorCard({required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -746,20 +822,40 @@ class _ErrorCard extends StatelessWidget {
         borderRadius: _kCardR,
         border: Border.all(color: AppColors.error.withOpacity(0.4)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.error,
-            size: 20,
+          Row(
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.error,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppText.bodyMd.copyWith(color: AppColors.error),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              message,
-              style: AppText.bodyMd.copyWith(color: AppColors.error),
+          if (onRetry != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded,
+                    size: 16, color: AppColors.error),
+                label: Text('RETRY',
+                    style: AppText.labelMd.copyWith(
+                      color: AppColors.error,
+                      fontWeight: FontWeight.w800,
+                    )),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -793,7 +889,7 @@ class _SubscriptionCard extends StatelessWidget {
     final daysLeftColor = daysLeft <= 0
         ? AppColors.error
         : daysLeft <= 7
-        ? Colors.orange
+        ? AppColors.orangeAccent
         : AppColors.onSurfaceVariant;
 
     return Material(
@@ -1179,31 +1275,31 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final (bg, fg, label, icon) = switch (status) {
       'active' => (
-        const Color(0xFF1B4332),
+        _kSuccess.withValues(alpha: 0.12),
         _kSuccess,
         'Active',
         Icons.check_circle_rounded,
       ), // TODO: l10n
       'pending' => (
-        const Color(0xFF3D2B00),
+        _kWarning.withValues(alpha: 0.12),
         _kWarning,
         'Pending',
         Icons.schedule_rounded,
       ), // TODO: l10n
       'paused' => (
-        const Color(0xFF003060),
+        _kBlue.withValues(alpha: 0.12),
         _kBlue,
         'Paused',
         Icons.pause_circle_rounded,
       ), // TODO: l10n
       'expired' => (
-        const Color(0xFF3B0000),
-        _kError,
+        AppColors.error.withValues(alpha: 0.12),
+        AppColors.error,
         'Expired',
         Icons.cancel_rounded,
       ), // TODO: l10n
       _ => (
-        const Color(0xFF1A1A1A),
+        AppColors.onSurfaceVariant.withValues(alpha: 0.12),
         AppColors.onSurfaceVariant,
         'Cancelled',
         Icons.block_rounded,
@@ -1367,7 +1463,7 @@ class _StepCircle extends StatelessWidget {
           color: Colors.transparent,
           shape: BoxShape.circle,
           border: Border.all(color: _kGold, width: 2),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(color: _kGoldGlow, blurRadius: 10, spreadRadius: 2),
           ],
         ),

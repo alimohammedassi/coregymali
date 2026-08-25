@@ -48,7 +48,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
           .select()
           .single();
 
-      return (response as Map<String, dynamic>).toEntity();
+      return response.toEntity();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {
@@ -99,7 +99,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
 
       if (response == null) return null;
 
-      return (response as Map<String, dynamic>).toEntity();
+      return response.toEntity();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {
@@ -134,7 +134,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
           .eq('status', 'active');
 
       return response
-          .map((json) => (json as Map<String, dynamic>).toEntity())
+          .map((json) => json.toEntity())
           .toList();
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');

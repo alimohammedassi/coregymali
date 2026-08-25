@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../domain/entities/client_full_data_entity.dart';
 import '../providers/coach_dashboard_providers.dart';
 import '../widgets/coach_shared.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
+// Aliases over AppColors — previously these were raw literals from the old
+// dark theme (off-palette gold #C9A84C, white-on-white text).
 
-const _kGold = Color(0xFFC9A84C);
-const _kGoldDim = Color(0xFFA07832);
-const _kGoldGlow = Color(0x33C9A84C);
-const _kGoldSubtle = Color(0x1AC9A84C);
-const _kSuccess = Color(0xFF34D399);
-const _kBlue = Color(0xFF60A5FA);
-const _kPurple = Color(0xFF7C3AED);
-const _kRed = Color(0xFFF87171);
-const _kAmber = Color(0xFFFBBF24);
+const _kGold = AppColors.tertiary;
+final _kGoldDim = AppColors.tertiaryDim;
+final _kGoldGlow = AppColors.tertiary.withValues(alpha: 0.20);
+final _kGoldSubtle = AppColors.tertiary.withValues(alpha: 0.10);
+const _kSuccess = AppColors.greenAccent;
+const _kBlue = AppColors.secondary;
+const _kPurple = AppColors.accentSteps;
+const _kRed = AppColors.error;
+const _kAmber = AppColors.accentCalories;
 
 const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kPillR = BorderRadius.all(Radius.circular(12));
@@ -65,12 +68,13 @@ class _ClientDataScreenState extends State<ClientDataScreen>
       lastDate: DateTime.now(),
       initialDateRange: currentRange,
       builder: (ctx, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: _kGold,
+        data: ThemeData.light().copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: AppColors.tertiary,
+            primary: AppColors.tertiary,
             onPrimary: Colors.black,
-            surface: Color(0xFF1A1919),
-            onSurface: Colors.white,
+            surface: AppColors.surface,
+            onSurface: AppColors.textPrimary,
           ),
         ),
         child: child!,
@@ -160,7 +164,7 @@ class _Header extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: _kGold, width: 2),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
                       color: _kGoldGlow,
                       blurRadius: 14,
@@ -182,7 +186,7 @@ class _Header extends StatelessWidget {
                     Text(
                       profile?.name ?? 'Client',
                       style: AppText.titleMd.copyWith(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.2,
                       ),
@@ -248,7 +252,7 @@ class _IconBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget iconWidget = Icon(icon, color: Colors.white, size: size);
+    Widget iconWidget = Icon(icon, color: AppColors.textPrimary, size: size);
     if (spinning) {
       iconWidget = TweenAnimationBuilder<double>(
         tween: Tween(begin: 0, end: 1),
@@ -322,7 +326,7 @@ class _DateRangeBar extends StatelessWidget {
                   color: kCoachCard,
                   borderRadius: const BorderRadius.all(Radius.circular(16)),
                   border: Border.all(color: _kGold.withOpacity(0.25)),
-                  boxShadow: const [
+                  boxShadow: [
                     BoxShadow(
                       color: _kGoldGlow,
                       blurRadius: 16,
@@ -335,7 +339,7 @@ class _DateRangeBar extends StatelessWidget {
                     Container(
                       width: 32,
                       height: 32,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: _kGoldSubtle,
                         borderRadius: _kBadgeR,
                       ),
@@ -426,13 +430,13 @@ class _TabBar extends StatelessWidget {
         child: TabBar(
           controller: controller,
           indicator: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               colors: [_kGold, _kGoldDim],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: const BorderRadius.all(Radius.circular(11)),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(color: _kGoldGlow, blurRadius: 8, offset: Offset(0, 2)),
             ],
           ),
@@ -474,7 +478,7 @@ class _TabContent extends StatelessWidget {
     return Consumer<ClientDataNotifier>(
       builder: (ctx, notifier, _) {
         if (notifier.isLoading) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(
               color: _kGold,
               strokeWidth: 2,
@@ -787,7 +791,7 @@ class _DaySectionHeader extends StatelessWidget {
         Text(
           '$dayName, $dateStr',
           style: AppText.labelSm.copyWith(
-            color: Colors.white70,
+            color: AppColors.textSecondary,
             letterSpacing: 1.2,
             fontSize: 11,
           ),
@@ -897,7 +901,7 @@ class _NutritionCard extends StatelessWidget {
               children: [
                 Text(
                   log.foodName,
-                  style: AppText.titleSm.copyWith(color: Colors.white),
+                  style: AppText.titleSm.copyWith(color: AppColors.textPrimary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1025,9 +1029,7 @@ class _WorkoutCard extends StatelessWidget {
           // Purple accent top bar
           Container(
             height: 3,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(colors: [_kPurple, Color(0xFF9F67FA)]),
-            ),
+            decoration: const BoxDecoration(gradient: AppColors.legsGradient),
           ),
           Padding(
             padding: const EdgeInsets.all(16),
@@ -1057,7 +1059,7 @@ class _WorkoutCard extends StatelessWidget {
                     children: [
                       Text(
                         session.sessionName,
-                        style: AppText.titleSm.copyWith(color: Colors.white),
+                        style: AppText.titleSm.copyWith(color: AppColors.textPrimary),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1196,15 +1198,15 @@ class _MeasurementCard extends StatelessWidget {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: AppColors.surfaceContainerHigh,
                   borderRadius: _kBadgeR,
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  border: Border.all(color: AppColors.borderSubtle),
                 ),
                 child: Text(
                   '${days[m.measuredDate.weekday - 1]}, '
                   '${months[m.measuredDate.month - 1]} ${m.measuredDate.day}',
                   style: AppText.labelSm.copyWith(
-                    color: Colors.white70,
+                    color: AppColors.textSecondary,
                     letterSpacing: 1,
                     fontSize: 11,
                   ),
@@ -1402,7 +1404,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
             child: LinearProgressIndicator(
               value: consistency,
               minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.08),
+              backgroundColor: AppColors.surfaceDim,
               valueColor: const AlwaysStoppedAnimation(_kSuccess),
             ),
           ),
@@ -1512,7 +1514,7 @@ class _SummaryCard extends StatelessWidget {
                 '${days[s.summaryDate.weekday - 1]}, '
                 '${months[s.summaryDate.month - 1]} ${s.summaryDate.day}',
                 style: AppText.titleSm.copyWith(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1525,12 +1527,12 @@ class _SummaryCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: s.workoutDone
                       ? _kSuccess.withOpacity(0.12)
-                      : Colors.white.withOpacity(0.05),
+                      : AppColors.surfaceContainerHigh,
                   borderRadius: const BorderRadius.all(Radius.circular(20)),
                   border: Border.all(
                     color: s.workoutDone
                         ? _kSuccess.withOpacity(0.3)
-                        : Colors.white.withOpacity(0.08),
+                        : AppColors.surfaceDim,
                   ),
                 ),
                 child: Row(
@@ -1601,7 +1603,7 @@ class _SummaryCard extends StatelessWidget {
                 Text(
                   '${(s.caloriesConsumed - s.caloriesBurned).toStringAsFixed(0)} kcal',
                   style: AppText.labelSm.copyWith(
-                    color: Colors.white70,
+                    color: AppColors.textSecondary,
                     fontSize: 10,
                   ),
                 ),
@@ -1652,7 +1654,7 @@ class _SumMetric extends StatelessWidget {
             Text(
               value,
               style: AppText.titleSm.copyWith(
-                color: Colors.white,
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w700,
               ),
             ),

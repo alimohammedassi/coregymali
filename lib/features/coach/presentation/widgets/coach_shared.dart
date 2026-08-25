@@ -4,15 +4,18 @@ import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 
 // ── Coach feature shared design tokens ────────────────────────────────────────
-// Uses AppColors as single source of truth
+// Aliases over AppColors (the single source of truth) so coach screens stay
+// visually in sync with the rest of the app's light Kalee palette.
+// NOTE: these previously pointed at dark-theme leftovers (white text / glass
+// borders on a white canvas), which rendered coach screens unreadable.
 
-const kCoachBg = AppColors.surface;
-const kCoachCard = AppColors.surfaceContainer;
+const kCoachBg = AppColors.background;
+const kCoachCard = AppColors.surface;
 const kCoachCard2 = AppColors.surfaceContainerHigh;
 const kCoachGold = AppColors.tertiary;
-const kCoachMuted = AppColors.onSurfaceVariant;
-const kCoachSubtle = AppColors.outline;
-const kCoachBorder = AppColors.glassBorder;
+const kCoachMuted = AppColors.textSecondary;
+const kCoachSubtle = AppColors.textMuted;
+const kCoachBorder = AppColors.borderSubtle;
 
 // ── Shared widgets ─────────────────────────────────────────────────────────────
 

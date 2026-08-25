@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../services/supabase_client.dart';
-import '../../domain/entities/client_summary_entity.dart';
 
 class CoachStats {
   final int activeSubscribers;
@@ -63,13 +62,15 @@ class CoachDashboardStatNotifier extends ChangeNotifier {
       final priceMonthly = (coachRow['price_monthly'] ?? 0).toDouble();
 
       int maxClients = 10;
+      double pricePremium = 0;
       final onboardingRow = await supabase
           .from('coach_onboarding')
-          .select('max_clients')
+          .select('max_clients, price_premium')
           .eq('user_id', userId)
           .maybeSingle();
       if (onboardingRow != null) {
         maxClients = onboardingRow['max_clients'] ?? 10;
+        pricePremium = (onboardingRow['price_premium'] ?? 0).toDouble();
       }
 
       // Get active subscribers
@@ -80,13 +81,15 @@ class CoachDashboardStatNotifier extends ChangeNotifier {
           .eq('status', 'active');
 
       final activeCount = subs.length;
+      // Revenue reflects the subscriber's actual tier: premium subscribers
+      // are billed the premium price when one is configured.
       final monthlyRevenue = subs.fold<double>(
         0,
-        (sum, s) {
-          final plan = s['tier'] ?? 'standard';
-          // If premium, use premium price (stored separately, here we approximate)
-          return sum + priceMonthly;
-        },
+        (sum, s) =>
+            sum +
+            ((s['tier'] ?? 'standard') == 'premium' && pricePremium > 0
+                ? pricePremium
+                : priceMonthly),
       );
 
       // Get rating from reviews

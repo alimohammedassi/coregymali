@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../domain/entities/coach_entity.dart';
 import '../../domain/entities/review_entity.dart';
+import '../../data/models/review_model.dart';
 import '../providers/coach_providers.dart';
 import '../providers/stripe_provider.dart';
 import '../providers/subscription_providers.dart';
@@ -25,12 +27,14 @@ class CoachDetailScreen extends StatefulWidget {
 }
 
 class _CoachDetailScreenState extends State<CoachDetailScreen> {
-  final List<ReviewEntity> _reviews = [];
-  bool _reviewsLoading = false;
+  List<ReviewEntity> _reviews = [];
+  bool _reviewsLoading = true;
+  String? _reviewsError;
 
   List<String> _galleryImages = [];
   List<CoachContentEntity> _pdfs = [];
   bool _mediaLoading = true;
+  String? _mediaError;
 
   @override
   void initState() {
@@ -39,7 +43,12 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
       await context.read<SelectedCoachNotifier>().fetchCoach(widget.coachId);
       if (!mounted) return;
       final c = context.read<SelectedCoachNotifier>().coach;
-      if (c != null) _fetchMedia(c);
+      if (c != null) {
+        _fetchMedia(c);
+        _fetchReviews(c);
+      } else {
+        if (mounted) setState(() => _reviewsLoading = false);
+      }
       // Listen to Stripe payment state changes for snackbar feedback
       context.read<StripePaymentNotifier>().addListener(_onStripeStateChange);
     });
@@ -49,26 +58,49 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
     try {
       final supabase = Supabase.instance.client;
       final uid = coach.userId;
-      
+
       final onb = await supabase.from('coach_onboarding').select('gallery_images').eq('user_id', uid).maybeSingle();
       if (onb != null && onb['gallery_images'] != null) {
         _galleryImages = List<String>.from(onb['gallery_images']);
       }
-      
+
       final pdfsRes = await supabase.from('coach_content')
           .select()
           .eq('coach_id', coach.id)
           .eq('type', 'pdf')
           .eq('is_public', true)
           .order('created_at', ascending: false);
-          
+
       _pdfs = (pdfsRes as List).map((e) => CoachContentEntity.fromJson(e)).toList();
-    } catch (_) {}
+      _mediaError = null;
+    } catch (e) {
+      // Visible, non-fatal: the profile still renders without media.
+      _mediaError = e.toString();
+    }
     if (mounted) {
       setState(() {
         _mediaLoading = false;
       });
     }
+  }
+
+  Future<void> _fetchReviews(CoachEntity coach) async {
+    try {
+      final supabase = Supabase.instance.client;
+      final res = await supabase
+          .from('reviews')
+          .select()
+          .eq('coach_id', coach.id)
+          .order('created_at', ascending: false)
+          .limit(20);
+      _reviews = (res as List)
+          .map((e) => ReviewModel.fromJson(e as Map<String, dynamic>).toEntity())
+          .toList();
+      _reviewsError = null;
+    } catch (e) {
+      _reviewsError = e.toString();
+    }
+    if (mounted) setState(() => _reviewsLoading = false);
   }
 
   @override
@@ -135,9 +167,11 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                           coachN.fetchCoach(widget.coachId),
                     )
                   : coach == null
-                      ? const Center(
+                      ? Center(
                           child: Text('Coach not found',
-                              style: TextStyle(color: Colors.white54)))
+                              style: AppText.bodyMd
+                                  .copyWith(color: kCoachMuted)),
+                        )
                       : _buildBody(coach, isSubscribed),
           bottomNavigationBar: coach != null
               ? _buildStickyBar(coach, isSubscribed)
@@ -152,6 +186,16 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
       slivers: [
         _buildHeroAppBar(coach, isSubscribed),
         _buildBioSection(coach),
+        if (_mediaError != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+              child: Text(
+                'Couldn\'t load media: $_mediaError',
+                style: AppText.bodySm.copyWith(color: AppColors.error),
+              ),
+            ),
+          ),
         if (!_mediaLoading && _galleryImages.isNotEmpty) _buildGallerySection(),
         if (!_mediaLoading && _pdfs.isNotEmpty) _buildPdfSection(),
         _buildSpecSection(coach),
@@ -237,7 +281,12 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(pdf.title, style: AppText.labelMd.copyWith(color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          Text(
+                            pdf.title,
+                            style: AppText.labelMd.copyWith(color: AppColors.textPrimary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                           if (sizeStr.isNotEmpty) const SizedBox(height: 4),
                           if (sizeStr.isNotEmpty) Text(sizeStr, style: AppText.bodySm.copyWith(color: kCoachMuted, fontSize: 12)),
                         ],
@@ -271,15 +320,23 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
       expandedHeight: 260,
       pinned: true,
       backgroundColor: kCoachBg,
-      leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black45,
-            borderRadius: BorderRadius.circular(12),
+      leading: Semantics(
+        button: true,
+        label: 'Back',
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.9),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kCoachBorder),
+            ),
+            child: const Icon(Icons.arrow_back_rounded,
+                color: AppColors.textPrimary),
           ),
-          child: const Icon(Icons.arrow_back_rounded, color: Colors.white),
         ),
       ),
       flexibleSpace: FlexibleSpaceBar(
@@ -309,7 +366,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                   Text(
                     coach.profile?.name ?? 'Coach',
                     style:
-                        AppText.headlineMd.copyWith(color: Colors.white),
+                        AppText.headlineMd.copyWith(color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 6),
                   CoachStarRating(rating: coach.rating),
@@ -413,6 +470,36 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                 child: Center(
                     child: CircularProgressIndicator(
                         color: kCoachGold, strokeWidth: 2)),
+              )
+            else if (_reviewsError != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: kCoachCard,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline_rounded,
+                        color: AppColors.error, size: 32),
+                    const SizedBox(height: 10),
+                    Text('Couldn\'t load reviews',
+                        style: AppText.bodyMd
+                            .copyWith(color: kCoachMuted)),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        final coach = context.read<SelectedCoachNotifier>().coach;
+                        if (coach == null) return;
+                        setState(() => _reviewsLoading = true);
+                        _fetchReviews(coach);
+                      },
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
               )
             else if (_reviews.isEmpty)
               Container(

@@ -138,16 +138,21 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
           children: [
             Row(
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: kCoachCard,
-                      borderRadius: BorderRadius.circular(8),
+                Semantics(
+                  button: true,
+                  label: 'Back',
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: kCoachCard,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: kCoachBorder),
+                      ),
+                      child: const Icon(Icons.arrow_back_rounded,
+                          color: AppColors.textPrimary, size: 20),
                     ),
-                    child: const Icon(Icons.arrow_back_rounded,
-                        color: Colors.white, size: 20),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -155,7 +160,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                   child: Text(
                     'BECOME A COACH',
                     style: AppText.labelLg.copyWith(
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -200,7 +205,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                             Text(
                               'Join Our Coach Network',
                               style: AppText.bodyLg.copyWith(
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -336,7 +341,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                   padding: const EdgeInsets.all(16),
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: const Color(0x33FF7351),
+                    color: AppColors.error.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.error),
                   ),
@@ -421,7 +426,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
-      style: AppText.bodyMd.copyWith(color: Colors.white),
+      style: AppText.bodyMd.copyWith(color: AppColors.onSurface),
       validator: validator,
       decoration: InputDecoration(
         hintText: hint,

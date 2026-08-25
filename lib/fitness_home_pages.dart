@@ -2620,7 +2620,7 @@ class _ProCoachBanner extends StatelessWidget {
                   ChangeNotifierProvider.value(value: activeSubNotifier),
                   ChangeNotifierProvider.value(value: subNotifier),
                 ],
-                child: const CoachMarketplaceScreen(),
+      child: const CoachMarketplaceScreen(embeddedInTabs: true),
               ),
             ),
           );

@@ -25,7 +25,11 @@ const _kSpecializations = [
 ];
 
 class CoachMarketplaceScreen extends StatefulWidget {
-  const CoachMarketplaceScreen({super.key});
+  /// True when the marketplace is a root destination inside the home
+  /// IndexedStack — in that mode there is nothing to pop, so the back
+  /// affordance is hidden (popping would exit the app instead).
+  final bool embeddedInTabs;
+  const CoachMarketplaceScreen({super.key, this.embeddedInTabs = false});
 
   @override
   State<CoachMarketplaceScreen> createState() => _CoachMarketplaceScreenState();
@@ -82,27 +86,32 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
           children: [
             Row(
               children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: kCoachCard2,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: kCoachBorder),
+                if (!widget.embeddedInTabs)
+                  Semantics(
+                    button: true,
+                    label: 'Back',
+                    child: GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: kCoachCard2,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: kCoachBorder),
+                        ),
+                        child: const Icon(Icons.arrow_back_rounded,
+                            color: AppColors.textPrimary, size: 20),
+                      ),
                     ),
-                    child: const Icon(Icons.arrow_back_rounded,
-                        color: Colors.white, size: 20),
                   ),
-                ),
-                const SizedBox(width: 16),
+                if (!widget.embeddedInTabs) const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('FIND A COACH',
-                          style:
-                              AppText.headlineSm.copyWith(color: Colors.white)),
+                          style: AppText.headlineSm
+                              .copyWith(color: AppColors.textPrimary)),
                       Text('اختر مدربك', style: AppText.bodySm),
                     ],
                   ),
@@ -408,8 +417,8 @@ class CoachCard extends StatelessWidget {
                   );
                 }
                 
-                final initials = coach.profile?.name.isNotEmpty == true 
-                  ? coach.profile!.name.substring(0, 1).toUpperCase() 
+                final initials = coach.profile?.name.isNotEmpty == true
+                  ? coach.profile!.name.substring(0, 1).toUpperCase()
                   : '?';
 
                 return Container(
@@ -419,13 +428,13 @@ class CoachCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Color(0xFF2C2C2C), Color(0xFF151515)],
+                      colors: [AppColors.lightGreen, AppColors.surfaceDim],
                     ),
                   ),
                   child: Center(
                     child: Text(
                       initials,
-                      style: AppText.headlineLg.copyWith(color: kCoachGold.withOpacity(0.5), fontSize: 40),
+                      style: AppText.headlineLg.copyWith(color: kCoachGold.withOpacity(0.6), fontSize: 40),
                     ),
                   ),
                 );
@@ -451,7 +460,7 @@ class CoachCard extends StatelessWidget {
                                   child: Text(
                                     coach.profile?.name ?? 'Coach',
                                     style: AppText.titleMd
-                                        .copyWith(color: Colors.white),
+                                        .copyWith(color: AppColors.textPrimary),
                                   ),
                                 ),
                                 if (isSubscribed)
@@ -556,7 +565,7 @@ class _SubscribeBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF1A1919),
+        color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
@@ -572,14 +581,14 @@ class _SubscribeBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: Colors.white12,
+                color: AppColors.borderSubtle,
                 borderRadius: BorderRadius.circular(2)),
           ),
           const SizedBox(height: 24),
           CoachAvatar(url: coach.profile?.avatarUrl, size: 64),
           const SizedBox(height: 16),
           Text(coach.profile?.name ?? 'Coach',
-              style: AppText.headlineSm.copyWith(color: Colors.white)),
+              style: AppText.headlineSm.copyWith(color: AppColors.textPrimary)),
           const SizedBox(height: 6),
           Text('\$${coach.priceMonthly.toStringAsFixed(0)} / month',
               style: AppText.titleMd.copyWith(color: kCoachGold)),

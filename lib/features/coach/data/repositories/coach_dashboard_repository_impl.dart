@@ -77,12 +77,15 @@ class CoachDashboardRepositoryImpl implements ICoachDashboardRepository {
           .inFilter('user_id', clientIds)
           .eq('summary_date', todayStr);
 
-      // Also fetch the most-recent summary per client (for lastActive)
+      // Also fetch the most-recent summary per client (for lastActive).
+      // Bounded: ordered newest-first, so a sane cap keeps this cheap while
+      // still covering every client's latest entry even if some are inactive.
       final recentSummaries = await _client
           .from('daily_summary')
           .select('user_id, summary_date')
           .inFilter('user_id', clientIds)
-          .order('summary_date', ascending: false);
+          .order('summary_date', ascending: false)
+          .limit(200);
 
       // Index today's data by clientId
       final Map<String, Map<String, dynamic>> todayByClient = {};

@@ -235,13 +235,12 @@ class NutritionService {
     if (currentUserId == null) return grouped;
     try {
       final today = DateTime.now().toIso8601String().substring(0, 10);
-      // Use 'created_at' for ordering as 'logged_at' may not exist in some schemas
       final rows = await supabase
           .from('nutrition_logs')
           .select()
           .eq('user_id', currentUserId!)
           .eq('logged_date', today)
-          .order('created_at', ascending: true);
+          .order('logged_at', ascending: true);
       for (final row in rows) {
         grouped[row['meal_type']]?.add(row);
       }

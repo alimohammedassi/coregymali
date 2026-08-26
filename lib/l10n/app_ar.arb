@@ -382,6 +382,22 @@
   "voiceErrorPersist": "التسجيل اتحلل بس حصلت مشكلة في الحفظ، جرب تاني",
   "voiceErrorUnknown": "حصلت مشكلة غير متوقعة، جرب تاني",
 
+  "textTitle": "تسجيل الأكل بالنص",
+  "textSubtitle": "اكتب أكلت إيه وإحنا نعمل الباقي",
+  "textInputHint": "مثال: فطار 2 عيش وجبنة وشاي…",
+  "textAnalyzeCta": "حلّل بالذكاء الاصطناعي",
+  "textAnalyzingTitle": "بنحلل وجبتك…",
+  "textEmptyInput": "اكتب أكلت إيه الأول وبعدين دوس تحليل",
+  "textWroteLabel": "إنت كتبت",
+  "textErrorNetwork": "مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني",
+  "textErrorUnauthorized": "لازم تسجل دخول الأول قبل ما تستخدم تسجيل النص",
+  "textErrorNotFood": "ملقيناش أكل في النص ده، جرب توصف وجبتك تاني",
+  "textErrorAnalysis": "حصلت مشكلة في فهم الوصف، جرب تاني",
+  "textErrorPersist": "الوجبة اتحللت بس حصلت مشكلة في الحفظ، جرب تاني",
+  "textErrorUnknown": "حصلت مشكلة غير متوقعة، جرب تاني",
+  "textEditDescription": "عدّل الوصف",
+  "textNewDescription": "وصف جديد",
+
   "profileFirstRunNudge": "سجّل أول تمرين لتبدأ في جمع الرانك!",
 
   "dashboardEyebrow": "لوحتي",
@@ -413,5 +429,8 @@
   "paymentUnpaid": "غير مدفوع",
   "paymentRefunded": "مسترجع",
   "phaseWeek": "الأسبوع {w}",
-  "@phaseWeek": { "placeholders": { "w": { "type": "int" } } }
+  "@phaseWeek": { "placeholders": { "w": { "type": "int" } } },
+  "previousDay": "اليوم السابق",
+  "nextDay": "اليوم التالي",
+  "smartwatchSync": "مزامنة الساعة الذكية"
 }

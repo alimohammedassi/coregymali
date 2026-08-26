@@ -382,6 +382,22 @@
   "voiceErrorPersist": "The recording was analyzed but saving failed. Please try again.",
   "voiceErrorUnknown": "Something unexpected went wrong. Please try again.",
 
+  "textTitle": "Text Food Log",
+  "textSubtitle": "Type what you ate",
+  "textInputHint": "e.g. breakfast: 2 eggs, toast and tea…",
+  "textAnalyzeCta": "Analyze with AI",
+  "textAnalyzingTitle": "Analyzing your meal…",
+  "textEmptyInput": "Type what you ate first, then tap analyze.",
+  "textWroteLabel": "You wrote",
+  "textErrorNetwork": "No internet connection. Check your network and try again.",
+  "textErrorUnauthorized": "Please sign in first to use the text logger.",
+  "textErrorNotFood": "We couldn't find any food in that text. Try describing your meal again.",
+  "textErrorAnalysis": "We couldn't understand that description. Please try again.",
+  "textErrorPersist": "The meal was analyzed but saving failed. Please try again.",
+  "textErrorUnknown": "Something unexpected went wrong. Please try again.",
+  "textEditDescription": "Edit description",
+  "textNewDescription": "New description",
+
   "profileFirstRunNudge": "Log your first workout to start ranking up!",
 
   "dashboardEyebrow": "MY DASHBOARD",
@@ -413,5 +429,8 @@
   "paymentUnpaid": "Unpaid",
   "paymentRefunded": "Refunded",
   "phaseWeek": "Week {w}",
-  "@phaseWeek": { "placeholders": { "w": { "type": "int" } } }
+  "@phaseWeek": { "placeholders": { "w": { "type": "int" } } },
+  "previousDay": "Previous day",
+  "nextDay": "Next day",
+  "smartwatchSync": "Smartwatch sync"
 }

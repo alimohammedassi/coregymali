@@ -918,6 +918,57 @@ class AppLocalizationsEn extends AppLocalizations {
       'Something unexpected went wrong. Please try again.';
 
   @override
+  String get textTitle => 'Text Food Log';
+
+  @override
+  String get textSubtitle => 'Type what you ate';
+
+  @override
+  String get textInputHint => 'e.g. breakfast: 2 eggs, toast and tea…';
+
+  @override
+  String get textAnalyzeCta => 'Analyze with AI';
+
+  @override
+  String get textAnalyzingTitle => 'Analyzing your meal…';
+
+  @override
+  String get textEmptyInput => 'Type what you ate first, then tap analyze.';
+
+  @override
+  String get textWroteLabel => 'You wrote';
+
+  @override
+  String get textErrorNetwork =>
+      'No internet connection. Check your network and try again.';
+
+  @override
+  String get textErrorUnauthorized =>
+      'Please sign in first to use the text logger.';
+
+  @override
+  String get textErrorNotFood =>
+      'We couldn\'t find any food in that text. Try describing your meal again.';
+
+  @override
+  String get textErrorAnalysis =>
+      'We couldn\'t understand that description. Please try again.';
+
+  @override
+  String get textErrorPersist =>
+      'The meal was analyzed but saving failed. Please try again.';
+
+  @override
+  String get textErrorUnknown =>
+      'Something unexpected went wrong. Please try again.';
+
+  @override
+  String get textEditDescription => 'Edit description';
+
+  @override
+  String get textNewDescription => 'New description';
+
+  @override
   String get profileFirstRunNudge =>
       'Log your first workout to start ranking up!';
 
@@ -1006,4 +1057,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String phaseWeek(int w) {
     return 'Week $w';
   }
+
+  @override
+  String get previousDay => 'Previous day';
+
+  @override
+  String get nextDay => 'Next day';
+
+  @override
+  String get smartwatchSync => 'Smartwatch sync';
 }

@@ -1826,6 +1826,96 @@ abstract class AppLocalizations {
   /// **'Something unexpected went wrong. Please try again.'**
   String get voiceErrorUnknown;
 
+  /// No description provided for @textTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Text Food Log'**
+  String get textTitle;
+
+  /// No description provided for @textSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type what you ate'**
+  String get textSubtitle;
+
+  /// No description provided for @textInputHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. breakfast: 2 eggs, toast and tea…'**
+  String get textInputHint;
+
+  /// No description provided for @textAnalyzeCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze with AI'**
+  String get textAnalyzeCta;
+
+  /// No description provided for @textAnalyzingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyzing your meal…'**
+  String get textAnalyzingTitle;
+
+  /// No description provided for @textEmptyInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Type what you ate first, then tap analyze.'**
+  String get textEmptyInput;
+
+  /// No description provided for @textWroteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You wrote'**
+  String get textWroteLabel;
+
+  /// No description provided for @textErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Check your network and try again.'**
+  String get textErrorNetwork;
+
+  /// No description provided for @textErrorUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'Please sign in first to use the text logger.'**
+  String get textErrorUnauthorized;
+
+  /// No description provided for @textErrorNotFood.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find any food in that text. Try describing your meal again.'**
+  String get textErrorNotFood;
+
+  /// No description provided for @textErrorAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t understand that description. Please try again.'**
+  String get textErrorAnalysis;
+
+  /// No description provided for @textErrorPersist.
+  ///
+  /// In en, this message translates to:
+  /// **'The meal was analyzed but saving failed. Please try again.'**
+  String get textErrorPersist;
+
+  /// No description provided for @textErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Something unexpected went wrong. Please try again.'**
+  String get textErrorUnknown;
+
+  /// No description provided for @textEditDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit description'**
+  String get textEditDescription;
+
+  /// No description provided for @textNewDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'New description'**
+  String get textNewDescription;
+
   /// No description provided for @profileFirstRunNudge.
   ///
   /// In en, this message translates to:
@@ -1981,6 +2071,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Week {w}'**
   String phaseWeek(int w);
+
+  /// No description provided for @previousDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous day'**
+  String get previousDay;
+
+  /// No description provided for @nextDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Next day'**
+  String get nextDay;
+
+  /// No description provided for @smartwatchSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Smartwatch sync'**
+  String get smartwatchSync;
 }
 
 class _AppLocalizationsDelegate

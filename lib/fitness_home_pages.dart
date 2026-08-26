@@ -19,6 +19,7 @@ import 'providers/profile_provider.dart';
 import 'screens/food_scan_screen.dart';
 import 'screens/barcode_scan_screen.dart';
 import 'screens/nutrition_screen.dart';
+import 'screens/text_food_log_screen.dart';
 import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/stats_service.dart';
@@ -728,6 +729,18 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
   }
 
+  // Text Food Log entry point — same refresh flow as the AI scan.
+  Future<void> _openTextLog() async {
+    HapticFeedback.lightImpact();
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const TextFoodLogScreen()));
+    if (saved == true && mounted) {
+      await _refreshNutritionTotals();
+      widget.onNutritionChanged?.call();
+    }
+  }
+
   Future<void> _refreshNutritionTotals() async {
     if (currentUserId == null) return;
     final dateStr = _selectedDate.toIso8601String().substring(0, 10);
@@ -1068,7 +1081,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   onAddMeal: _openFoodDatabase,
                   onAiScan: _openFoodScan,
                   onVoice: _openVoiceLog,
-                  onText: () => _openFoodLogger(mode: 'quick'),
+                  onText: _openTextLog,
                   onBarcode: _openBarcodeScan,
                 ),
               ),

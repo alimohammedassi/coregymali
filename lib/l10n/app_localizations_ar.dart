@@ -910,6 +910,54 @@ class AppLocalizationsAr extends AppLocalizations {
   String get voiceErrorUnknown => 'حصلت مشكلة غير متوقعة، جرب تاني';
 
   @override
+  String get textTitle => 'تسجيل الأكل بالنص';
+
+  @override
+  String get textSubtitle => 'اكتب أكلت إيه وإحنا نعمل الباقي';
+
+  @override
+  String get textInputHint => 'مثال: فطار 2 عيش وجبنة وشاي…';
+
+  @override
+  String get textAnalyzeCta => 'حلّل بالذكاء الاصطناعي';
+
+  @override
+  String get textAnalyzingTitle => 'بنحلل وجبتك…';
+
+  @override
+  String get textEmptyInput => 'اكتب أكلت إيه الأول وبعدين دوس تحليل';
+
+  @override
+  String get textWroteLabel => 'إنت كتبت';
+
+  @override
+  String get textErrorNetwork =>
+      'مفيش اتصال بالإنترنت، اتأكد من الشبكة وجرب تاني';
+
+  @override
+  String get textErrorUnauthorized =>
+      'لازم تسجل دخول الأول قبل ما تستخدم تسجيل النص';
+
+  @override
+  String get textErrorNotFood => 'ملقيناش أكل في النص ده، جرب توصف وجبتك تاني';
+
+  @override
+  String get textErrorAnalysis => 'حصلت مشكلة في فهم الوصف، جرب تاني';
+
+  @override
+  String get textErrorPersist =>
+      'الوجبة اتحللت بس حصلت مشكلة في الحفظ، جرب تاني';
+
+  @override
+  String get textErrorUnknown => 'حصلت مشكلة غير متوقعة، جرب تاني';
+
+  @override
+  String get textEditDescription => 'عدّل الوصف';
+
+  @override
+  String get textNewDescription => 'وصف جديد';
+
+  @override
   String get profileFirstRunNudge => 'سجّل أول تمرين لتبدأ في جمع الرانك!';
 
   @override
@@ -997,4 +1045,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String phaseWeek(int w) {
     return 'الأسبوع $w';
   }
+
+  @override
+  String get previousDay => 'اليوم السابق';
+
+  @override
+  String get nextDay => 'اليوم التالي';
+
+  @override
+  String get smartwatchSync => 'مزامنة الساعة الذكية';
 }

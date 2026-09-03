@@ -31,6 +31,7 @@ import 'widgets/add_food_sheet.dart';
 import 'widgets/app_background.dart';
 import 'widgets/food_logging_modal.dart';
 import 'widgets/pixel_art_icons.dart';
+import 'features/health/data/health_service.dart';
 import 'features/health/presentation/widgets/today_activity_card.dart';
 
 // ─── Interactive Micro-Widgets ────────────────────────────────────────────────
@@ -222,6 +223,8 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         onNutritionChanged: _onNutritionChanged,
         workoutTabIndex: _indexOf(tabs, _TabId.workout),
         profileTabIndex: _indexOf(tabs, _TabId.profile),
+        coachesTabIndex: _indexOf(tabs, _TabId.coaches),
+        dashboardTabIndex: _indexOf(tabs, _TabId.dashboard),
       ),
       _TabId.nutrition => NutritionScreen(key: _nutritionScreenKey),
       _TabId.dashboard => CoachDashboardProviders.provideAll(
@@ -420,15 +423,20 @@ class _PlayfulNavBar extends StatelessWidget {
 class _HomeScreenCore extends StatefulWidget {
   final Function(int) onNavigate;
   final VoidCallback? onNutritionChanged;
+
   /// Resolved by the parent from the active tab list so home-screen shortcuts
   /// land on the right destination for both client and coach layouts.
   final int workoutTabIndex;
   final int profileTabIndex;
+  final int coachesTabIndex;
+  final int dashboardTabIndex;
   const _HomeScreenCore({
     required this.onNavigate,
     this.onNutritionChanged,
     required this.workoutTabIndex,
     required this.profileTabIndex,
+    required this.coachesTabIndex,
+    required this.dashboardTabIndex,
   });
 
   @override
@@ -440,6 +448,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   static bool _nudgeShownThisSession = false;
 
   final StreakService _streakService = StreakService();
+  final HealthService _healthService = HealthService();
   StreakStatus _streakStatus = StreakStatus.empty;
 
   bool _isLoading = true;
@@ -560,9 +569,62 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     super.dispose();
   }
 
+  /// Day-precision date comparison used for "is this today?" checks.
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Quiet smartwatch sync used by [_loadAll] so steps/burned stay fresh
+  /// without the old always-visible activity card. Permission-gated and
+  /// guarded against zero-fetch overwrites (a revoked-permission or errored
+  /// fetch must never wipe values the user entered manually).
+  Future<bool> _syncTodayHealthQuietly() async {
+    try {
+      final status = await _healthService.checkPlatformStatus();
+      if (status != HealthPermissionStatus.granted) return false;
+      final activity = await _healthService.fetchTodayActivity();
+      if (activity.steps <= 0 && activity.activeCaloriesBurned <= 0) {
+        return false;
+      }
+      return await _healthService.syncTodayActivity(activity);
+    } catch (e) {
+      debugPrint('Quiet health sync skipped: $e');
+      return false;
+    }
+  }
+
+  // Smartwatch connect / sync sheet — hosts the existing activity card so
+  // permission requests, install prompts and manual sync stay reachable
+  // without a permanent home-section slot.
+  void _openWatchSheet() {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+          child: TodayActivityCard(stepGoal: 10000, onSynced: () => _loadAll()),
+        ),
+      ),
+    );
+  }
+
   Future<void> _loadAll([DateTime? date]) async {
     final targetDate = date ?? _selectedDate;
     final dateStr = targetDate.toIso8601String().substring(0, 10);
+
+    // Best-effort smartwatch sync before reading today's summary. Hard-capped
+    // at 3s so a hung health plugin can never stall home load; runs ahead of
+    // the fetches so fresh steps land in daily_summary before we read it.
+    if (currentUserId != null && _isSameDay(targetDate, DateTime.now())) {
+      try {
+        await _syncTodayHealthQuietly().timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => false,
+        );
+      } catch (_) {}
+    }
 
     // Streak status — fire-and-forget refresh for the header badge.
     _streakService.getStatus().then((s) {
@@ -673,9 +735,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   // Barcode scanner entry point — same refresh flow as the AI scan.
   Future<void> _openBarcodeScan() async {
     HapticFeedback.lightImpact();
-    final saved = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const BarcodeScanScreen()),
-    );
+    final saved = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const BarcodeScanScreen()));
     if (saved == true && mounted) {
       await _refreshNutritionTotals();
       widget.onNutritionChanged?.call();
@@ -855,6 +917,14 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
   }
 
+  Widget _shimmerBlock(double height, double radius) => Container(
+    height: height,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(radius),
+    ),
+  );
+
   Widget _buildShimmer() {
     return Shimmer.fromColors(
       baseColor: const Color(0xFFE8ECE9),
@@ -862,31 +932,40 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 60),
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+            _shimmerBlock(48, 16),
+            const SizedBox(height: 14),
+            _shimmerBlock(64, 20), // quick stats strip
+            const SizedBox(height: 14),
+            _shimmerBlock(340, 26), // hero fuel card
+            const SizedBox(height: 12),
+            _shimmerBlock(84, 20), // vitals bar
+            const SizedBox(height: 14),
+            _shimmerBlock(56, 20), // add-meal CTA
+            const SizedBox(height: 10),
+            Row(
+              children: List.generate(
+                4,
+                (_) => Expanded(
+                  child: Center(
+                    child: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 16),
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
+            const SizedBox(height: 18),
+            _shimmerBlock(20, 8), // meals section header
+            const SizedBox(height: 10),
+            _shimmerBlock(116, 18), // meals feed
           ],
         ),
       ),
@@ -909,6 +988,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     final double calorieProgress = _goalCalories > 0
         ? (_totalCalories / _goalCalories).clamp(0.0, 1.0)
         : 0.0;
+    final int caloriesLeft = (_goalCalories - _totalCalories).toInt();
+    final int proteinPct = _goalProtein > 0
+        ? ((_totalProtein / _goalProtein) * 100).clamp(0, 100).toInt()
+        : 0;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -943,10 +1026,29 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                       widget.onNavigate(widget.profileTabIndex),
                   onOpenChat: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                          builder: (_) => const ChatListScreen()),
+                      MaterialPageRoute(builder: (_) => const ChatListScreen()),
                     );
                   },
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 14)),
+
+            // ── 1a. Quick glance strip — the day's headline numbers, up
+            // front and unmissable before anything else competes for
+            // attention. Calories always leads.
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 1,
+                child: _QuickStatsStrip(
+                  caloriesLeft: caloriesLeft,
+                  isOverCalories: _totalCalories > _goalCalories,
+                  proteinPct: proteinPct,
+                  steps: _stepsInt,
+                  streak: _streakStatus.currentStreak,
+                  isArabic: isArabic,
                 ),
               ),
             ),
@@ -964,25 +1066,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 ),
               ),
 
-            // ── 2. Compact Interactive Date Selector Strip ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 1,
-                child: _CompactDateStrip(
-                  selectedDate: _selectedDate,
-                  isArabic: isArabic,
-                  onSelectDate: (d) {
-                    setState(() => _selectedDate = d);
-                    _loadAll(d);
-                  },
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ── 3. Goals Alert if not set ──
+            // ── 2. Goals Alert if not set ──
             if (_noGoalsSet)
               SliverToBoxAdapter(
                 child: _Stagger(
@@ -995,83 +1079,61 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 ),
               ),
 
-            // ── 4. Hero Today's Calories Card ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 2,
-                child: _HeroCalorieCard(
-                  ringAnim: _ringAnim,
-                  calorieProgress: calorieProgress,
-                  totalCalories: _totalCalories,
-                  goalCalories: _goalCalories,
-                  isArabic: isArabic,
-                  onOpenNutrition: () => _openFoodLogger(),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 14)),
-
-            // ── 5. Macro Breakdown 3-Pack ──
+            // ── 3. Hero Fuel Card — calories gauge, macros & date stepper ──
+            // This is the single most important surface on Home: the ring
+            // and the calorie count get the most visual weight on the page.
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 3,
-                child: _MacroCardsPack(
+                child: _HeroFuelCard(
+                  ringAnim: _ringAnim,
                   macroAnim: _macroAnim,
+                  calorieProgress: calorieProgress,
+                  totalCalories: _totalCalories,
+                  goalCalories: _goalCalories,
                   totalProtein: _totalProtein,
                   goalProtein: _goalProtein,
                   totalCarbs: _totalCarbs,
                   goalCarbs: _goalCarbs,
                   totalFat: _totalFat,
                   goalFat: _goalFat,
+                  caloriesBurned: _caloriesBurned,
+                  selectedDate: _selectedDate,
                   isArabic: isArabic,
-                  onTap: () => _openFoodLogger(),
+                  onSelectDate: (d) {
+                    setState(() => _selectedDate = d);
+                    _loadAll(d);
+                  },
+                  onOpenNutrition: () => _openFoodLogger(),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+            // ── 4. Vitals Bar (Water · Steps · Burned) ──
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 4,
+                child: _VitalsBar(
+                  waterGlasses: _waterGlasses,
+                  steps: _stepsInt,
+                  caloriesBurned: _caloriesBurned,
+                  isArabic: isArabic,
+                  canEditDaily: _isSameDay(_selectedDate, DateTime.now()),
+                  onAddWater: _addWater,
+                  onStepsTap: _promptUpdateSteps,
+                  onWorkoutTap: () => widget.onNavigate(widget.workoutTabIndex),
+                  onOpenWatchSheet: _openWatchSheet,
                 ),
               ),
             ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 18)),
 
-            // ── 6. 5-Second Daily Snapshot (Water, Steps, Burned) ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 4,
-                child: _DailySnapshotRow(
-                  waterGlasses: _waterGlasses,
-                  steps: _stepsInt,
-                  caloriesBurned: _caloriesBurned,
-                  isArabic: isArabic,
-                  onAddWater: _addWater,
-                  onStepsTap: _promptUpdateSteps,
-                  onWorkoutTap: () =>
-                      widget.onNavigate(widget.workoutTabIndex),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ── 6.5 Today's Smartwatch & Health Activity Card ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 4,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: TodayActivityCard(
-                    stepGoal: 10000,
-                    onSynced: () => _loadAll(),
-                  ),
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-            // ── 7. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
+            // ── 5. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
@@ -1089,11 +1151,34 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
             const SliverToBoxAdapter(child: SizedBox(height: 22)),
 
-            // ── 8. Today's Fueling / Meals Feed ──
+            // ── 5b. App feature highlights — surfaces the app's other big
+            // pillars (coaches, workouts, dashboard) right on Home so they
+            // don't get lost behind the bottom nav.
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 6,
+                child: _FeatureHighlightsStrip(
+                  isArabic: isArabic,
+                  onOpenWorkout: () =>
+                      widget.onNavigate(widget.workoutTabIndex),
+                  onOpenCoaches: () =>
+                      widget.onNavigate(widget.coachesTabIndex),
+                  onOpenNutrition: () => _openFoodLogger(),
+                  onOpenChat: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ChatListScreen()),
+                  ),
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 22)),
+
+            // ── 6. Today's Fueling / Meals Feed ──
+            SliverToBoxAdapter(
+              child: _Stagger(
+                ctrl: _staggerCtrl,
+                index: 7,
                 child: _SectionHeader(
                   title: l10n.todaysFueling,
                   actionText: l10n.addFood,
@@ -1106,39 +1191,12 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
-                index: 7,
+                index: 8,
                 child: _MealsFeed(
                   logs: _nutritionLogs,
                   isArabic: isArabic,
                   onTapMeal: (mealType) => _openFoodLogger(mealType: mealType),
                 ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 22)),
-
-            // ── 9. Gamified Daily Quests & Challenges ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 8,
-                child: _DailyQuestsCard(
-                  waterGlasses: _waterGlasses,
-                  totalProtein: _totalProtein,
-                  goalProtein: _goalProtein,
-                  isArabic: isArabic,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 22)),
-
-            // ── 10. Pro Coach Mentorship Banner ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 9,
-                child: _ProCoachBanner(isArabic: isArabic),
               ),
             ),
 
@@ -1296,8 +1354,8 @@ class _KaleeHeader extends StatelessWidget {
                   color: streakCount == 0
                       ? AppColors.textMuted
                       : (streakLoggedToday
-                          ? AppColors.primaryGreen
-                          : AppColors.textSecondary),
+                            ? AppColors.primaryGreen
+                            : AppColors.textSecondary),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -1306,8 +1364,8 @@ class _KaleeHeader extends StatelessWidget {
                     color: streakCount == 0
                         ? AppColors.textMuted
                         : (streakLoggedToday
-                            ? AppColors.primaryGreen
-                            : AppColors.textSecondary),
+                              ? AppColors.primaryGreen
+                              : AppColors.textSecondary),
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     fontFamily: AppText.fontFamily(isArabic: isArabic),
@@ -1351,6 +1409,141 @@ class _KaleeHeader extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 1a. Quick Stats Strip — the day's headline numbers at a glance
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Four compact chips summarizing calories left, protein progress, steps and
+/// streak — placed immediately under the header so the most important
+/// numbers on the whole app are visible before any scrolling happens.
+class _QuickStatsStrip extends StatelessWidget {
+  final int caloriesLeft;
+  final bool isOverCalories;
+  final int proteinPct;
+  final int steps;
+  final int streak;
+  final bool isArabic;
+
+  const _QuickStatsStrip({
+    required this.caloriesLeft,
+    required this.isOverCalories,
+    required this.proteinPct,
+    required this.steps,
+    required this.streak,
+    required this.isArabic,
+  });
+
+  String _formatSteps(int steps) =>
+      steps >= 1000 ? '${(steps / 1000).toStringAsFixed(1)}k' : '$steps';
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    final items = [
+      _StatChipData(
+        icon: Icons.local_fire_department_rounded,
+        iconColor: isOverCalories
+            ? AppColors.accentProtein
+            : AppColors.accentCalories,
+        value: isOverCalories ? '+${caloriesLeft.abs()}' : '$caloriesLeft',
+        label: isOverCalories
+            ? (isArabic ? 'سعرات زيادة' : 'kcal over')
+            : (isArabic ? 'سعرات متبقية' : 'kcal left'),
+      ),
+      _StatChipData(
+        icon: Icons.bolt_rounded,
+        iconColor: AppColors.accentProtein,
+        value: '$proteinPct%',
+        label: isArabic ? 'بروتين' : 'protein',
+      ),
+      _StatChipData(
+        icon: Icons.directions_walk_rounded,
+        iconColor: AppColors.primaryGreen,
+        value: _formatSteps(steps),
+        label: isArabic ? 'خطوة' : 'steps',
+      ),
+      _StatChipData(
+        icon: Icons.whatshot_rounded,
+        iconColor: streak > 0 ? AppColors.accentCalories : AppColors.textMuted,
+        value: '$streak',
+        label: l10n.navHome == l10n.navHome
+            ? (isArabic ? 'يوم متتالي' : 'day streak')
+            : '',
+      ),
+    ];
+
+    return SizedBox(
+      height: 68,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: items.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final item = items[i];
+          return _ModernPlayfulCard(
+            borderRadius: 18,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: item.iconColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(item.icon, size: 16, color: item.iconColor),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      item.value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                    ),
+                    Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StatChipData {
+  final IconData icon;
+  final Color iconColor;
+  final String value;
+  final String label;
+  const _StatChipData({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 1b. Streak-at-risk nudge banner
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1375,13 +1568,20 @@ class _StreakAtRiskBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.borderSubtle),
         boxShadow: [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.local_fire_department_rounded,
-              color: AppColors.primaryGreen, size: 20),
+          const Icon(
+            Icons.local_fire_department_rounded,
+            color: AppColors.primaryGreen,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1399,123 +1599,14 @@ class _StreakAtRiskBanner extends StatelessWidget {
           ),
           IconButton(
             visualDensity: VisualDensity.compact,
-            icon: Icon(Icons.close_rounded,
-                size: 16, color: AppColors.textSecondary),
+            icon: Icon(
+              Icons.close_rounded,
+              size: 16,
+              color: AppColors.textSecondary,
+            ),
             onPressed: onDismiss,
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. Compact Daily Date Selector Strip
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _CompactDateStrip extends StatelessWidget {
-  final DateTime selectedDate;
-  final bool isArabic;
-  final ValueChanged<DateTime> onSelectDate;
-
-  const _CompactDateStrip({
-    required this.selectedDate,
-    required this.isArabic,
-    required this.onSelectDate,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-
-    final enDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final arDays = ['ن', 'ث', 'ر', 'خ', 'ج', 'س', 'ح'];
-    final weekdays = isArabic ? arDays : enDays;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.borderSubtle),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: List.generate(7, (i) {
-            final dayDate = startOfWeek.add(Duration(days: i));
-            final isSelected =
-                dayDate.day == selectedDate.day &&
-                dayDate.month == selectedDate.month &&
-                dayDate.year == selectedDate.year;
-
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onSelectDate(dayDate);
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primaryGreen
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primaryGreen.withValues(
-                                alpha: 0.28,
-                              ),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        weekdays[i],
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textSecondary,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${dayDate.day}',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected
-                              ? FontWeight.w800
-                              : FontWeight.w600,
-                          color: isSelected
-                              ? Colors.white
-                              : AppColors.textPrimary,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ),
       ),
     );
   }
@@ -1585,22 +1676,39 @@ class _GoalsOnboardingBanner extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 4. Hero Today's Calories Card
+// 4. Hero Fuel Card — calories gauge, macros & date stepper in one card
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _HeroCalorieCard extends StatelessWidget {
+class _HeroFuelCard extends StatelessWidget {
   final Animation<double> ringAnim;
+  final Animation<double> macroAnim;
   final double calorieProgress;
   final double totalCalories, goalCalories;
+  final double totalProtein, goalProtein;
+  final double totalCarbs, goalCarbs;
+  final double totalFat, goalFat;
+  final int caloriesBurned;
+  final DateTime selectedDate;
   final bool isArabic;
+  final ValueChanged<DateTime> onSelectDate;
   final VoidCallback onOpenNutrition;
 
-  const _HeroCalorieCard({
+  const _HeroFuelCard({
     required this.ringAnim,
+    required this.macroAnim,
     required this.calorieProgress,
     required this.totalCalories,
     required this.goalCalories,
+    required this.totalProtein,
+    required this.goalProtein,
+    required this.totalCarbs,
+    required this.goalCarbs,
+    required this.totalFat,
+    required this.goalFat,
+    required this.caloriesBurned,
+    required this.selectedDate,
     required this.isArabic,
+    required this.onSelectDate,
     required this.onOpenNutrition,
   });
 
@@ -1617,66 +1725,85 @@ class _HeroCalorieCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: _InteractiveScaleDetector(
         onTap: onOpenNutrition,
-        child: _ModernPlayfulCard(
-          padding: const EdgeInsets.all(20),
+        child: Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(
+              color: _isOver
+                  ? const Color(0xFFFCA5A5).withValues(alpha: 0.5)
+                  : AppColors.primaryGreen.withValues(alpha: 0.18),
+              width: 1.4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                blurRadius: 22,
+                spreadRadius: 0,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
           child: Column(
             children: [
-              // Header title + Pixel Fire Badge
+              // Header title + Pixel Fire Badge + compact date stepper
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF3E0),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const PixelArtIcon(
-                          type: PixelIconType.fire,
-                          size: 16,
-                          animate: true,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        l10n.todayCalories.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 0.8,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
-                        ),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF3E0),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: const PixelArtIcon(
+                      type: PixelIconType.fire,
+                      size: 17,
+                      animate: true,
+                    ),
                   ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: AppColors.textMuted,
-                    size: 20,
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      l10n.todayCalories.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.9,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _HeroDateStepper(
+                    selectedDate: selectedDate,
+                    isArabic: isArabic,
+                    onSelectDate: onSelectDate,
                   ),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Gauge & Main Counter
+              // Gauge & Main Counter — the single largest, most prominent
+              // number on the whole home screen.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Circular Progress Gauge
                   SizedBox(
-                    width: 96,
-                    height: 96,
+                    width: 116,
+                    height: 116,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         AnimatedBuilder(
                           animation: ringAnim,
                           builder: (_, __) => CustomPaint(
-                            size: const Size(96, 96),
+                            size: const Size(116, 116),
                             painter: _CalorieGaugePainter(
                               progress: (calorieProgress * ringAnim.value)
                                   .clamp(0.0, 1.0),
@@ -1689,14 +1816,14 @@ class _HeroCalorieCard extends StatelessWidget {
                           children: [
                             const PixelArtIcon(
                               type: PixelIconType.fire,
-                              size: 18,
+                              size: 22,
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 3),
                             Text(
                               '${((calorieProgress * 100).toInt())}%',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w900,
                                 color: _isOver
                                     ? AppColors.accentProtein
                                     : AppColors.accentCalories,
@@ -1726,19 +1853,14 @@ class _HeroCalorieCard extends StatelessWidget {
                             children: [
                               Text(
                                 '${(totalCalories * ringAnim.value).toInt()}',
-                                style: AppText.styledDisplayMd(
-                                  isArabic: isArabic,
+                                style: TextStyle(
+                                  fontSize: 34,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.0,
+                                  letterSpacing: -0.5,
                                   color: _isOver
                                       ? AppColors.accentProtein
                                       : AppColors.textPrimary,
-                                ),
-                              ),
-                              Text(
-                                ' / ${goalCalories.toInt()} ${l10n.kcal}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
                                   fontFamily: AppText.fontFamily(
                                     isArabic: isArabic,
                                   ),
@@ -1747,12 +1869,23 @@ class _HeroCalorieCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(height: 6),
-                        // Remaining Pill Badge
+                        const SizedBox(height: 2),
+                        Text(
+                          '${l10n.kcal} · ${isArabic ? 'الهدف' : 'goal'} ${goalCalories.toInt()}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textSecondary,
+                            fontFamily: AppText.fontFamily(isArabic: isArabic),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Remaining Pill Badge — enlarged so the "how much
+                        // is left today" answer is unmissable.
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                            horizontal: 12,
+                            vertical: 7,
                           ),
                           decoration: BoxDecoration(
                             color: _isOver
@@ -1760,20 +1893,317 @@ class _HeroCalorieCard extends StatelessWidget {
                                 : AppColors.lightGreen,
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Text(
-                            _isOver
-                                ? l10n.caloriesOverMsg(_remaining.toInt())
-                                : l10n.caloriesRemainingMsg(_remaining.toInt()),
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: _isOver
-                                  ? const Color(0xFFB91C1C)
-                                  : AppColors.onPrimaryContainer,
-                              fontFamily: AppText.fontFamily(
-                                isArabic: isArabic,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _isOver
+                                    ? Icons.trending_up_rounded
+                                    : Icons.check_circle_rounded,
+                                size: 13,
+                                color: _isOver
+                                    ? const Color(0xFFB91C1C)
+                                    : AppColors.onPrimaryContainer,
                               ),
-                            ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  _isOver
+                                      ? l10n.caloriesOverMsg(_remaining.toInt())
+                                      : l10n.caloriesRemainingMsg(
+                                          _remaining.toInt(),
+                                        ),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: _isOver
+                                        ? const Color(0xFFB91C1C)
+                                        : AppColors.onPrimaryContainer,
+                                    fontFamily: AppText.fontFamily(
+                                      isArabic: isArabic,
+                                    ),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (caloriesBurned > 0) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.local_fire_department_rounded,
+                                size: 12,
+                                color: AppColors.textMuted,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isArabic
+                                    ? '$caloriesBurned سعرة محروقة بالتمرين'
+                                    : '$caloriesBurned kcal burned from activity',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textMuted,
+                                  fontFamily: AppText.fontFamily(
+                                    isArabic: isArabic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 18),
+
+              // Macro breakdown — slim rows inside the same card
+              Divider(height: 1, thickness: 1, color: AppColors.borderSubtle),
+              const SizedBox(height: 14),
+              // Gram counts derive from the animated values below so they
+              // count up together instead of jumping ahead of the gauge.
+              AnimatedBuilder(
+                animation: macroAnim,
+                builder: (_, __) => Column(
+                  children: [
+                    _MacroRow(
+                      label: l10n.protein,
+                      icon: Icons.egg_alt_rounded,
+                      current: (totalProtein * macroAnim.value).toInt(),
+                      goal: goalProtein.toInt(),
+                      accentColor: AppColors.accentProtein,
+                      isArabic: isArabic,
+                    ),
+                    const SizedBox(height: 11),
+                    _MacroRow(
+                      label: l10n.carbs,
+                      icon: Icons.rice_bowl_rounded,
+                      current: (totalCarbs * macroAnim.value).toInt(),
+                      goal: goalCarbs.toInt(),
+                      accentColor: AppColors.accentCarbs,
+                      isArabic: isArabic,
+                    ),
+                    const SizedBox(height: 11),
+                    _MacroRow(
+                      label: l10n.fat,
+                      icon: Icons.opacity_rounded,
+                      current: (totalFat * macroAnim.value).toInt(),
+                      goal: goalFat.toInt(),
+                      accentColor: AppColors.accentFat,
+                      isArabic: isArabic,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact ‹ date › stepper replacing the old week strip. Range is clamped to
+/// the current week (Monday → today), matching the strip's previous reach.
+class _HeroDateStepper extends StatelessWidget {
+  final DateTime selectedDate;
+  final bool isArabic;
+  final ValueChanged<DateTime> onSelectDate;
+
+  const _HeroDateStepper({
+    required this.selectedDate,
+    required this.isArabic,
+    required this.onSelectDate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final selDay = DateTime(
+      selectedDate.year,
+      selectedDate.month,
+      selectedDate.day,
+    );
+    final startOfWeek = today.subtract(Duration(days: today.weekday - 1));
+    final canGoBack = selDay.isAfter(startOfWeek);
+    final canGoForward = selDay.isBefore(today);
+
+    // The Row auto-reverses under RTL, but chevron glyphs don't — swap them
+    // so "earlier" always points against the reading direction.
+    final rtl = Directionality.of(context) == TextDirection.rtl;
+    final prevIcon = rtl
+        ? Icons.chevron_right_rounded
+        : Icons.chevron_left_rounded;
+    final nextIcon = rtl
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _HeroStepButton(
+            icon: prevIcon,
+            tooltip: l10n.previousDay,
+            enabled: canGoBack,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onSelectDate(selDay.subtract(const Duration(days: 1)));
+            },
+          ),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 84),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                MaterialLocalizations.of(context).formatShortDate(selectedDate),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: isArabic),
+                ),
+              ),
+            ),
+          ),
+          _HeroStepButton(
+            icon: nextIcon,
+            tooltip: l10n.nextDay,
+            enabled: canGoForward,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onSelectDate(selDay.add(const Duration(days: 1)));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroStepButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _HeroStepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: enabled ? onTap : null,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            icon,
+            size: 17,
+            color: enabled
+                ? AppColors.primaryGreen
+                : AppColors.textMuted.withValues(alpha: 0.45),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One slim animated macro progress row rendered inside [_HeroFuelCard].
+/// Each macro gets a tinted icon badge so protein/carbs/fat are instantly
+/// scannable by color, not just by label text.
+class _MacroRow extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final int current, goal;
+  final Color accentColor;
+  final bool isArabic;
+
+  const _MacroRow({
+    required this.label,
+    required this.icon,
+    required this.current,
+    required this.goal,
+    required this.accentColor,
+    required this.isArabic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double pct = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
+
+    return Row(
+      children: [
+        Container(
+          width: 26,
+          height: 26,
+          decoration: BoxDecoration(
+            color: accentColor.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 14, color: accentColor),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                        fontFamily: AppText.fontFamily(isArabic: isArabic),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '$current g',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: accentColor,
+                            fontFamily: AppText.fontFamily(isArabic: isArabic),
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' / $goal g',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.textMuted,
+                            fontFamily: AppText.fontFamily(isArabic: isArabic),
                           ),
                         ),
                       ],
@@ -1781,10 +2211,20 @@ class _HeroCalorieCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 5),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: LinearProgressIndicator(
+                  value: pct,
+                  minHeight: 5,
+                  backgroundColor: AppColors.surfaceContainerHigh,
+                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+                ),
+              ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -1798,8 +2238,8 @@ class _CalorieGaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 6;
-    const strokeWidth = 8.5;
+    final radius = size.width / 2 - 7;
+    const strokeWidth = 10.0;
 
     // Track Background
     final bgPaint = Paint()
@@ -1828,217 +2268,33 @@ class _CalorieGaugePainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 5. Macro Breakdown 3-Pack (Protein, Carbs, Fat)
+// 5. Vitals Bar — Water · Steps · Burned in one divided card
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MacroCardsPack extends StatelessWidget {
-  final Animation<double> macroAnim;
-  final double totalProtein, goalProtein;
-  final double totalCarbs, goalCarbs;
-  final double totalFat, goalFat;
-  final bool isArabic;
-  final VoidCallback onTap;
-
-  const _MacroCardsPack({
-    required this.macroAnim,
-    required this.totalProtein,
-    required this.goalProtein,
-    required this.totalCarbs,
-    required this.goalCarbs,
-    required this.totalFat,
-    required this.goalFat,
-    required this.isArabic,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: AnimatedBuilder(
-        animation: macroAnim,
-        builder: (_, __) => Row(
-          children: [
-            // Protein Card (Chicken)
-            Expanded(
-              child: _MacroCard(
-                title: l10n.protein,
-                iconType: PixelIconType.chicken,
-                current: (totalProtein * macroAnim.value).toInt(),
-                goal: goalProtein.toInt(),
-                accentColor: AppColors.accentProtein,
-                lightBgColor: const Color(0xFFFEE2E2),
-                isArabic: isArabic,
-                onTap: onTap,
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Carbs Card (Grain)
-            Expanded(
-              child: _MacroCard(
-                title: l10n.carbs,
-                iconType: PixelIconType.grain,
-                current: (totalCarbs * macroAnim.value).toInt(),
-                goal: goalCarbs.toInt(),
-                accentColor: AppColors.accentCarbs,
-                lightBgColor: const Color(0xFFDBEAFE),
-                isArabic: isArabic,
-                onTap: onTap,
-              ),
-            ),
-            const SizedBox(width: 10),
-            // Fat Card (Avocado)
-            Expanded(
-              child: _MacroCard(
-                title: l10n.fat,
-                iconType: PixelIconType.avocado,
-                current: (totalFat * macroAnim.value).toInt(),
-                goal: goalFat.toInt(),
-                accentColor: AppColors.accentFat,
-                lightBgColor: const Color(0xFFDCFCE7),
-                isArabic: isArabic,
-                onTap: onTap,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MacroCard extends StatelessWidget {
-  final String title;
-  final PixelIconType iconType;
-  final int current, goal;
-  final Color accentColor;
-  final Color lightBgColor;
-  final bool isArabic;
-  final VoidCallback onTap;
-
-  const _MacroCard({
-    required this.title,
-    required this.iconType,
-    required this.current,
-    required this.goal,
-    required this.accentColor,
-    required this.lightBgColor,
-    required this.isArabic,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final double pct = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
-
-    return _InteractiveScaleDetector(
-      onTap: onTap,
-      scaleFactor: 0.94,
-      child: _ModernPlayfulCard(
-        padding: const EdgeInsets.all(12),
-        borderRadius: 18,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: lightBgColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: PixelArtIcon(type: iconType, size: 16),
-                ),
-                Text(
-                  '${(pct * 100).toInt()}%',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: accentColor,
-                    fontFamily: AppText.fontFamily(isArabic: isArabic),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-                fontFamily: AppText.fontFamily(isArabic: isArabic),
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '${current}g',
-                    style: TextStyle(
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
-                    ),
-                  ),
-                  TextSpan(
-                    text: ' / ${goal}g',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.textMuted,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: pct,
-                minHeight: 4,
-                backgroundColor: const Color(0xFFF1F5F3),
-                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 6. 5-Second Daily Snapshot (Water, Steps, Burned)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DailySnapshotRow extends StatelessWidget {
+class _VitalsBar extends StatelessWidget {
   final int waterGlasses;
   final int steps;
   final int caloriesBurned;
   final bool isArabic;
-  final VoidCallback onAddWater;
-  final VoidCallback onStepsTap;
-  final VoidCallback onWorkoutTap;
 
-  const _DailySnapshotRow({
+  /// False while browsing a past day — water/steps writes always hit *today*,
+  /// so the editing affordances hide and the tiles stop being tappable.
+  final bool canEditDaily;
+  final VoidCallback? onAddWater;
+  final VoidCallback? onStepsTap;
+  final VoidCallback onWorkoutTap;
+  final VoidCallback onOpenWatchSheet;
+
+  const _VitalsBar({
     required this.waterGlasses,
     required this.steps,
     required this.caloriesBurned,
     required this.isArabic,
-    required this.onAddWater,
-    required this.onStepsTap,
+    required this.canEditDaily,
+    this.onAddWater,
+    this.onStepsTap,
     required this.onWorkoutTap,
+    required this.onOpenWatchSheet,
   });
 
   String _formatSteps(int steps) =>
@@ -2050,149 +2306,196 @@ class _DailySnapshotRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Row(
-        children: [
-          // Water Card (Interactive Tap)
-          Expanded(
-            child: _InteractiveScaleDetector(
-              onTap: onAddWater,
-              child: _ModernPlayfulCard(
-                padding: const EdgeInsets.all(12),
-                borderRadius: 18,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: _ModernPlayfulCard(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        child: IntrinsicHeight(
+          child: Row(
+            children: [
+              // Water tile — tap anywhere to add a glass
+              Expanded(
+                child: _InteractiveScaleDetector(
+                  onTap: canEditDaily ? onAddWater : null,
+                  scaleFactor: 0.94,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const PixelArtIcon(
-                          type: PixelIconType.waterDrop,
-                          size: 16,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 5,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFE0F2FE),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            '+250ml',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0284C7),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const PixelArtIcon(
+                              type: PixelIconType.waterDrop,
+                              size: 15,
                             ),
+                            if (canEditDaily) ...[
+                              const SizedBox(width: 5),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightGreen,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '+250ml',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.onPrimaryContainer,
+                                    fontFamily: AppText.fontFamily(
+                                      isArabic: isArabic,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.water,
+                          style: AppText.styledBodySm(
+                            isArabic: isArabic,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '$waterGlasses / 8',
+                          style: AppText.styledTitleMd(
+                            isArabic: isArabic,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.water,
-                      style: AppText.styledBodySm(
-                        isArabic: isArabic,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      '$waterGlasses / 8',
-                      style: AppText.styledTitleMd(
-                        isArabic: isArabic,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Steps Card (Interactive Tap)
-          Expanded(
-            child: _InteractiveScaleDetector(
-              onTap: onStepsTap,
-              child: _ModernPlayfulCard(
-                padding: const EdgeInsets.all(12),
-                borderRadius: 18,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+              _barDivider(),
+
+              // Steps tile — pencil edits manually, watch icon opens sync sheet
+              Expanded(
+                child: _InteractiveScaleDetector(
+                  onTap: canEditDaily ? onStepsTap : null,
+                  scaleFactor: 0.94,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const PixelArtIcon(
-                          type: PixelIconType.sneaker,
-                          size: 16,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const PixelArtIcon(
+                              type: PixelIconType.sneaker,
+                              size: 15,
+                            ),
+                            if (canEditDaily) ...[
+                              const SizedBox(width: 5),
+                              const Icon(
+                                Icons.edit_outlined,
+                                size: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ],
+                            const SizedBox(width: 5),
+                            // Watch affordance — opens the smartwatch
+                            // connect/sync sheet (TodayActivityCard).
+                            Tooltip(
+                              message: AppLocalizations.of(
+                                context,
+                              )!.smartwatchSync,
+                              child: GestureDetector(
+                                onTap: onOpenWatchSheet,
+                                behavior: HitTestBehavior.opaque,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: Icon(
+                                    Icons.watch,
+                                    size: 13,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const Icon(
-                          Icons.edit_outlined,
-                          size: 13,
-                          color: AppColors.textMuted,
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.steps,
+                          style: AppText.styledBodySm(
+                            isArabic: isArabic,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          _formatSteps(steps),
+                          style: AppText.styledTitleMd(
+                            isArabic: isArabic,
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.steps,
-                      style: AppText.styledBodySm(
-                        isArabic: isArabic,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      _formatSteps(steps),
-                      style: AppText.styledTitleMd(
-                        isArabic: isArabic,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Workout / Burned Card
-          Expanded(
-            child: _InteractiveScaleDetector(
-              onTap: onWorkoutTap,
-              child: _ModernPlayfulCard(
-                padding: const EdgeInsets.all(12),
-                borderRadius: 18,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const PixelArtIcon(type: PixelIconType.dumbbell, size: 16),
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.burned,
-                      style: AppText.styledBodySm(
-                        isArabic: isArabic,
-                        color: AppColors.textSecondary,
-                      ),
+              _barDivider(),
+              // Workout / Burned tile — jumps to the workout tab
+              Expanded(
+                child: _InteractiveScaleDetector(
+                  onTap: onWorkoutTap,
+                  scaleFactor: 0.94,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const PixelArtIcon(
+                          type: PixelIconType.dumbbell,
+                          size: 15,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          l10n.burned,
+                          style: AppText.styledBodySm(
+                            isArabic: isArabic,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '$caloriesBurned ${l10n.kcal}',
+                          style: AppText.styledTitleMd(
+                            isArabic: isArabic,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 1),
-                    Text(
-                      '$caloriesBurned kcal',
-                      style: AppText.styledTitleMd(
-                        isArabic: isArabic,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
+
+  Widget _barDivider() => Container(
+    width: 1,
+    margin: const EdgeInsets.symmetric(vertical: 6),
+    color: AppColors.borderSubtle,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2271,7 +2574,7 @@ class _QuickFoodLogHub extends StatelessWidget {
           Row(
             children: [
               _buildQuickOption(
-                icon: Icons.camera_alt_rounded,
+                icon: Icons.document_scanner_rounded,
                 label: l10n.scanAi,
                 onTap: onAiScan,
               ),
@@ -2305,38 +2608,200 @@ class _QuickFoodLogHub extends StatelessWidget {
     required String label,
     required VoidCallback onTap,
   }) {
+    // Icon-only circle chips keep the four logging modes reachable at a
+    // fraction of the old height; localized labels survive via tooltip +
+    // semantics instead of visible text.
     return Expanded(
-      child: _InteractiveScaleDetector(
-        onTap: onTap,
-        scaleFactor: 0.90,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, size: 18, color: AppColors.primaryGreen),
-              const SizedBox(height: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
-                  ),
+      child: Center(
+        child: Semantics(
+          label: label,
+          button: true,
+          child: Tooltip(
+            message: label,
+            child: _InteractiveScaleDetector(
+              onTap: onTap,
+              scaleFactor: 0.86,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.borderSubtle),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cardShadow,
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
+                child: Icon(icon, size: 20, color: AppColors.primaryGreen),
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5b. Feature Highlights Strip — surfaces the app's other key pillars
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Compact horizontally-scrolling cards spotlighting the app's other major
+/// features (workouts, coaches, AI chat, full nutrition log) so they stay
+/// discoverable from Home instead of being hidden behind the bottom nav.
+class _FeatureHighlightsStrip extends StatelessWidget {
+  final bool isArabic;
+  final VoidCallback onOpenWorkout;
+  final VoidCallback onOpenCoaches;
+  final VoidCallback onOpenNutrition;
+  final VoidCallback onOpenChat;
+
+  const _FeatureHighlightsStrip({
+    required this.isArabic,
+    required this.onOpenWorkout,
+    required this.onOpenCoaches,
+    required this.onOpenNutrition,
+    required this.onOpenChat,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _FeatureCardData(
+        icon: Icons.fitness_center_rounded,
+        color: AppColors.primaryGreen,
+        title: isArabic ? 'التمارين' : 'Workouts',
+        subtitle: isArabic ? 'خطتك اليومية' : 'Your daily plan',
+        onTap: onOpenWorkout,
+      ),
+      _FeatureCardData(
+        icon: Icons.groups_rounded,
+        color: AppColors.tertiaryFixed,
+        title: isArabic ? 'المدربين' : 'Coaches',
+        subtitle: isArabic ? 'تدريب شخصي' : 'Get personal training',
+        onTap: onOpenCoaches,
+      ),
+      _FeatureCardData(
+        icon: Icons.insights_rounded,
+        color: AppColors.accentProtein,
+        title: isArabic ? 'تحليل التغذية' : 'Nutrition insights',
+        subtitle: isArabic ? 'تفاصيل السعرات' : 'Full calorie details',
+        onTap: onOpenNutrition,
+      ),
+      _FeatureCardData(
+        icon: Icons.smart_toy_rounded,
+        color: AppColors.accentCalories,
+        title: isArabic ? 'المساعد الذكي' : 'AI Assistant',
+        subtitle: isArabic ? 'اسأل أي حاجة' : 'Ask anything',
+        onTap: onOpenChat,
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Text(
+            isArabic ? 'استكشف مميزات التطبيق' : 'Explore app features',
+            style: AppText.styledHeadlineSm(
+              isArabic: isArabic,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 108,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, i) {
+              final item = items[i];
+              return _InteractiveScaleDetector(
+                onTap: item.onTap,
+                child: Container(
+                  width: 132,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderSubtle),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cardShadow,
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: item.color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: Icon(item.icon, size: 18, color: item.color),
+                      ),
+                      const Spacer(),
+                      Text(
+                        item.title,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item.subtitle,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeatureCardData {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _FeatureCardData({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2451,265 +2916,6 @@ class _MealsFeed extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 9. Gamified Daily Quests & Challenges
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _DailyQuestsCard extends StatelessWidget {
-  final int waterGlasses;
-  final double totalProtein, goalProtein;
-  final bool isArabic;
-
-  const _DailyQuestsCard({
-    required this.waterGlasses,
-    required this.totalProtein,
-    required this.goalProtein,
-    required this.isArabic,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final isWaterDone = waterGlasses >= 8;
-    final isProteinDone = goalProtein > 0 && totalProtein >= goalProtein;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: _ModernPlayfulCard(
-        backgroundColor: const Color(0xFFF9FAFB),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    const PixelArtIcon(type: PixelIconType.trophy, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      l10n.dailyQuests,
-                      style: AppText.styledTitleSm(
-                        isArabic: isArabic,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const PixelArtIcon(type: PixelIconType.star, size: 12),
-                      const SizedBox(width: 4),
-                      Text(
-                        l10n.xpEarned(120),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFFB45309),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildQuestTile(
-              title: l10n.hydrationHero,
-              progressText: '$waterGlasses / 8',
-              isCompleted: isWaterDone,
-              iconType: PixelIconType.waterDrop,
-            ),
-            const SizedBox(height: 8),
-            _buildQuestTile(
-              title: l10n.proteinChampion,
-              progressText: '${totalProtein.toInt()} / ${goalProtein.toInt()}g',
-              isCompleted: isProteinDone,
-              iconType: PixelIconType.chicken,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuestTile({
-    required String title,
-    required String progressText,
-    required bool isCompleted,
-    required PixelIconType iconType,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          PixelArtIcon(type: iconType, size: 14),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-                fontFamily: AppText.fontFamily(isArabic: isArabic),
-              ),
-            ),
-          ),
-          Text(
-            progressText,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: isCompleted
-                  ? AppColors.primaryGreen
-                  : AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(width: 6),
-          Icon(
-            isCompleted
-                ? Icons.check_circle_rounded
-                : Icons.radio_button_unchecked_rounded,
-            size: 16,
-            color: isCompleted ? AppColors.primaryGreen : AppColors.textMuted,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 10. Pro Coach Mentorship Banner
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ProCoachBanner extends StatelessWidget {
-  final bool isArabic;
-
-  const _ProCoachBanner({required this.isArabic});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: _InteractiveScaleDetector(
-        onTap: () {
-          final subRepo = SubscriptionRepositoryImpl();
-          final activeSubNotifier = ActiveSubscriptionNotifier(subRepo)
-            ..fetchActiveSubscription();
-          final subNotifier = SubscriptionNotifier(subRepo);
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => MultiProvider(
-                providers: [
-                  ChangeNotifierProvider(
-                    create: (_) {
-                      final n =
-                          CoachListNotifier(CoachRepositoryImpl());
-                      WidgetsBinding.instance.addPostFrameCallback(
-                        (_) => n.fetchCoaches(),
-                      );
-                      return n;
-                    },
-                  ),
-                  ChangeNotifierProvider.value(value: activeSubNotifier),
-                  ChangeNotifierProvider.value(value: subNotifier),
-                ],
-      child: const CoachMarketplaceScreen(embeddedInTabs: true),
-              ),
-            ),
-          );
-        },
-        child: _ModernPlayfulCard(
-          backgroundColor: AppColors.lightGreen,
-          borderColor: AppColors.primaryGreen.withValues(alpha: 0.3),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryGreen.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: const Center(
-                  child: PixelArtIcon(type: PixelIconType.trophy, size: 22),
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.coachBannerTitle,
-                      style: TextStyle(
-                        color: AppColors.onPrimaryContainer,
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: AppText.fontFamily(isArabic: isArabic),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      l10n.coachBannerSubtitle,
-                      style: TextStyle(
-                        color: AppColors.primaryGreen,
-                        fontSize: 11,
-                        fontFamily: AppText.fontFamily(isArabic: isArabic),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.arrow_forward_rounded,
-                  color: Colors.white,
-                  size: 15,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Section Header
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -2779,7 +2985,7 @@ class _Stagger extends StatelessWidget {
     return AnimatedBuilder(
       animation: ctrl,
       builder: (_, c) {
-        final start = (index * 0.04).clamp(0.0, 0.6);
+        final start = (index * 0.035).clamp(0.0, 0.6);
         final end = (start + 0.35).clamp(0.0, 1.0);
         final curved = CurvedAnimation(
           parent: ctrl,

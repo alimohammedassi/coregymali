@@ -5,7 +5,6 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../services/exercise_database.dart';
 import '../services/fitness_plan_generator.dart';
-import '../services/workout_service.dart';
 
 class ExerciseDetailSheet extends StatefulWidget {
   final PlannedExercise plannedExercise;
@@ -177,8 +176,8 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
   }
 
   Widget _buildVideoTab(Exercise exercise) {
-    final hasVideo = exercise.youtubeVideoId.isNotEmpty &&
-        exercise.youtubeVideoId != '是什么';
+    final hasVideo =
+        exercise.youtubeVideoId.isNotEmpty && exercise.youtubeVideoId != '是什么';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -210,9 +209,14 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: _getDifficultyColor(exercise.difficulty).withOpacity(0.2),
+                  color: _getDifficultyColor(
+                    exercise.difficulty,
+                  ).withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -537,7 +541,9 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                         child: Text(
                           '${index + 1}',
                           style: TextStyle(
-                            color: set.isWarmup ? Colors.orange : AppColors.primaryFixed,
+                            color: set.isWarmup
+                                ? Colors.orange
+                                : AppColors.primaryFixed,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -596,7 +602,10 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                  ),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     labelText: 'الوزن (كجم)',
@@ -609,7 +618,9 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primaryFixed),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryFixed,
+                      ),
                     ),
                   ),
                 ),
@@ -619,7 +630,10 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 18),
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                  ),
                   textAlign: TextAlign.center,
                   decoration: InputDecoration(
                     labelText: 'التكرار',
@@ -632,7 +646,9 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.primaryFixed),
+                      borderSide: const BorderSide(
+                        color: AppColors.primaryFixed,
+                      ),
                     ),
                   ),
                 ),
@@ -800,7 +816,9 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : AppColors.surfaceContainerHigh,
+          color: isSelected
+              ? color.withOpacity(0.2)
+              : AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -810,7 +828,11 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: isSelected ? color : AppColors.onSurfaceVariant, size: 16),
+            Icon(
+              icon,
+              color: isSelected ? color : AppColors.onSurfaceVariant,
+              size: 16,
+            ),
             const SizedBox(width: 6),
             Text(
               label,

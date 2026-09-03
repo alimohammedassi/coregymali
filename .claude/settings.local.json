@@ -1,24 +1,14 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(flutter analyze:*)",
-      "Bash(flutter run:*)",
-      "Bash(flutter doctor:*)",
-      "Bash(ls:*)",
-      "Bash(flutter gen-l10n:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(flutter pub:*)",
-      "Bash(flutter build:*)",
-      "Skill(update-config)",
-      "Skill(update-config:*)",
-      "Bash(npx supabase *)",
-      "Bash(grep -E \"^\\\\\\\\s*\\(error|warning\\)\")",
-      "Bash(grep -E \"^\\\\\\\\s*error\")",
-      "mcp__supabase__get_project_url"
-    ]
-  },
-  "enableAllProjectMcpServers": true,
-  "enabledMcpjsonServers": [
-    "supabase"
-  ]
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://api.anthropic.com",
+    "ANTHROPIC_API_KEY": "sk-vwX6URwmGGbpOkORrs646YcKuLs35UWlD4Og6z6tpTbpILHT",
+    "ANTHROPIC_MODEL": "claude-4-5",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-4-5",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-4-5",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4-5",
+    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-4-5",
+    "CLAUDE_CODE_SUBAGENT_API_KEY": "[ENCRYPTION_KEY]",
+    "CLAUDE_CODE_SUBAGENT_BASE_URL": "https://api.anthropic.com"
+  }
 }

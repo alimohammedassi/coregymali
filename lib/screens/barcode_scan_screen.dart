@@ -379,7 +379,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(
+           CircularProgressIndicator(
             color: AppColors.primary,
             strokeWidth: 2.5,
           ),
@@ -900,7 +900,7 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(color: AppColors.primary),
+                borderSide:  BorderSide(color: AppColors.primary),
               ),
             ),
           ),

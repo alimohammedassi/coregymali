@@ -57,7 +57,7 @@ class AppStateViews {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(
+              decoration:  BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.lightGreen,
                 border: Border.fromBorderSide(
@@ -121,7 +121,7 @@ class AppStateViews {
                   BorderSide(color: AppColors.error.withValues(alpha: 0.30)),
                 ),
               ),
-              child: const Icon(
+              child:  Icon(
                 Icons.error_outline_rounded,
                 color: AppColors.error,
                 size: 30,

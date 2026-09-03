@@ -297,7 +297,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                       color: accentColor,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(
+                    child:  Icon(
                       Icons.check,
                       color: AppColors.onPrimary,
                       size: 18,

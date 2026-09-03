@@ -869,7 +869,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
               ),
               child: Column(
                 children: [
-                  const Icon(
+                   Icon(
                     Icons.check_circle_outline_rounded,
                     color: AppColors.primaryFixed,
                     size: 40,

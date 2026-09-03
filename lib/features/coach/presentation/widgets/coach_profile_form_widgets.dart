@@ -99,12 +99,12 @@ InputDecoration _bioDecoration(String hint) {
 
 OutlineInputBorder _focusedBorder() => OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.tertiary, width: 1.5),
+      borderSide:  BorderSide(color: AppColors.tertiary, width: 1.5),
     );
 
 OutlineInputBorder _errorBorder() => OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.error, width: 1),
+      borderSide:  BorderSide(color: AppColors.error, width: 1),
     );
 
 /// Male / Female segmented selector bound to 'male' / 'female' values.
@@ -268,7 +268,7 @@ class CoachSelectChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (selected)
-              const Icon(Icons.check_rounded,
+               Icon(Icons.check_rounded,
                   color: AppColors.tertiary, size: 14),
             if (selected) const SizedBox(width: 4),
             Text(
@@ -323,7 +323,7 @@ class CoachPhotoPicker extends StatelessWidget {
                             : null)
                         as ImageProvider?,
                 child: localPath == null && networkUrl == null
-                    ? const Icon(Icons.person_rounded,
+                    ?  Icon(Icons.person_rounded,
                         color: AppColors.onSurfaceVariant, size: 40)
                     : null,
               ),
@@ -444,7 +444,7 @@ class CoachCertificationsEditor extends StatelessWidget {
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => onRemove(i),
-                    icon: const Icon(Icons.close_rounded,
+                    icon:  Icon(Icons.close_rounded,
                         color: AppColors.error, size: 18),
                   ),
                 ],

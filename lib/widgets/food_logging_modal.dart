@@ -173,7 +173,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: AppColors.onPrimary),
+             Icon(Icons.check_circle_rounded, color: AppColors.onPrimary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -233,7 +233,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
       padding: EdgeInsets.only(bottom: bottomInset),
-      decoration: const BoxDecoration(
+      decoration:  BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -271,7 +271,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                 ),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textSecondary),
+                  icon:  Icon(Icons.close_rounded, color: AppColors.textSecondary),
                 ),
               ],
             ),
@@ -428,8 +428,8 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
             onChanged: _performSearch,
             decoration: InputDecoration(
               hintText: isArabic ? 'ابحث عن طعام (مثل: دجاج، أرز، بيض...)' : 'Search food (e.g. Chicken, Rice, Eggs...)',
-              hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
-              prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primaryGreen),
+              hintStyle:  TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+              prefixIcon:  Icon(Icons.search_rounded, color: AppColors.primaryGreen),
               suffixIcon: _searchCtrl.text.isNotEmpty
                   ? IconButton(
                       icon: const Icon(Icons.clear, size: 16),
@@ -444,15 +444,15 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
               fillColor: AppColors.surfaceContainerHigh,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.borderSubtle),
+                borderSide:  BorderSide(color: AppColors.borderSubtle),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.borderSubtle),
+                borderSide:  BorderSide(color: AppColors.borderSubtle),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
-                borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5),
+                borderSide:  BorderSide(color: AppColors.primaryGreen, width: 1.5),
               ),
             ),
           ),
@@ -461,12 +461,12 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
         // Search results or DB browse list
         Expanded(
           child: _isSearching
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
+              ?  Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
               : _searchResults.isNotEmpty
                   ? ListView.separated(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       itemCount: _searchResults.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderSubtle),
+                      separatorBuilder: (_, __) =>  Divider(height: 1, color: AppColors.borderSubtle),
                       itemBuilder: (_, i) => _buildDbFoodTile(_searchResults[i], isArabic),
                     )
                   : _buildBrowseList(isArabic),
@@ -480,7 +480,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
   /// it for filtered results from the same table.
   Widget _buildBrowseList(bool isArabic) {
     if (_isLoadingBrowse) {
-      return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+      return  Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
     }
 
     if (_browseFoods.isEmpty) {
@@ -534,7 +534,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             itemCount: _browseFoods.length,
             separatorBuilder: (_, __) =>
-                const Divider(height: 1, color: AppColors.borderSubtle),
+                 Divider(height: 1, color: AppColors.borderSubtle),
             itemBuilder: (_, i) => _buildDbFoodTile(_browseFoods[i], isArabic),
           ),
         ),
@@ -569,15 +569,15 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       ),
       subtitle: Text(
         '${cals.toInt()} kcal · P: ${prot.toInt()}g | C: ${carb.toInt()}g | F: ${fat.toInt()}g',
-        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        style:  TextStyle(fontSize: 11, color: AppColors.textSecondary),
       ),
       trailing: Container(
         padding: const EdgeInsets.all(6),
-        decoration: const BoxDecoration(
+        decoration:  BoxDecoration(
           color: AppColors.primaryGreen,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.add_rounded, color: AppColors.onPrimary, size: 16),
+        child:  Icon(Icons.add_rounded, color: AppColors.onPrimary, size: 16),
       ),
       onTap: () => _logFoodItem(
         name: name,
@@ -599,7 +599,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
           // Food Name
           Text(
             isArabic ? 'اسم الوجبة / الطعام' : 'Meal / Food Name',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+            style:  TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 6),
           TextField(
@@ -608,9 +608,9 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
               hintText: isArabic ? 'مثال: وجبة بروتين بعد التمرين' : 'e.g. Post-workout protein meal',
               filled: true,
               fillColor: AppColors.surfaceContainerHigh,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.primaryGreen, width: 1.5)),
             ),
           ),
 
@@ -636,9 +636,9 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                         prefixIcon: const Icon(Icons.local_fire_department_rounded, color: AppColors.accentCalories, size: 18),
                         filled: true,
                         fillColor: AppColors.surfaceContainerHigh,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.primaryGreen, width: 1.5)),
                       ),
                     ),
                   ],
@@ -651,7 +651,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                   children: [
                     Text(
                       isArabic ? 'الكمية / الحصة' : 'Quantity / Servings',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+                      style:  TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 6),
                     TextField(
@@ -659,12 +659,12 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
                         hintText: '1',
-                        prefixIcon: const Icon(Icons.numbers_rounded, color: AppColors.textSecondary, size: 18),
+                        prefixIcon:  Icon(Icons.numbers_rounded, color: AppColors.textSecondary, size: 18),
                         filled: true,
                         fillColor: AppColors.surfaceContainerHigh,
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
-                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.primaryGreen, width: 1.5)),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.primaryGreen, width: 1.5)),
                       ),
                     ),
                   ],
@@ -678,7 +678,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
           // Macros (Protein, Carbs, Fat)
           Text(
             isArabic ? 'عناصر الماكروز (جرام)' : 'Macronutrients (grams)',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
+            style:  TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 6),
           Row(
@@ -694,7 +694,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                     suffixText: 'g',
                     filled: true,
                     fillColor: AppColors.surfaceContainerHigh,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
                   ),
                 ),
               ),
@@ -710,7 +710,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                     suffixText: 'g',
                     filled: true,
                     fillColor: AppColors.surfaceContainerHigh,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
                   ),
                 ),
               ),
@@ -726,7 +726,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                     suffixText: 'g',
                     filled: true,
                     fillColor: AppColors.surfaceContainerHigh,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: AppColors.borderSubtle)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide:  BorderSide(color: AppColors.borderSubtle)),
                   ),
                 ),
               ),
@@ -748,7 +748,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                 elevation: 0,
               ),
               child: _isSaving
-                  ? const SizedBox(
+                  ?  SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(color: AppColors.onPrimary, strokeWidth: 2.5),
@@ -776,13 +776,11 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
 class _FoodThumbnail extends StatelessWidget {
   final String? imageUrl;
   final String? category;
-  final PixelIconType? fallbackIcon;
   final double size;
 
   const _FoodThumbnail({
     required this.imageUrl,
     required this.category,
-    this.fallbackIcon,
     this.size = 48,
   });
 
@@ -826,9 +824,7 @@ class _FoodThumbnail extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Center(
-        child: fallbackIcon != null
-            ? PixelArtIcon(type: fallbackIcon!, size: size * 0.42)
-            : Icon(Icons.restaurant_rounded, color: color, size: size * 0.42),
+        child: Icon(Icons.restaurant_rounded, color: color, size: size * 0.42),
       ),
     );
   }

@@ -95,7 +95,7 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
         right: 24,
         top: 24,
       ),
-      decoration: const BoxDecoration(
+      decoration:  BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -112,7 +112,7 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.close_rounded,
+                icon:  Icon(Icons.close_rounded,
                     color: AppColors.textSecondary),
                 onPressed: () => Navigator.pop(context),
               )
@@ -131,7 +131,7 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.timer, color: AppColors.primaryFixed),
+                   Icon(Icons.timer, color: AppColors.primaryFixed),
                   const SizedBox(width: 8),
                   Text(
                     'REST: 00:${_restTimer.toString().padLeft(2, '0')}',

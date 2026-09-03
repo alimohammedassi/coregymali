@@ -99,7 +99,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: kCoachBorder),
                         ),
-                        child: const Icon(Icons.arrow_back_rounded,
+                        child:  Icon(Icons.arrow_back_rounded,
                             color: AppColors.textPrimary, size: 20),
                       ),
                     ),
@@ -126,7 +126,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.star_rounded,
+                       Icon(Icons.star_rounded,
                           color: kCoachGold, size: 14),
                       const SizedBox(width: 4),
                       Text('Premium',
@@ -270,7 +270,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     return Consumer<CoachListNotifier>(
       builder: (ctx, notifier, _) {
         if (notifier.isLoading) {
-          return const SliverFillRemaining(
+          return  SliverFillRemaining(
             child: Center(
                 child:
                     CircularProgressIndicator(color: kCoachGold, strokeWidth: 2)),
@@ -429,7 +429,7 @@ class CoachCard extends StatelessWidget {
                 return Container(
                   height: 120,
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration:  BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -569,7 +569,7 @@ class _SubscribeBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration:  BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -607,7 +607,7 @@ class _SubscribeBottomSheet extends StatelessWidget {
           Consumer<SubscriptionNotifier>(
             builder: (ctx, notifier, _) {
               if (notifier.isLoading) {
-                return const Center(
+                return  Center(
                     child: CircularProgressIndicator(
                         color: kCoachGold, strokeWidth: 2));
               }

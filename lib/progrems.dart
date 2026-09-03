@@ -561,7 +561,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
           border: Border.all(color: AppColors.glassBorder),
         ),
         child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -761,7 +761,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
                               color: AppColors.surfaceContainerHigh,
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: const Center(
+                            child:  Center(
                               child: Icon(
                                 Icons.image_not_supported,
                                 color: AppColors.outline,
@@ -814,7 +814,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
                               ),
                             ],
                           ),
-                          child: const Icon(
+                          child:  Icon(
                             Icons.play_arrow,
                             color: AppColors.onPrimary,
                             size: 18,
@@ -872,7 +872,7 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
             children: [
               Row(
                 children: [
-                  const Icon(
+                   Icon(
                     Icons.bolt,
                     color: AppColors.tertiaryFixed,
                     size: 22,

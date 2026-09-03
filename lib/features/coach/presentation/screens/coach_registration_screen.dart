@@ -150,7 +150,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: kCoachBorder),
                       ),
-                      child: const Icon(Icons.arrow_back_rounded,
+                      child:  Icon(Icons.arrow_back_rounded,
                           color: AppColors.textPrimary, size: 20),
                     ),
                   ),
@@ -191,7 +191,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                           color: kCoachGold.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child:  Icon(
                           Icons.workspace_premium_rounded,
                           color: kCoachGold,
                           size: 24,
@@ -347,7 +347,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                       Icon(
                         Icons.error_outline_rounded,
                         color: AppColors.error,
                         size: 20,
@@ -446,15 +446,15 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: kCoachGold, width: 1.5),
+          borderSide:  BorderSide(color: kCoachGold, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error, width: 1),
+          borderSide:  BorderSide(color: AppColors.error, width: 1),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+          borderSide:  BorderSide(color: AppColors.error, width: 1.5),
         ),
         contentPadding: const EdgeInsets.all(16),
       ),
@@ -481,7 +481,7 @@ class _CoachRegistrationScreenState extends State<CoachRegistrationScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (isSelected)
-              const Icon(
+               Icon(
                 Icons.check_rounded,
                 color: kCoachGold,
                 size: 14,

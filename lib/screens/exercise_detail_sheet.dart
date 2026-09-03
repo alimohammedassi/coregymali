@@ -240,7 +240,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 controller: _youtubeController!,
                 showVideoProgressIndicator: true,
                 progressIndicatorColor: AppColors.primaryFixed,
-                progressColors: const ProgressBarColors(
+                progressColors:  ProgressBarColors(
                   playedColor: AppColors.primaryFixed,
                   handleColor: AppColors.primaryFixed,
                 ),
@@ -370,7 +370,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
               children: [
                 Row(
                   children: [
-                    const Icon(
+                     Icon(
                       Icons.tips_and_updates_rounded,
                       color: AppColors.primaryFixed,
                       size: 20,
@@ -602,7 +602,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _weightController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 18,
                   ),
@@ -618,7 +618,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
+                      borderSide:  BorderSide(
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -630,7 +630,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 child: TextField(
                   controller: _repsController,
                   keyboardType: TextInputType.number,
-                  style: const TextStyle(
+                  style:  TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 18,
                   ),
@@ -646,7 +646,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
+                      borderSide:  BorderSide(
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -790,7 +790,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
             const SizedBox(height: 4),
             Text(
               text,
-              style: const TextStyle(
+              style:  TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,

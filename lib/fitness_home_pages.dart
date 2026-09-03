@@ -1158,7 +1158,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                     child: Container(
                       width: 42,
                       height: 42,
-                      decoration: const BoxDecoration(
+                      decoration:  BoxDecoration(
                         color: AppColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
@@ -1600,7 +1600,7 @@ class _KaleeHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(
+              child:  Icon(
                 Icons.chat_bubble_outline_rounded,
                 color: AppColors.textPrimary,
                 size: 18,
@@ -1782,7 +1782,7 @@ class _StreakAtRiskBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+           Icon(
             Icons.local_fire_department_rounded,
             color: AppColors.primaryGreen,
             size: 20,
@@ -2140,7 +2140,7 @@ class _HeroFuelCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                               Icon(
                                 Icons.local_fire_department_rounded,
                                 size: 12,
                                 color: AppColors.textMuted,
@@ -2604,7 +2604,7 @@ class _VitalsBar extends StatelessWidget {
                             ),
                             if (canEditDaily) ...[
                               const SizedBox(width: 5),
-                              const Icon(
+                               Icon(
                                 Icons.edit_outlined,
                                 size: 12,
                                 color: AppColors.textMuted,

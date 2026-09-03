@@ -133,7 +133,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
         elevation: 0,
         title: Text('My Media', style: AppText.titleLg.copyWith(color: AppColors.onSurface)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
+          icon:  Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
           tooltip: 'Back',
           onPressed: () => Navigator.pop(context),
         ),
@@ -143,7 +143,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
           // Inline progress banner — keeps the gallery/PDF list visible
           // (and scroll position intact) while an upload is in flight.
           if (state.isUploading)
-            const LinearProgressIndicator(
+             LinearProgressIndicator(
               color: AppColors.tertiary,
               backgroundColor: AppColors.surfaceContainerHigh,
               minHeight: 3,
@@ -158,7 +158,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
                       color: AppColors.error.withValues(alpha: 0.1),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline_rounded,
+                           Icon(Icons.error_outline_rounded,
                               color: AppColors.error, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
@@ -187,7 +187,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
                               tooltip: 'Upload PDF',
                               icon: Container(
                                 padding: const EdgeInsets.all(8),
-                                decoration: const BoxDecoration(
+                                decoration:  BoxDecoration(
                                   color: AppColors.tertiary,
                                   shape: BoxShape.circle,
                                 ),
@@ -254,7 +254,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_photo_alternate_rounded, color: AppColors.tertiary, size: 32),
+               Icon(Icons.add_photo_alternate_rounded, color: AppColors.tertiary, size: 32),
               const SizedBox(height: 8),
               Text('Add Photo', style: AppText.labelSm.copyWith(color: AppColors.tertiary)),
             ],
@@ -351,7 +351,7 @@ class _CoachMediaScreenState extends State<CoachMediaScreen> {
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+            icon:  Icon(Icons.delete_outline_rounded, color: AppColors.error),
             tooltip: 'Remove PDF',
             onPressed: () => _confirmDeletePdf(pdf.id, pdf.fileUrl),
           ),

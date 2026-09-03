@@ -506,7 +506,7 @@ class NutritionScreenState extends State<NutritionScreen>
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline_rounded,
+                        icon:  Icon(Icons.delete_outline_rounded,
                             color: AppColors.error),
                         onPressed: () {
                           Navigator.pop(ctx);
@@ -762,7 +762,7 @@ class NutritionScreenState extends State<NutritionScreen>
                 ),
                 child: Text(
                   '${_caloriesGoal.toInt()} kcal goal',
-                  style: const TextStyle(
+                  style:  TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primary,
@@ -795,7 +795,7 @@ class NutritionScreenState extends State<NutritionScreen>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child: const Icon(Icons.tune_rounded,
+            child:  Icon(Icons.tune_rounded,
                 color: AppColors.textPrimary, size: 20),
           ),
           onPressed: _showGoalsEditorModal,
@@ -1389,7 +1389,7 @@ class NutritionScreenState extends State<NutritionScreen>
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
-                  child: const Icon(Icons.undo_rounded,
+                  child:  Icon(Icons.undo_rounded,
                       size: 18, color: AppColors.textSecondary),
                 ),
               ),
@@ -1876,7 +1876,7 @@ class NutritionScreenState extends State<NutritionScreen>
                         color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.add_rounded,
+                      child:  Icon(Icons.add_rounded,
                           color: AppColors.primary, size: 18),
                     ),
                   ),
@@ -1885,7 +1885,7 @@ class NutritionScreenState extends State<NutritionScreen>
                   AnimatedRotation(
                     turns: isExpanded ? 0 : -0.25,
                     duration: const Duration(milliseconds: 200),
-                    child: const Icon(Icons.keyboard_arrow_down_rounded,
+                    child:  Icon(Icons.keyboard_arrow_down_rounded,
                         color: AppColors.textSecondary, size: 20),
                   ),
                 ],
@@ -1962,7 +1962,7 @@ class NutritionScreenState extends State<NutritionScreen>
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 20),
                       color: AppColors.error.withValues(alpha: 0.12),
-                      child: const Icon(Icons.delete_outline_rounded,
+                      child:  Icon(Icons.delete_outline_rounded,
                           color: AppColors.error, size: 24),
                     ),
                     confirmDismiss: (_) =>
@@ -2100,7 +2100,7 @@ class NutritionScreenState extends State<NutritionScreen>
               ],
             ),
             const SizedBox(width: 6),
-            const Icon(Icons.chevron_right_rounded,
+             Icon(Icons.chevron_right_rounded,
                 size: 18, color: AppColors.textMuted),
           ],
         ),
@@ -2199,7 +2199,7 @@ class NutritionScreenState extends State<NutritionScreen>
                 color: AppColors.surfaceContainerHigh,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.bar_chart_rounded,
+              child:  Icon(Icons.bar_chart_rounded,
                   size: 36, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
@@ -2484,7 +2484,7 @@ class NutritionScreenState extends State<NutritionScreen>
                             ),
                             child: Text(
                               AppLocalizations.of(context)!.today,
-                              style: const TextStyle(
+                              style:  TextStyle(
                                 fontSize: 9,
                                 color: AppColors.onPrimary,
                                 fontWeight: FontWeight.w800,
@@ -2761,7 +2761,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded,
+                  icon:  Icon(Icons.close_rounded,
                       color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -2890,7 +2890,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded,
+                         Icon(Icons.info_outline_rounded,
                             size: 18, color: AppColors.textSecondary),
                         const SizedBox(width: 10),
                         Expanded(
@@ -2945,7 +2945,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                         nav.pop();
                       },
                 child: _saving
-                    ? const SizedBox(
+                    ?  SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(

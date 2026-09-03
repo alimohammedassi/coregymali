@@ -77,7 +77,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return  Scaffold(
         backgroundColor: AppColors.surface,
         body: Center(
           child: CircularProgressIndicator(color: AppColors.primaryFixed),
@@ -94,7 +94,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_chart, color: AppColors.primaryFixed),
+            icon:  Icon(Icons.add_chart, color: AppColors.primaryFixed),
             onPressed: () => _showUpdateMeasurementsSheet(context),
           )
         ],
@@ -309,7 +309,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         label: const Text('LOG TODAY\'S WEIGHT'),
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.primaryFixed,
-          side: const BorderSide(color: AppColors.primaryFixed),
+          side:  BorderSide(color: AppColors.primaryFixed),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           padding: const EdgeInsets.symmetric(vertical: 14),
         ),
@@ -325,7 +325,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         backgroundColor: AppColors.surfaceContainer,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.glassBorder),
+          side:  BorderSide(color: AppColors.glassBorder),
         ),
         title: Text("LOG WEIGHT", style: AppText.headlineSm.copyWith(fontSize: 18)),
         content: TextField(
@@ -412,7 +412,7 @@ class _ProgressScreenState extends State<ProgressScreen>
               label: const Text('UPDATE MEASUREMENTS'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primaryFixed,
-                side: const BorderSide(color: AppColors.primaryFixed),
+                side:  BorderSide(color: AppColors.primaryFixed),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
             ),
@@ -626,7 +626,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                         color: AppColors.primaryFixed.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
+                      child:  Icon(
                         Icons.emoji_events,
                         color: AppColors.primaryFixed,
                         size: 18,
@@ -671,16 +671,16 @@ class _ProgressScreenState extends State<ProgressScreen>
         children: [
           _buildGoalRow(Icons.local_fire_department, 'Daily Calories',
               '${_goals['daily_calories'] ?? 2000} kcal'),
-          const Divider(color: AppColors.outlineVariant),
+           Divider(color: AppColors.outlineVariant),
           _buildGoalRow(Icons.egg_alt_outlined, 'Daily Protein',
               '${_goals['daily_protein_g'] ?? 150} g'),
-          const Divider(color: AppColors.outlineVariant),
+           Divider(color: AppColors.outlineVariant),
           _buildGoalRow(Icons.directions_walk, 'Daily Steps',
               '${_goals['daily_steps'] ?? 10000}'),
-          const Divider(color: AppColors.outlineVariant),
+           Divider(color: AppColors.outlineVariant),
           _buildGoalRow(Icons.fitness_center, 'Weekly Workouts',
               '${_goals['weekly_workouts'] ?? 3}x'),
-          const Divider(color: AppColors.outlineVariant),
+           Divider(color: AppColors.outlineVariant),
           _buildGoalRow(Icons.monitor_weight_outlined, 'Target Weight',
               '${_goals['target_weight_kg'] ?? '--'} kg'),
         ],
@@ -885,7 +885,7 @@ class _UpdateMeasurementsSheetState extends State<_UpdateMeasurementsSheet> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primaryFixed, width: 1.5),
+            borderSide:  BorderSide(color: AppColors.primaryFixed, width: 1.5),
           ),
         ),
       ),

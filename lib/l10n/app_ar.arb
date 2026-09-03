@@ -436,5 +436,9 @@
   "@phaseWeek": { "placeholders": { "w": { "type": "int" } } },
   "previousDay": "اليوم السابق",
   "nextDay": "اليوم التالي",
-  "smartwatchSync": "مزامنة الساعة الذكية"
+  "smartwatchSync": "مزامنة الساعة الذكية",
+  "appearance": "المظهر",
+  "themeSystem": "النظام",
+  "themeLight": "فاتح",
+  "themeDark": "داكن"
 }

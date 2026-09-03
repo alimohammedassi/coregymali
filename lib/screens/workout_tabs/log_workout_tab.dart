@@ -10,14 +10,14 @@ import 'package:url_launcher/url_launcher.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 //  Design Tokens — mapped onto the shared Kinetic Obsidian system
 // ─────────────────────────────────────────────────────────────────────────────
-const _kSurface = AppColors.background;
-const _kCard = AppColors.surfaceContainer;
-const _kCard2 = AppColors.surfaceContainerHigh;
-const _kAccent = AppColors.primary;
-const _kMuted = AppColors.textSecondary;
-const _kSubtle = AppColors.textMuted;
+Color get _kSurface => AppColors.background;
+Color get _kCard => AppColors.surfaceContainer;
+Color get _kCard2 => AppColors.surfaceContainerHigh;
+Color get _kAccent => AppColors.primary;
+Color get _kMuted => AppColors.textSecondary;
+Color get _kSubtle => AppColors.textMuted;
 
-final Map<String, Color> _muscleColors = AppSemanticColors.muscle;
+Map<String, Color> get _muscleColors => AppSemanticColors.muscle;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  LogWorkoutTab
@@ -182,7 +182,7 @@ class _LogWorkoutTabState extends State<LogWorkoutTab>
                   ? ''
                   : '${_exercises.length} EXERCISES IN ${_muscleFilter.toUpperCase()}',
               key: ValueKey('$_muscleFilter-${_exercises.length}'),
-              style: const TextStyle(
+              style:  TextStyle(
                 color: _kMuted,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -417,7 +417,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
                     children: [
                       Text(
                         ex['name'] ?? '',
-                        style: const TextStyle(
+                        style:  TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -427,7 +427,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
                       if (ex['name_ar'] != null)
                         Text(
                           ex['name_ar'],
-                          style: const TextStyle(color: _kMuted, fontSize: 12),
+                          style:  TextStyle(color: _kMuted, fontSize: 12),
                         ),
                       const SizedBox(height: 10),
                       Row(
@@ -793,7 +793,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                   // Name
                   Text(
                     ex['name'] ?? '',
-                    style: const TextStyle(
+                    style:  TextStyle(
                       color: AppColors.textPrimary,
                       fontSize: 28,
                       fontWeight: FontWeight.w900,
@@ -804,7 +804,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                   if (ex['name_ar'] != null)
                     Text(
                       ex['name_ar'],
-                      style: const TextStyle(color: _kMuted, fontSize: 15),
+                      style:  TextStyle(color: _kMuted, fontSize: 15),
                     ),
 
                   const SizedBox(height: 16),
@@ -829,7 +829,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                   if (ex['instructions_ar'] != null &&
                       ex['instructions_ar'].toString().isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    const Text(
+                     Text(
                       'INSTRUCTIONS',
                       style: TextStyle(
                         color: _kMuted,
@@ -1091,7 +1091,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style:  TextStyle(
             color: _kMuted,
             fontSize: 10,
             fontWeight: FontWeight.w700,
@@ -1102,14 +1102,14 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
         TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(
+          style:  TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
           decoration: InputDecoration(
             hintText: unit,
-            hintStyle: const TextStyle(color: _kMuted),
+            hintStyle:  TextStyle(color: _kMuted),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 10,
@@ -1158,7 +1158,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
           ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: const TextStyle(color: _kMuted, fontSize: 11)),
+        Text(label, style:  TextStyle(color: _kMuted, fontSize: 11)),
       ],
     );
   }
@@ -1259,14 +1259,14 @@ class _SetRow extends StatelessWidget {
       children: [
         Text(
           val,
-          style: const TextStyle(
+          style:  TextStyle(
             color: AppColors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(width: 3),
-        Text(unit, style: const TextStyle(color: _kMuted, fontSize: 11)),
+        Text(unit, style:  TextStyle(color: _kMuted, fontSize: 11)),
       ],
     );
   }

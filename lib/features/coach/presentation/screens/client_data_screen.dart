@@ -11,15 +11,15 @@ import '../widgets/coach_shared.dart';
 // Aliases over AppColors — previously these were raw literals from the old
 // dark theme (off-palette gold #C9A84C, white-on-white text).
 
-const _kGold = AppColors.tertiary;
-final _kGoldDim = AppColors.tertiaryDim;
-final _kGoldGlow = AppColors.tertiary.withValues(alpha: 0.20);
-final _kGoldSubtle = AppColors.tertiary.withValues(alpha: 0.10);
-const _kSuccess = AppColors.greenAccent;
-const _kBlue = AppColors.secondary;
-const _kPurple = AppColors.accentSteps;
-const _kRed = AppColors.error;
-const _kAmber = AppColors.accentCalories;
+Color get _kGold => AppColors.tertiary;
+Color get _kGoldDim => AppColors.tertiaryDim;
+Color get _kGoldGlow => AppColors.tertiary.withValues(alpha: 0.20);
+Color get _kGoldSubtle => AppColors.tertiary.withValues(alpha: 0.10);
+Color get _kSuccess => AppColors.greenAccent;
+Color get _kBlue => AppColors.secondary;
+Color get _kPurple => AppColors.accentSteps;
+Color get _kRed => AppColors.error;
+Color get _kAmber => AppColors.accentCalories;
 
 const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kPillR = BorderRadius.all(Radius.circular(12));
@@ -351,7 +351,7 @@ class _DateRangeBar extends StatelessWidget {
                         color: _kGoldSubtle,
                         borderRadius: _kBadgeR,
                       ),
-                      child: const Icon(
+                      child:  Icon(
                         Icons.date_range_rounded,
                         color: _kGold,
                         size: 16,
@@ -391,7 +391,7 @@ class _DateRangeBar extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                           Icon(
                             Icons.tune_rounded,
                             color: _kGold,
                             size: 13,
@@ -619,7 +619,7 @@ class _NutritionSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.analytics_rounded, color: _kGold, size: 16),
+               Icon(Icons.analytics_rounded, color: _kGold, size: 16),
               const SizedBox(width: 8),
               Text(
                 'PERIOD SUMMARY  ·  $days days',
@@ -815,7 +815,7 @@ class _DaySectionHeader extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(
+               Icon(
                 Icons.local_fire_department_rounded,
                 color: _kGold,
                 size: 12,
@@ -1053,7 +1053,7 @@ class _WorkoutCard extends StatelessWidget {
                     borderRadius: const BorderRadius.all(Radius.circular(14)),
                     border: Border.all(color: _kPurple.withValues(alpha: 0.25)),
                   ),
-                  child: const Icon(
+                  child:  Icon(
                     Icons.fitness_center_rounded,
                     color: _kPurple,
                     size: 20,
@@ -1110,7 +1110,7 @@ class _WorkoutCard extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(
+                           Icon(
                             Icons.timer_outlined,
                             color: _kPurple,
                             size: 13,
@@ -1378,7 +1378,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.insights_rounded, color: _kSuccess, size: 16),
+               Icon(Icons.insights_rounded, color: _kSuccess, size: 16),
               const SizedBox(width: 8),
               Text(
                 'PERIOD OVERVIEW',
@@ -1414,7 +1414,7 @@ class _WeeklyOverviewCard extends StatelessWidget {
               value: consistency,
               minHeight: 6,
               backgroundColor: AppColors.surfaceDim,
-              valueColor: const AlwaysStoppedAnimation(_kSuccess),
+              valueColor:  AlwaysStoppedAnimation(_kSuccess),
             ),
           ),
           const SizedBox(height: 12),
@@ -1626,7 +1626,7 @@ class _SummaryCard extends StatelessWidget {
                     .clamp(0.0, 1.0),
                 minHeight: 5,
                 backgroundColor: _kGold.withValues(alpha: 0.15),
-                valueColor: const AlwaysStoppedAnimation(_kBlue),
+                valueColor:  AlwaysStoppedAnimation(_kBlue),
               ),
             ),
           ],

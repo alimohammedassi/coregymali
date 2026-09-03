@@ -74,7 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () {
             widget.onBackToLogin?.call();
             Navigator.of(context).pop();
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child:  Icon(
                           Icons.lock_reset,
                           size: 36,
                           color: AppColors.primaryFixed,
@@ -440,7 +440,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -491,7 +491,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                           ),
                         ],
                       ),
-                      child: const Icon(
+                      child:  Icon(
                         Icons.mark_email_read_outlined,
                         size: 36,
                         color: AppColors.secondary,
@@ -563,7 +563,7 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                         GestureDetector(
                           onTap: _isResending ? null : _handleResendOTP,
                           child: _isResending
-                              ? const SizedBox(
+                              ?  SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
@@ -717,7 +717,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -770,7 +770,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(
+                        child:  Icon(
                           Icons.lock_reset,
                           size: 36,
                           color: AppColors.primaryFixed,
@@ -972,7 +972,7 @@ Widget _buildTextField({
     obscureText: obscureText,
     keyboardType: keyboardType,
     validator: validator,
-    style: const TextStyle(
+    style:  TextStyle(
       color: AppColors.onSurface,
       fontFamily: 'Inter',
       fontSize: 14,
@@ -990,7 +990,7 @@ Widget _buildTextField({
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: AppColors.surfaceContainerHighest,
-      border: const UnderlineInputBorder(
+      border:  UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.outline, width: 0.5),
       ),
       enabledBorder: UnderlineInputBorder(
@@ -998,16 +998,16 @@ Widget _buildTextField({
           color: AppColors.outline.withValues(alpha: 0.3),
         ),
       ),
-      focusedBorder: const UnderlineInputBorder(
+      focusedBorder:  UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.primaryFixed, width: 2),
       ),
-      errorBorder: const UnderlineInputBorder(
+      errorBorder:  UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.error, width: 2),
       ),
-      focusedErrorBorder: const UnderlineInputBorder(
+      focusedErrorBorder:  UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.error, width: 2),
       ),
-      errorStyle: const TextStyle(
+      errorStyle:  TextStyle(
         color: AppColors.error,
         fontWeight: FontWeight.w500,
         fontSize: 11,
@@ -1054,7 +1054,7 @@ Widget _buildButton({
               children: [
                 const SizedBox(width: 32),
                 isLoading
-                    ? const SizedBox(
+                    ?  SizedBox(
                         height: 24,
                         width: 24,
                         child: CircularProgressIndicator(
@@ -1072,7 +1072,7 @@ Widget _buildButton({
                     color: AppColors.onPrimary,
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: const Icon(
+                  child:  Icon(
                     Icons.bolt,
                     color: AppColors.primaryFixed,
                     size: 18,

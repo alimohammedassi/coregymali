@@ -189,7 +189,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
     if (!_isLoaded || notifier.isLoading && notifier.profile == null) {
       return Scaffold(
         backgroundColor: AppColors.surfaceLowest,
-        body: const Center(
+        body:  Center(
           child: CircularProgressIndicator(color: AppColors.tertiary),
         ),
       );
@@ -399,7 +399,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
                   color: AppColors.surfaceContainer,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.arrow_back_rounded,
+                child:  Icon(Icons.arrow_back_rounded,
                     color: AppColors.onSurface, size: 20),
               ),
             ),
@@ -540,7 +540,7 @@ class _CoachEditProfileScreenState extends State<CoachEditProfileScreen> {
           ),
           IconButton(
             onPressed: onRemove,
-            icon: const Icon(Icons.delete_outline_rounded,
+            icon:  Icon(Icons.delete_outline_rounded,
                 color: AppColors.error, size: 20),
             tooltip: 'Remove file',
           ),

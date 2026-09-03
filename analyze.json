@@ -1,0 +1,433 @@
+
+   info - Don't invoke 'print' in production code - fix_imports.dart:15:9 - avoid_print
+warning - Unused import: '../../data/repositories/notification_repository.dart' - lib\chat\presentation\providers\chat_providers.dart:4:8 - unused_import
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\screens\client_data_screen.dart:14:16 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\screens\client_data_screen.dart:19:16 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\screens\client_data_screen.dart:21:15 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:25:16 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:30:16 - const_initialized_with_non_constant_value
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:171:22 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:771:22 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:842:24 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:861:38 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:948:39 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:1033:32 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:1189:22 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_dashboard_screen.dart:1246:26 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_detail_screen.dart:338:24 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_edit_profile_screen.dart:193:51 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_edit_profile_screen.dart:403:28 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_edit_profile_screen.dart:544:24 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_marketplace_screen.dart:103:36 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_marketplace_screen.dart:436:32 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_marketplace_screen.dart:573:16 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:136:61 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:147:22 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:162:38 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:191:42 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:257:68 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_media_screen.dart:354:67 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_registration_screen.dart:154:34 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_registration_screen.dart:352:32 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_registration_screen.dart:453:47 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\screens\coach_registration_screen.dart:457:47 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_profile_form_widgets.dart:102:43 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_profile_form_widgets.dart:107:43 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_profile_form_widgets.dart:272:26 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_profile_form_widgets.dart:327:32 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_profile_form_widgets.dart:448:32 - invalid_constant
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:11:18 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:12:20 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:13:21 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:14:20 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:15:21 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:16:22 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\features\coach\presentation\widgets\coach_shared.dart:17:22 - const_initialized_with_non_constant_value
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_shared.dart:50:58 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_shared.dart:53:24 - invalid_constant
+  error - Invalid constant value - lib\features\coach\presentation\widgets\coach_shared.dart:56:22 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:185:30 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:190:28 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:230:32 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:257:36 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:265:36 - invalid_constant
+  error - Arguments of a constant creation must be constant expressions - lib\features\health\presentation\widgets\today_activity_card.dart:284:25 - const_with_non_constant_argument
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:392:26 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:401:26 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:505:30 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:580:30 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:608:55 - invalid_constant
+  error - Invalid constant value - lib\features\health\presentation\widgets\today_activity_card.dart:623:20 - invalid_constant
+  error - Invalid constant value - lib\fitness_home_pages.dart:1162:32 - invalid_constant
+  error - Invalid constant value - lib\fitness_home_pages.dart:1605:24 - invalid_constant
+  error - Invalid constant value - lib\fitness_home_pages.dart:1787:20 - invalid_constant
+  error - Invalid constant value - lib\fitness_home_pages.dart:2146:40 - invalid_constant
+  error - Invalid constant value - lib\fitness_home_pages.dart:2610:40 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:77:53 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:137:34 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:443:53 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:497:32 - invalid_constant
+  error - Arguments of a constant creation must be constant expressions - lib\forgetpassword.dart:572:39 - const_with_non_constant_argument
+  error - Invalid constant value - lib\forgetpassword.dart:720:53 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:776:34 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:976:14 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:994:39 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:1002:39 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:1005:39 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:1008:39 - invalid_constant
+  error - Invalid constant value - lib\forgetpassword.dart:1011:16 - invalid_constant
+  error - Arguments of a constant creation must be constant expressions - lib\forgetpassword.dart:1063:29 - const_with_non_constant_argument
+  error - Invalid constant value - lib\forgetpassword.dart:1077:28 - invalid_constant
+  error - Invalid constant value - lib\gender.dart:302:30 - invalid_constant
+warning - Unused import: 'features/coach/presentation/screens/coach_dashboard_screen.dart' - lib\login_sign_up.dart:10:8 - unused_import
+warning - Unused import: 'features/coach/presentation/providers/coach_dashboard_providers.dart' - lib\login_sign_up.dart:12:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\login_sign_up.dart:199:27 - use_build_context_synchronously
+warning - The declaration '_getUserRole' isn't referenced - lib\login_sign_up.dart:223:19 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\login_sign_up.dart:245:27 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\login_sign_up.dart:553:9 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\login_sign_up.dart:555:29 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:709:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:715:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:750:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:756:63 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\login_sign_up.dart:832:51 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:840:35 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:854:59 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:857:61 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:859:61 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:862:59 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\login_sign_up.dart:867:33 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\login_sign_up.dart:867:33 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:921:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:923:62 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:953:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:977:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:989:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1002:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1006:49 - deprecated_member_use
+  error - Invalid constant value - lib\login_sign_up.dart:1015:22 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1048:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1097:48 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\login_sign_up.dart:1170:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\login_sign_up.dart:1172:9 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1193:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1194:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1217:38 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1224:44 - deprecated_member_use
+  error - Invalid constant value - lib\login_sign_up.dart:1244:46 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1314:47 - deprecated_member_use
+  error - Invalid constant value - lib\login_sign_up.dart:1330:28 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1340:39 - deprecated_member_use
+  error - Invalid constant value - lib\login_sign_up.dart:1345:26 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1369:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1380:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1392:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1500:55 - deprecated_member_use
+warning - The declaration '_GlowOrb' isn't referenced - lib\login_sign_up.dart:1583:7 - unused_element
+warning - The declaration '_GridPainterWidget' isn't referenced - lib\login_sign_up.dart:1601:7 - unused_element
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1611:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\login_sign_up.dart:1646:40 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\login_sign_up.dart:1686:5 - curly_braces_in_flow_control_structures
+  error - Invalid constant value - lib\login_sign_up.dart:1752:26 - invalid_constant
+  error - Invalid constant value - lib\login_sign_up.dart:1851:22 - invalid_constant
+  error - Invalid constant value - lib\main.dart:133:43 - invalid_constant
+  error - Invalid constant value - lib\main.dart:144:49 - invalid_constant
+  error - Invalid constant value - lib\main.dart:148:49 - invalid_constant
+  error - Invalid constant value - lib\main.dart:152:49 - invalid_constant
+  error - Invalid constant value - lib\main.dart:154:45 - invalid_constant
+  error - Invalid constant value - lib\main.dart:163:28 - invalid_constant
+  error - Invalid constant value - lib\main.dart:183:18 - invalid_constant
+  error - Invalid constant value - lib\main.dart:189:46 - invalid_constant
+  error - Invalid constant value - lib\main.dart:190:41 - invalid_constant
+  error - Invalid constant value - lib\main.dart:196:23 - invalid_constant
+  error - Invalid constant value - lib\main.dart:201:18 - invalid_constant
+   info - The variable name '_A' isn't a lowerCamelCase identifier - lib\profile.dart:132:10 - non_constant_identifier_names
+  error - Invalid constant value - lib\profile.dart:803:46 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:1649:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:1667:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:1685:36 - deprecated_member_use
+  error - Invalid constant value - lib\profile.dart:1803:20 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:2080:24 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:2082:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\profile.dart:2239:39 - deprecated_member_use
+  error - Invalid constant value - lib\profile.dart:2301:18 - invalid_constant
+  error - Invalid constant value - lib\progrems.dart:564:53 - invalid_constant
+  error - Invalid constant value - lib\progrems.dart:767:40 - invalid_constant
+  error - Invalid constant value - lib\progrems.dart:819:36 - invalid_constant
+  error - Invalid constant value - lib\progrems.dart:877:28 - invalid_constant
+  error - Invalid constant value - lib\screens\active_workout_sheet.dart:99:16 - invalid_constant
+  error - Invalid constant value - lib\screens\active_workout_sheet.dart:116:28 - invalid_constant
+  error - Invalid constant value - lib\screens\active_workout_sheet.dart:134:50 - invalid_constant
+  error - Invalid constant value - lib\screens\barcode_scan_screen.dart:383:20 - invalid_constant
+  error - Invalid constant value - lib\screens\barcode_scan_screen.dart:903:53 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:219:21 - deprecated_member_use
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:244:32 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:362:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:365:47 - deprecated_member_use
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:375:30 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:470:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:471:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:475:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:536:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:537:54 - deprecated_member_use
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:606:28 - invalid_constant
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:622:32 - invalid_constant
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:634:28 - invalid_constant
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:650:32 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:750:28 - deprecated_member_use
+  error - Invalid constant value - lib\screens\exercise_detail_sheet.dart:794:24 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:820:23 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\exercise_detail_sheet.dart:856:22 - deprecated_member_use
+warning - Unused import: '../theme/app_colors.dart' - lib\screens\fitness_coach_screen.dart:3:8 - unused_import
+warning - Unused import: '../services/exercise_database.dart' - lib\screens\fitness_coach_screen.dart:5:8 - unused_import
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:123:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:198:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:276:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:346:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:402:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:512:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:513:28 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:517:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:567:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:580:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:581:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:636:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:679:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\fitness_coach_screen.dart:707:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:368:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:373:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:421:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:435:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:436:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:441:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:482:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:529:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:543:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:546:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:551:65 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:594:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:645:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:656:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:677:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:746:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:776:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:777:34 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:822:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:845:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:847:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:879:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:881:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1000:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1015:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1102:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1116:20 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1132:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1135:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1152:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1156:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1242:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1269:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1277:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1309:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1311:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\food_scan_screen.dart:1357:45 - deprecated_member_use
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:510:36 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:768:28 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:799:24 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:1393:40 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:1880:34 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:1889:32 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:1966:34 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2104:34 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2203:36 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2489:40 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2765:30 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2894:46 - invalid_constant
+  error - Invalid constant value - lib\screens\nutrition_screen.dart:2952:36 - invalid_constant
+  error - Invalid constant value - lib\screens\onboarding_flow.dart:874:28 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:81:26 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:97:54 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:312:41 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:328:41 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:415:47 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:631:32 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:674:32 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:677:32 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:680:32 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:683:32 - invalid_constant
+  error - Invalid constant value - lib\screens\progress_screen.dart:888:49 - invalid_constant
+  error - Invalid constant value - lib\screens\text_food_log_screen.dart:708:28 - invalid_constant
+  error - Invalid constant value - lib\screens\text_food_log_screen.dart:1151:34 - invalid_constant
+  error - Invalid constant value - lib\screens\text_food_log_screen.dart:1161:36 - invalid_constant
+  error - Invalid constant value - lib\screens\text_food_log_screen.dart:1169:38 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:408:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:413:61 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:507:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:509:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:576:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:587:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:605:20 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:606:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:612:18 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:664:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:674:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:706:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:802:46 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:825:48 - deprecated_member_use
+  error - Invalid constant value - lib\screens\voice_food_log_screen.dart:844:26 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:860:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:906:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:908:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:930:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:932:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1051:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1066:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1153:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1167:20 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1183:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1186:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1203:60 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1207:53 - deprecated_member_use
+  error - Invalid constant value - lib\screens\voice_food_log_screen.dart:1225:34 - invalid_constant
+  error - Invalid constant value - lib\screens\voice_food_log_screen.dart:1235:36 - invalid_constant
+  error - Invalid constant value - lib\screens\voice_food_log_screen.dart:1243:38 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1295:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1322:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1330:36 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1362:30 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1364:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\voice_food_log_screen.dart:1410:45 - deprecated_member_use
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:13:19 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:14:16 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:15:17 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:16:18 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:17:17 - const_initialized_with_non_constant_value
+  error - Const variables must be initialized with a constant value - lib\screens\workout_tabs\log_workout_tab.dart:18:18 - const_initialized_with_non_constant_value
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:137:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:141:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:364:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:384:53 - deprecated_member_use
+  error - Invalid constant value - lib\screens\workout_tabs\log_workout_tab.dart:421:34 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:477:35 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:486:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:714:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:735:47 - deprecated_member_use
+  error - Invalid constant value - lib\screens\workout_tabs\log_workout_tab.dart:797:30 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:885:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:982:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:985:51 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:1034:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:1039:47 - deprecated_member_use
+  error - Invalid constant value - lib\screens\workout_tabs\log_workout_tab.dart:1106:20 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:1133:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\workout_tabs\log_workout_tab.dart:1135:41 - deprecated_member_use
+  error - Invalid constant value - lib\screens\workout_tabs\log_workout_tab.dart:1263:20 - invalid_constant
+  error - Invalid constant value - lib\screens\workout_tabs\my_program_tab.dart:81:18 - invalid_constant
+  error - Invalid constant value - lib\screens\workout_tabs\my_program_tab.dart:457:30 - invalid_constant
+  error - Invalid constant value - lib\screens\workout_tabs\programs_library_tab.dart:96:26 - invalid_constant
+  error - Invalid constant value - lib\screens\workout_tabs\programs_library_tab.dart:472:28 - invalid_constant
+warning - The value of the local variable 'intensityMultiplier' isn't used - lib\services\fitness_coach_service.dart:487:11 - unused_local_variable
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:41:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:43:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:56:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:59:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:75:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\measurements_service.dart:78:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\onboarding_service.dart:15:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\onboarding_service.dart:18:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\onboarding_service.dart:114:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\onboarding_service.dart:116:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:22:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:25:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:51:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:53:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:68:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:70:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:86:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:89:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:105:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:108:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:122:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\workout_service.dart:125:7 - avoid_print
+  error - Invalid constant value - lib\splashscreen.dart:753:20 - invalid_constant
+  error - Const variables must be initialized with a constant value - lib\theme\app_semantic_colors.dart:23:18 - const_initialized_with_non_constant_value
+  error - The values in a const map literal must be constant - lib\theme\app_semantic_colors.dart:23:18 - non_constant_map_value
+  error - Const variables must be initialized with a constant value - lib\theme\app_semantic_colors.dart:33:12 - const_initialized_with_non_constant_value
+  error - The values in a const map literal must be constant - lib\theme\app_semantic_colors.dart:33:12 - non_constant_map_value
+  error - Const variables must be initialized with a constant value - lib\theme\app_semantic_colors.dart:41:12 - const_initialized_with_non_constant_value
+  error - The values in a const map literal must be constant - lib\theme\app_semantic_colors.dart:41:12 - non_constant_map_value
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:127:36 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:135:30 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:164:28 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:168:46 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:247:32 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:415:26 - invalid_constant
+  error - Invalid constant value - lib\widgets\add_food_sheet.dart:705:34 - invalid_constant
+  error - Invalid constant value - lib\widgets\app_state_views.dart:62:24 - invalid_constant
+  error - Invalid constant value - lib\widgets\app_state_views.dart:126:24 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:48:29 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:95:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:326:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:389:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:405:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:422:49 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:572:31 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:576:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:591:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:592:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:609:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:634:40 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:714:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\enhanced_charts.dart:775:30 - deprecated_member_use
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:176:59 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:237:16 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:274:64 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:431:65 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:432:67 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:447:53 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:451:53 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:455:53 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:464:70 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:469:84 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:483:67 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:537:49 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:572:53 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:577:18 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:580:53 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:602:86 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:611:119 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:612:126 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:613:126 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:639:129 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:640:136 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:641:136 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:654:96 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:662:78 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:665:129 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:666:136 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:667:136 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:681:86 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:697:125 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:713:125 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:729:125 - invalid_constant
+  error - Invalid constant value - lib\widgets\food_logging_modal.dart:754:63 - invalid_constant
+warning - A value for optional parameter 'fallbackIcon' isn't ever given - lib\widgets\food_logging_modal.dart:785:10 - unused_element_parameter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:119:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:122:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:259:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:271:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:303:52 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\home_header.dart:317:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\language_toggle.dart:24:62 - deprecated_member_use
+  error - Invalid constant value - lib\widgets\language_toggle.dart:36:26 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\language_toggle.dart:50:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\premium_glass_bg.dart:50:44 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\premium_glass_bg.dart:74:45 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\premium_glass_bg.dart:99:53 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\premium_glass_bg.dart:110:50 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\premium_glass_bg.dart:121:49 - deprecated_member_use
+warning - Unused import: 'package:provider/provider.dart' - test\coach_dashboard_test.dart:4:8 - unused_import
+warning - Unused import: 'package:flutter/material.dart' - test\widget_test.dart:1:8 - unused_import
+   info - Don't invoke 'print' in production code - translate.dart:34:7 - avoid_print
+   info - Don't invoke 'print' in production code - translate.dart:77:3 - avoid_print
+

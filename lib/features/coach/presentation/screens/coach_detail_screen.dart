@@ -157,7 +157,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
         return Scaffold(
           backgroundColor: kCoachBg,
           body: coachN.isLoading
-              ? const Center(
+              ?  Center(
                   child: CircularProgressIndicator(
                       color: kCoachGold, strokeWidth: 2))
               : coachN.error != null
@@ -334,7 +334,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: kCoachBorder),
             ),
-            child: const Icon(Icons.arrow_back_rounded,
+            child:  Icon(Icons.arrow_back_rounded,
                 color: AppColors.textPrimary),
           ),
         ),
@@ -465,7 +465,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                     .copyWith(color: kCoachMuted, letterSpacing: 2)),
             const SizedBox(height: 10),
             if (_reviewsLoading)
-              const Padding(
+               Padding(
                 padding: EdgeInsets.all(20),
                 child: Center(
                     child: CircularProgressIndicator(
@@ -535,7 +535,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 16, 20, MediaQuery.of(context).padding.bottom + 16),
-      decoration: const BoxDecoration(
+      decoration:  BoxDecoration(
         color: kCoachCard,
         border: Border(top: BorderSide(color: kCoachBorder)),
       ),
@@ -567,7 +567,7 @@ class _CoachDetailScreenState extends State<CoachDetailScreen> {
                     color: kCoachCard2,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.chat_bubble_rounded,
+                  child:  Icon(Icons.chat_bubble_rounded,
                       color: kCoachGold, size: 22),
                 ),
               ),

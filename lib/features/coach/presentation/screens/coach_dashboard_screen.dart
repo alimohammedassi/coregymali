@@ -22,12 +22,12 @@ import '../providers/coach_media_provider.dart';
 import '../providers/coach_profile_provider.dart';
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
-const _kGold = AppColors.tertiary;
-final _kGoldGlow = AppColors.tertiary.withValues(alpha: 0.20);
-final _kGoldSubtle = AppColors.tertiary.withValues(alpha: 0.10);
-const _kSuccess = AppColors.greenAccent;
-const _kWarning = AppColors.orangeAccent;
-const _kBlue = AppColors.secondary;
+Color get _kGold => AppColors.tertiary;
+Color get _kGoldGlow => AppColors.tertiary.withValues(alpha: 0.20);
+Color get _kGoldSubtle => AppColors.tertiary.withValues(alpha: 0.10);
+Color get _kSuccess => AppColors.greenAccent;
+Color get _kWarning => AppColors.orangeAccent;
+Color get _kBlue => AppColors.secondary;
 
 const _kCardR = BorderRadius.all(Radius.circular(20));
 const _kBadgeR = BorderRadius.all(Radius.circular(8));
@@ -166,7 +166,7 @@ class _SignOutBtn extends StatelessWidget {
           child: SizedBox(
             width: 44,
             height: 44,
-            child: const Icon(
+            child:  Icon(
               Icons.logout_rounded,
               color: AppColors.error,
               size: 20,
@@ -765,7 +765,7 @@ class _EmptyState extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child: const Icon(
+            child:  Icon(
               Icons.group_off_rounded,
               size: 34,
               color: AppColors.onSurfaceVariant,
@@ -837,7 +837,7 @@ class _ErrorCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
+               Icon(
                 Icons.error_outline_rounded,
                 color: AppColors.error,
                 size: 20,
@@ -857,7 +857,7 @@ class _ErrorCard extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded,
+                icon:  Icon(Icons.refresh_rounded,
                     size: 16, color: AppColors.error),
                 label: Text('RETRY',
                     style: AppText.labelMd.copyWith(
@@ -943,7 +943,7 @@ class _SubscriptionCard extends StatelessWidget {
               _CardHeader(model: model),
 
               // ② Divider
-              const Padding(
+               Padding(
                 padding: EdgeInsets.symmetric(vertical: 14),
                 child: Divider(color: AppColors.borderSubtle, height: 1),
               ),
@@ -1028,7 +1028,7 @@ class _CardHeader extends StatelessWidget {
                     : null,
                 backgroundColor: AppColors.surfaceContainerHigh,
                 child: model.clientAvatarUrl == null
-                    ? const Icon(
+                    ?  Icon(
                         Icons.person,
                         color: AppColors.onSurfaceVariant,
                         size: 22,
@@ -1111,7 +1111,7 @@ class _DatePaymentRow extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
+                 Icon(
                   Icons.calendar_today_rounded,
                   size: 12,
                   color: _kGold,
@@ -1183,7 +1183,7 @@ class _PhaseSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(
+             Icon(
               Icons.route_rounded,
               size: 13,
               color: AppColors.onSurfaceVariant,
@@ -1240,7 +1240,7 @@ class _ProgressSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
+                 Icon(
                   Icons.timer_outlined,
                   size: 13,
                   color: AppColors.onSurfaceVariant,
@@ -1269,7 +1269,7 @@ class _ProgressSection extends StatelessWidget {
             value: progressValue,
             minHeight: 6,
             backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: const AlwaysStoppedAnimation(_kGold),
+            valueColor:  AlwaysStoppedAnimation(_kGold),
           ),
         ),
       ],
@@ -1474,7 +1474,7 @@ class _StepCircle extends StatelessWidget {
       'completed' => Container(
         width: 32,
         height: 32,
-        decoration: const BoxDecoration(color: _kGold, shape: BoxShape.circle),
+        decoration:  BoxDecoration(color: _kGold, shape: BoxShape.circle),
         child: const Icon(Icons.check_rounded, color: Colors.black, size: 16),
       ),
       'in_progress' => Container(

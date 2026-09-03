@@ -30,7 +30,7 @@ class LanguageToggle extends StatelessWidget {
               const SizedBox(width: 2),
               Text(
                 isAr ? 'EN' : 'عر',
-                style: const TextStyle(
+                style:  TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryFixed,

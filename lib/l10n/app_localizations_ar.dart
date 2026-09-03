@@ -1067,4 +1067,16 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get smartwatchSync => 'مزامنة الساعة الذكية';
+
+  @override
+  String get appearance => 'المظهر';
+
+  @override
+  String get themeSystem => 'النظام';
+
+  @override
+  String get themeLight => 'فاتح';
+
+  @override
+  String get themeDark => 'داكن';
 }

@@ -177,7 +177,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
         if (isConnected)
           IconButton(
             icon: isSyncing
-                ? const SizedBox(
+                ?  SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
@@ -185,7 +185,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                       color: AppColors.primaryGreen,
                     ),
                   )
-                : const Icon(
+                :  Icon(
                     Icons.sync_rounded,
                     color: AppColors.primaryGreen,
                     size: 22,
@@ -225,7 +225,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                       Icon(
                         Icons.directions_walk_rounded,
                         color: AppColors.primaryGreen,
                         size: 20,
@@ -251,7 +251,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                       children: [
                         TextSpan(
                           text: '${activity.steps} ',
-                          style: const TextStyle(
+                          style:  TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w900,
                             color: AppColors.primaryGreen,
@@ -259,7 +259,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                         ),
                         TextSpan(
                           text: '/ ${widget.stepGoal}',
-                          style: const TextStyle(
+                          style:  TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textMuted,
@@ -280,7 +280,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                       value: stepProgress * _progressAnim.value,
                       minHeight: 8,
                       backgroundColor: AppColors.borderSubtle,
-                      valueColor: const AlwaysStoppedAnimation<Color>(
+                      valueColor: AlwaysStoppedAnimation<Color>(
                         AppColors.primaryGreen,
                       ),
                     ),
@@ -386,7 +386,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
             children: [
               Text(
                 value,
-                style: const TextStyle(
+                style:  TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                   color: AppColors.textPrimary,
@@ -395,7 +395,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
               const SizedBox(width: 2),
               Text(
                 unit,
-                style: const TextStyle(
+                style:  TextStyle(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textMuted,
@@ -497,7 +497,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                 ? null
                 : () => _handlePermissionRequest(isArabic),
             icon: _isConnecting
-                ? const SizedBox(
+                ?  SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
@@ -572,7 +572,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                 ? null
                 : () => _handlePermissionRequest(isArabic),
             icon: _isConnecting
-                ? const SizedBox(
+                ?  SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
@@ -605,7 +605,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
           isArabic
               ? 'مزامنة الساعات الذكية متوفرة على أجهزة iOS و Android'
               : 'Smartwatch sync is available on iOS and Android devices',
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style:  TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
       ),
     );
@@ -614,7 +614,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
   Widget _buildLoadingState(bool isArabic) {
     return Container(
       padding: const EdgeInsets.all(24),
-      child: const Center(
+      child:  Center(
         child: SizedBox(
           width: 24,
           height: 24,

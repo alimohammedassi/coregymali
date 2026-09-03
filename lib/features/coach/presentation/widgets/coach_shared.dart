@@ -8,13 +8,13 @@ import '../../../../widgets/app_state_views.dart';
 // Aliases over AppColors (the single source of truth) so coach screens stay
 // visually in sync with the app-wide Kinetic Obsidian & Electric Volt system.
 
-const kCoachBg = AppColors.background;
-const kCoachCard = AppColors.surfaceContainer;
-const kCoachCard2 = AppColors.surfaceContainerHigh;
-const kCoachGold = AppColors.tertiary;
-const kCoachMuted = AppColors.textSecondary;
-const kCoachSubtle = AppColors.textMuted;
-const kCoachBorder = AppColors.glassBorder;
+Color get kCoachBg => AppColors.background;
+Color get kCoachCard => AppColors.surfaceContainer;
+Color get kCoachCard2 => AppColors.surfaceContainerHigh;
+Color get kCoachGold => AppColors.tertiary;
+Color get kCoachMuted => AppColors.textSecondary;
+Color get kCoachSubtle => AppColors.textMuted;
+Color get kCoachBorder => AppColors.glassBorder;
 
 // ── Shared widgets ─────────────────────────────────────────────────────────────
 
@@ -47,12 +47,12 @@ class CoachStarRating extends StatelessWidget {
       children: [
         ...List.generate(5, (i) {
           if (i < rating.floor()) {
-            return const Icon(Icons.star_rounded, color: AppColors.tertiary, size: 14);
+            return  Icon(Icons.star_rounded, color: AppColors.tertiary, size: 14);
           } else if (i < rating) {
-            return const Icon(Icons.star_half_rounded,
+            return  Icon(Icons.star_half_rounded,
                 color: AppColors.tertiary, size: 14);
           }
-          return const Icon(Icons.star_outline_rounded,
+          return  Icon(Icons.star_outline_rounded,
               color: AppColors.outline, size: 14);
         }),
         const SizedBox(width: 4),

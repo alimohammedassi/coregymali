@@ -15,6 +15,7 @@ import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'login_sign_up.dart';
 import 'widgets/language_toggle.dart';
+import 'widgets/theme_mode_toggle.dart';
 import 'features/coach/presentation/screens/coach_registration_screen.dart';
 import 'screens/workout_screen.dart';
 
@@ -797,7 +798,7 @@ class _ProfilePageState extends State<ProfilePage>
                                         ),
                                       ],
                                     ),
-                                    child: const Icon(
+                                    child:  Icon(
                                       Icons.edit_rounded,
                                       size: 14,
                                       color: AppColors.onPrimary,
@@ -921,7 +922,12 @@ class _ProfilePageState extends State<ProfilePage>
       _A(7, _buildCoachCta()),
       const SizedBox(height: 10),
 
-      _A(8, _buildSignOutBtn()),
+      _A(8, _SectionHeader(title: l10n.appearance)),
+      const SizedBox(height: 10),
+      _A(8, _ProfileCard(child: ThemeModeToggle())),
+      const SizedBox(height: 20),
+
+      _A(9, _buildSignOutBtn()),
     ];
   }
 
@@ -1798,7 +1804,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
-          style: const TextStyle(
+          style:  TextStyle(
             fontSize: 10,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w700,
@@ -2296,7 +2302,7 @@ class _FieldDropdown extends StatelessWidget {
         value: value,
         isExpanded: true,
         dropdownColor: AppColors.surfaceContainerHigh,
-        icon: const Icon(
+        icon:  Icon(
           Icons.keyboard_arrow_down_rounded,
           color: AppColors.textSecondary,
         ),

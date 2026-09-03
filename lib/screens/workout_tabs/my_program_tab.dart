@@ -24,7 +24,7 @@ class _MyProgramTabState extends State<MyProgramTab>
   late Animation<Offset> _heroSlide;
 
   // Consistent level accent mapping — single source of truth app-wide
-  static const Map<String, Color> _levelColors = AppSemanticColors.level;
+  static Map<String, Color> get _levelColors => AppSemanticColors.level;
 
   @override
   void initState() {
@@ -76,7 +76,7 @@ class _MyProgramTabState extends State<MyProgramTab>
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
+      return  Center(
         child: CircularProgressIndicator(
           color: AppColors.primary,
           strokeWidth: 2,
@@ -452,7 +452,7 @@ class _MyProgramTabState extends State<MyProgramTab>
                       color: AppColors.primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: const Icon(
+                    child:  Icon(
                       Icons.fitness_center_rounded,
                       color: AppColors.primary,
                       size: 22,

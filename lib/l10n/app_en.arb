@@ -436,5 +436,9 @@
   "@phaseWeek": { "placeholders": { "w": { "type": "int" } } },
   "previousDay": "Previous day",
   "nextDay": "Next day",
-  "smartwatchSync": "Smartwatch sync"
+  "smartwatchSync": "Smartwatch sync",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark"
 }

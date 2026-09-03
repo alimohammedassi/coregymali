@@ -837,7 +837,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
               const SizedBox(width: 5),
               Text(
                 l10n.scanAi,
-                style: const TextStyle(
+                style:  TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.3,
@@ -1218,7 +1218,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
               onTap: canSave ? _saveToLog : null,
               child: Center(
                 child: _saving
-                    ? const SizedBox(
+                    ?  SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
@@ -1229,7 +1229,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                           Icon(
                             Icons.add_circle_rounded,
                             size: 20,
                             color: AppColors.onPrimary,
@@ -1237,7 +1237,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                           const SizedBox(width: 8),
                           Text(
                             l10n.scanLogToMeal(_mealLabel(l10n)),
-                            style: const TextStyle(
+                            style:  TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
                               color: AppColors.onPrimary,

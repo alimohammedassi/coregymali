@@ -26,9 +26,9 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
   final List<String> _goals = ['All', 'strength', 'muscle gain', 'weight loss'];
 
   // Accent colors per level/goal — single source of truth app-wide
-  static const Map<String, Color> _levelColors = AppSemanticColors.level;
+  static Map<String, Color> get _levelColors => AppSemanticColors.level;
 
-  static const Map<String, Color> _goalColors = AppSemanticColors.goal;
+  static Map<String, Color> get _goalColors => AppSemanticColors.goal;
 
   @override
   void initState() {
@@ -92,7 +92,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_rounded,
+               Icon(Icons.check_circle_rounded,
                   color: AppColors.primary, size: 20),
               const SizedBox(width: 12),
               Expanded(
@@ -467,7 +467,7 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
 
         Expanded(
           child: _isLoading
-              ? const Center(
+              ?  Center(
                   child: CircularProgressIndicator(
                     color: AppColors.primary,
                     strokeWidth: 2,

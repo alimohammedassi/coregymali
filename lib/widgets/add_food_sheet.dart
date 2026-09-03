@@ -122,7 +122,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
                               color: AppColors.textPrimary)),
                       Text(
                         'Targeting: ${widget.preselectedMeal.toUpperCase()} · English / Arabic',
-                        style: const TextStyle(
+                        style:  TextStyle(
                             fontSize: 11,
                             color: AppColors.primary,
                             fontWeight: FontWeight.w700),
@@ -131,7 +131,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded,
+                  icon:  Icon(Icons.close_rounded,
                       color: AppColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -160,11 +160,11 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
                   borderRadius: BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
-                prefixIcon: const Icon(Icons.search_rounded,
+                prefixIcon:  Icon(Icons.search_rounded,
                     color: AppColors.primary, size: 22),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear_rounded,
+                        icon:  Icon(Icons.clear_rounded,
                             size: 18, color: AppColors.textSecondary),
                         onPressed: () {
                           _searchController.clear();
@@ -242,7 +242,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
 
           Expanded(
             child: _searching
-                ? const Center(
+                ?  Center(
                     child: CircularProgressIndicator(
                         color: AppColors.primary, strokeWidth: 2.5),
                   )
@@ -411,7 +411,7 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
                 color: AppColors.primary.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.add_rounded,
+              child:  Icon(Icons.add_rounded,
                   color: AppColors.primary, size: 20),
             ),
           ],
@@ -699,7 +699,7 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                     color: AppColors.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text('per 100g',
+                  child:  Text('per 100g',
                       style: TextStyle(
                           fontSize: 10,
                           color: AppColors.primary,

@@ -1009,7 +1009,7 @@ class _LogoMark extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
+            child:  Icon(
               Icons.lock_outline_rounded,
               size: 26,
               color: AppColors.primaryFixed,
@@ -1241,7 +1241,7 @@ class _KineticTextFieldState extends State<KineticTextField>
           focusedBorder: InputBorder.none,
           errorBorder: InputBorder.none,
           focusedErrorBorder: InputBorder.none,
-          errorStyle: const TextStyle(color: AppColors.error, fontSize: 11),
+          errorStyle:  TextStyle(color: AppColors.error, fontSize: 11),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical: 14,
@@ -1322,7 +1322,7 @@ class _KineticButtonState extends State<KineticButton>
             children: [
               const SizedBox(width: 52),
               if (widget.isLoading)
-                const SizedBox(
+                 SizedBox(
                   width: 22,
                   height: 22,
                   child: CircularProgressIndicator(
@@ -1340,7 +1340,7 @@ class _KineticButtonState extends State<KineticButton>
                   color: Colors.white.withOpacity(0.18),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child:  Icon(
                   Icons.bolt_rounded,
                   color: AppColors.onPrimary,
                   size: 18,
@@ -1747,7 +1747,7 @@ class _RoleSelectionDialog extends StatelessWidget {
                   color: AppColors.primaryFixed.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child:  Icon(
                   Icons.person_add_rounded,
                   color: AppColors.primaryFixed,
                   size: 32,
@@ -1846,7 +1846,7 @@ class _RoleOption extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
+             Icon(
               Icons.arrow_forward_ios_rounded,
               color: AppColors.outline,
               size: 14,

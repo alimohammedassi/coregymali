@@ -146,6 +146,30 @@ abstract class AppLocalizations {
   /// **'Dashboard'**
   String get navDashboard;
 
+  /// No description provided for @navMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get navMore;
+
+  /// No description provided for @moreMenuTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore CoreGym'**
+  String get moreMenuTitle;
+
+  /// No description provided for @moreMarketplaceSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse coaches, compare plans, manage subscriptions'**
+  String get moreMarketplaceSubtitle;
+
+  /// No description provided for @moreProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your body data, goals, settings and achievements'**
+  String get moreProfileSubtitle;
+
   /// No description provided for @dashboardOverview.
   ///
   /// In en, this message translates to:

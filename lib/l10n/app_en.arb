@@ -10,6 +10,10 @@
   "navMessages": "Messages",
   "navCoaches": "Coaches",
   "navDashboard": "Dashboard",
+  "navMore": "More",
+  "moreMenuTitle": "Explore CoreGym",
+  "moreMarketplaceSubtitle": "Browse coaches, compare plans, manage subscriptions",
+  "moreProfileSubtitle": "Your body data, goals, settings and achievements",
   "dashboardOverview": "Dashboard Overview",
 
   "goodMorning": "Good morning",

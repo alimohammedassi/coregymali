@@ -33,6 +33,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navDashboard => 'لوحة التحكم';
 
   @override
+  String get navMore => 'المزيد';
+
+  @override
+  String get moreMenuTitle => 'استكشف كور جيم';
+
+  @override
+  String get moreMarketplaceSubtitle =>
+      'تصفح المدربين، قارن الخطط، وأدر اشتراكاتك';
+
+  @override
+  String get moreProfileSubtitle => 'بياناتك وأهدافك وإعداداتك وإنجازاتك';
+
+  @override
   String get dashboardOverview => 'نظرة عامة على لوحة التحكم';
 
   @override

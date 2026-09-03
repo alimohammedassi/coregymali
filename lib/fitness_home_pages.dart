@@ -156,7 +156,7 @@ class FitnessHomePage extends StatefulWidget {
 /// Semantic identity of every bottom-navigation destination. Tabs and their
 /// screens are both derived from this single enum, so the visible tab list and
 /// the IndexedStack children can never drift out of sync again.
-enum _TabId { home, nutrition, dashboard, workout, coaches, profile }
+enum _TabId { home, nutrition, dashboard, workout, coaches, profile, more }
 
 class _FitnessHomePageState extends State<FitnessHomePage> {
   int _currentIndex = 0;
@@ -216,6 +216,165 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   int _indexOf(List<_TabInfo> tabs, _TabId id) =>
       tabs.indexWhere((t) => t.id == id);
 
+  /// What the bottom bar actually SHOWS. Every destination still exists as an
+  /// IndexedStack child (see [_tabsFor]), but a coach's bar would need 6 items
+  /// to surface them all — too cramped for 68dp of glass. Coaches instead get
+  /// the 5 primary destinations plus a "More" action sheet holding the
+  /// Marketplace and Profile, the same pattern premium fitness apps use when
+  /// a role has more destinations than the bar can carry. Members already fit
+  /// in 5 and keep them all visible.
+  List<_TabInfo> _visibleTabsFor(bool isCoach, AppLocalizations l10n) {
+    final all = _tabsFor(isCoach, l10n);
+    if (!isCoach) return all;
+    return [
+      all.firstWhere((t) => t.id == _TabId.home),
+      all.firstWhere((t) => t.id == _TabId.dashboard),
+      all.firstWhere((t) => t.id == _TabId.nutrition),
+      all.firstWhere((t) => t.id == _TabId.workout),
+      _TabInfo(
+        id: _TabId.more,
+        icon: Icons.grid_view_outlined,
+        activeIcon: Icons.grid_view_rounded,
+        label: l10n.navMore,
+      ),
+    ];
+  }
+
+  /// Opens the coach's "More" sheet. Entries navigate to the underlying
+  /// IndexedStack destinations, and the nav bar keeps highlighting "More"
+  /// while one of them is active so the user never loses their place.
+  void _showMoreSheet(List<_TabInfo> allTabs) {
+    HapticFeedback.selectionClick();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final l10n = AppLocalizations.of(sheetContext)!;
+        final entries = [
+          (
+            tab: allTabs.firstWhere((t) => t.id == _TabId.coaches),
+            subtitle: l10n.moreMarketplaceSubtitle,
+          ),
+          (
+            tab: allTabs.firstWhere((t) => t.id == _TabId.profile),
+            subtitle: l10n.moreProfileSubtitle,
+          ),
+        ];
+        return Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainer,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: AppColors.glassBorder, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.45),
+                blurRadius: 32,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 44,
+                  height: 4.5,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderSubtle,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                l10n.moreMenuTitle,
+                style: AppText.headlineMd.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...entries.map((entry) {
+                final tab = entry.tab;
+                final accent = tab.isGold ? AppColors.tertiary : AppColors.primary;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: () {
+                        Navigator.pop(sheetContext);
+                        _onNavigate(_indexOf(allTabs, tab.id));
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.borderSubtle),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 46,
+                              height: 46,
+                              decoration: BoxDecoration(
+                                color: accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: accent.withValues(alpha: 0.3),
+                                ),
+                              ),
+                              child: Icon(tab.activeIcon, color: accent, size: 22),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    tab.label,
+                                    style: TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    entry.subtitle,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              color: AppColors.textSecondary,
+                              size: 22,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _screenFor(_TabInfo tab, List<_TabInfo> tabs) {
     return switch (tab.id) {
       _TabId.home => _HomeScreenCore(
@@ -235,6 +394,8 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       _TabId.profile => ProfilePage(
           onOpenWorkout: () => _onNavigate(_indexOf(tabs, _TabId.workout)),
         ),
+      // "More" is an action-sheet entry point, never a painted destination.
+      _TabId.more => const SizedBox.expand(),
     };
   }
 
@@ -280,7 +441,16 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
     final profileProvider = context.watch<ProfileProvider>();
     final isCoach = profileProvider.isCoach;
     final tabs = _tabsFor(isCoach, l10n);
+    final visibleTabs = _visibleTabsFor(isCoach, l10n);
     final children = tabs.map((t) => _screenFor(t, tabs)).toList();
+
+    // The bar highlights "More" while a relocated destination (Marketplace /
+    // Profile for coaches) is on screen, so context is never lost.
+    final activeId = tabs[_currentIndex].id;
+    final isMoreActive =
+        activeId == _TabId.more ||
+        (isCoach &&
+            (activeId == _TabId.coaches || activeId == _TabId.profile));
 
     return Scaffold(
       extendBody: true,
@@ -290,11 +460,27 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         child: IndexedStack(index: _currentIndex, children: children),
       ),
       bottomNavigationBar: _PlayfulNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavigate,
-        tabs: tabs,
+        currentIndex: currentIndex(visibleTabs, activeId, isMoreActive),
+        onTap: (i) {
+          final id = visibleTabs[i].id;
+          if (id == _TabId.more) {
+            _showMoreSheet(tabs);
+          } else {
+            _onNavigate(_indexOf(tabs, id));
+          }
+        },
+        tabs: visibleTabs,
       ),
     );
+  }
+
+  /// Maps the active destination to an index within the visible bar items.
+  int currentIndex(List<_TabInfo> visibleTabs, _TabId activeId, bool isMoreActive) {
+    final direct = visibleTabs.indexWhere((t) => t.id == activeId);
+    if (direct != -1) return direct;
+    return isMoreActive
+        ? visibleTabs.indexWhere((t) => t.id == _TabId.more)
+        : 0;
   }
 }
 
@@ -366,13 +552,30 @@ class _PlayfulNavBar extends StatelessWidget {
                     curve: Curves.easeOutCubic,
                     margin: const EdgeInsets.symmetric(
                       vertical: 6,
-                      horizontal: 2,
+                      horizontal: 3,
                     ),
                     decoration: BoxDecoration(
                       color: isActive
-                          ? accentColor.withValues(alpha: 0.10)
+                          ? accentColor.withValues(alpha: 0.12)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
+                      border: isActive
+                          ? Border.all(
+                              color: accentColor.withValues(alpha: 0.35),
+                              width: 1.2,
+                            )
+                          : null,
+                      boxShadow: isActive
+                          ? [
+                              // Volt glow — the active destination should read
+                              // as "lit up", the signature of the bar.
+                              BoxShadow(
+                                color: accentColor.withValues(alpha: 0.22),
+                                blurRadius: 14,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,

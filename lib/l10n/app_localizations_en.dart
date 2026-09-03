@@ -33,6 +33,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navDashboard => 'Dashboard';
 
   @override
+  String get navMore => 'More';
+
+  @override
+  String get moreMenuTitle => 'Explore CoreGym';
+
+  @override
+  String get moreMarketplaceSubtitle =>
+      'Browse coaches, compare plans, manage subscriptions';
+
+  @override
+  String get moreProfileSubtitle =>
+      'Your body data, goals, settings and achievements';
+
+  @override
   String get dashboardOverview => 'Dashboard Overview';
 
   @override

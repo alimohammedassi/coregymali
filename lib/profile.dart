@@ -16,12 +16,17 @@ import 'theme/app_text.dart';
 import 'login_sign_up.dart';
 import 'widgets/language_toggle.dart';
 import 'features/coach/presentation/screens/coach_registration_screen.dart';
+import 'screens/workout_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
 // ─────────────────────────────────────────────────────────────────────────────
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  /// When the profile lives inside the main tab scaffold, this jumps to the
+  /// Workouts tab; when profile is shown standalone it can stay null and the
+  /// banner pushes the WorkoutScreen instead.
+  final VoidCallback? onOpenWorkout;
+  const ProfilePage({super.key, this.onOpenWorkout});
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
@@ -1002,7 +1007,19 @@ class _ProfilePageState extends State<ProfilePage>
   // ── Program banner ────────────────────────────────────────────────────────
   Widget _buildProgramBanner() => _PressCard(
     semanticLabel: 'Active program: $_activeProgramName. Tap to view.',
-    onTap: () => HapticFeedback.lightImpact(),
+    // The banner promises "tap to view" — open the active program in the
+    // Workouts tab (in-app) or push the workout screen when standalone.
+    onTap: () {
+      HapticFeedback.lightImpact();
+      if (widget.onOpenWorkout != null) {
+        widget.onOpenWorkout!();
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const WorkoutScreen()),
+        );
+      }
+    },
     child: Row(
       children: [
         Container(

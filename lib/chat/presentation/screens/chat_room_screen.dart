@@ -266,14 +266,10 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      actions: [
-        IconButton(
-          icon: Icon(Icons.more_vert_rounded,
-              color: AppColors.onSurfaceVariant, size: 22),
-          onPressed: () => _showChatOptions(context),
-          tooltip: 'More options',
-        ),
-      ],
+      // The ⋮ options sheet was removed: every action in it (view profile,
+      // notification settings, delete conversation) was a dead TODO no-op.
+      // Fake menus are worse than no menu — restore when the actions exist.
+      actions: const [],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
         child: Container(
@@ -281,105 +277,6 @@ class _ChatAppBar extends StatelessWidget implements PreferredSizeWidget {
           color: AppColors.outlineVariant.withValues(alpha: 0.3),
         ),
       ),
-    );
-  }
-
-  void _showChatOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => _ChatOptionsSheet(isClient: isClient, l: l),
-    );
-  }
-}
-
-class _ChatOptionsSheet extends StatelessWidget {
-  final bool isClient;
-  final AppLocalizations l;
-
-  const _ChatOptionsSheet({required this.isClient, required this.l});
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.outlineVariant.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            _OptionTile(
-              icon: Icons.person_outline_rounded,
-              label: 'View ${isClient ? "coach" : "client"} profile',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: navigate to profile
-              },
-            ),
-            _OptionTile(
-              icon: Icons.notifications_outlined,
-              label: 'Notification settings',
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: navigate to notification settings
-              },
-            ),
-            _OptionTile(
-              icon: Icons.delete_outline_rounded,
-              label: 'Delete conversation',
-              isDestructive: true,
-              onTap: () {
-                Navigator.pop(context);
-                // TODO: confirm and delete
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _OptionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool isDestructive;
-
-  const _OptionTile({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.isDestructive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDestructive ? AppColors.error : AppColors.onSurface;
-    return ListTile(
-      leading: Icon(icon, color: color, size: 22),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: color,
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
-      dense: true,
     );
   }
 }
@@ -870,10 +767,6 @@ class _MessageInputBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // Attach button
-          _AttachButton(),
-          const SizedBox(width: 8),
-
           // Text field
           Expanded(
             child: Container(
@@ -963,149 +856,6 @@ class _MessageInputBar extends StatelessWidget {
             },
           ),
         ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Attach button
-// ---------------------------------------------------------------------------
-class _AttachButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Attach file',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            _showAttachMenu(context);
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHighest,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.add_circle_outline_rounded,
-              size: 22,
-              color: AppColors.onSurfaceVariant,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showAttachMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.outlineVariant.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _AttachOption(
-                    icon: Icons.image_outlined,
-                    label: 'Photo',
-                    color: Colors.green,
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: image picker
-                    },
-                  ),
-                  _AttachOption(
-                    icon: Icons.folder_outlined,
-                    label: 'Document',
-                    color: Colors.blue,
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: file picker
-                    },
-                  ),
-                  _AttachOption(
-                    icon: Icons.camera_alt_outlined,
-                    label: 'Camera',
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.pop(context);
-                      // TODO: camera
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AttachOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _AttachOption({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                color: AppColors.onSurface,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

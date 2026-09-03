@@ -141,14 +141,23 @@ class _MyProgramTabState extends State<MyProgramTab>
               // ── Today's Workout ────────────────────────────
               _sectionLabel('TODAY\'S WORKOUT'),
               const SizedBox(height: 12),
-              _buildWorkoutCard(),
+              _buildWorkoutCard(
+                progName: progName,
+                currentWeek: currentWeek,
+                totalWeeks: totalWeeks,
+                currentDay: (_activeProgram!['current_day'] ?? 1) as int,
+                daysPerWeek: (progData['days_per_week'] ?? 4) as int,
+              ),
 
               const SizedBox(height: 28),
 
               // ── Weekly Schedule ────────────────────────────
               _sectionLabel('THIS WEEK'),
               const SizedBox(height: 12),
-              _buildWeekRow(currentWeek),
+              _buildWeekRow(
+                currentDay: (_activeProgram!['current_day'] ?? 1) as int,
+                daysPerWeek: (progData['days_per_week'] ?? 4) as int,
+              ),
 
               const SizedBox(height: 32),
 
@@ -400,7 +409,13 @@ class _MyProgramTabState extends State<MyProgramTab>
     );
   }
 
-  Widget _buildWorkoutCard() {
+  Widget _buildWorkoutCard({
+    required String progName,
+    required int currentWeek,
+    required int totalWeeks,
+    required int currentDay,
+    required int daysPerWeek,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -419,7 +434,12 @@ class _MyProgramTabState extends State<MyProgramTab>
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () {},
+            // Opens the same training flow as the START CTA below — the
+            // muscle-picker sheet is the app's real session entry point.
+            onTap: () {
+              HapticFeedback.mediumImpact();
+              _showMuscleSelection(context);
+            },
             splashColor: AppColors.primary.withValues(alpha: 0.05),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -444,16 +464,18 @@ class _MyProgramTabState extends State<MyProgramTab>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Day 1 — Full Body',
+                          'Day $currentDay — $progName',
                           style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '5 exercises  •  ~45 min',
+                          '$daysPerWeek sessions/week  •  Week $currentWeek of $totalWeeks',
                           style: TextStyle(
                               color: AppColors.textSecondary, fontSize: 13),
                         ),
@@ -479,15 +501,22 @@ class _MyProgramTabState extends State<MyProgramTab>
     );
   }
 
-  Widget _buildWeekRow(int currentDay) {
+  Widget _buildWeekRow({required int currentDay, required int daysPerWeek}) {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    final workoutDays = [0, 2, 4]; // Mon, Wed, Fri
+
+    // Derive the training days from the program's days_per_week instead of
+    // hardcoding Mon/Wed/Fri: distribute the sessions evenly across the week.
+    final workoutDays = <int>{
+      for (var i = 0; i < daysPerWeek.clamp(1, 7); i++)
+        (i * 7 / daysPerWeek).floor()
+    };
 
     return Row(
       children: List.generate(7, (i) {
         final isWorkout = workoutDays.contains(i);
-        final isToday = i == 0;
-        final isDone = i < currentDay - 1;
+        // Monday-first index of today (DateTime.weekday: Mon=1..Sun=7)
+        final isToday = i == DateTime.now().weekday - 1;
+        final isDone = i < currentDay - 1 && !isToday;
 
         return Expanded(
           child: Padding(

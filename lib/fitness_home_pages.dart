@@ -232,7 +232,9 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       ),
       _TabId.workout => const WorkoutScreen(),
       _TabId.coaches => _buildCoachesScreen(),
-      _TabId.profile => const ProfilePage(),
+      _TabId.profile => ProfilePage(
+          onOpenWorkout: () => _onNavigate(_indexOf(tabs, _TabId.workout)),
+        ),
     };
   }
 

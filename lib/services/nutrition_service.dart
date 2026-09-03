@@ -49,6 +49,23 @@ class NutritionService {
     }
   }
 
+  /// Browse the seeded `foods` table without a search term (the "popular /
+  /// browse" list shown by food pickers before the user types anything).
+  /// Single source of truth for both FoodLoggingModal and AddFoodSheet.
+  Future<List<Map<String, dynamic>>> getFoods({String category = 'all'}) async {
+    try {
+      var dbQuery = supabase.from('foods').select();
+      if (category.toLowerCase() != 'all') {
+        dbQuery = dbQuery.eq('category', category);
+      }
+      final dbResults = await dbQuery.order('name').limit(40);
+      return List<Map<String, dynamic>>.from(dbResults);
+    } catch (e) {
+      debugPrint('Error loading foods: $e');
+      return [];
+    }
+  }
+
   // Log food
   Future<bool> logFood({
     required String foodId,

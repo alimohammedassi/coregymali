@@ -7,7 +7,11 @@ import '../theme/app_text.dart';
 import 'pixel_art_icons.dart';
 
 /// Interactive Food & Meal Logging Modal for CoreGym
-/// Supports searching Supabase database, quick macro add, and preset fitness meals
+/// Browses/searches the Supabase `foods` table (the seeded Egyptian food
+/// database) and supports quick custom macro add. The former hardcoded
+/// `_popularFoods` preset list was removed: the pre-search list now comes
+/// from `NutritionService.getFoods()` so every entry point into food
+/// logging shows the same real database-backed list.
 class FoodLoggingModal extends StatefulWidget {
   final String initialMealType;
   final String? initialMode; // 'search', 'quick', 'ai', 'voice'
@@ -43,13 +47,17 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
   final _nutritionService = NutritionService();
 
   late String _selectedMeal;
-  int _tabIndex = 0; // 0: Search & Popular, 1: Quick Custom Add
+  int _tabIndex = 0; // 0: Browse & Search DB, 1: Quick Custom Add
   bool _isSaving = false;
 
-  // Search state
+  // Search / browse state
   final TextEditingController _searchCtrl = TextEditingController();
   List<Map<String, dynamic>> _searchResults = [];
   bool _isSearching = false;
+
+  // Database browse list (seeded Egyptian foods) shown before any search
+  List<Map<String, dynamic>> _browseFoods = [];
+  bool _isLoadingBrowse = true;
 
   // Quick Add state
   final TextEditingController _nameCtrl = TextEditingController();
@@ -58,90 +66,6 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
   final TextEditingController _carbsCtrl = TextEditingController();
   final TextEditingController _fatCtrl = TextEditingController();
   final TextEditingController _quantityCtrl = TextEditingController(text: '1');
-
-  // Popular fitness presets for instant 1-tap logging
-  static const List<Map<String, dynamic>> _popularFoods = [
-    {
-      'name': 'Grilled Chicken Breast',
-      'name_ar': 'صدر دجاج مشوي (150g)',
-      'calories': 247.0,
-      'protein_g': 46.0,
-      'carbs_g': 0.0,
-      'fat_g': 5.0,
-      'serving': '150g',
-      'icon': PixelIconType.chicken,
-    },
-    {
-      'name': 'Eggs (3 Whole)',
-      'name_ar': 'بيض مسلوق (3 حبات)',
-      'calories': 215.0,
-      'protein_g': 18.0,
-      'carbs_g': 1.5,
-      'fat_g': 15.0,
-      'serving': '3 eggs',
-      'icon': PixelIconType.egg,
-    },
-    {
-      'name': 'Oatmeal & Milk',
-      'name_ar': 'شوفان بالحليب (80g)',
-      'calories': 320.0,
-      'protein_g': 14.0,
-      'carbs_g': 54.0,
-      'fat_g': 6.0,
-      'serving': '1 bowl',
-      'icon': PixelIconType.grain,
-    },
-    {
-      'name': 'White Rice',
-      'name_ar': 'أرز أبيض مطبوخ (200g)',
-      'calories': 260.0,
-      'protein_g': 5.0,
-      'carbs_g': 57.0,
-      'fat_g': 0.6,
-      'serving': '200g',
-      'icon': PixelIconType.grain,
-    },
-    {
-      'name': 'Whey Protein Shake',
-      'name_ar': 'واي بروتين شيك (1 سكوب)',
-      'calories': 125.0,
-      'protein_g': 25.0,
-      'carbs_g': 2.0,
-      'fat_g': 1.5,
-      'serving': '1 scoop',
-      'icon': PixelIconType.bolt,
-    },
-    {
-      'name': 'Greek Yogurt',
-      'name_ar': 'زبادي يوناني (170g)',
-      'calories': 100.0,
-      'protein_g': 17.0,
-      'carbs_g': 6.0,
-      'fat_g': 0.7,
-      'serving': '170g',
-      'icon': PixelIconType.sparkles,
-    },
-    {
-      'name': 'Avocado (Half)',
-      'name_ar': 'نصف حبة أفوكادو (100g)',
-      'calories': 160.0,
-      'protein_g': 2.0,
-      'carbs_g': 8.5,
-      'fat_g': 14.7,
-      'serving': '100g',
-      'icon': PixelIconType.avocado,
-    },
-    {
-      'name': 'Banana & Peanut Butter',
-      'name_ar': 'موز مع ملعقة زبدة فول سوداني',
-      'calories': 200.0,
-      'protein_g': 5.0,
-      'carbs_g': 28.0,
-      'fat_g': 8.0,
-      'serving': '1 snack',
-      'icon': PixelIconType.apple,
-    },
-  ];
 
   @override
   void initState() {
@@ -164,6 +88,16 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       _carbsCtrl.text = '40';
       _fatCtrl.text = '10';
     }
+    _loadBrowseFoods();
+  }
+
+  Future<void> _loadBrowseFoods() async {
+    final foods = await _nutritionService.getFoods();
+    if (!mounted) return;
+    setState(() {
+      _browseFoods = foods;
+      _isLoadingBrowse = false;
+    });
   }
 
   @override
@@ -225,9 +159,9 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
     if (!success) {
       setState(() => _isSaving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
-          backgroundColor: Color(0xFFDC2626),
+        SnackBar(
+          content: const Text('❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -239,7 +173,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle_rounded, color: Colors.white),
+            const Icon(Icons.check_circle_rounded, color: AppColors.onPrimary),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -362,7 +296,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryGreen : const Color(0xFFF3F6F4),
+                        color: isSelected ? AppColors.primaryGreen : AppColors.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: isSelected
                             ? [
@@ -383,7 +317,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                             style: TextStyle(
                               fontSize: 10.5,
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                              color: isSelected ? Colors.white : AppColors.textPrimary,
+                              color: isSelected ? AppColors.onPrimary : AppColors.textPrimary,
                               fontFamily: AppText.fontFamily(isArabic: isArabic),
                             ),
                           ),
@@ -398,13 +332,13 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
 
           const SizedBox(height: 14),
 
-          // Mode Toggle Tabs (Popular/Database vs Quick Add)
+          // Mode Toggle Tabs (Database Browse/Search vs Quick Add)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F3),
+                color: AppColors.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Row(
@@ -415,21 +349,17 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: _tabIndex == 0 ? Colors.white : Colors.transparent,
+                          color: _tabIndex == 0
+                              ? AppColors.surfaceContainerHighest
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
-                          boxShadow: _tabIndex == 0
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
+                          border: _tabIndex == 0
+                              ? Border.all(color: AppColors.glassBorder)
                               : null,
                         ),
                         child: Center(
                           child: Text(
-                            isArabic ? 'قاعدة البيانات والمقترحات' : 'Search & Popular',
+                            isArabic ? 'قاعدة البيانات' : 'Food Database',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: _tabIndex == 0 ? FontWeight.w800 : FontWeight.w600,
@@ -447,16 +377,12 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         decoration: BoxDecoration(
-                          color: _tabIndex == 1 ? Colors.white : Colors.transparent,
+                          color: _tabIndex == 1
+                              ? AppColors.surfaceContainerHighest
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(10),
-                          boxShadow: _tabIndex == 1
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.05),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
+                          border: _tabIndex == 1
+                              ? Border.all(color: AppColors.glassBorder)
                               : null,
                         ),
                         child: Center(
@@ -532,7 +458,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
           ),
         ),
 
-        // Results or Popular List
+        // Search results or DB browse list
         Expanded(
           child: _isSearching
               ? const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen))
@@ -541,122 +467,126 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       itemCount: _searchResults.length,
                       separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderSubtle),
-                      itemBuilder: (_, i) {
-                        final food = _searchResults[i];
-                        final name = (isArabic && food['name_ar'] != null && food['name_ar'].toString().isNotEmpty)
-                            ? food['name_ar'].toString()
-                            : (food['name'] ?? 'Food');
-                        final cals = ((food['calories'] as num?) ?? 0).toDouble();
-                        final prot = ((food['protein_g'] as num?) ?? 0).toDouble();
-                        final carb = ((food['carbs_g'] as num?) ?? 0).toDouble();
-                        final fat = ((food['fat_g'] as num?) ?? 0).toDouble();
-
-                        final imageUrl = food['image_url']?.toString();
-                        final category = food['category']?.toString();
-
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                          leading: _FoodThumbnail(
-                            imageUrl: imageUrl,
-                            category: category,
-                            size: 48,
-                          ),
-                          title: Text(
-                            name,
-                            style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
-                          ),
-                          subtitle: Text(
-                            '${cals.toInt()} kcal · P: ${prot.toInt()}g | C: ${carb.toInt()}g | F: ${fat.toInt()}g',
-                            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryGreen,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                          ),
-                          onTap: () => _logFoodItem(
-                            name: name,
-                            calories: cals,
-                            protein: prot,
-                            carbs: carb,
-                            fat: fat,
-                            foodId: food['id']?.toString(),
-                          ),
-                        );
-                      },
+                      itemBuilder: (_, i) => _buildDbFoodTile(_searchResults[i], isArabic),
                     )
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            isArabic ? 'أطعمة رياضية سريعة بنقرة واحدة 🔥' : 'Quick Popular Fitness Meals 🔥',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textSecondary,
-                              fontFamily: AppText.fontFamily(isArabic: isArabic),
-                            ),
-                          ),
-                        ),
-                        ...List.generate(_popularFoods.length, (i) {
-                          final f = _popularFoods[i];
-                          final name = isArabic ? f['name_ar'] : f['name'];
-                          final cals = (f['calories'] as num).toDouble();
-                          final prot = (f['protein_g'] as num).toDouble();
-                          final carb = (f['carbs_g'] as num).toDouble();
-                          final fat = (f['fat_g'] as num).toDouble();
-                          final icon = f['icon'] as PixelIconType;
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.borderSubtle),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                              leading: _FoodThumbnail(
-                                imageUrl: null, // presets have no DB image_url
-                                category: null,
-                                fallbackIcon: icon,
-                                size: 48,
-                              ),
-                              title: Text(
-                                name,
-                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                              ),
-                              subtitle: Text(
-                                '${cals.toInt()} kcal · P: ${prot.toInt()}g | C: ${carb.toInt()}g | F: ${fat.toInt()}g',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                              ),
-                              trailing: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primaryGreen,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
-                              ),
-                              onTap: () => _logFoodItem(
-                                name: name,
-                                calories: cals,
-                                protein: prot,
-                                carbs: carb,
-                                fat: fat,
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                  : _buildBrowseList(isArabic),
         ),
       ],
+    );
+  }
+
+  /// The real database-backed list (Supabase `foods` — the seeded Egyptian
+  /// food database). Shown before the user types anything; searching swaps
+  /// it for filtered results from the same table.
+  Widget _buildBrowseList(bool isArabic) {
+    if (_isLoadingBrowse) {
+      return const Center(child: CircularProgressIndicator(color: AppColors.primaryGreen));
+    }
+
+    if (_browseFoods.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.restaurant_menu_rounded,
+                size: 40, color: AppColors.textMuted),
+            const SizedBox(height: 12),
+            Text(
+              isArabic ? 'لا توجد أطعمة في قاعدة البيانات' : 'No foods in the database',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isArabic ? 'تحقق من الاتصال بالإنترنت' : 'Check your internet connection',
+              style: TextStyle(
+                fontSize: 11.5,
+                color: AppColors.textMuted,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+          child: Text(
+            isArabic ? 'من قاعدة بيانات الأطعمة 🇪🇬' : 'From the food database 🇪🇬',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+              fontFamily: AppText.fontFamily(isArabic: isArabic),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            itemCount: _browseFoods.length,
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, color: AppColors.borderSubtle),
+            itemBuilder: (_, i) => _buildDbFoodTile(_browseFoods[i], isArabic),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// One tile builder for both browse and search results — a single
+  /// implementation for DB-backed foods so the two states can't drift.
+  Widget _buildDbFoodTile(Map<String, dynamic> food, bool isArabic) {
+    final name = (isArabic && food['name_ar'] != null && food['name_ar'].toString().isNotEmpty)
+        ? food['name_ar'].toString()
+        : (food['name'] ?? 'Food');
+    final cals = ((food['calories'] as num?) ?? 0).toDouble();
+    final prot = ((food['protein_g'] as num?) ?? 0).toDouble();
+    final carb = ((food['carbs_g'] as num?) ?? 0).toDouble();
+    final fat = ((food['fat_g'] as num?) ?? 0).toDouble();
+
+    final imageUrl = food['image_url']?.toString();
+    final category = food['category']?.toString();
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+      leading: _FoodThumbnail(
+        imageUrl: imageUrl,
+        category: category,
+        size: 48,
+      ),
+      title: Text(
+        name,
+        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
+      ),
+      subtitle: Text(
+        '${cals.toInt()} kcal · P: ${prot.toInt()}g | C: ${carb.toInt()}g | F: ${fat.toInt()}g',
+        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: const BoxDecoration(
+          color: AppColors.primaryGreen,
+          shape: BoxShape.circle,
+        ),
+        child: const Icon(Icons.add_rounded, color: AppColors.onPrimary, size: 16),
+      ),
+      onTap: () => _logFoodItem(
+        name: name,
+        calories: cals,
+        protein: prot,
+        carbs: carb,
+        fat: fat,
+        foodId: food['id']?.toString(),
+      ),
     );
   }
 
@@ -813,7 +743,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
               onPressed: _isSaving ? null : _submitQuickAdd,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onPrimary,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 elevation: 0,
               ),
@@ -821,7 +751,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                      child: CircularProgressIndicator(color: AppColors.onPrimary, strokeWidth: 2.5),
                     )
                   : Text(
                       isArabic ? 'حفظ في السجل اليومي 🔥' : 'Save to Daily Log 🔥',
@@ -857,6 +787,8 @@ class _FoodThumbnail extends StatelessWidget {
   });
 
   /// Returns a colour accent based on food category for the placeholder.
+  /// Category accents are data-viz colours (like the chart/pixel-art
+  /// palettes) — intentionally not mode-flipped; they read on both themes.
   Color _categoryColor() {
     switch ((category ?? '').toLowerCase()) {
       case 'meat':

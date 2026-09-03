@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_semantic_colors.dart';
 import '../../services/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Design Tokens — mapped onto the shared CoreGym light system
+//  Design Tokens — mapped onto the shared Kinetic Obsidian system
 // ─────────────────────────────────────────────────────────────────────────────
 const _kSurface = AppColors.background;
-const _kCard = AppColors.surface;
+const _kCard = AppColors.surfaceContainer;
 const _kCard2 = AppColors.surfaceContainerHigh;
 const _kAccent = AppColors.primary;
 const _kMuted = AppColors.textSecondary;
 const _kSubtle = AppColors.textMuted;
 
-const Map<String, Color> _muscleColors = {
-  'Chest': Color(0xFFEF4444),
-  'Back': Color(0xFF8B5CF6),
-  'Shoulders': Color(0xFF38BDF8),
-  'Arms': Color(0xFFF59E0B),
-  'Legs': Color(0xFF22A06B),
-  'Core': Color(0xFFFF8A00),
-  'Full Body': AppColors.primary,
-};
+final Map<String, Color> _muscleColors = AppSemanticColors.muscle;
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  LogWorkoutTab
@@ -107,7 +100,7 @@ class _LogWorkoutTabState extends State<LogWorkoutTab>
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = _muscleColors[_muscleFilter] ?? const Color(0xFFD4FF57);
+    final accentColor = _muscleColors[_muscleFilter] ?? AppColors.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,12 +434,12 @@ class _ExerciseCardState extends State<_ExerciseCard>
                         children: [
                           _badge(
                             ex['equipment'] ?? 'Bodyweight',
-                            const Color(0xFFFF8A00),
+                            AppColors.accentCalories,
                           ),
                           const SizedBox(width: 6),
                           _badge(
                             ex['category'] ?? 'Strength',
-                            const Color(0xFF38BDF8),
+                            AppColors.secondary,
                           ),
                           const Spacer(),
                           if (imageUrl == null &&
@@ -821,12 +814,12 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                     children: [
                       _infoPill(
                         ex['equipment'] ?? 'Bodyweight',
-                        const Color(0xFFFF8A00),
+                        AppColors.accentCalories,
                       ),
                       const SizedBox(width: 8),
                       _infoPill(
                         ex['category'] ?? 'Strength',
-                        const Color(0xFF38BDF8),
+                        AppColors.secondary,
                       ),
                       const SizedBox(width: 8),
                       _infoPill(widget.defaultMuscleGroup, _accentColor),

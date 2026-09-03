@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_text.dart';
 import '../../services/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,20 +25,10 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
   final List<String> _levels = ['All', 'beginner', 'intermediate', 'advanced'];
   final List<String> _goals = ['All', 'strength', 'muscle gain', 'weight loss'];
 
-  // Accent colors per level — consistent semantic mapping
-  static const Map<String, Color> _levelColors = {
-    'beginner': Color(0xFF22A06B),
-    'intermediate': Color(0xFFF59E0B),
-    'advanced': Color(0xFFEF4444),
-    'All': AppColors.primary,
-  };
+  // Accent colors per level/goal — single source of truth app-wide
+  static const Map<String, Color> _levelColors = AppSemanticColors.level;
 
-  static const Map<String, Color> _goalColors = {
-    'strength': Color(0xFFFF8A00),
-    'muscle gain': Color(0xFF8B5CF6),
-    'weight loss': Color(0xFF38BDF8),
-    'All': AppColors.primary,
-  };
+  static const Map<String, Color> _goalColors = AppSemanticColors.goal;
 
   @override
   void initState() {

@@ -238,7 +238,7 @@ class _SignOutBtn extends StatelessWidget {
             child: Text(
               l.signOutTitle,
               style: AppText.labelMd.copyWith(
-                color: Colors.white,
+                color: AppColors.onPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),

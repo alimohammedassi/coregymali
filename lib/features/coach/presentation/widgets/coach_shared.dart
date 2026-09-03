@@ -2,20 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
+import '../../../../widgets/app_state_views.dart';
 
 // ── Coach feature shared design tokens ────────────────────────────────────────
 // Aliases over AppColors (the single source of truth) so coach screens stay
-// visually in sync with the rest of the app's light Kalee palette.
-// NOTE: these previously pointed at dark-theme leftovers (white text / glass
-// borders on a white canvas), which rendered coach screens unreadable.
+// visually in sync with the app-wide Kinetic Obsidian & Electric Volt system.
 
 const kCoachBg = AppColors.background;
-const kCoachCard = AppColors.surface;
+const kCoachCard = AppColors.surfaceContainer;
 const kCoachCard2 = AppColors.surfaceContainerHigh;
 const kCoachGold = AppColors.tertiary;
 const kCoachMuted = AppColors.textSecondary;
 const kCoachSubtle = AppColors.textMuted;
-const kCoachBorder = AppColors.borderSubtle;
+const kCoachBorder = AppColors.glassBorder;
 
 // ── Shared widgets ─────────────────────────────────────────────────────────────
 
@@ -92,31 +91,7 @@ class CoachErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded,
-                color: AppColors.error, size: 48),
-            const SizedBox(height: 16),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: AppText.bodySm.copyWith(color: AppColors.onSurfaceVariant)),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.tertiary,
-                  foregroundColor: Colors.black),
-              onPressed: onRetry,
-              child: Text('RETRY',
-                  style: AppText.buttonPrimary.copyWith(color: Colors.black)),
-            ),
-          ],
-        ),
-      ),
-    );
+    return AppStateViews.error(message: message, onRetry: onRetry);
   }
 }
 
@@ -130,20 +105,6 @@ class CoachEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: AppColors.outline, size: 48),
-            const SizedBox(height: 12),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: AppText.bodyMd.copyWith(color: AppColors.onSurfaceVariant, height: 1.6)),
-          ],
-        ),
-      ),
-    );
+    return AppStateViews.empty(message: message, icon: icon);
   }
 }

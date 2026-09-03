@@ -502,7 +502,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                     height: 18,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                     ),
                   )
                 : const Icon(Icons.watch_rounded, size: 18),
@@ -520,7 +520,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onPrimary,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               shape: RoundedRectangleBorder(
@@ -577,7 +577,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                     ),
                   )
                 : const Icon(Icons.download_rounded, size: 16),
@@ -585,8 +585,8 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
               isArabic ? 'تثبيت من Google Play' : 'Install from Google Play',
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF57F17),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.tertiary,
+              foregroundColor: AppColors.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

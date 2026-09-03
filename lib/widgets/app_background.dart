@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-/// Fresh, energetic and playful background for CoreGym
-/// Supports light clean canvas (#F7F9F8) with soft green ambient glow accents
+/// Kinetic Obsidian canvas for CoreGym.
+/// Near-black (#000000) base with soft volt/cyan ambient glow orbs so cards
+/// built on the glass token system read as liquid glass, not flat gray.
 class AppBackground extends StatelessWidget {
   final Widget child;
   final bool showGlowOrbs;
@@ -20,7 +21,7 @@ class AppBackground extends StatelessWidget {
       child: Stack(
         children: [
           if (showGlowOrbs) ...[
-            // Soft ambient top-right green glow
+            // Soft ambient top-right volt glow
             Positioned(
               top: -80,
               right: -80,
@@ -31,14 +32,14 @@ class AppBackground extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primaryGreen.withValues(alpha: 0.06),
+                      AppColors.glowOrbPrimary,
                       Colors.transparent,
                     ],
                   ),
                 ),
               ),
             ),
-            // Soft ambient bottom-left subtle glow
+            // Soft ambient bottom-left cyan glow
             Positioned(
               bottom: 100,
               left: -60,
@@ -49,7 +50,7 @@ class AppBackground extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.accentWater.withValues(alpha: 0.04),
+                      AppColors.glowOrbSecondary,
                       Colors.transparent,
                     ],
                   ),
@@ -70,7 +71,8 @@ class AppBackground extends StatelessWidget {
       );
 }
 
-/// Soft white card with rounded corners, crisp subtle border and lightweight shadow
+/// Shared glass card: elevated obsidian surface, 8%-white hairline border,
+/// deep shadow. The single card language for list items, panels and sheets.
 class PlayfulCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -99,10 +101,10 @@ class PlayfulCard extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppColors.surface,
+        color: backgroundColor ?? AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: borderColor ?? AppColors.borderSubtle,
+          color: borderColor ?? AppColors.glassBorder,
           width: borderWidth,
         ),
         boxShadow: [

@@ -1327,7 +1327,7 @@ class _KineticButtonState extends State<KineticButton>
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppColors.onPrimary,
                   ),
                 )
               else
@@ -1342,7 +1342,7 @@ class _KineticButtonState extends State<KineticButton>
                 ),
                 child: const Icon(
                   Icons.bolt_rounded,
-                  color: Colors.white,
+                  color: AppColors.onPrimary,
                   size: 18,
                 ),
               ),

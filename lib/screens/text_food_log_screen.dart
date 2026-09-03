@@ -1148,7 +1148,7 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
@@ -1158,7 +1158,7 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
                           const Icon(
                             Icons.add_circle_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -1166,7 +1166,7 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
                             style: const TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 15,
-                              color: Colors.white,
+                              color: AppColors.onPrimary,
                             ),
                           ),
                         ],

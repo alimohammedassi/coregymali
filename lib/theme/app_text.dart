@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-/// Kalee-Inspired Modern & Playful Typography System
+/// Kinetic Obsidian — App Typography System
 /// English: Poppins (Clean, rounded, friendly, modern)
 /// Arabic: Cairo (Bold, crisp, geometric Arabic typography)
+/// (Auth/splash/onboarding use AuthAppText: Epilogue display + Inter labels.)
 class AppText {
   AppText._();
 

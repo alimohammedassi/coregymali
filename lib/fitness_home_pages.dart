@@ -884,7 +884,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             hintText: '6000',
             suffixText: isArabic ? 'خطوة' : 'steps',
             filled: true,
-            fillColor: const Color(0xFFF7F9F8),
+            fillColor: AppColors.surfaceContainerHigh,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
@@ -920,15 +920,15 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   Widget _shimmerBlock(double height, double radius) => Container(
     height: height,
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(radius),
     ),
   );
 
   Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: const Color(0xFFE8ECE9),
-      highlightColor: const Color(0xFFF7F9F8),
+      baseColor: AppColors.surfaceContainerHigh,
+      highlightColor: AppColors.surfaceBright,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: Column(
@@ -954,7 +954,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                       width: 42,
                       height: 42,
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -2559,7 +2559,7 @@ class _QuickFoodLogHub extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       fontFamily: AppText.fontFamily(isArabic: isArabic),
                     ),
                   ),

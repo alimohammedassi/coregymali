@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_text.dart';
 import '../../services/supabase_client.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -22,12 +23,8 @@ class _MyProgramTabState extends State<MyProgramTab>
   late Animation<double> _heroFade;
   late Animation<Offset> _heroSlide;
 
-  // Consistent level accent mapping (same as Programs Library)
-  static const Map<String, Color> _levelColors = {
-    'beginner': Color(0xFF22A06B),
-    'intermediate': Color(0xFFF59E0B),
-    'advanced': Color(0xFFEF4444),
-  };
+  // Consistent level accent mapping — single source of truth app-wide
+  static const Map<String, Color> _levelColors = AppSemanticColors.level;
 
   @override
   void initState() {
@@ -612,25 +609,25 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Push Day',
           'id': 'push',
           'icon': Icons.pan_tool,
-          'color': const Color(0xFFEF4444)
+          'color': AppSemanticColors.forMuscle('Chest')
         },
         {
           'label': 'Pull Day',
           'id': 'pull',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFF8B5CF6)
+          'color': AppSemanticColors.forMuscle('Back')
         },
         {
           'label': 'Legs Day',
           'id': 'legs',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF22A06B)
+          'color': AppSemanticColors.forMuscle('Legs')
         },
         {
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFF59E0B)
+          'color': AppSemanticColors.forMuscle('Core')
         },
       ];
     } else if (progName.contains('upper') || progName.contains('lower')) {
@@ -639,19 +636,19 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Upper Body',
           'id': 'upper',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFF8B5CF6)
+          'color': AppSemanticColors.forMuscle('Back')
         },
         {
           'label': 'Lower Body',
           'id': 'lower',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF22A06B)
+          'color': AppSemanticColors.forMuscle('Legs')
         },
         {
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFF59E0B)
+          'color': AppSemanticColors.forMuscle('Core')
         },
       ];
     } else if (progName.contains('full')) {
@@ -666,7 +663,7 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Core / Abs',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFF59E0B)
+          'color': AppSemanticColors.forMuscle('Core')
         },
       ];
     } else {
@@ -675,37 +672,37 @@ class _MyProgramTabState extends State<MyProgramTab>
           'label': 'Chest',
           'id': 'chest',
           'icon': Icons.fitness_center,
-          'color': const Color(0xFFEF4444)
+          'color': AppSemanticColors.forMuscle('Chest')
         },
         {
           'label': 'Back',
           'id': 'back',
           'icon': Icons.airline_seat_flat_angled,
-          'color': const Color(0xFF8B5CF6)
+          'color': AppSemanticColors.forMuscle('Back')
         },
         {
           'label': 'Shoulders',
           'id': 'shoulders',
           'icon': Icons.accessibility,
-          'color': const Color(0xFF38BDF8)
+          'color': AppSemanticColors.forMuscle('Shoulders')
         },
         {
           'label': 'Arms',
           'id': 'arms',
           'icon': Icons.sports_gymnastics,
-          'color': const Color(0xFFF59E0B)
+          'color': AppSemanticColors.forMuscle('Arms')
         },
         {
           'label': 'Legs',
           'id': 'legs',
           'icon': Icons.directions_run,
-          'color': const Color(0xFF22A06B)
+          'color': AppSemanticColors.forMuscle('Legs')
         },
         {
           'label': 'Core',
           'id': 'core',
           'icon': Icons.self_improvement,
-          'color': const Color(0xFFFF8A00)
+          'color': AppSemanticColors.forMuscle('Core')
         },
       ];
     }

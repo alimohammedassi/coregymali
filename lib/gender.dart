@@ -299,7 +299,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                     ),
                     child: const Icon(
                       Icons.check,
-                      color: Colors.white,
+                      color: AppColors.onPrimary,
                       size: 18,
                     ),
                   )

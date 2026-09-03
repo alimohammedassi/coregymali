@@ -795,7 +795,7 @@ class _ProfilePageState extends State<ProfilePage>
                                     child: const Icon(
                                       Icons.edit_rounded,
                                       size: 14,
-                                      color: Colors.white,
+                                      color: AppColors.onPrimary,
                                     ),
                                   ),
                                 ),

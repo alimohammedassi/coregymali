@@ -985,7 +985,7 @@ class NutritionScreenState extends State<NutritionScreen>
                 AppLocalizations.of(context)!.snack,
                 'snack',
                 Icons.eco_rounded,
-                const Color(0xFF10B981),
+                AppColors.accentFat,
               ),
             ),
           ],
@@ -1631,7 +1631,7 @@ class NutritionScreenState extends State<NutritionScreen>
                   _fiberConsumed,
                   30,
                   'g',
-                  const Color(0xFF10B981),
+                  AppColors.accentFat,
                   Icons.spa_rounded,
                 ),
               ),
@@ -1642,7 +1642,7 @@ class NutritionScreenState extends State<NutritionScreen>
                   _sugarConsumed,
                   50,
                   'g',
-                  const Color(0xFFEC4899),
+                  const Color(0xFFFD79A8),
                   Icons.cake_rounded,
                 ),
               ),
@@ -2486,7 +2486,7 @@ class NutritionScreenState extends State<NutritionScreen>
                               AppLocalizations.of(context)!.today,
                               style: const TextStyle(
                                 fontSize: 9,
-                                color: Colors.white,
+                                color: AppColors.onPrimary,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -2921,7 +2921,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onPrimary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -2949,7 +2949,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2.5),
+                            color: AppColors.onPrimary, strokeWidth: 2.5),
                       )
                     : const Text(
                         'Save Goals',

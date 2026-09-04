@@ -43,6 +43,14 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
           indicatorColor: AppColors.primaryFixed,
           labelColor: AppColors.primaryFixed,
           unselectedLabelColor: AppColors.onSurfaceVariant,
+          // Smaller, tighter labels so "My Program" / "Log Workout" fit
+          // their tab without truncating to "My Progr…".
+          labelStyle: const TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            height: 1.25,
+          ),
+          labelPadding: const EdgeInsets.symmetric(horizontal: 4),
           tabs: const [
             Tab(text: 'My Program\n(برنامجي)'),
             Tab(text: 'Library\n(مكتبة)'),

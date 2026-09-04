@@ -365,12 +365,12 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                       border: Border.all(
                         color: sel
                             ? Colors.transparent
-                            : Colors.white.withOpacity(0.08),
+                            : Colors.white.withValues(alpha: 0.08),
                       ),
                       boxShadow: sel
                           ? [
                               BoxShadow(
-                                color: AppColors.primaryFixed.withOpacity(0.35),
+                                color: AppColors.primaryFixed.withValues(alpha: 0.35),
                                 blurRadius: 14,
                                 offset: const Offset(0, 5),
                               ),
@@ -418,7 +418,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryFixed.withOpacity(0.05 + 0.03 * t),
+                    color: AppColors.primaryFixed.withValues(alpha: 0.05 + 0.03 * t),
                   ),
                   alignment: Alignment.center,
                   child: child,
@@ -432,13 +432,13 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppColors.primaryFixed.withOpacity(0.16),
-                      AppColors.secondaryFixed.withOpacity(0.10),
+                      AppColors.primaryFixed.withValues(alpha: 0.16),
+                      AppColors.secondaryFixed.withValues(alpha: 0.10),
                     ],
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: AppColors.primaryFixed.withOpacity(0.3),
+                    color: AppColors.primaryFixed.withValues(alpha: 0.3),
                     width: 1.5,
                   ),
                 ),
@@ -479,7 +479,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primaryFixed,
                 side: BorderSide(
-                  color: AppColors.primaryFixed.withOpacity(0.35),
+                  color: AppColors.primaryFixed.withValues(alpha: 0.35),
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -526,7 +526,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     else
                       _scanFallback(),
                     // subtle darken so the scan line and text stay legible
-                    Container(color: Colors.black.withOpacity(0.18)),
+                    Container(color: Colors.black.withValues(alpha: 0.18)),
                     AnimatedBuilder(
                       animation: _scanController,
                       builder: (_, __) {
@@ -540,15 +540,15 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppColors.primaryFixed.withOpacity(0),
+                                  AppColors.primaryFixed.withValues(alpha: 0),
                                   AppColors.primaryFixed,
                                   AppColors.secondaryFixed,
-                                  AppColors.primaryFixed.withOpacity(0),
+                                  AppColors.primaryFixed.withValues(alpha: 0),
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryFixed.withOpacity(
+                                  color: AppColors.primaryFixed.withValues(alpha: 
                                     0.7,
                                   ),
                                   blurRadius: 10,
@@ -591,7 +591,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryFixed.withOpacity(0.1),
+                  color: AppColors.primaryFixed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -642,7 +642,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               right: 0,
               child: Container(
                 height: thickness,
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
             Positioned(
@@ -653,7 +653,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               child: Container(
                 width: thickness,
                 height: size,
-                color: Colors.white.withOpacity(0.85),
+                color: Colors.white.withValues(alpha: 0.85),
               ),
             ),
           ],
@@ -674,7 +674,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     child: Icon(
       Icons.restaurant_rounded,
       size: 56,
-      color: AppColors.primaryFixed.withOpacity(0.6),
+      color: AppColors.primaryFixed.withValues(alpha: 0.6),
     ),
   );
 
@@ -743,7 +743,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white.withOpacity(0.05)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
     ),
     child: Text(
       'All items removed — go back to rescan',
@@ -773,8 +773,8 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.0),
-                    Colors.black.withOpacity(0.65),
+                    Colors.black.withValues(alpha: 0.0),
+                    Colors.black.withValues(alpha: 0.65),
                   ],
                   stops: const [0.35, 1.0],
                 ),
@@ -819,7 +819,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -842,9 +842,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.45),
+        color: Colors.black.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.25)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
       ),
       child: Text(
         label,
@@ -876,9 +876,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primaryFixed.withOpacity(0.07),
+        color: AppColors.primaryFixed.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primaryFixed.withOpacity(0.25)),
+        border: Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -997,7 +997,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
           padding: const EdgeInsets.symmetric(horizontal: 18),
           alignment: Alignment.centerRight,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.15),
+            color: AppColors.error.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
@@ -1012,7 +1012,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Row(
             children: [
@@ -1099,7 +1099,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     child: Icon(
                       Icons.close_rounded,
                       size: 16,
-                      color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -1113,7 +1113,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   Widget _microPill(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.12),
+      color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
@@ -1129,10 +1129,10 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1149,11 +1149,11 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
                   )
                 : null,
-            color: canSave ? null : AppColors.primaryFixed.withOpacity(0.35),
+            color: canSave ? null : AppColors.primaryFixed.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withOpacity(0.35),
+                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -1239,7 +1239,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primaryFixed,
                   side: BorderSide(
-                    color: AppColors.primaryFixed.withOpacity(0.35),
+                    color: AppColors.primaryFixed.withValues(alpha: 0.35),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -1266,7 +1266,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
     ),
     child: Column(
       children: [
@@ -1274,7 +1274,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -1306,9 +1306,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   Widget _errorBanner(String message) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.error.withOpacity(0.08),
+      color: AppColors.error.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.error.withOpacity(0.25)),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
     ),
     child: Row(
       children: [
@@ -1354,7 +1354,7 @@ class _GradientButton extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryFixed.withOpacity(0.35),
+              color: AppColors.primaryFixed.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),

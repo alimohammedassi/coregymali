@@ -216,7 +216,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                 decoration: BoxDecoration(
                   color: _getDifficultyColor(
                     exercise.difficulty,
-                  ).withOpacity(0.2),
+                  ).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -359,10 +359,10 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primaryFixed.withOpacity(0.1),
+              color: AppColors.primaryFixed.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.primaryFixed.withOpacity(0.3),
+                color: AppColors.primaryFixed.withValues(alpha: 0.3),
               ),
             ),
             child: Column(
@@ -467,12 +467,12 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Colors.orange.withOpacity(0.2),
-                    Colors.orange.withOpacity(0.1),
+                    Colors.orange.withValues(alpha: 0.2),
+                    Colors.orange.withValues(alpha: 0.1),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
               ),
               child: Column(
                 children: [
@@ -533,8 +533,8 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                       height: 32,
                       decoration: BoxDecoration(
                         color: set.isWarmup
-                            ? Colors.orange.withOpacity(0.2)
-                            : AppColors.primaryFixed.withOpacity(0.2),
+                            ? Colors.orange.withValues(alpha: 0.2)
+                            : AppColors.primaryFixed.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Center(
@@ -747,7 +747,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, color: color, size: 20),
@@ -817,7 +817,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: isSelected
-              ? color.withOpacity(0.2)
+              ? color.withValues(alpha: 0.2)
               : AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
@@ -853,7 +853,7 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
       margin: const EdgeInsets.only(right: 8, top: 4),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

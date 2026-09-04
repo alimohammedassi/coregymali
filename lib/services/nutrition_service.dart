@@ -8,6 +8,52 @@ import 'supabase_client.dart';
 class NutritionService {
   final StreakService _streakService = StreakService();
 
+  /// Ranks DB matches by relevance: exact name first, then names that start
+  /// with the query, then by the position of the first match (earlier wins),
+  /// alphabetical as final tie-break. Positional ranking matters for Arabic:
+  /// users type the stem ("رز") which sits INSIDE the word ("أرز"), so a
+  /// startsWith-only strategy would fail every Arabic match.
+  /// Pure function (unit-tested).
+  static List<Map<String, dynamic>> rankFoods(
+    List<Map<String, dynamic>> results,
+    String query,
+  ) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return results;
+    final qAr = query.trim();
+    int tier(Map<String, dynamic> food) {
+      final name = (food['name'] ?? '').toString().toLowerCase();
+      final nameAr = (food['name_ar'] ?? '').toString();
+      if (name == q || nameAr == qAr) return 0;
+      if (name.startsWith(q) || nameAr.startsWith(qAr)) return 1;
+      return 2;
+    }
+
+    int firstMatchPos(Map<String, dynamic> food) {
+      final inEn = (food['name'] ?? '')
+          .toString()
+          .toLowerCase()
+          .indexOf(q);
+      final inAr = (food['name_ar'] ?? '').toString().indexOf(qAr);
+      if (inEn == -1) return inAr == -1 ? 1 << 30 : inAr;
+      if (inAr == -1) return inEn;
+      return inEn < inAr ? inEn : inAr;
+    }
+
+    final ranked = List<Map<String, dynamic>>.from(results);
+    ranked.sort((a, b) {
+      final byTier = tier(a).compareTo(tier(b));
+      if (byTier != 0) return byTier;
+      final byPos = firstMatchPos(a).compareTo(firstMatchPos(b));
+      if (byPos != 0) return byPos;
+      return (a['name'] ?? '')
+          .toString()
+          .toLowerCase()
+          .compareTo((b['name'] ?? '').toString().toLowerCase());
+    });
+    return ranked;
+  }
+
   // Search foods
   Future<List<Map<String, dynamic>>> searchFoods(String query, {String category = 'all'}) async {
     List<Map<String, dynamic>> results = [];
@@ -23,7 +69,7 @@ class NutritionService {
       }
 
       final dbResults = await dbQuery.order('name').limit(40);
-      results = List<Map<String, dynamic>>.from(dbResults);
+      results = rankFoods(List<Map<String, dynamic>>.from(dbResults), query);
       return results;
     } on PostgrestException catch (e) {
       debugPrint('DB Error [${e.code}]: ${e.message} — trying name only fallback');
@@ -37,7 +83,7 @@ class NutritionService {
           dbQuery = dbQuery.eq('category', category);
         }
         final dbResults = await dbQuery.order('name').limit(40);
-        results = List<Map<String, dynamic>>.from(dbResults);
+        results = rankFoods(List<Map<String, dynamic>>.from(dbResults), query);
         return results;
       } catch (fallbackError) {
         debugPrint('Fallback search also failed: $fallbackError');

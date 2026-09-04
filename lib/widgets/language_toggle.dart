@@ -21,7 +21,7 @@ class LanguageToggle extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primaryFixed.withOpacity(0.3)),
+            border: Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -47,7 +47,7 @@ class LanguageToggle extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

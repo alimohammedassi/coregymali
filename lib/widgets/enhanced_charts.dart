@@ -45,7 +45,7 @@ class EnhancedRingPainter extends CustomPainter {
       final glowPaint = Paint()
         ..shader = SweepGradient(
           colors: gradientColors
-              .map((c) => c.withOpacity(0.3))
+              .map((c) => c.withValues(alpha: 0.3))
               .toList(),
           startAngle: -pi / 2,
           endAngle: -pi / 2 + sweepAngle,
@@ -92,7 +92,7 @@ class EnhancedRingPainter extends CustomPainter {
       final endY = center.dy + radius * sin(endAngle);
 
       final highlightPaint = Paint()
-        ..color = Colors.white.withOpacity(0.5)
+        ..color = Colors.white.withValues(alpha: 0.5)
         ..style = PaintingStyle.fill;
 
       canvas.drawCircle(
@@ -323,7 +323,7 @@ class _EnhancedMacroBarState extends State<EnhancedMacroBar>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: widget.gradientColors
-                        .map((c) => c.withOpacity(0.2))
+                        .map((c) => c.withValues(alpha: 0.2))
                         .toList(),
                   ),
                   borderRadius: BorderRadius.circular(6),
@@ -386,7 +386,7 @@ class _EnhancedMacroBarState extends State<EnhancedMacroBar>
                     Container(
                       height: 8,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.08),
+                        color: Colors.white.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
@@ -402,7 +402,7 @@ class _EnhancedMacroBarState extends State<EnhancedMacroBar>
                           borderRadius: BorderRadius.circular(4),
                           boxShadow: [
                             BoxShadow(
-                              color: widget.gradientColors.first.withOpacity(0.4),
+                              color: widget.gradientColors.first.withValues(alpha: 0.4),
                               blurRadius: 8,
                               spreadRadius: -2,
                             ),
@@ -419,7 +419,7 @@ class _EnhancedMacroBarState extends State<EnhancedMacroBar>
                           width: 6,
                           height: 6,
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.6),
+                            color: Colors.white.withValues(alpha: 0.6),
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -569,11 +569,11 @@ class EnhancedCaloriesCard extends StatelessWidget {
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: Colors.white.withOpacity(0.07),
+          color: Colors.white.withValues(alpha: 0.07),
         ),
         boxShadow: [
           BoxShadow(
-            color: gradientColors.first.withOpacity(0.08),
+            color: gradientColors.first.withValues(alpha: 0.08),
             blurRadius: 30,
             spreadRadius: -10,
           ),
@@ -588,8 +588,8 @@ class EnhancedCaloriesCard extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  gradientColors.first.withOpacity(0.15),
-                  gradientColors.last.withOpacity(0.05),
+                  gradientColors.first.withValues(alpha: 0.15),
+                  gradientColors.last.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: const BorderRadius.vertical(
@@ -606,7 +606,7 @@ class EnhancedCaloriesCard extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: ringColor.withOpacity(0.5),
+                        color: ringColor.withValues(alpha: 0.5),
                         blurRadius: 6,
                       ),
                     ],
@@ -631,7 +631,7 @@ class EnhancedCaloriesCard extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: ringColor.withOpacity(0.15),
+                      color: ringColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -711,7 +711,7 @@ class EnhancedCaloriesCard extends StatelessWidget {
                     Container(
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.07),
+                        color: Colors.white.withValues(alpha: 0.07),
                         borderRadius: BorderRadius.circular(2),
                       ),
                       child: FractionallySizedBox(
@@ -772,7 +772,7 @@ class _CalorieStatRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 blurRadius: 4,
               ),
             ],

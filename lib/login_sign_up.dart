@@ -706,13 +706,13 @@ class _SignupScreenState extends State<SignupScreen>
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   decoration: BoxDecoration(
                                     color: _selectedRole == 'client'
-                                        ? AppColors.primaryFixed.withOpacity(0.2)
+                                        ? AppColors.primaryFixed.withValues(alpha: 0.2)
                                         : AppColors.glass1,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: _selectedRole == 'client'
                                           ? AppColors.primaryFixed
-                                          : AppColors.outline.withOpacity(0.3),
+                                          : AppColors.outline.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -747,13 +747,13 @@ class _SignupScreenState extends State<SignupScreen>
                                   padding: const EdgeInsets.symmetric(vertical: 12),
                                   decoration: BoxDecoration(
                                     color: _selectedRole == 'coach'
-                                        ? AppColors.primaryFixed.withOpacity(0.2)
+                                        ? AppColors.primaryFixed.withValues(alpha: 0.2)
                                         : AppColors.glass1,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: _selectedRole == 'coach'
                                           ? AppColors.primaryFixed
-                                          : AppColors.outline.withOpacity(0.3),
+                                          : AppColors.outline.withValues(alpha: 0.3),
                                     ),
                                   ),
                                   child: Row(
@@ -918,9 +918,9 @@ class _TopBar extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.primaryFixed.withOpacity(0.12),
+            color: AppColors.primaryFixed.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.primaryFixed.withOpacity(0.25)),
+            border: Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.25)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -950,7 +950,7 @@ class _TopBar extends StatelessWidget {
         Text(
           'v2.4 // KINETIC',
           style: AuthAppText.labelSm.copyWith(
-            color: AppColors.onSurfaceVariant.withOpacity(0.6),
+            color: AppColors.onSurfaceVariant.withValues(alpha: 0.6),
             letterSpacing: 1.5,
             fontSize: 10,
           ),
@@ -974,7 +974,7 @@ class _LogoMark extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primaryFixed.withOpacity(0.15),
+                color: AppColors.primaryFixed.withValues(alpha: 0.15),
                 width: 1,
               ),
             ),
@@ -986,7 +986,7 @@ class _LogoMark extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primaryFixed.withOpacity(0.25),
+                color: AppColors.primaryFixed.withValues(alpha: 0.25),
                 width: 1,
               ),
             ),
@@ -999,11 +999,11 @@ class _LogoMark extends StatelessWidget {
               color: AppColors.glass1,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.primaryFixed.withOpacity(0.35),
+                color: AppColors.primaryFixed.withValues(alpha: 0.35),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primaryFixed.withOpacity(0.2),
+                  color: AppColors.primaryFixed.withValues(alpha: 0.2),
                   blurRadius: 24,
                   spreadRadius: -4,
                 ),
@@ -1045,7 +1045,7 @@ class _Headline extends StatelessWidget {
             Container(
               width: 20,
               height: 1.5,
-              color: AppColors.primaryFixed.withOpacity(0.5),
+              color: AppColors.primaryFixed.withValues(alpha: 0.5),
             ),
             const SizedBox(width: 8),
             Text(
@@ -1094,7 +1094,7 @@ class _GlassCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         AppColors.primaryFixed,
-                        AppColors.primaryFixed.withOpacity(0),
+                        AppColors.primaryFixed.withValues(alpha: 0),
                       ],
                     ),
                   ),
@@ -1190,8 +1190,8 @@ class _KineticTextFieldState extends State<KineticTextField>
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: Color.lerp(
-              AppColors.outline.withOpacity(0.2),
-              AppColors.primaryFixed.withOpacity(0.6),
+              AppColors.outline.withValues(alpha: 0.2),
+              AppColors.primaryFixed.withValues(alpha: 0.6),
               _focusAnim.value,
             )!,
             width: 1 + _focusAnim.value * 0.5,
@@ -1214,14 +1214,14 @@ class _KineticTextFieldState extends State<KineticTextField>
         decoration: InputDecoration(
           hintText: widget.hint,
           hintStyle: TextStyle(
-            color: AppColors.outline.withOpacity(0.4),
+            color: AppColors.outline.withValues(alpha: 0.4),
             fontSize: 12,
             letterSpacing: 1.5,
           ),
           prefixIcon: widget.icon != null
               ? Icon(
                   widget.icon,
-                  color: AppColors.outline.withOpacity(0.7),
+                  color: AppColors.outline.withValues(alpha: 0.7),
                   size: 18,
                 )
               : null,
@@ -1311,7 +1311,7 @@ class _KineticButtonState extends State<KineticButton>
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primaryFixed.withOpacity(0.28),
+                color: AppColors.primaryFixed.withValues(alpha: 0.28),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -1337,7 +1337,7 @@ class _KineticButtonState extends State<KineticButton>
                 height: 36,
                 margin: const EdgeInsetsDirectional.only(end: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child:  Icon(
@@ -1366,7 +1366,7 @@ class _AuthDivider extends StatelessWidget {
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  AppColors.outline.withOpacity(0.3),
+                  AppColors.outline.withValues(alpha: 0.3),
                 ],
               ),
             ),
@@ -1377,7 +1377,7 @@ class _AuthDivider extends StatelessWidget {
           child: Text(
             AppLocalizations.of(context)!.externalAuth,
             style: AuthAppText.labelSm.copyWith(
-              color: AppColors.outline.withOpacity(0.6),
+              color: AppColors.outline.withValues(alpha: 0.6),
               fontSize: 9,
               letterSpacing: 2,
             ),
@@ -1389,7 +1389,7 @@ class _AuthDivider extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.outline.withOpacity(0.3),
+                  AppColors.outline.withValues(alpha: 0.3),
                   Colors.transparent,
                 ],
               ),
@@ -1497,7 +1497,7 @@ class _TermsRow extends StatelessWidget {
             onChanged: onChanged,
             activeColor: AppColors.primaryFixed,
             checkColor: Colors.white,
-            side: BorderSide(color: AppColors.outline.withOpacity(0.5)),
+            side: BorderSide(color: AppColors.outline.withValues(alpha: 0.5)),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(4),
             ),
@@ -1608,7 +1608,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.025)
+      ..color = Colors.white.withValues(alpha: 0.025)
       ..strokeWidth = 0.5;
     const spacing = 44.0;
     for (double x = 0; x < size.width; x += spacing) {
@@ -1643,7 +1643,7 @@ class _CornerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primaryFixed.withOpacity(0.3)
+      ..color = AppColors.primaryFixed.withValues(alpha: 0.3)
       ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.square;

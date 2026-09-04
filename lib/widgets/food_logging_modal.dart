@@ -121,8 +121,13 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
     super.dispose();
   }
 
+  /// Guards against out-of-order search responses: onChanged fires per
+  /// keystroke, so a slow response for "ri" must never paint over "rice".
+  int _searchSeq = 0;
+
   Future<void> _performSearch(String query) async {
     if (query.trim().isEmpty) {
+      _searchSeq++;
       setState(() {
         _searchResults = [];
         _isSearching = false;
@@ -130,9 +135,10 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       return;
     }
 
+    final seq = ++_searchSeq;
     setState(() => _isSearching = true);
     final results = await _nutritionService.searchFoods(query);
-    if (!mounted) return;
+    if (!mounted || seq != _searchSeq) return;
     setState(() {
       _searchResults = results;
       _isSearching = false;

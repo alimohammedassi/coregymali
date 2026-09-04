@@ -162,7 +162,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _kAccent.withOpacity(0.15),
+                  color: _kAccent.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -237,7 +237,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? _getMoodColor(mood).withOpacity(0.2)
+                              ? _getMoodColor(mood).withValues(alpha: 0.2)
                               : _kCard,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
@@ -315,7 +315,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? _kAccent.withOpacity(0.2)
+                        ? _kAccent.withValues(alpha: 0.2)
                         : _kCard,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
@@ -385,7 +385,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: _kAccent.withOpacity(_isGenerating ? 0.5 : 0.3),
+                    color: _kAccent.withValues(alpha: _isGenerating ? 0.5 : 0.3),
                     blurRadius: _isGenerating ? 20 : 10,
                     spreadRadius: _isGenerating ? 2 : 0,
                   ),
@@ -441,7 +441,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? _kAccent.withOpacity(0.2) : _kCard,
+            color: isSelected ? _kAccent.withValues(alpha: 0.2) : _kCard,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected ? _kAccent : Colors.transparent,
@@ -551,12 +551,12 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  _kAccent.withOpacity(0.2),
-                  _kAccent.withOpacity(0.05),
+                  _kAccent.withValues(alpha: 0.2),
+                  _kAccent.withValues(alpha: 0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _kAccent.withOpacity(0.3)),
+              border: Border.all(color: _kAccent.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -606,7 +606,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
           color: _kCard,
           borderRadius: BorderRadius.circular(16),
           border: isWarmup
-              ? Border.all(color: Colors.orange.withOpacity(0.5), width: 1)
+              ? Border.all(color: Colors.orange.withValues(alpha: 0.5), width: 1)
               : null,
         ),
         child: Column(
@@ -619,8 +619,8 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                   height: 36,
                   decoration: BoxDecoration(
                     color: isWarmup
-                        ? Colors.orange.withOpacity(0.2)
-                        : _kAccent.withOpacity(0.2),
+                        ? Colors.orange.withValues(alpha: 0.2)
+                        : _kAccent.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
@@ -675,7 +675,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.orange.withOpacity(0.2),
+                                color: Colors.orange.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: const Text(
@@ -718,7 +718,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.2),
+                      color: Colors.red.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
@@ -746,7 +746,7 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: _kCard2.withOpacity(0.5),
+                color: _kCard2.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(

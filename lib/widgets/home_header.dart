@@ -116,10 +116,10 @@ class _DayPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.primaryFixed.withOpacity(0.1),
+            color: AppColors.primaryFixed.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.primaryFixed.withOpacity(0.22),
+              color: AppColors.primaryFixed.withValues(alpha: 0.22),
               width: 0.8,
             ),
           ),
@@ -256,7 +256,7 @@ class _AvatarState extends State<_Avatar>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primaryFixed.withOpacity(0.18),
+                  AppColors.primaryFixed.withValues(alpha: 0.18),
                   Colors.transparent,
                 ],
               ),
@@ -268,7 +268,7 @@ class _AvatarState extends State<_Avatar>
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: AppColors.primaryFixed.withOpacity(0.45),
+                color: AppColors.primaryFixed.withValues(alpha: 0.45),
                 width: 1.5,
               ),
             ),
@@ -300,7 +300,7 @@ class _AvatarState extends State<_Avatar>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF4DC591).withOpacity(0.5),
+                    color: const Color(0xFF4DC591).withValues(alpha: 0.5),
                     blurRadius: 4,
                   ),
                 ],
@@ -314,7 +314,7 @@ class _AvatarState extends State<_Avatar>
 
   Widget _initialsWidget(String initial) {
     return Container(
-      color: AppColors.primaryFixed.withOpacity(0.12),
+      color: AppColors.primaryFixed.withValues(alpha: 0.12),
       alignment: Alignment.center,
       child: Text(
         initial,

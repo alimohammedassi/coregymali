@@ -405,12 +405,12 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     border: Border.all(
                       color: sel
                           ? Colors.transparent
-                          : Colors.white.withOpacity(0.08),
+                          : Colors.white.withValues(alpha: 0.08),
                     ),
                     boxShadow: sel
                         ? [
                             BoxShadow(
-                              color: AppColors.primaryFixed.withOpacity(0.35),
+                              color: AppColors.primaryFixed.withValues(alpha: 0.35),
                               blurRadius: 14,
                               offset: const Offset(0, 5),
                             ),
@@ -504,9 +504,9 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.12),
+                color: AppColors.error.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.error.withOpacity(0.35)),
+                border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -573,7 +573,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: accent.withOpacity(0.4 * (1 - v)),
+                        color: accent.withValues(alpha: 0.4 * (1 - v)),
                         width: 2,
                       ),
                     ),
@@ -584,7 +584,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                 height: 160,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accent.withOpacity(0.05 + 0.03 * t),
+                  color: accent.withValues(alpha: 0.05 + 0.03 * t),
                 ),
                 alignment: Alignment.center,
                 child: child,
@@ -602,14 +602,14 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
             end: Alignment.bottomRight,
             colors: [
               (recording ? AppColors.error : AppColors.primaryFixed)
-                  .withOpacity(0.16),
-              AppColors.secondaryFixed.withOpacity(0.10),
+                  .withValues(alpha: 0.16),
+              AppColors.secondaryFixed.withValues(alpha: 0.10),
             ],
           ),
           shape: BoxShape.circle,
           border: Border.all(
             color: (recording ? AppColors.error : AppColors.primaryFixed)
-                .withOpacity(0.3),
+                .withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),
@@ -661,7 +661,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: AppColors.primaryFixed
-                                  .withOpacity(0.5 * (1 - v)),
+                                  .withValues(alpha: 0.5 * (1 - v)),
                               width: 2,
                             ),
                           ),
@@ -671,7 +671,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     Icon(
                       Icons.graphic_eq_rounded,
                       size: 56,
-                      color: AppColors.primaryFixed.withOpacity(0.85),
+                      color: AppColors.primaryFixed.withValues(alpha: 0.85),
                     ),
                   ],
                 ),
@@ -703,7 +703,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryFixed.withOpacity(0.1),
+                  color: AppColors.primaryFixed.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -799,7 +799,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.white.withOpacity(0.05)),
+      border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
     ),
     child: Text(
       'All items removed — go back and re-record',
@@ -822,7 +822,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
             AppColors.surfaceContainerHighest,
           ],
         ),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -857,7 +857,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                 child: Icon(
                   Icons.format_quote_rounded,
                   size: 16,
-                  color: AppColors.primaryFixed.withOpacity(0.7),
+                  color: AppColors.primaryFixed.withValues(alpha: 0.7),
                 ),
               ),
               Expanded(
@@ -903,9 +903,9 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.25),
+        color: Colors.black.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withOpacity(0.18)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
       ),
       child: Text(
         label,
@@ -927,9 +927,9 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primaryFixed.withOpacity(0.07),
+        color: AppColors.primaryFixed.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primaryFixed.withOpacity(0.25)),
+        border: Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1048,7 +1048,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
           padding: const EdgeInsets.symmetric(horizontal: 18),
           alignment: Alignment.centerRight,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.15),
+            color: AppColors.error.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Icon(
@@ -1063,7 +1063,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
           decoration: BoxDecoration(
             color: AppColors.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.05)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           ),
           child: Row(
             children: [
@@ -1150,7 +1150,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     child: Icon(
                       Icons.close_rounded,
                       size: 16,
-                      color: AppColors.onSurfaceVariant.withOpacity(0.5),
+                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -1164,7 +1164,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   Widget _microPill(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
     decoration: BoxDecoration(
-      color: color.withOpacity(0.12),
+      color: color.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(5),
     ),
     child: Text(
@@ -1180,10 +1180,10 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, -4),
           ),
@@ -1200,11 +1200,11 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                     colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
                   )
                 : null,
-            color: canSave ? null : AppColors.primaryFixed.withOpacity(0.35),
+            color: canSave ? null : AppColors.primaryFixed.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withOpacity(0.35),
+                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
                       blurRadius: 16,
                       offset: const Offset(0, 6),
                     ),
@@ -1292,7 +1292,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.primaryFixed,
                   side: BorderSide(
-                    color: AppColors.primaryFixed.withOpacity(0.35),
+                    color: AppColors.primaryFixed.withValues(alpha: 0.35),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -1319,7 +1319,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppColors.error.withOpacity(0.3)),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
     ),
     child: Column(
       children: [
@@ -1327,7 +1327,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.1),
+            color: AppColors.error.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
@@ -1359,9 +1359,9 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   Widget _errorBanner(String message) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.error.withOpacity(0.08),
+      color: AppColors.error.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.error.withOpacity(0.25)),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
     ),
     child: Row(
       children: [
@@ -1407,7 +1407,7 @@ class _GradientButton extends StatelessWidget {
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryFixed.withOpacity(0.35),
+              color: AppColors.primaryFixed.withValues(alpha: 0.35),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),

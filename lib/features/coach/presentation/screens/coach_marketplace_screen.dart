@@ -26,10 +26,16 @@ const _kSpecializations = [
 
 class CoachMarketplaceScreen extends StatefulWidget {
   /// True when the marketplace is a root destination inside the home
-  /// IndexedStack — in that mode there is nothing to pop, so the back
-  /// affordance is hidden (popping would exit the app instead).
+  /// IndexedStack. In that mode there is nothing to pop, so the back
+  /// affordance either hides or, if [onBackToHome] is provided, returns to
+  /// the Home tab instead of popping the navigator.
   final bool embeddedInTabs;
-  const CoachMarketplaceScreen({super.key, this.embeddedInTabs = false});
+  final VoidCallback? onBackToHome;
+  const CoachMarketplaceScreen({
+    super.key,
+    this.embeddedInTabs = false,
+    this.onBackToHome,
+  });
 
   @override
   State<CoachMarketplaceScreen> createState() => _CoachMarketplaceScreenState();
@@ -86,12 +92,12 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
           children: [
             Row(
               children: [
-                if (!widget.embeddedInTabs)
+                if (!widget.embeddedInTabs || widget.onBackToHome != null)
                   Semantics(
                     button: true,
                     label: 'Back',
                     child: GestureDetector(
-                      onTap: () => Navigator.pop(context),
+                      onTap: widget.onBackToHome ?? () => Navigator.pop(context),
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
@@ -104,7 +110,8 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                       ),
                     ),
                   ),
-                if (!widget.embeddedInTabs) const SizedBox(width: 16),
+                if (!widget.embeddedInTabs || widget.onBackToHome != null)
+                  const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

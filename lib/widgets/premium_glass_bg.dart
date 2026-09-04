@@ -47,7 +47,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primaryFixed.withOpacity(0.12),
+                    AppColors.primaryFixed.withValues(alpha: 0.12),
                     Colors.transparent,
                   ],
                   stops: const [0.0, 0.7],
@@ -71,7 +71,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        AppColors.secondary.withOpacity(0.08 * (0.8 + 0.2 * cos(t * pi))),
+                        AppColors.secondary.withValues(alpha: 0.08 * (0.8 + 0.2 * cos(t * pi))),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.7],
@@ -96,7 +96,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                     child: _BlurredBlob(
                       width: 250,
                       height: 350,
-                      color: AppColors.primaryFixed.withOpacity(0.16),
+                      color: AppColors.primaryFixed.withValues(alpha: 0.16),
                       sigma: 70,
                     ),
                   ),
@@ -107,7 +107,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                     child: _BlurredBlob(
                       width: 300,
                       height: 250,
-                      color: AppColors.secondary.withOpacity(0.10),
+                      color: AppColors.secondary.withValues(alpha: 0.10),
                       sigma: 80,
                     ),
                   ),
@@ -118,7 +118,7 @@ class _PremiumGlassmorphismBgState extends State<PremiumGlassmorphismBg> with Si
                     child: _BlurredBlob(
                       width: 200,
                       height: 250,
-                      color: AppColors.tertiary.withOpacity(0.08),
+                      color: AppColors.tertiary.withValues(alpha: 0.08),
                       sigma: 60,
                     ),
                   ),

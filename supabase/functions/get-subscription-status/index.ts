@@ -37,6 +37,16 @@ Deno.serve(async (req: Request) => {
     // Retrieve session from Stripe
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
+    // Ownership check: the checkout session must belong to the requesting
+    // user (create-checkout-session stamps metadata.supabase_uid).
+    const ownerUid = session.metadata?.supabase_uid;
+    if (!ownerUid || ownerUid !== user.id) {
+      return Response.json(
+        { error: 'Forbidden: this checkout session does not belong to you' },
+        { status: 403, headers: { 'Access-Control-Allow-Origin': '*' } },
+      );
+    }
+
     return Response.json(
       {
         status: session.payment_status,          // 'paid' | 'unpaid' | 'no_payment_required'

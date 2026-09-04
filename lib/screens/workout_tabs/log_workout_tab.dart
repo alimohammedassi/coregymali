@@ -134,11 +134,11 @@ class _LogWorkoutTabState extends State<LogWorkoutTab>
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: isSelected ? color.withOpacity(0.15) : _kCard,
+                      color: isSelected ? color.withValues(alpha: 0.15) : _kCard,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected
-                            ? color.withOpacity(0.5)
+                            ? color.withValues(alpha: 0.5)
                             : Colors.transparent,
                         width: 1.5,
                       ),
@@ -361,7 +361,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                _kCard.withOpacity(0.8),
+                                _kCard.withValues(alpha: 0.8),
                               ],
                               stops: const [0.4, 1.0],
                             ),
@@ -381,7 +381,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
                                 vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.7),
+                                color: Colors.black.withValues(alpha: 0.7),
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: const Row(
@@ -474,7 +474,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
       child: Icon(
         Icons.fitness_center_rounded,
         size: 40,
-        color: widget.accentColor.withOpacity(0.3),
+        color: widget.accentColor.withValues(alpha: 0.3),
       ),
     );
   }
@@ -483,7 +483,7 @@ class _ExerciseCardState extends State<_ExerciseCard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -711,7 +711,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
               child: Container(
                 margin: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
+                  color: Colors.black.withValues(alpha: 0.5),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -732,7 +732,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.redAccent.withOpacity(0.9),
+                      color: Colors.redAccent.withValues(alpha: 0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Row(
@@ -882,7 +882,7 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: _accentColor.withOpacity(0.15),
+                            color: _accentColor.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -979,10 +979,10 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: _accentColor.withOpacity(0.08),
+                            color: _accentColor.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: _accentColor.withOpacity(0.2),
+                              color: _accentColor.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Row(
@@ -1031,12 +1031,12 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
                     height: 58,
                     decoration: BoxDecoration(
                       color: _saving
-                          ? _accentColor.withOpacity(0.5)
+                          ? _accentColor.withValues(alpha: 0.5)
                           : _accentColor,
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: _accentColor.withOpacity(0.3),
+                          color: _accentColor.withValues(alpha: 0.3),
                           blurRadius: 20,
                           offset: const Offset(0, 6),
                         ),
@@ -1130,9 +1130,9 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         text.toUpperCase(),

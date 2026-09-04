@@ -1680,7 +1680,7 @@ class _ProfilePageState extends State<ProfilePage>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(0.5),
+      barrierColor: Colors.black.withValues(alpha: 0.5),
       enableDrag: true,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, ss) => Padding(
@@ -1698,7 +1698,7 @@ class _ProfilePageState extends State<ProfilePage>
     final l10n = AppLocalizations.of(ctx)!;
     showDialog(
       context: ctx,
-      barrierColor: Colors.black.withOpacity(0.55),
+      barrierColor: Colors.black.withValues(alpha: 0.55),
       builder: (dCtx) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(
@@ -1716,7 +1716,7 @@ class _ProfilePageState extends State<ProfilePage>
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(.12),
+            color: AppColors.error.withValues(alpha: .12),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -2111,9 +2111,9 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
               horizontal: 20,
             ),
             decoration: BoxDecoration(
-              color: c.withOpacity(0.07),
+              color: c.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.withOpacity(.22)),
+              border: Border.all(color: c.withValues(alpha: .22)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -2270,7 +2270,7 @@ class _FieldInput extends StatelessWidget {
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: color.withOpacity(.2)),
+      border: Border.all(color: color.withValues(alpha: .2)),
     ),
     child: TextField(
       controller: ctrl,

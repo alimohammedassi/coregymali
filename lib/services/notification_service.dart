@@ -111,6 +111,33 @@ class NotificationService {
     debugPrint('OneSignal permission granted: $granted');
   }
 
+  /// Task 2 — welcome push right after account creation. Fired with the
+  /// user's own JWT (the function allows self-push), delayed a few seconds
+  /// so OneSignal.login has time to sync the new external_id alias.
+  /// Both languages are sent; OneSignal picks per device language.
+  Future<void> sendWelcomePush() async {
+    final userId = SupabaseConfig.client.auth.currentUser?.id;
+    if (userId == null || !_initialized) return;
+    Future.delayed(const Duration(seconds: 6), () async {
+      try {
+        final res = await SupabaseConfig.client.functions.invoke(
+          'send-notification',
+          body: {
+            'user_id': userId,
+            'title': 'Welcome to CoreGym! 👋',
+            'body': "Let's log your first meal and kick off your journey. 🍽️",
+            'title_ar': 'أهلاً بيك في CoreGym! 👋',
+            'body_ar': 'سجّل أول وجبة وابدأ رحلتك. 🍽️',
+            'type': 'welcome',
+          },
+        );
+        debugPrint('Welcome push: ${res.data}');
+      } catch (e) {
+        debugPrint('Welcome push failed (non-critical): $e');
+      }
+    });
+  }
+
   /// Tag the OneSignal user with our auth user id (external_id alias).
   Future<void> login(String userId) async {
     if (!_initialized) return;

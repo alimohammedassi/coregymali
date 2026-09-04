@@ -13,6 +13,9 @@ export interface PushPayload {
   userId: string;
   title: string;
   body: string;
+  /** Optional Arabic variants — OneSignal picks per device language. */
+  titleAr?: string;
+  bodyAr?: string;
   /** welcome | meal_reminder | water_reminder | calorie_alert | chat */
   type: string;
   /** Extra data for deep-linking (e.g. { conversationId }). */
@@ -45,8 +48,8 @@ export async function sendOneSignalPush(payload: PushPayload): Promise<PushResul
         target_channel: 'push',
         // external_id alias == Supabase auth user id (set by OneSignal.login)
         include_aliases: { external_id: [payload.userId] },
-        headings: { en: payload.title },
-        contents: { en: payload.body },
+        headings: { en: payload.title, ...(payload.titleAr ? { ar: payload.titleAr } : {}) },
+        contents: { en: payload.body, ...(payload.bodyAr ? { ar: payload.bodyAr } : {}) },
         data: { type: payload.type, ...(payload.data ?? {}) },
       }),
     });

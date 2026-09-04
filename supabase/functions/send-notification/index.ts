@@ -54,14 +54,33 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    const { user_id, title, body, type } = await req.json();
+    const { user_id, title, body, title_ar, body_ar, type, data } = await req.json();
 
     const result = await sendOneSignalPush({
       userId: user_id,
       title: title ?? 'CoreGym test',
       body: body ?? 'Push notifications are working 💪',
+      titleAr: title_ar,
+      bodyAr: body_ar,
       type: type ?? 'test',
+      data,
     });
+
+    // Every push lands in the in-app history (Task 7 inbox reads this).
+    // Service-role client bypasses RLS — users never insert here directly.
+    // Best-effort: a missing table (migration not run) must never fail an
+    // already-delivered push.
+    try {
+      await supabase.from('notification_log').insert({
+        user_id,
+        type: type ?? 'test',
+        title: title ?? 'CoreGym test',
+        body: body ?? 'Push notifications are working 💪',
+        data: data ?? null,
+      });
+    } catch (logError) {
+      console.error('notification_log insert failed:', logError);
+    }
 
     return new Response(JSON.stringify(result), {
       status: result.ok ? 200 : 500,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
@@ -31,11 +33,17 @@ class AuthService {
   Future<AuthResponse> registerWithEmail(
       String email, String password, String name, {String role = 'user'}) async {
     try {
-      return await _client.auth.signUp(
+      final res = await _client.auth.signUp(
         email: email,
         password: password,
         data: {'name': name, 'role': role},
       );
+      // Task 2 — welcome push fires right after a successful signup
+      // (no-op when email confirmation is on and no session exists yet).
+      if (res.session != null) {
+        unawaited(NotificationService.instance.sendWelcomePush());
+      }
+      return res;
     } on AuthException catch (e) {
       throw _handleAuthException(e);
     }
@@ -78,6 +86,15 @@ class AuthService {
         accessToken: accessToken,
       );
       debugPrint("Supabase Sign-In Successful: ${response.user?.id}");
+      // Task 2 — welcome push for FIRST-TIME Google users only (the auth
+      // row was created moments ago).
+      final createdAt = response.user?.createdAt;
+      if (createdAt != null) {
+        final age = DateTime.now().difference(DateTime.parse(createdAt));
+        if (age < const Duration(minutes: 2)) {
+          unawaited(NotificationService.instance.sendWelcomePush());
+        }
+      }
       return response;
     } on AuthException catch (e) {
       throw _handleAuthException(e);

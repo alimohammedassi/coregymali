@@ -243,7 +243,11 @@ class ChatRepository implements IChatRepository {
     required String fileName,
   }) async {
     final file = File(filePath);
-    final storagePath = '$conversationId/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+    // Storage path must be URL-safe — names with spaces/Arabic/parentheses
+    // break upload or createSignedUrl with 400s. The display name travels
+    // separately in the message content JSON.
+    final safeName = fileName.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_');
+    final storagePath = '$conversationId/${DateTime.now().millisecondsSinceEpoch}_$safeName';
     await _client.storage.from('chat-files').upload(
           storagePath,
           file,

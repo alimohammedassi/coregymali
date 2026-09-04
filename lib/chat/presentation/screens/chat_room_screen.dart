@@ -329,11 +329,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
 
   Future<void> _pickPdf() async {
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        withData: false,
-      );
+      // FileType.custom / allowedExtensions is mishandled by several Android
+      // OEM pickers (Realme/OPPO included — PDFs show greyed out or the pick
+      // errors), so open the picker unfiltered and validate the extension
+      // ourselves.
+      final result = await FilePicker.pickFiles(withData: false);
       if (result == null || result.files.isEmpty) return;
       final file = result.files.single;
       final path = file.path;
@@ -344,11 +344,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         );
         return;
       }
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please pick a PDF file'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
       HapticFeedback.lightImpact();
       await _chatNotifier.sendFileMessage(
         filePath: path,
         fileName: file.name,
-        fileSize: file.size,
+        // withData:false can report -1 size from some providers
+        fileSize: file.size > 0 ? file.size : 0,
       );
       _scrollToBottom(immediate: true);
     } catch (e) {

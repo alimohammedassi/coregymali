@@ -53,5 +53,7 @@
 	<string>CoreGym uses the microphone to record short voice notes describing your meals so it can log them for you.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>CoreGym uses the camera to scan food photos and product barcodes so it can log your meals.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>CoreGym needs photo library access to let you share images in chat.</string>
 </dict>
 </plist>

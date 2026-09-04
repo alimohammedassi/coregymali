@@ -287,7 +287,14 @@ class ChatNotifier extends ChangeNotifier {
   bool _isSending = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
+
+  /// Load failures only — renders the full-screen error view with retry.
   String? _error;
+
+  /// Send failures only — the room shows a SnackBar and keeps the list
+  /// (and the unsent text) intact. Never render this as a full-screen view.
+  String? _sendError;
+
   RealtimeChannel? _channel;
 
   List<MessageEntity> get messages => _messages;
@@ -295,7 +302,14 @@ class ChatNotifier extends ChangeNotifier {
   bool get isSending => _isSending;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
+
+  /// LOAD error — list failed to fetch. Safe for full-screen error UI.
   String? get error => _error;
+
+  /// SEND error — one message failed. Show transient feedback, not a wipe.
+  String? get sendError => _sendError;
+
+  void clearSendError() => _sendError = null;
 
   ChatNotifier(this._repo, this.conversationId)
       : _userId = Supabase.instance.client.auth.currentUser?.id ?? '' {
@@ -343,8 +357,10 @@ class ChatNotifier extends ChangeNotifier {
               record['created_at'] ?? DateTime.now().toIso8601String()),
         );
 
-        // O(1) deduplication — check by ID before allocating new list
-        if (_messages.isEmpty || _messages.last.id != newMsg.id) {
+        // Dedup by ID anywhere in the list — checking only the last element
+        // misses when another participant's message lands between the
+        // optimistic append and this Realtime event.
+        if (!_messages.any((m) => m.id == newMsg.id)) {
           _messages = [..._messages, newMsg];
           notifyListeners();
         }
@@ -358,8 +374,10 @@ class ChatNotifier extends ChangeNotifier {
     _channel!.subscribe();
   }
 
-  Future<void> sendMessage(String content) async {
-    if (content.trim().isEmpty) return;
+  /// Returns true when the message was persisted. On failure the unsent
+  /// text stays with the caller (so it can restore the input field).
+  Future<bool> sendMessage(String content) async {
+    if (content.trim().isEmpty) return false;
     _isSending = true;
     notifyListeners();
 
@@ -373,10 +391,131 @@ class ChatNotifier extends ChangeNotifier {
       _isSending = false;
       // Single notifyListeners — not three separate calls
       notifyListeners();
+      return true;
     } catch (e) {
-      _error = e.toString();
+      _sendError = e.toString();
       _isSending = false;
       notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> sendVoiceMessage({
+    required String filePath,
+    required int durationSeconds,
+  }) async {
+    if (filePath.isEmpty || durationSeconds <= 0) return false;
+    _isSending = true;
+    notifyListeners();
+
+    try {
+      final storagePath = await _repo.uploadVoiceNote(
+        conversationId: conversationId,
+        filePath: filePath,
+      );
+      final message = await _repo.sendVoiceMessage(
+        conversationId: conversationId,
+        senderId: _userId,
+        storagePath: storagePath,
+        durationSeconds: durationSeconds,
+      );
+      _messages = [..._messages, message];
+      _isSending = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _sendError = e.toString();
+      _isSending = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Helper to get signed URL for voice playback (private bucket).
+  Future<String?> getVoiceUrl(String storagePath) async {
+    try {
+      return await _repo.getVoiceSignedUrl(storagePath);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> sendImageMessage({
+    required String filePath,
+    String caption = '',
+  }) async {
+    if (filePath.isEmpty) return false;
+    _isSending = true;
+    notifyListeners();
+    try {
+      final storagePath = await _repo.uploadImage(
+        conversationId: conversationId,
+        filePath: filePath,
+      );
+      final message = await _repo.sendImageMessage(
+        conversationId: conversationId,
+        senderId: _userId,
+        storagePath: storagePath,
+        caption: caption,
+      );
+      _messages = [..._messages, message];
+      _isSending = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _sendError = e.toString();
+      _isSending = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<String?> getImageUrl(String storagePath) async {
+    try {
+      return await _repo.getImageSignedUrl(storagePath);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<bool> sendFileMessage({
+    required String filePath,
+    required String fileName,
+    required int fileSize,
+  }) async {
+    if (filePath.isEmpty) return false;
+    _isSending = true;
+    notifyListeners();
+    try {
+      final storagePath = await _repo.uploadFile(
+        conversationId: conversationId,
+        filePath: filePath,
+        fileName: fileName,
+      );
+      final message = await _repo.sendFileMessage(
+        conversationId: conversationId,
+        senderId: _userId,
+        storagePath: storagePath,
+        fileName: fileName,
+        fileSize: fileSize,
+      );
+      _messages = [..._messages, message];
+      _isSending = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _sendError = e.toString();
+      _isSending = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<String?> getFileUrl(String storagePath) async {
+    try {
+      return await _repo.getFileSignedUrl(storagePath);
+    } catch (_) {
+      return null;
     }
   }
 

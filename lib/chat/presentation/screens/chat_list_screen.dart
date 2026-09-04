@@ -49,15 +49,13 @@ class _ChatListScreenState extends State<ChatListScreen>
 
   void _openChat(BuildContext ctx, ConversationEntity conv) {
     HapticFeedback.selectionClick();
+    // ChatRoomScreen owns its ChatNotifier internally (it is also pushed
+    // without a provider from coach detail and notifications). Wrapping it
+    // here used to create a SECOND notifier with its own realtime
+    // subscription that was never read — pure waste per room open.
     Navigator.of(ctx).push(
       MaterialPageRoute(
-        builder: (_) => ChangeNotifierProvider(
-          create: (_) => ChatNotifier(
-            ctx.read<ChatRepoProvider>().repo,
-            conv.id,
-          ),
-          child: ChatRoomScreen(conversation: conv),
-        ),
+        builder: (_) => ChatRoomScreen(conversation: conv),
       ),
     );
   }
@@ -77,8 +75,22 @@ class _ChatListScreenState extends State<ChatListScreen>
             pinned: true,
             expandedHeight: _isSearching ? 0 : 72,
             floating: false,
-            leadingWidth: 0,
-            leading: const SizedBox.shrink(),
+            leadingWidth: _isSearching ? 0 : 48,
+            leading: _isSearching
+                ? const SizedBox.shrink()
+                : IconButton(
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: AppColors.onSurface, size: 20),
+                    onPressed: () {
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.of(context).pop();
+                      } else {
+                        Navigator.of(context).popUntil((r) => r.isFirst);
+                      }
+                    },
+                    tooltip: 'Back',
+                  ),
+            titleSpacing: _isSearching ? null : 0,
             title: _isSearching
                 ? _SearchField(
                     initialValue: _searchQuery,

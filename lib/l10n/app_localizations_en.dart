@@ -39,12 +39,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreMenuTitle => 'Explore CoreGym';
 
   @override
-  String get moreMarketplaceSubtitle =>
-      'Browse coaches, compare plans, manage subscriptions';
+  String get moreMarketplaceSubtitle => 'Browse coaches, compare plans, manage subscriptions';
 
   @override
-  String get moreProfileSubtitle =>
-      'Your body data, goals, settings and achievements';
+  String get moreProfileSubtitle => 'Your body data, goals, settings and achievements';
 
   @override
   String get dashboardOverview => 'Dashboard Overview';
@@ -123,8 +121,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get setGoalsTitle => 'Personalize Your Target Goals';
 
   @override
-  String get setGoalsSubtitle =>
-      'Set calories, macros & water for tailored tracking';
+  String get setGoalsSubtitle => 'Set calories, macros & water for tailored tracking';
 
   @override
   String get moodSectionTitle => 'Choose Your Mood';
@@ -361,12 +358,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get coachBannerTitle => 'Level up with a Pro Coach';
 
   @override
-  String get coachBannerSubtitle =>
-      'Certified coaches available · Personalized plans';
+  String get coachBannerSubtitle => 'Certified coaches available · Personalized plans';
 
   @override
-  String get completeProfile =>
-      'Complete your profile to see personalized goals.';
+  String get completeProfile => 'Complete your profile to see personalized goals.';
 
   @override
   String get fix => 'Fix →';
@@ -806,8 +801,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanSaveToMeal => 'Log this meal to';
 
   @override
-  String get scanIdleHint =>
-      'One photo is all it takes — we\'ll detect each item, its weight and calories automatically.';
+  String get scanIdleHint => 'One photo is all it takes — we\'ll detect each item, its weight and calories automatically.';
 
   @override
   String get scanCameraCta => 'Scan your food';
@@ -848,28 +842,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get scanNewPhoto => 'New photo';
 
   @override
-  String get scanErrorNetwork =>
-      'No internet connection. Check your network and try again.';
+  String get scanErrorNetwork => 'No internet connection. Check your network and try again.';
 
   @override
-  String get scanErrorUnauthorized =>
-      'Please sign in first to use the scanner.';
+  String get scanErrorUnauthorized => 'Please sign in first to use the scanner.';
 
   @override
-  String get scanErrorNotFood =>
-      'No clear food in the photo. Try another angle.';
+  String get scanErrorNotFood => 'No clear food in the photo. Try another angle.';
 
   @override
-  String get scanErrorAnalysis =>
-      'We couldn\'t analyze the photo. Please try again.';
+  String get scanErrorAnalysis => 'We couldn\'t analyze the photo. Please try again.';
 
   @override
-  String get scanErrorPersist =>
-      'The photo was analyzed but saving failed. Please try again.';
+  String get scanErrorPersist => 'The photo was analyzed but saving failed. Please try again.';
 
   @override
-  String get scanErrorUnknown =>
-      'Something unexpected went wrong. Please try again.';
+  String get scanErrorUnknown => 'Something unexpected went wrong. Please try again.';
 
   @override
   String get voiceTitle => 'Voice Food Log';
@@ -878,8 +866,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceSubtitle => 'Just say what you ate';
 
   @override
-  String get voiceIdleHint =>
-      'Describe your meal in one sentence — we\'ll transcribe it and estimate the calories automatically.';
+  String get voiceIdleHint => 'Describe your meal in one sentence — we\'ll transcribe it and estimate the calories automatically.';
 
   @override
   String get voiceRecordCta => 'Start recording';
@@ -888,8 +875,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceStopCta => 'Stop & analyze';
 
   @override
-  String get voiceRecordingHint =>
-      'Listening… tap stop when you\'re done describing your meal.';
+  String get voiceRecordingHint => 'Listening… tap stop when you\'re done describing your meal.';
 
   @override
   String get voiceAnalyzingTitle => 'Analyzing your recording…';
@@ -904,32 +890,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get voiceNewRecording => 'New recording';
 
   @override
-  String get voiceErrorNetwork =>
-      'No internet connection. Check your network and try again.';
+  String get voiceErrorNetwork => 'No internet connection. Check your network and try again.';
 
   @override
-  String get voiceErrorUnauthorized =>
-      'Please sign in first to use the voice logger.';
+  String get voiceErrorUnauthorized => 'Please sign in first to use the voice logger.';
 
   @override
-  String get voiceErrorMicrophone =>
-      'Microphone access is needed. Enable it in Settings and try again.';
+  String get voiceErrorMicrophone => 'Microphone access is needed. Enable it in Settings and try again.';
 
   @override
-  String get voiceErrorNotFood =>
-      'We couldn\'t hear any food in that recording. Try describing your meal again.';
+  String get voiceErrorNotFood => 'We couldn\'t hear any food in that recording. Try describing your meal again.';
 
   @override
-  String get voiceErrorAnalysis =>
-      'We couldn\'t understand that recording. Please try again.';
+  String get voiceErrorAnalysis => 'We couldn\'t understand that recording. Please try again.';
 
   @override
-  String get voiceErrorPersist =>
-      'The recording was analyzed but saving failed. Please try again.';
+  String get voiceErrorPersist => 'The recording was analyzed but saving failed. Please try again.';
 
   @override
-  String get voiceErrorUnknown =>
-      'Something unexpected went wrong. Please try again.';
+  String get voiceErrorUnknown => 'Something unexpected went wrong. Please try again.';
 
   @override
   String get textTitle => 'Text Food Log';
@@ -953,28 +932,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textWroteLabel => 'You wrote';
 
   @override
-  String get textErrorNetwork =>
-      'No internet connection. Check your network and try again.';
+  String get textErrorNetwork => 'No internet connection. Check your network and try again.';
 
   @override
-  String get textErrorUnauthorized =>
-      'Please sign in first to use the text logger.';
+  String get textErrorUnauthorized => 'Please sign in first to use the text logger.';
 
   @override
-  String get textErrorNotFood =>
-      'We couldn\'t find any food in that text. Try describing your meal again.';
+  String get textErrorNotFood => 'We couldn\'t find any food in that text. Try describing your meal again.';
 
   @override
-  String get textErrorAnalysis =>
-      'We couldn\'t understand that description. Please try again.';
+  String get textErrorAnalysis => 'We couldn\'t understand that description. Please try again.';
 
   @override
-  String get textErrorPersist =>
-      'The meal was analyzed but saving failed. Please try again.';
+  String get textErrorPersist => 'The meal was analyzed but saving failed. Please try again.';
 
   @override
-  String get textErrorUnknown =>
-      'Something unexpected went wrong. Please try again.';
+  String get textErrorUnknown => 'Something unexpected went wrong. Please try again.';
 
   @override
   String get textEditDescription => 'Edit description';
@@ -983,8 +956,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get textNewDescription => 'New description';
 
   @override
-  String get profileFirstRunNudge =>
-      'Log your first workout to start ranking up!';
+  String get profileFirstRunNudge => 'Log your first workout to start ranking up!';
 
   @override
   String get dashboardEyebrow => 'MY DASHBOARD';
@@ -1025,8 +997,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noSubscribersYet => 'No subscribers yet';
 
   @override
-  String get completeProfileHint =>
-      'Complete your coach profile so clients can find and subscribe to you.';
+  String get completeProfileHint => 'Complete your coach profile so clients can find and subscribe to you.';
 
   @override
   String get completeProfileCta => 'Complete Your Profile';
@@ -1094,8 +1065,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
-  String get saveFailed =>
-      'Couldn\'t save — check your connection and try again.';
+  String get saveFailed => 'Couldn\'t save — check your connection and try again.';
 
   @override
   String get aiScanSubtitle => 'Snap your meal — AI logs it for you';

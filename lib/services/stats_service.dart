@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_client.dart';
+
+import 'water_reminder_service.dart';
 
 class StatsService {
   // Get today's summary
@@ -105,6 +109,9 @@ class StatsService {
   // Update today's water intake
   Future<void> updateWater(int waterMl) async {
     await updateTodaySummary({'water_ml': waterMl});
+    // Task 4 — goal reached today? Re-anchor the local water schedule to
+    // tomorrow (fire-and-forget; the log is already persisted).
+    unawaited(WaterReminderService.instance.refresh());
   }
 
   Map<String, dynamic> _empty() => {

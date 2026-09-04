@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chat/presentation/providers/chat_providers.dart';
 import 'chat/data/repositories/notification_repository.dart';
 import 'services/notification_service.dart';
+import 'services/water_reminder_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,6 +36,7 @@ void main() async {
   await initializeDateFormatting('ar', null);
 
   await NotificationService.instance.init();
+  unawaited(WaterReminderService.instance.refresh());
 
   runApp(
     ProviderScope(

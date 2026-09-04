@@ -20,6 +20,7 @@ import 'screens/text_food_log_screen.dart';
 import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/stats_service.dart';
+import 'services/notification_service.dart';
 import 'services/streak_service.dart';
 import 'services/supabase_client.dart';
 import 'theme/app_colors.dart';
@@ -545,6 +546,17 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // OneSignal SDK verification dialog — shown at most once per session
+    // right after home paints. Its "Got it" button is the ONLY place the OS
+    // notification permission is requested (per OneSignal's integration
+    // rules). Waiting for a subscription id first would deadlock on
+    // Android 13+, where a real subscription only exists after this
+    // dialog grants the permission.
+    if (NotificationService.instance.isReady) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _maybeShowPushVerifyDialog(),
+      );
+    }
     _heroCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -627,6 +639,50 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     if (state == AppLifecycleState.resumed) {
       _loadAll();
     }
+  }
+
+  bool _pushVerifyDialogShown = false;
+
+  void _maybeShowPushVerifyDialog() {
+    if (_pushVerifyDialogShown || !mounted) return;
+    _pushVerifyDialogShown = true;
+    // The callback can fire synchronously from initState when the
+    // subscription already exists — dialog needs a completed frame first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Your OneSignal SDK integration is complete!',
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 17,
+          ),
+        ),
+        content: Text(
+          'Enable notifications so we can remind you about meals, water and '
+          'your daily calorie goal.',
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              NotificationService.instance.requestPermission();
+            },
+            child: const Text(
+              'Got it',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+    });
   }
 
   @override

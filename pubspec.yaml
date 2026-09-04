@@ -41,7 +41,7 @@ dependencies:
   path_provider: ^2.1.4
   mobile_scanner: ^5.2.3
   just_audio: ^0.10.6
-  onesignal_flutter: ^5.3.0
+  onesignal_flutter: 5.5.2
 
 dev_dependencies:
   flutter_test:

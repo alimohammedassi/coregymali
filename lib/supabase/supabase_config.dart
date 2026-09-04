@@ -9,7 +9,8 @@ class SupabaseConfig {
   /// OneSignal app id — provided by the OneSignal dashboard (public value,
   /// safe to ship in the app). The REST API key must NEVER live here; it is
   /// a Supabase Edge Function secret (ONESIGNAL_REST_API_KEY).
-  static const String oneSignalAppId = '';
+  static const String oneSignalAppId =
+      'fdc71b2a-afae-4c45-ac44-238d2aeed089';
 
   static SupabaseClient get client => Supabase.instance.client;
 }

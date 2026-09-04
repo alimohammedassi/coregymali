@@ -3,13 +3,18 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../supabase/supabase_config.dart';
 
 /// OneSignal push notification infrastructure (Task 1 of the notification
-/// system). Initialization is a no-op until [SupabaseConfig.oneSignalAppId]
-/// is filled in, so the app runs normally before the OneSignal dashboard
-/// setup is finished.
+/// system). Users are targeted server-side by their Supabase auth user id,
+/// registered as OneSignal's external_id alias via [login] - Edge Functions
+/// never touch device tokens.
 ///
-/// Users are targeted server-side by their Supabase auth user id, registered
-/// here as OneSignal's external_id alias via [login] — Edge Functions never
-/// touch device tokens.
+/// OneSignal integration rules followed here (per the official SDK guide):
+/// - All SDK calls live in this wrapper only.
+/// - The push-subscription observer is held in a field (locally-scoped
+///   observers get deallocated and never fire).
+/// - The notification permission is requested ONLY from the verification
+///   dialog's button tap ([requestPermission]) - never at app launch.
+/// - A subscription id starting with `local-` is a placeholder, not a real
+///   registration.
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
@@ -17,20 +22,57 @@ class NotificationService {
   bool _initialized = false;
   bool get isReady => _initialized;
 
+  OnPushSubscriptionChangeObserver? _subscriptionObserver;
+  String? _subscriptionId;
+  final List<void Function()> _verifiedCallbacks = [];
+
+  /// The real OneSignal subscription id, once registered (never `local-`).
+  String? get subscriptionId => _subscriptionId;
+
+  /// True when the device has a real push subscription with OneSignal.
+  bool get pushRegistered =>
+      _subscriptionId != null && _subscriptionId!.isNotEmpty;
+
   Future<void> init() async {
     final appId = SupabaseConfig.oneSignalAppId;
     if (appId.isEmpty) {
-      debugPrint('ℹ️ OneSignal: app id not set yet — push disabled');
+      debugPrint('OneSignal: app id not set yet - push disabled');
       return;
     }
     if (_initialized) return;
 
     try {
+      if (kDebugMode) {
+        OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+      }
       OneSignal.initialize(appId);
-      // Android 13+ runtime permission — the OS dialog appears on first run.
-      OneSignal.Notifications.requestPermission(true);
+
+      // Field-held observer (see class doc). Detects the moment the device
+      // really registers, then fires the verification callbacks once.
+      _subscriptionObserver = (OSPushSubscriptionChangedState state) {
+        final id = state.current.id;
+        final isReal =
+            id != null && id.isNotEmpty && !id.startsWith('local-');
+        if (!isReal) return;
+        _subscriptionId = id;
+        debugPrint('OneSignal push subscription: $id');
+        for (final cb in List<void Function()>.from(_verifiedCallbacks)) {
+          cb();
+        }
+        _verifiedCallbacks.clear();
+      };
+      OneSignal.User.pushSubscription.addObserver(_subscriptionObserver!);
+
+      // The id may already exist (previous install/launch).
+      final existing = OneSignal.User.pushSubscription.id;
+      if (existing != null &&
+          existing.isNotEmpty &&
+          !existing.startsWith('local-')) {
+        _subscriptionId = existing;
+      }
+
       _initialized = true;
-      debugPrint('✅ OneSignal initialized');
+      debugPrint('OneSignal initialized');
 
       // One choke point for every sign-in path (email, Google, signup,
       // session restore): tag the OneSignal user with our auth user id so
@@ -42,12 +84,31 @@ class NotificationService {
         }
       });
 
-      // Session restored on app start — tag immediately.
+      // Session restored on app start - tag immediately.
       final userId = SupabaseConfig.client.auth.currentUser?.id;
       if (userId != null) await login(userId);
     } catch (e) {
-      debugPrint('❌ OneSignal init failed: $e');
+      debugPrint('OneSignal init failed: $e');
     }
+  }
+
+  /// Fires [callback] once when the device gets a real push subscription
+  /// (or immediately if it already has one). Used to time the verification
+  /// dialog.
+  void onPushVerified(void Function() callback) {
+    if (pushRegistered) {
+      callback();
+      return;
+    }
+    _verifiedCallbacks.add(callback);
+  }
+
+  /// MUST be called from the verification dialog's button tap - the
+  /// notification permission is never requested anywhere else.
+  Future<void> requestPermission() async {
+    if (!_initialized) return;
+    final granted = await OneSignal.Notifications.requestPermission(true);
+    debugPrint('OneSignal permission granted: $granted');
   }
 
   /// Tag the OneSignal user with our auth user id (external_id alias).
@@ -56,7 +117,7 @@ class NotificationService {
     try {
       await OneSignal.login(userId);
     } catch (e) {
-      debugPrint('❌ OneSignal login failed: $e');
+      debugPrint('OneSignal login failed: $e');
     }
   }
 
@@ -66,7 +127,7 @@ class NotificationService {
     try {
       await OneSignal.logout();
     } catch (e) {
-      debugPrint('❌ OneSignal logout failed: $e');
+      debugPrint('OneSignal logout failed: $e');
     }
   }
 }

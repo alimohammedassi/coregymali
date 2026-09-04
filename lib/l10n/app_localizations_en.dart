@@ -1096,4 +1096,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get saveFailed =>
       'Couldn\'t save — check your connection and try again.';
+
+  @override
+  String get aiScanSubtitle => 'Snap your meal — AI logs it for you';
+
+  @override
+  String get logAnotherWay => 'Or log another way';
 }

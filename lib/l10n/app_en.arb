@@ -441,5 +441,7 @@
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",
-  "saveFailed": "Couldn't save — check your connection and try again."
+  "saveFailed": "Couldn't save — check your connection and try again.",
+  "aiScanSubtitle": "Snap your meal — AI logs it for you",
+  "logAnotherWay": "Or log another way"
 }

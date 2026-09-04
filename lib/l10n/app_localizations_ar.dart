@@ -1083,4 +1083,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get saveFailed =>
       'تعذّر الحفظ — تأكد من الاتصال بالإنترنت وحاول مرة أخرى.';
+
+  @override
+  String get aiScanSubtitle => 'صوّر أكلك والـ AI يسجّله لك';
+
+  @override
+  String get logAnotherWay => 'أو سجّل بطريقة تانية';
 }

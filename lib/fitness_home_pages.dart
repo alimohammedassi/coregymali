@@ -8,14 +8,11 @@ import 'package:shimmer/shimmer.dart';
 import 'chat/presentation/screens/chat_list_screen.dart';
 import 'features/coach/data/repositories/coach_repository_impl.dart';
 import 'features/coach/data/repositories/subscription_repository_impl.dart';
-import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
 import 'features/coach/presentation/providers/coach_providers.dart';
 import 'features/coach/presentation/providers/subscription_providers.dart';
-import 'features/coach/presentation/screens/coach_dashboard_screen.dart';
 import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'profile.dart';
-import 'providers/profile_provider.dart';
 import 'screens/food_scan_screen.dart';
 import 'screens/barcode_scan_screen.dart';
 import 'screens/nutrition_screen.dart';
@@ -156,7 +153,7 @@ class FitnessHomePage extends StatefulWidget {
 /// Semantic identity of every bottom-navigation destination. Tabs and their
 /// screens are both derived from this single enum, so the visible tab list and
 /// the IndexedStack children can never drift out of sync again.
-enum _TabId { home, nutrition, dashboard, workout, coaches, profile, more }
+enum _TabId { home, nutrition, workout, coaches, profile }
 
 class _FitnessHomePageState extends State<FitnessHomePage> {
   int _currentIndex = 0;
@@ -168,11 +165,13 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
     _nutritionScreenKey.currentState?.refreshAfterExternalSave();
   }
 
-  /// Single source of truth for the bottom bar. Both roles share Home /
-  /// Nutrition / Workout / Coaches / Profile; coaches additionally get the
-  /// gold Dashboard tab. A coach is also a CoreGym user who tracks their own
-  /// food, so Nutrition stays a first-class tab for them too.
-  List<_TabInfo> _tabsFor(bool isCoach, AppLocalizations l10n) => [
+  /// Single source of truth for the destinations that exist in the app.
+  /// The bottom bar shows only Home / Nutrition / Profile (see
+  /// [_visibleTabsFor]); Workout and Coaches stay here as IndexedStack
+  /// children so Home's "Explore app features" cards can still deep-link
+  /// into them. The coach Dashboard was removed entirely — it is moving to
+  /// a website.
+  List<_TabInfo> _tabsFor(AppLocalizations l10n) => [
     _TabInfo(
       id: _TabId.home,
       icon: Icons.home_outlined,
@@ -185,14 +184,6 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
       activeIcon: Icons.restaurant_rounded,
       label: l10n.navNutrition,
     ),
-    if (isCoach)
-      _TabInfo(
-        id: _TabId.dashboard,
-        icon: Icons.dashboard_outlined,
-        activeIcon: Icons.dashboard_rounded,
-        label: l10n.navDashboard,
-        isGold: true,
-      ),
     _TabInfo(
       id: _TabId.workout,
       icon: Icons.fitness_center_outlined,
@@ -216,164 +207,29 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   int _indexOf(List<_TabInfo> tabs, _TabId id) =>
       tabs.indexWhere((t) => t.id == id);
 
-  /// What the bottom bar actually SHOWS. Every destination still exists as an
-  /// IndexedStack child (see [_tabsFor]), but a coach's bar would need 6 items
-  /// to surface them all — too cramped for 68dp of glass. Coaches instead get
-  /// the 5 primary destinations plus a "More" action sheet holding the
-  /// Marketplace and Profile, the same pattern premium fitness apps use when
-  /// a role has more destinations than the bar can carry. Members already fit
-  /// in 5 and keep them all visible.
-  List<_TabInfo> _visibleTabsFor(bool isCoach, AppLocalizations l10n) {
-    final all = _tabsFor(isCoach, l10n);
-    if (!isCoach) return all;
-    return [
-      all.firstWhere((t) => t.id == _TabId.home),
-      all.firstWhere((t) => t.id == _TabId.dashboard),
-      all.firstWhere((t) => t.id == _TabId.nutrition),
-      all.firstWhere((t) => t.id == _TabId.workout),
-      _TabInfo(
-        id: _TabId.more,
-        icon: Icons.grid_view_outlined,
-        activeIcon: Icons.grid_view_rounded,
-        label: l10n.navMore,
-      ),
-    ];
-  }
-
-  /// Opens the coach's "More" sheet. Entries navigate to the underlying
-  /// IndexedStack destinations, and the nav bar keeps highlighting "More"
-  /// while one of them is active so the user never loses their place.
-  void _showMoreSheet(List<_TabInfo> allTabs) {
-    HapticFeedback.selectionClick();
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        final l10n = AppLocalizations.of(sheetContext)!;
-        final entries = [
-          (
-            tab: allTabs.firstWhere((t) => t.id == _TabId.coaches),
-            subtitle: l10n.moreMarketplaceSubtitle,
-          ),
-          (
-            tab: allTabs.firstWhere((t) => t.id == _TabId.profile),
-            subtitle: l10n.moreProfileSubtitle,
-          ),
-        ];
-        return Container(
-          margin: const EdgeInsets.all(12),
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainer,
-            borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: AppColors.glassBorder, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 32,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 44,
-                  height: 4.5,
-                  decoration: BoxDecoration(
-                    color: AppColors.borderSubtle,
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                l10n.moreMenuTitle,
-                style: AppText.headlineMd.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...entries.map((entry) {
-                final tab = entry.tab;
-                final accent = tab.isGold ? AppColors.tertiary : AppColors.primary;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
-                      onTap: () {
-                        Navigator.pop(sheetContext);
-                        _onNavigate(_indexOf(allTabs, tab.id));
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerHigh,
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: AppColors.borderSubtle),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color: accent.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: accent.withValues(alpha: 0.3),
-                                ),
-                              ),
-                              child: Icon(tab.activeIcon, color: accent, size: 22),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    tab.label,
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    entry.subtitle,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              color: AppColors.textSecondary,
-                              size: 22,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  /// What the bottom bar actually SHOWS — three first-class tabs for every
+  /// role. Workout / Coaches / everything else stay reachable from Home's
+  /// "Explore app features" strip instead of crowding the bar.
+  List<_TabInfo> _visibleTabsFor(AppLocalizations l10n) => [
+    _TabInfo(
+      id: _TabId.home,
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      label: l10n.navHome,
+    ),
+    _TabInfo(
+      id: _TabId.nutrition,
+      icon: Icons.restaurant_outlined,
+      activeIcon: Icons.restaurant_rounded,
+      label: l10n.navNutrition,
+    ),
+    _TabInfo(
+      id: _TabId.profile,
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: l10n.navProfile,
+    ),
+  ];
 
   Widget _screenFor(_TabInfo tab, List<_TabInfo> tabs) {
     return switch (tab.id) {
@@ -383,27 +239,39 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         workoutTabIndex: _indexOf(tabs, _TabId.workout),
         profileTabIndex: _indexOf(tabs, _TabId.profile),
         coachesTabIndex: _indexOf(tabs, _TabId.coaches),
-        dashboardTabIndex: _indexOf(tabs, _TabId.dashboard),
         nutritionTabIndex: _indexOf(tabs, _TabId.nutrition),
       ),
       _TabId.nutrition => NutritionScreen(key: _nutritionScreenKey),
-      _TabId.dashboard => CoachDashboardProviders.provideAll(
-        child: const CoachDashboardScreen(),
-      ),
       _TabId.workout => const WorkoutScreen(),
-      _TabId.coaches => _buildCoachesScreen(),
+      _TabId.coaches => _buildCoachesScreen(
+        onBackToHome: () => _onNavigate(_indexOf(tabs, _TabId.home)),
+      ),
       _TabId.profile => ProfilePage(
-          onOpenWorkout: () => _onNavigate(_indexOf(tabs, _TabId.workout)),
-        ),
-      // "More" is an action-sheet entry point, never a painted destination.
-      _TabId.more => const SizedBox.expand(),
+        onOpenWorkout: () => _onNavigate(_indexOf(tabs, _TabId.workout)),
+      ),
     };
   }
 
-  Widget _buildCoachesScreen() {
-    final subRepo = SubscriptionRepositoryImpl();
-    final activeSubNotifier = ActiveSubscriptionNotifier(subRepo);
-    final subNotifier = SubscriptionNotifier(subRepo);
+  // Subscription notifiers for the Coaches tab, created once per home State.
+  // Creating them per rebuild leaked every instance (ChangeNotifierProvider
+  // .value never disposes) and reset subscription state on tab switches.
+  ActiveSubscriptionNotifier? _activeSubNotifier;
+  SubscriptionNotifier? _subNotifier;
+
+  @override
+  void dispose() {
+    _activeSubNotifier?.dispose();
+    _subNotifier?.dispose();
+    super.dispose();
+  }
+
+  Widget _buildCoachesScreen({VoidCallback? onBackToHome}) {
+    _activeSubNotifier ??= ActiveSubscriptionNotifier(
+      SubscriptionRepositoryImpl(),
+    );
+    _subNotifier ??= SubscriptionNotifier(SubscriptionRepositoryImpl());
+    final activeSubNotifier = _activeSubNotifier!;
+    final subNotifier = _subNotifier!;
 
     // Defer the fetch out of the build phase — it calls notifyListeners()
     // synchronously, which would mark provider scopes dirty mid-build and
@@ -426,7 +294,10 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         ChangeNotifierProvider.value(value: activeSubNotifier),
         ChangeNotifierProvider.value(value: subNotifier),
       ],
-      child: const CoachMarketplaceScreen(),
+      child: CoachMarketplaceScreen(
+        embeddedInTabs: true,
+        onBackToHome: onBackToHome,
+      ),
     );
   }
 
@@ -439,49 +310,45 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final profileProvider = context.watch<ProfileProvider>();
-    final isCoach = profileProvider.isCoach;
-    final tabs = _tabsFor(isCoach, l10n);
-    final visibleTabs = _visibleTabsFor(isCoach, l10n);
+    final tabs = _tabsFor(l10n);
+    final visibleTabs = _visibleTabsFor(l10n);
     final children = tabs.map((t) => _screenFor(t, tabs)).toList();
 
-    // The bar highlights "More" while a relocated destination (Marketplace /
-    // Profile for coaches) is on screen, so context is never lost.
     final activeId = tabs[_currentIndex].id;
-    final isMoreActive =
-        activeId == _TabId.more ||
-        (isCoach &&
-            (activeId == _TabId.coaches || activeId == _TabId.profile));
+    final isHome = _currentIndex == _indexOf(tabs, _TabId.home);
 
-    return Scaffold(
-      extendBody: true,
-      resizeToAvoidBottomInset: false,
-      backgroundColor: AppColors.background,
-      body: AppBackground(
-        child: IndexedStack(index: _currentIndex, children: children),
-      ),
-      bottomNavigationBar: _PlayfulNavBar(
-        currentIndex: currentIndex(visibleTabs, activeId, isMoreActive),
-        onTap: (i) {
-          final id = visibleTabs[i].id;
-          if (id == _TabId.more) {
-            _showMoreSheet(tabs);
-          } else {
+    return PopScope(
+      canPop: isHome,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        _onNavigate(_indexOf(tabs, _TabId.home));
+      },
+      child: Scaffold(
+        extendBody: true,
+        resizeToAvoidBottomInset: false,
+        backgroundColor: AppColors.background,
+        body: AppBackground(
+          child: IndexedStack(index: _currentIndex, children: children),
+        ),
+        bottomNavigationBar: _PlayfulNavBar(
+          currentIndex: currentIndex(visibleTabs, activeId),
+          onTap: (i) {
+            final id = visibleTabs[i].id;
             _onNavigate(_indexOf(tabs, id));
-          }
-        },
-        tabs: visibleTabs,
+          },
+          tabs: visibleTabs,
+        ),
       ),
     );
   }
 
   /// Maps the active destination to an index within the visible bar items.
-  int currentIndex(List<_TabInfo> visibleTabs, _TabId activeId, bool isMoreActive) {
+  /// Non-visible destinations (workout/coaches) fall back to Home so the bar
+  /// never highlights nothing while those screens are reachable via Home's
+  /// feature strip.
+  int currentIndex(List<_TabInfo> visibleTabs, _TabId activeId) {
     final direct = visibleTabs.indexWhere((t) => t.id == activeId);
-    if (direct != -1) return direct;
-    return isMoreActive
-        ? visibleTabs.indexWhere((t) => t.id == _TabId.more)
-        : 0;
+    return direct == -1 ? 0 : direct;
   }
 }
 
@@ -490,13 +357,11 @@ class _TabInfo {
   final IconData icon;
   final IconData activeIcon;
   final String label;
-  final bool isGold;
   const _TabInfo({
     required this.id,
     required this.icon,
     required this.activeIcon,
     required this.label,
-    this.isGold = false,
   });
 }
 
@@ -540,9 +405,7 @@ class _PlayfulNavBar extends StatelessWidget {
             children: List.generate(tabs.length, (i) {
               final tab = tabs[i];
               final isActive = currentIndex == i;
-              final accentColor = tab.isGold
-                  ? AppColors.tertiaryFixed
-                  : AppColors.primaryGreen;
+              final accentColor = AppColors.primaryGreen;
 
               return Expanded(
                 child: _InteractiveScaleDetector(
@@ -631,11 +494,10 @@ class _HomeScreenCore extends StatefulWidget {
   final VoidCallback? onNutritionChanged;
 
   /// Resolved by the parent from the active tab list so home-screen shortcuts
-  /// land on the right destination for both client and coach layouts.
+  /// land on the right destination.
   final int workoutTabIndex;
   final int profileTabIndex;
   final int coachesTabIndex;
-  final int dashboardTabIndex;
   final int nutritionTabIndex;
   const _HomeScreenCore({
     required this.onNavigate,
@@ -643,7 +505,6 @@ class _HomeScreenCore extends StatefulWidget {
     required this.workoutTabIndex,
     required this.profileTabIndex,
     required this.coachesTabIndex,
-    required this.dashboardTabIndex,
     required this.nutritionTabIndex,
   });
 
@@ -1163,7 +1024,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                     child: Container(
                       width: 42,
                       height: 42,
-                      decoration:  BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
@@ -1362,7 +1223,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             const SliverToBoxAdapter(child: SizedBox(height: 22)),
 
             // ── 5b. App feature highlights — surfaces the app's other big
-            // pillars (coaches, workouts, dashboard) right on Home so they
+            // pillars (coaches, workouts) right on Home so they
             // don't get lost behind the bottom nav.
             SliverToBoxAdapter(
               child: _Stagger(
@@ -1564,10 +1425,11 @@ class _KaleeHeader extends StatelessWidget {
                 Icon(
                   Icons.local_fire_department_rounded,
                   size: 15,
+                  // The one place the neon volt still lives (micro-accent).
                   color: streakCount == 0
                       ? AppColors.textMuted
                       : (streakLoggedToday
-                            ? AppColors.primaryGreen
+                            ? AppColors.volt
                             : AppColors.textSecondary),
                 ),
                 const SizedBox(width: 5),
@@ -1608,7 +1470,7 @@ class _KaleeHeader extends StatelessWidget {
                   ),
                 ],
               ),
-              child:  Icon(
+              child: Icon(
                 Icons.chat_bubble_outline_rounded,
                 color: AppColors.textPrimary,
                 size: 18,
@@ -1790,9 +1652,9 @@ class _StreakAtRiskBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-           Icon(
+          Icon(
             Icons.local_fire_department_rounded,
-            color: AppColors.primaryGreen,
+            color: AppColors.volt, // micro-accent: the streak flame
             size: 20,
           ),
           const SizedBox(width: 10),
@@ -1844,8 +1706,8 @@ class _GoalsOnboardingBanner extends StatelessWidget {
       child: _InteractiveScaleDetector(
         onTap: onTap,
         child: _ModernPlayfulCard(
-          backgroundColor: const Color(0xFFFFF8E1),
-          borderColor: const Color(0xFFFFD54F),
+          backgroundColor: AppColors.tertiary.withValues(alpha: 0.10),
+          borderColor: AppColors.tertiary.withValues(alpha: 0.45),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
@@ -1860,7 +1722,7 @@ class _GoalsOnboardingBanner extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFFE65100),
+                        color: AppColors.tertiary,
                         fontFamily: AppText.fontFamily(isArabic: isArabic),
                       ),
                     ),
@@ -1868,17 +1730,17 @@ class _GoalsOnboardingBanner extends StatelessWidget {
                       l10n.setGoalsSubtitle,
                       style: TextStyle(
                         fontSize: 11,
-                        color: const Color(0xFFF57C00),
+                        color: AppColors.tertiaryDim,
                         fontFamily: AppText.fontFamily(isArabic: isArabic),
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios_rounded,
                 size: 14,
-                color: Color(0xFFE65100),
+                color: AppColors.tertiary,
               ),
             ],
           ),
@@ -1945,7 +1807,7 @@ class _HeroFuelCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(26),
             border: Border.all(
               color: _isOver
-                  ? const Color(0xFFFCA5A5).withValues(alpha: 0.5)
+                  ? AppColors.error.withValues(alpha: 0.5)
                   : AppColors.primaryGreen.withValues(alpha: 0.18),
               width: 1.4,
             ),
@@ -1966,7 +1828,7 @@ class _HeroFuelCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF3E0),
+                      color: AppColors.accentCalories.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(11),
                     ),
                     child: const PixelArtIcon(
@@ -2102,7 +1964,7 @@ class _HeroFuelCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: _isOver
-                                ? const Color(0xFFFEE2E2)
+                                ? AppColors.error.withValues(alpha: 0.15)
                                 : AppColors.lightGreen,
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -2115,7 +1977,7 @@ class _HeroFuelCard extends StatelessWidget {
                                     : Icons.check_circle_rounded,
                                 size: 13,
                                 color: _isOver
-                                    ? const Color(0xFFB91C1C)
+                                    ? AppColors.error
                                     : AppColors.onPrimaryContainer,
                               ),
                               const SizedBox(width: 5),
@@ -2130,7 +1992,7 @@ class _HeroFuelCard extends StatelessWidget {
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
                                     color: _isOver
-                                        ? const Color(0xFFB91C1C)
+                                        ? AppColors.error
                                         : AppColors.onPrimaryContainer,
                                     fontFamily: AppText.fontFamily(
                                       isArabic: isArabic,
@@ -2148,7 +2010,7 @@ class _HeroFuelCard extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                               Icon(
+                              Icon(
                                 Icons.local_fire_department_rounded,
                                 size: 12,
                                 color: AppColors.textMuted,
@@ -2290,8 +2152,9 @@ class _HeroDateStepper extends StatelessWidget {
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  MaterialLocalizations.of(context)
-                      .formatShortDate(selectedDate),
+                  MaterialLocalizations.of(
+                    context,
+                  ).formatShortDate(selectedDate),
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -2466,7 +2329,7 @@ class _CalorieGaugePainter extends CustomPainter {
     final bgPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = const Color(0xFFF0F3F1);
+      ..color = AppColors.surfaceContainerHighest;
     canvas.drawCircle(center, radius, bgPaint);
 
     if (progress <= 0) return;
@@ -2620,7 +2483,7 @@ class _VitalsBar extends StatelessWidget {
                             ),
                             if (canEditDaily) ...[
                               const SizedBox(width: 5),
-                               Icon(
+                              Icon(
                                 Icons.edit_outlined,
                                 size: 12,
                                 color: AppColors.textMuted,
@@ -2635,19 +2498,16 @@ class _VitalsBar extends StatelessWidget {
                                 context,
                               )!.smartwatchSync,
                               child: GestureDetector(
-                                onTap: canEditDaily
-                                    ? onOpenWatchSheet
-                                    : null,
+                                onTap: canEditDaily ? onOpenWatchSheet : null,
                                 behavior: HitTestBehavior.opaque,
                                 child: Padding(
                                   padding: const EdgeInsets.all(2),
                                   child: Icon(
                                     Icons.watch,
                                     size: 13,
-                                    color: AppColors.textSecondary
-                                        .withValues(
-                                          alpha: canEditDaily ? 1.0 : 0.4,
-                                        ),
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: canEditDaily ? 1.0 : 0.4,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -2754,41 +2614,111 @@ class _QuickFoodLogHub extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          // Primary Green CTA Button
+          // ── AI Scan — the hero action. AI logging is the app's core
+          // differentiator, so it gets a full-width gradient banner with a
+          // visible subtitle instead of a small circle chip.
           _InteractiveScaleDetector(
-            onTap: onAddMeal,
+            onTap: onAiScan,
             scaleFactor: 0.97,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
               decoration: BoxDecoration(
                 gradient: AppColors.primaryActionGradient,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.28),
-                    blurRadius: 16,
+                    color: AppColors.primaryGlow,
+                    blurRadius: 18,
                     offset: const Offset(0, 6),
                   ),
                 ],
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const PixelArtIcon(
-                    type: PixelIconType.robot,
-                    size: 20,
-                    animate: true,
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    l10n.addMeal,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onPrimary,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.onPrimary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    alignment: Alignment.center,
+                    child: const PixelArtIcon(
+                      type: PixelIconType.robot,
+                      size: 24,
+                      animate: true,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                l10n.scanAi,
+                                style: TextStyle(
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w900,
+                                  color: AppColors.onPrimary,
+                                  fontFamily: AppText.fontFamily(
+                                    isArabic: isArabic,
+                                  ),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.onPrimary.withValues(
+                                  alpha: 0.14,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'AI',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1,
+                                  color: AppColors.onPrimary,
+                                  fontFamily: AppText.fontFamily(
+                                    isArabic: isArabic,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          l10n.aiScanSubtitle,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.onPrimary.withValues(alpha: 0.75),
+                            fontFamily: AppText.fontFamily(isArabic: isArabic),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 15,
+                    color: AppColors.onPrimary.withValues(alpha: 0.8),
                   ),
                 ],
               ),
@@ -2797,74 +2727,116 @@ class _QuickFoodLogHub extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          // 4 Quick Options (AI Scan, Voice, Text, Barcode)
+          // ── Voice / Text / Barcode — surfaced tiles with visible labels
+          // (used to be icon-only 44px circles; AI alternatives deserve
+          // scannable, tappable targets).
           Row(
             children: [
-              _buildQuickOption(
-                icon: Icons.document_scanner_rounded,
-                label: l10n.scanAi,
-                onTap: onAiScan,
-              ),
-              const SizedBox(width: 8),
-              _buildQuickOption(
+              _buildLogModeTile(
                 icon: Icons.mic_rounded,
                 label: l10n.voiceLog,
                 onTap: onVoice,
               ),
               const SizedBox(width: 8),
-              _buildQuickOption(
+              _buildLogModeTile(
                 icon: Icons.edit_note_rounded,
                 label: l10n.quickText,
                 onTap: onText,
               ),
               const SizedBox(width: 8),
-              _buildQuickOption(
+              _buildLogModeTile(
                 icon: Icons.qr_code_scanner_rounded,
                 label: l10n.barcodeScan,
                 onTap: onBarcode,
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          // ── Add Meal — quiet secondary path into the food database.
+          _InteractiveScaleDetector(
+            onTap: onAddMeal,
+            scaleFactor: 0.97,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.borderSubtle),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.restaurant_rounded,
+                    size: 18,
+                    color: AppColors.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    l10n.addMeal,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurface,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuickOption({
+  Widget _buildLogModeTile({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
   }) {
-    // Icon-only circle chips keep the four logging modes reachable at a
-    // fraction of the old height; localized labels survive via tooltip +
-    // semantics instead of visible text.
     return Expanded(
-      child: Center(
-        child: Semantics(
-          label: label,
-          button: true,
-          child: Tooltip(
-            message: label,
-            child: _InteractiveScaleDetector(
-              onTap: onTap,
-              scaleFactor: 0.86,
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.borderSubtle),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.cardShadow,
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+      child: Semantics(
+        label: label,
+        button: true,
+        child: _InteractiveScaleDetector(
+          onTap: onTap,
+          scaleFactor: 0.93,
+          child: Container(
+            height: 64,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.borderSubtle),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cardShadow,
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
                 ),
-                child: Icon(icon, size: 20, color: AppColors.primaryGreen),
-              ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 21, color: AppColors.primary),
+                const SizedBox(height: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textSecondary,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
         ),
@@ -3095,7 +3067,7 @@ class _MealsFeed extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: hasLogs
                                 ? AppColors.primaryGreen
-                                : const Color(0xFFF1F5F3),
+                                : AppColors.surfaceContainerHighest,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

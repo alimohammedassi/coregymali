@@ -2143,6 +2143,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t save — check your connection and try again.'**
   String get saveFailed;
+
+  /// No description provided for @aiScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Snap your meal — AI logs it for you'**
+  String get aiScanSubtitle;
+
+  /// No description provided for @logAnotherWay.
+  ///
+  /// In en, this message translates to:
+  /// **'Or log another way'**
+  String get logAnotherWay;
 }
 
 class _AppLocalizationsDelegate

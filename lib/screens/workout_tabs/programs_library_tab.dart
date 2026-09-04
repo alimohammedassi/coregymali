@@ -76,7 +76,18 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
   }
 
   Future<void> _startProgram(Map<String, dynamic> program) async {
-    if (currentUserId == null) return;
+    if (currentUserId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please sign in first to activate a program.'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
     try {
       await supabase.from('user_active_program').upsert({
         'user_id': currentUserId,
@@ -113,6 +124,15 @@ class _ProgramsLibraryTabState extends State<ProgramsLibraryTab>
       );
     } on PostgrestException catch (e) {
       debugPrint('DB Error starting program: ${e.message}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to activate program: ${e.message}'),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

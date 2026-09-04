@@ -706,34 +706,19 @@ class _ConversationTileState extends State<_ConversationTile>
       opacity: _fadeAnim,
       child: SlideTransition(
         position: _slideAnim,
-        child: Dismissible(
-          key: Key(conv.id),
-          direction: DismissDirection.endToStart,
-          background: Container(
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 24),
-            color: AppColors.primaryFixed.withValues(alpha: 0.08),
-            child: Icon(Icons.archive_outlined,
-                color: AppColors.primaryFixed, size: 22),
-          ),
-          confirmDismiss: (_) async {
-            HapticFeedback.mediumImpact();
-            return true;
-          },
-          onDismissed: (_) {
-            // Future: archive conversation
-          },
-          child: _TileContent(
-            otherName: otherName,
-            otherAvatar: otherAvatar,
-            lastMessage: conv.lastMessage,
-            lastMessageAt: conv.lastMessageAt,
-            isUnread: isUnread,
-            unreadCount: unreadCount,
-            isClient: isClient,
-            l: l,
-            onTap: widget.onTap,
-          ),
+        // No archive API exists yet, so there is intentionally no swipe
+        // action — a Dismissible here animated the row away and then the
+        // tile popped back on the next rebuild.
+        child: _TileContent(
+          otherName: otherName,
+          otherAvatar: otherAvatar,
+          lastMessage: conv.lastMessage,
+          lastMessageAt: conv.lastMessageAt,
+          isUnread: isUnread,
+          unreadCount: unreadCount,
+          isClient: isClient,
+          l: l,
+          onTap: widget.onTap,
         ),
       ),
     );

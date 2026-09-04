@@ -2137,6 +2137,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Dark'**
   String get themeDark;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save — check your connection and try again.'**
+  String get saveFailed;
 }
 
 class _AppLocalizationsDelegate

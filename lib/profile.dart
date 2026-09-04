@@ -1557,6 +1557,7 @@ class _ProfilePageState extends State<ProfilePage>
           label: 'SAVE DATA',
           onPressed: () async {
             HapticFeedback.mediumImpact();
+            bool ok = false;
             try {
               final db = SupabaseConfig.client;
               final uid = db.auth.currentUser?.id;
@@ -1570,8 +1571,21 @@ class _ProfilePageState extends State<ProfilePage>
                       'fitness_goal': goal,
                     })
                     .eq('id', uid);
+                ok = true;
               }
-            } catch (_) {}
+            } catch (_) {
+              ok = false;
+            }
+            if (!ok) {
+              if (ctx.mounted) {
+                _toast(
+                  AppLocalizations.of(context)!.saveFailed,
+                  Icons.error_outline_rounded,
+                  AppColors.error,
+                );
+              }
+              return; // keep the sheet open so edits aren't lost
+            }
             if (ctx.mounted) Navigator.pop(ctx);
             if (mounted) _loadData();
           },
@@ -1618,6 +1632,7 @@ class _ProfilePageState extends State<ProfilePage>
           label: 'SAVE GOALS',
           onPressed: () async {
             HapticFeedback.mediumImpact();
+            bool ok = false;
             try {
               final db = SupabaseConfig.client;
               final uid = db.auth.currentUser?.id;
@@ -1632,8 +1647,21 @@ class _ProfilePageState extends State<ProfilePage>
                       int.tryParse(wkCtrl.text) ?? _weeklyWorkouts,
                   'updated_at': DateTime.now().toIso8601String(),
                 }, onConflict: 'user_id');
+                ok = true;
               }
-            } catch (_) {}
+            } catch (_) {
+              ok = false;
+            }
+            if (!ok) {
+              if (ctx.mounted) {
+                _toast(
+                  AppLocalizations.of(context)!.saveFailed,
+                  Icons.error_outline_rounded,
+                  AppColors.error,
+                );
+              }
+              return; // keep the sheet open so edits aren't lost
+            }
             if (ctx.mounted) Navigator.pop(ctx);
             if (mounted) _loadData();
           },

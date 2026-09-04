@@ -61,6 +61,41 @@ Full tap-handler audit (sub-agent) over profile, workout tabs, coach feature, ch
 
 Confirmed OK: coach feature (~120 handlers), chat list, `progrems.dart`, programs library, log-workout tab, main.dart (no named routes by design). Flagged: profile edit sheets swallow DB errors (`catch (_) {}`) — silent failure.
 
+## 3. PART 2b — full button/navigation audit — DONE ✔ (2026-09-04)
+
+User request: "verify every button does its real job and lands on the right page — especially the
+date button, which opens the food page I never asked for."
+
+**Root cause of the date-button complaint (FIXED):** the hero fuel card's whole surface opens
+`FoodLoggingModal`; inside it, the date pill's label and DISABLED chevrons had no enabled gesture
+handler, so taps fell through to the card handler → food logger opened from a date control.
+Fix: `_HeroDateStepper` now wraps its pill in an absorbing `GestureDetector` (`fitness_home_pages.dart`).
+
+**3 sub-agent trace audits (home, sub-screens, profile/chat/coach/auth) — all issues fixed:**
+
+| Location | Problem | Fix |
+|---|---|---|
+| `fitness_home_pages.dart` feature strip | "Nutrition insights / full calorie details" card opened the add-food logger | `nutritionTabIndex` added to `_HomeScreenCore`; card now opens the Nutrition tab |
+| same file, food logging | Logging ignored the selected date — past-day browsing logged into today | `FoodLoggingModal` gained `logDate` (service already supported `date:`); home passes `_selectedDate` |
+| same file, vitals bar | Watch affordance usable on past days while tile is read-only | gated by `canEditDaily` + dimmed |
+| `profile.dart` SAVE DATA / SAVE GOALS | `catch (_) {}` → sheet closed as success on DB failure | error snackbar (`saveFailed` l10n key, en+ar), sheet stays open |
+| `chat_list_screen.dart` | Swipe-to-archive animated rows away, nothing archived, tile popped back | fake `Dismissible` removed (no archive API exists) |
+| `coach_marketplace_screen.dart` | CONFIRM SUBSCRIPTION closed the sheet even on failure; no refresh on success | error keeps sheet open; success refreshes `ActiveSubscriptionNotifier` (passed into the sheet) then pops |
+| `add_food_sheet.dart` Confirm & Log | ignored `logFood` bool → silent data loss | checks result; error snackbar; sheet stays open |
+| `nutrition_screen.dart` ×3 | Quick Calories / Save Changes / Save Goals ignored service bools | same pattern: verify before pop, snackbar on failure |
+| `programs_library_tab.dart` START PROGRAM | silent no-op when signed out; `debugPrint`-only on DB error | snackbars for both |
+| `exercise_detail_sheet.dart` + `fitness_coach_screen.dart` | "Log Set" only debugPrinted — **every AI-coach set was lost on close** | lazy `WorkoutService.startSession` on first set, every set persists via `logSet`; error snackbar if session can't start |
+| `forgetpassword.dart` | whole OTP flow was fake: send/resend sent nothing, any 6 digits verified, reset had no session (always failed) | real `resetPasswordForEmail` (send+resend), real `verifyOTP(OtpType.recovery)` (signs in → `updateUser` works), errors surfaced, resend cooldown 60s (Supabase rate limit) |
+| `forgetpassword.dart` + `gender.dart` | SIGN IN from OTP/Reset landed on the onboarding carousel | pops to the route named `auth` (gender push now names it), falls back to isFirst |
+| `gender.dart` MALE/FEMALE cards | one tap navigated instantly — selection never visible or captured | first tap selects (haptic + highlight), tapping the selected card proceeds |
+| `progrems.dart` START SESSION FAB | silent dead button when `startSession` returned null | error snackbar, spinner resets |
+
+**Flagged, not fixed (product decisions / larger refactors):**
+- `chat_room_screen.dart`: a failed send flips the whole room to the error view (global error state).
+- AI-coach session: started lazily but never `endSession`-ed (dangling open session row if the user abandons the plan).
+- `gender.dart` "STEP 01/03" label promises steps that don't exist; gender still re-asked in onboarding.
+- Apple sign-in remains "coming soon".
+
 ## 4. PART 3 — bottom nav redesign — DONE ✔
 
 **Was:** members 5 tabs; **coaches 6** — overloaded.

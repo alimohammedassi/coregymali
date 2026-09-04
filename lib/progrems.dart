@@ -496,13 +496,28 @@ class _MuscleTrainingPageState extends State<MuscleTrainingPage>
       floatingActionButton: _sessionId == null
           ? FloatingActionButton.extended(
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 setState(() => _isLoading = true);
                 final sid = await _workoutService.startSession(muscleGroup: widget.muscleGroup);
                 if (mounted) {
+                  setState(() => _isLoading = false);
+                  if (sid == null) {
+                    // Service returns null on DB failure or signed-out —
+                    // silently resetting the spinner used to make the FAB
+                    // look completely dead.
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                            'تعذّر بدء الجلسة — تأكد من الاتصال بالإنترنت وحاول مرة أخرى'),
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
                   setState(() {
                     _sessionId = sid;
                     _startTime = DateTime.now();
-                    _isLoading = false;
                   });
                 }
               },

@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'login_sign_up.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';
@@ -216,13 +217,22 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
 
     return GestureDetector(
       onTap: () {
-        setState(() => selectedGender = value);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const AuthWrapper(),
-          ),
-        );
+        // First tap selects (shows the highlight), tapping the already
+        // selected card proceeds. Previously a single tap navigated
+        // immediately, so the selection UI was invisible and the choice
+        // was never captured.
+        if (selectedGender == value) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              settings: const RouteSettings(name: 'auth'),
+              builder: (context) => const AuthWrapper(),
+            ),
+          );
+        } else {
+          HapticFeedback.selectionClick();
+          setState(() => selectedGender = value);
+        }
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),

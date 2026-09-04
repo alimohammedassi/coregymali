@@ -360,12 +360,23 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
 
   void _showSubscribeSheet(CoachEntity coach) {
     final subscriptionNotifier = context.read<SubscriptionNotifier>();
+    // Passed through so the sheet can refresh the "active subscription"
+    // state after a successful subscribe — otherwise the card still says
+    // SUBSCRIBE until the whole screen is rebuilt.
+    final activeSubNotifier = context.read<ActiveSubscriptionNotifier>();
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => ChangeNotifierProvider<SubscriptionNotifier>.value(
-        value: subscriptionNotifier,
+      builder: (_) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider<SubscriptionNotifier>.value(
+            value: subscriptionNotifier,
+          ),
+          ChangeNotifierProvider<ActiveSubscriptionNotifier>.value(
+            value: activeSubNotifier,
+          ),
+        ],
         child: _SubscribeBottomSheet(coach: coach),
       ),
     );
@@ -632,10 +643,17 @@ class _SubscribeBottomSheet extends StatelessWidget {
                         elevation: 0,
                       ),
                       onPressed: () async {
-                        await ctx
-                            .read<SubscriptionNotifier>()
-                            .subscribeToCoach(coach.id);
-                        if (context.mounted) Navigator.pop(context);
+                        final navigator = Navigator.of(context);
+                        final activeSub =
+                            context.read<ActiveSubscriptionNotifier>();
+                        final notifier = ctx.read<SubscriptionNotifier>();
+                        await notifier.subscribeToCoach(coach.id);
+                        // Failure keeps the sheet open so the error text
+                        // above stays visible; success refreshes the active
+                        // subscription and closes.
+                        if (notifier.error != null) return;
+                        await activeSub.fetchActiveSubscription();
+                        if (navigator.mounted) navigator.pop();
                       },
                       child: Text('CONFIRM SUBSCRIPTION',
                           style: AppText.buttonPrimary

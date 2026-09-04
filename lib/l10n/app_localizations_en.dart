@@ -1092,4 +1092,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get themeDark => 'Dark';
+
+  @override
+  String get saveFailed =>
+      'Couldn\'t save — check your connection and try again.';
 }

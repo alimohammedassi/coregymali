@@ -1079,4 +1079,8 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get themeDark => 'داكن';
+
+  @override
+  String get saveFailed =>
+      'تعذّر الحفظ — تأكد من الاتصال بالإنترنت وحاول مرة أخرى.';
 }

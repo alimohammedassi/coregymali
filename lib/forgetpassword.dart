@@ -47,21 +47,37 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   }
 
   Future<void> _handleSendOTP() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
-
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isLoading = true);
+    try {
+      // Actually send the Supabase recovery email — this used to be a
+      // 2-second fake delay that sent nothing.
+      await AuthService().resetPassword(_emailController.text.trim());
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => OTPVerificationScreen(
-              email: _emailController.text,
+              email: _emailController.text.trim(),
               onBackToLogin: widget.onBackToLogin,
             ),
           ),
         );
       }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -339,19 +355,41 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
   Future<void> _handleVerifyOTP() async {
     if (_isOTPComplete()) {
       setState(() => _isLoading = true);
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isLoading = false);
-
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ResetPasswordScreen(
-              email: widget.email,
-              otp: _getOTPValue(),
-              onBackToLogin: widget.onBackToLogin,
-            ),
-          ),
+      try {
+        // Verify the recovery code against Supabase — success also signs the
+        // user in, which is what lets the next screen update the password.
+        // Any 6 digits used to pass here.
+        await SupabaseConfig.client.auth.verifyOTP(
+          type: OtpType.recovery,
+          email: widget.email.trim(),
+          token: _getOTPValue(),
         );
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ResetPasswordScreen(
+                email: widget.email,
+                otp: _getOTPValue(),
+                onBackToLogin: widget.onBackToLogin,
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(e.toString()),
+              backgroundColor: Colors.red[600],
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -369,25 +407,42 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
 
   Future<void> _handleResendOTP() async {
     setState(() => _isResending = true);
-    await Future.delayed(const Duration(seconds: 2));
-
-    setState(() {
-      _isResending = false;
-      _resendTimer = 30;
-    });
-    _startResendTimer();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('OTP sent successfully!'),
-          backgroundColor: Colors.green[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+    try {
+      await AuthService().resetPassword(widget.email.trim());
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('OTP sent successfully!'),
+            backgroundColor: Colors.green[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red[600],
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isResending = false;
+          // Supabase rate-limits recovery emails to one per minute.
+          _resendTimer = 60;
+        });
+        _startResendTimer();
+      }
     }
   }
 
@@ -591,7 +646,13 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                     child: GestureDetector(
                       onTap: () {
                         widget.onBackToLogin?.call();
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        // Land on the login screen, not the onboarding
+                        // carousel underneath it.
+                        Navigator.of(context).popUntil(
+                          (route) =>
+                              route.settings.name == 'auth' ||
+                              route.isFirst,
+                        );
                       },
                       child: RichText(
                         text: TextSpan(
@@ -692,7 +753,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
             ),
           );
           widget.onBackToLogin?.call();
-          Navigator.of(context).popUntil((route) => route.isFirst);
+          Navigator.of(context).popUntil(
+            (route) => route.settings.name == 'auth' || route.isFirst,
+          );
         }
       } catch (e) {
         setState(() => _isLoading = false);
@@ -922,7 +985,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                       child: GestureDetector(
                         onTap: () {
                           widget.onBackToLogin?.call();
-                          Navigator.of(context).popUntil((route) => route.isFirst);
+                          // Land on the login screen, not the onboarding
+                          // carousel underneath it.
+                          Navigator.of(context).popUntil(
+                            (route) =>
+                                route.settings.name == 'auth' ||
+                                route.isFirst,
+                          );
                         },
                         child: RichText(
                           text: TextSpan(

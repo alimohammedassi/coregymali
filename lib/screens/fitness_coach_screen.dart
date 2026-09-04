@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../services/exercise_database.dart';
 import '../services/fitness_plan_generator.dart';
+import '../services/workout_service.dart';
 import 'exercise_detail_sheet.dart';
 
 // Design tokens
@@ -82,15 +83,56 @@ class _FitnessCoachScreenState extends State<FitnessCoachScreen>
     });
   }
 
+  /// Lazily created DB session for the AI-coach plan — the first logged set
+  /// starts it, every set in this screen attaches to it.
+  String? _sessionId;
+
+  Future<String?> _ensureWorkoutSession() async {
+    if (_sessionId != null) return _sessionId;
+    final group = _selectedMuscles.isNotEmpty
+        ? _selectedMuscles.join(' + ')
+        : 'تمرين مختلط';
+    _sessionId = await WorkoutService().startSession(
+      muscleGroup: group,
+      sessionName: 'AI Coach — $group',
+    );
+    return _sessionId;
+  }
+
   void _openExerciseDetail(PlannedExercise exercise) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ExerciseDetailSheet(
+      // Builder param is intentionally NOT named `context` — the error
+      // snackbar below must use the screen's own context, which stays valid
+      // after the sheet (and its context) is gone.
+      builder: (sheetContext) => ExerciseDetailSheet(
         plannedExercise: exercise,
-        onLogSet: (setData) {
-          debugPrint('Logged set: $setData');
+        onLogSet: (setData) async {
+          // Persist every logged set — this used to only debugPrint, so all
+          // sets were silently lost when the sheet closed.
+          final sid = await _ensureWorkoutSession();
+          if (sid == null) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text(
+                      'تعذّر بدء جلسة التمرين — تأكد من الاتصال بالإنترنت'),
+                  backgroundColor: AppColors.error,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+            return;
+          }
+          await WorkoutService().logSet(
+            sessionId: sid,
+            exerciseName: exercise.exercise.nameAr,
+            setNumber: setData['setNumber'],
+            reps: setData['reps'],
+            weightKg: setData['weightKg'] > 0 ? setData['weightKg'] : null,
+          );
         },
       ),
     );

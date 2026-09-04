@@ -440,5 +440,6 @@
   "appearance": "المظهر",
   "themeSystem": "النظام",
   "themeLight": "فاتح",
-  "themeDark": "داكن"
+  "themeDark": "داكن",
+  "saveFailed": "تعذّر الحفظ — تأكد من الاتصال بالإنترنت وحاول مرة أخرى."
 }

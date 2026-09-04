@@ -407,8 +407,9 @@ class NutritionScreenState extends State<NutritionScreen>
                     final cals = double.tryParse(calCtrl.text) ?? 0;
                     if (cals <= 0) return;
                     HapticFeedback.mediumImpact();
-                    Navigator.pop(ctx);
-                    await _nutritionService.logQuickCalories(
+                    final navigator = Navigator.of(ctx);
+                    final messenger = ScaffoldMessenger.of(ctx);
+                    final ok = await _nutritionService.logQuickCalories(
                       foodName: nameCtrl.text.trim().isEmpty
                           ? 'Quick Calories'
                           : nameCtrl.text.trim(),
@@ -418,6 +419,18 @@ class NutritionScreenState extends State<NutritionScreen>
                       carbsG: double.tryParse(carbCtrl.text) ?? 0,
                       fatG: double.tryParse(fatCtrl.text) ?? 0,
                     );
+                    if (!ok) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                              '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                          backgroundColor: AppColors.error,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return; // keep the dialog open so entries aren't lost
+                    }
+                    navigator.pop();
                     _loadData();
                   },
                   child: const Text('Add to Log',
@@ -643,8 +656,9 @@ class NutritionScreenState extends State<NutritionScreen>
                             double.tryParse(qtyCtrl.text) ?? originalQty;
                         final multiplier = factor(newQty);
                         HapticFeedback.mediumImpact();
-                        Navigator.pop(ctx);
-                        await _nutritionService.updateLog(
+                        final navigator = Navigator.of(ctx);
+                        final messenger = ScaffoldMessenger.of(ctx);
+                        final ok = await _nutritionService.updateLog(
                           logId: log['id'].toString(),
                           quantity: newQty,
                           calories: originalCals * multiplier,
@@ -653,6 +667,18 @@ class NutritionScreenState extends State<NutritionScreen>
                           fatG: originalFat * multiplier,
                           mealType: currentMeal,
                         );
+                        if (!ok) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                  '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return; // keep the edit sheet open
+                        }
+                        navigator.pop();
                         _loadData();
                       },
                       child: const Text('Save Changes',
@@ -2931,6 +2957,7 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                     ? null
                     : () async {
                         final nav = Navigator.of(context);
+                        final messenger = ScaffoldMessenger.of(context);
                         setState(() => _saving = true);
                         HapticFeedback.mediumImpact();
                         final newGoals = {
@@ -2940,7 +2967,21 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                           'daily_fat_g': _fat.toInt(),
                           'daily_water_ml': _water.toInt(),
                         };
-                        await _statsService.updateGoals(newGoals);
+                        final ok =
+                            await _statsService.updateGoals(newGoals);
+                        if (!mounted) return;
+                        if (!ok) {
+                          setState(() => _saving = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                  '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return; // keep the sheet open
+                        }
                         widget.onGoalsSaved(newGoals);
                         nav.pop();
                       },

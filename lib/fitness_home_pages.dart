@@ -384,6 +384,7 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         profileTabIndex: _indexOf(tabs, _TabId.profile),
         coachesTabIndex: _indexOf(tabs, _TabId.coaches),
         dashboardTabIndex: _indexOf(tabs, _TabId.dashboard),
+        nutritionTabIndex: _indexOf(tabs, _TabId.nutrition),
       ),
       _TabId.nutrition => NutritionScreen(key: _nutritionScreenKey),
       _TabId.dashboard => CoachDashboardProviders.provideAll(
@@ -635,6 +636,7 @@ class _HomeScreenCore extends StatefulWidget {
   final int profileTabIndex;
   final int coachesTabIndex;
   final int dashboardTabIndex;
+  final int nutritionTabIndex;
   const _HomeScreenCore({
     required this.onNavigate,
     this.onNutritionChanged,
@@ -642,6 +644,7 @@ class _HomeScreenCore extends StatefulWidget {
     required this.profileTabIndex,
     required this.coachesTabIndex,
     required this.dashboardTabIndex,
+    required this.nutritionTabIndex,
   });
 
   @override
@@ -927,10 +930,12 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     String mealType = 'breakfast',
     String? mode,
   }) async {
+    // Log into the day the user is actually viewing, not blindly today.
     final result = await FoodLoggingModal.show(
       context,
       initialMealType: mealType,
       initialMode: mode,
+      logDate: _selectedDate,
     );
     if (result == true) {
       await _loadAll();
@@ -1369,7 +1374,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                       widget.onNavigate(widget.workoutTabIndex),
                   onOpenCoaches: () =>
                       widget.onNavigate(widget.coachesTabIndex),
-                  onOpenNutrition: () => _openFoodLogger(),
+                  // "Nutrition insights / full calorie details" — land on the
+                  // Nutrition tab (analytics), not the add-food logger.
+                  onOpenNutrition: () =>
+                      widget.onNavigate(widget.nutritionTabIndex),
                   onOpenChat: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ChatListScreen()),
                   ),
@@ -2253,49 +2261,57 @@ class _HeroDateStepper extends StatelessWidget {
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _HeroStepButton(
-            icon: prevIcon,
-            tooltip: l10n.previousDay,
-            enabled: canGoBack,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onSelectDate(selDay.subtract(const Duration(days: 1)));
-            },
-          ),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 84),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                MaterialLocalizations.of(context).formatShortDate(selectedDate),
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  fontFamily: AppText.fontFamily(isArabic: isArabic),
+    // Absorb every tap that is not an enabled chevron (the date label, the
+    // padding, disabled step buttons) so it can never fall through to the
+    // card's open-food-logger handler — the pill only changes the date.
+    return GestureDetector(
+      onTap: () {},
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _HeroStepButton(
+              icon: prevIcon,
+              tooltip: l10n.previousDay,
+              enabled: canGoBack,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelectDate(selDay.subtract(const Duration(days: 1)));
+              },
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 84),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  MaterialLocalizations.of(context)
+                      .formatShortDate(selectedDate),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  ),
                 ),
               ),
             ),
-          ),
-          _HeroStepButton(
-            icon: nextIcon,
-            tooltip: l10n.nextDay,
-            enabled: canGoForward,
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onSelectDate(selDay.add(const Duration(days: 1)));
-            },
-          ),
-        ],
+            _HeroStepButton(
+              icon: nextIcon,
+              tooltip: l10n.nextDay,
+              enabled: canGoForward,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onSelectDate(selDay.add(const Duration(days: 1)));
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2612,20 +2628,26 @@ class _VitalsBar extends StatelessWidget {
                             ],
                             const SizedBox(width: 5),
                             // Watch affordance — opens the smartwatch
-                            // connect/sync sheet (TodayActivityCard).
+                            // connect/sync sheet (TodayActivityCard). Gated
+                            // like the tile itself: past days are read-only.
                             Tooltip(
                               message: AppLocalizations.of(
                                 context,
                               )!.smartwatchSync,
                               child: GestureDetector(
-                                onTap: onOpenWatchSheet,
+                                onTap: canEditDaily
+                                    ? onOpenWatchSheet
+                                    : null,
                                 behavior: HitTestBehavior.opaque,
                                 child: Padding(
                                   padding: const EdgeInsets.all(2),
                                   child: Icon(
                                     Icons.watch,
                                     size: 13,
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.textSecondary
+                                        .withValues(
+                                          alpha: canEditDaily ? 1.0 : 0.4,
+                                        ),
                                   ),
                                 ),
                               ),

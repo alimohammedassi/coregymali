@@ -837,9 +837,10 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                 onPressed: _logging
                     ? null
                     : () async {
+                        final messenger = ScaffoldMessenger.of(context);
                         HapticFeedback.mediumImpact();
                         setState(() => _logging = true);
-                        await _nutritionService.logFood(
+                        final ok = await _nutritionService.logFood(
                           foodId: widget.food['id'].toString(),
                           foodName: widget.food['name'],
                           mealType: _mealType,
@@ -849,6 +850,19 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                           carbsG: _calc('carbs_g'),
                           fatG: _calc('fat_g'),
                         );
+                        if (!ok) {
+                          if (!mounted) return;
+                          setState(() => _logging = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                  '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                              backgroundColor: AppColors.error,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
                         widget.onLogged();
                       },
                 child: _logging

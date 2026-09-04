@@ -16,16 +16,24 @@ class FoodLoggingModal extends StatefulWidget {
   final String initialMealType;
   final String? initialMode; // 'search', 'quick', 'ai', 'voice'
 
-  const FoodLoggingModal({
+  /// Day the logged food is attributed to. Defaults to today; the home
+  /// screen passes its selected date so browsing a past day logs there.
+  final DateTime logDate;
+
+  // Not const: logDate defaults to DateTime.now(), which is a non-const
+  // initializer and illegal in a const constructor.
+  FoodLoggingModal({
     super.key,
     this.initialMealType = 'breakfast',
     this.initialMode,
-  });
+    DateTime? logDate,
+  }) : logDate = logDate ?? DateTime.now();
 
   static Future<bool?> show(
     BuildContext context, {
     String initialMealType = 'breakfast',
     String? initialMode,
+    DateTime? logDate,
   }) {
     return showModalBottomSheet<bool>(
       context: context,
@@ -34,6 +42,7 @@ class FoodLoggingModal extends StatefulWidget {
       builder: (_) => FoodLoggingModal(
         initialMealType: initialMealType,
         initialMode: initialMode,
+        logDate: logDate,
       ),
     );
   }
@@ -152,6 +161,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       proteinG: protein * quantity,
       carbsG: carbs * quantity,
       fatG: fat * quantity,
+      date: widget.logDate,
     );
 
     if (!mounted) return;

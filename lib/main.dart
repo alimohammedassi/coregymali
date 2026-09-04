@@ -15,6 +15,7 @@ import 'providers/theme_mode_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'chat/presentation/providers/chat_providers.dart';
 import 'chat/data/repositories/notification_repository.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,8 @@ void main() async {
   );
 
   await initializeDateFormatting('ar', null);
+
+  await NotificationService.instance.init();
 
   runApp(
     ProviderScope(

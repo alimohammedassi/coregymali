@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'supabase_config.dart';
+import '../services/notification_service.dart';
 
 class AuthService {
   final _client = SupabaseConfig.client;
@@ -90,6 +91,7 @@ class AuthService {
 
   // Sign out
   Future<void> signOut() async {
+    await NotificationService.instance.logout();
     await _client.auth.signOut();
   }
 

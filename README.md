@@ -1,20 +1,30 @@
+<div align="center">
+
+<img src="docs/screenshots/logo.png" alt="CoreGym Logo" width="120"/>
+
 # 💪 CoreGym — Smart Fitness & Nutrition Tracker
 
-<div align="center">
-  <img src="assets/images/coregym_logo.png" alt="CoreGym Logo" width="120"/>
+### Your intelligent fitness companion — AI-powered logging, real coaches, and smart reminders
+**رفيقك الذكي لللياقة — تسجيل ذكي بالذكاء الاصطناعي، كوتشز حقيقيون، وتنبيهات مميزة**
 
-  <p>
-    <strong>CoreGym</strong> — Your intelligent fitness companion with AI-powered workout generation and nutrition tracking
-  </p>
+<img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter">
+<img src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge%20Functions-3ECF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase">
+<img src="https://img.shields.io/badge/Push-OneSignal-E0513D?style=flat-square&logo=onesignal&logoColor=white" alt="OneSignal">
+<img src="https://img.shields.io/badge/Payments-Stripe-635BFF?style=flat-square&logo=stripe&logoColor=white" alt="Stripe">
+<img src="https://img.shields.io/badge/Platform-Android-green?style=flat-square&logo=android&logoColor=white" alt="Android">
+<img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square" alt="iOS">
+<img src="https://img.shields.io/badge/Language-EN%20%7C%20AR-orange?style=flat-square" alt="Languages">
 
-  <p>
-    <img src="https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter" alt="Flutter">
-    <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=flat-square&logo=supabase" alt="Supabase">
-    <img src="https://img.shields.io/badge/Platform-Android-green?style=flat-square" alt="Android">
-    <img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square" alt="iOS">
-    <img src="https://img.shields.io/badge/Language-EN%20%7C%20AR-orange?style=flat-square" alt="Languages">
-  </p>
 </div>
+
+---
+
+<p align="center">
+  <img src="docs/screenshots/home.png" width="30%" alt="Home — Graphite & Soft Volt theme, 3-tab navigation"/>
+  <img src="docs/screenshots/ai-hub.png" width="30%" alt="AI logging hub — Scan / Voice / Text / Barcode"/>
+  <img src="docs/screenshots/chat-voice.png" width="30%" alt="Coach chat with voice messages"/>
+</p>
+<p align="center"><i>Home · AI logging hub · Coach chat with voice notes</i></p>
 
 ---
 
@@ -22,23 +32,19 @@
 
 - [What is CoreGym?](#-what-is-coregym)
 - [Key Features](#-key-features)
-  - [1. AI Smart Trainer](#1--ai-smart-trainer)
-  - [2. Workout Tracking](#2--workout-tracking)
-  - [3. Nutrition Tracking](#3--nutrition-tracking)
-  - [4. Health & Wearable Integration](#4--health--wearable-integration)
-  - [5. Progress & Analytics](#5--progress--analytics)
-  - [6. Coach Marketplace](#6--coach-marketplace)
-  - [7. Chat & Notifications](#7--chat--notifications)
-  - [8. Subscriptions & Payments](#8--subscriptions--payments)
-  - [9. Profile & Goals](#9--profile--goals)
-- [Tech Stack](#️-tech-stack)
+- [Push Notification System](#-push-notification-system-onesignal)
+- [Design System — Graphite & Soft Volt](#-design-system--graphite--soft-volt)
+- [Tech Stack](#%EF%B8%8F-tech-stack)
 - [Project Structure](#-project-structure)
-- [Supabase Backend](#️-supabase-backend)
+- [Supabase Backend](#%EF%B8%8F-supabase-backend)
 - [Getting Started](#-getting-started)
-- [FAQ](#-faq)
+- [Security](#-security)
+- [Testing](#-testing)
 - [Localization](#-localization)
 - [Building for Production](#-building-for-production)
-- [Additional Documentation](#-additional-documentation)
+- [Roadmap](#%EF%B8%8F-roadmap)
+- [FAQ](#-faq)
+- [License](#-license)
 
 ---
 
@@ -51,14 +57,13 @@
 
 Picture having all of this in your pocket:
 
-- A **personal trainer** who builds you a workout plan based on your mood and how much time you have.
 - A **nutrition coach** who can look at a photo of your meal — or just listen to you describe it — and instantly calculate the calories, protein, and carbs.
-- A **smart watch companion** that tracks your steps, heart rate, and calories burned.
-- A **marketplace of real human coaches** you can message and subscribe to.
+- A **personal trainer** who builds you a workout plan based on your mood and how much time you have.
+- A **smartwatch companion** that tracks your steps, heart rate, and calories burned.
+- A **marketplace of real human coaches** you can message (voice, photos, PDFs) and subscribe to.
+- **Smart reminders** that nudge you to log meals, drink water, and stay inside your calorie goal.
 
-CoreGym brings all of that together in one app. It's built with **Flutter** (so the same code runs on both Android and iPhone), uses **Supabase** as its backend (database, login, and file storage), and uses Google's **Gemini AI** to understand food photos and voice descriptions.
-
-The whole app works fully in both English and Arabic, including automatic right-to-left (RTL) layout switching.
+CoreGym brings all of that together in one bilingual app (English / العربية, with full RTL). It's built with **Flutter**, runs on a serverless **Supabase** backend, understands food with **Google Gemini**, delivers pushes with **OneSignal**, and takes payments with **Stripe**.
 
 </details>
 
@@ -66,161 +71,151 @@ The whole app works fully in both English and Arabic, including automatic right-
 
 ## ✨ Key Features
 
-### 1. 🤖 AI Smart Trainer
+### 1. 🧠 AI Food Logging — front and center
 
-Generates a personalized workout plan based on three things you choose:
+The AI experience is the hero of the Home screen — a full-width gradient banner, not a buried menu item:
 
-| You pick | What it controls |
+| Mode | How it works |
 |---|---|
-| **Mood / Energy level** | 5 levels, from "Tired" to "Full Power" — adjusts workout intensity |
-| **Target muscles** | Multi-select from 8 groups (Chest, Back, Shoulders, Biceps, Triceps, Legs, Abs, Cardio) |
-| **Duration** | 30, 45, 60, or 90 minutes |
+| 📷 **AI Scan** | Snap a photo → Gemini vision analysis (Edge Function) → review → save |
+| 🎤 **Voice** | Describe your meal by voice → Gemini parses the audio directly → review → save |
+| ⌨️ **Text** | Type what you ate (*"٢ بيض و عيش بلدي"*) → AI extracts items & macros |
+| 🏷️ **Barcode** | Scan any product → instant nutrition lookup → serving-size picker |
 
-The generator then pulls exercises from a library of **48+ exercises**, adjusts sets/reps/rest times based on your mood, includes a warm-up, and adds a motivational message.
+All paths write to one `nutrition_logs` table with real macros. The seeded food database ships with **~319 Egyptian foods** (كشري، فول، طعمية…) for instant manual search & browse.
 
-### 2. 🏋️ Workout Tracking
+### 2. 🍽️ Nutrition Tracking
 
-- **Exercise Library** — Browse exercises by muscle group with YouTube video tutorials
-- **My Program** — View and start your active workout program
-- **Programs Library** — Preset training programs (Push Pull Legs, Upper/Lower, Full Body, Bro Split)
-- **Detailed Logging** — Log sets, weights, reps, and durations during workouts
-- **Rest Timer** — Built-in countdown timer between sets
-- **Streaks** — Track workout streaks with badges
+- Daily calorie gauge with over-goal states and remaining/over pills
+- Protein / carbs / fat progress rows with semantic colors
+- Water tracking with quick-add and local every-2-hour reminders
+- Weekly history charts, per-meal editing (quantity × multipliers), quick-calories entry
+- Date-aware logging — entries are attributed to the day you're viewing
 
-### 3. 🍽️ Nutrition Tracking
+### 3. 🏋️ Workout Tracking
 
-- **Daily Macros Dashboard** — Calories, protein, carbs, and fat vs. your goals, with animated rings
-- **Food Search** — A seeded food database plus foods you add yourself
-- **Meal Categorization** — Breakfast, Lunch, Dinner, Snacks
-- **Weekly History** — Past 7 days of nutrition data with charts
-
-#### 🧠 Smart Food Logging (AI)
-
-| Method | How it works |
-|--------|--------------|
-| **📷 Photo Scan** | Snap a picture of your meal — Gemini vision analyzes it and estimates weight, calories, and macros |
-| **🎙️ Voice Logging** | Describe your meal by voice — Gemini understands the audio directly (no separate speech-to-text step) |
-| **📊 Barcode Scan** | Scan any product barcode for instant nutrition lookup |
-
-All three flows save directly to Supabase via Edge Functions.
+- **AI Smart Trainer** — generates a session from mood (5 energy levels) × target muscles (8 groups) × duration (30–90 min), from a 48+ exercise library with YouTube tutorials
+- **Programs Library** — preset programs (PPL, Upper/Lower, Full Body, Bro Split) with difficulty/goal filters
+- **Live sessions** — set-by-set logging (warm-up / drop-set / failure flags), rest timers, automatic session persistence
+- **My Program** — active-program tracking, real per-day progress
+- Streaks with badges, 1RM / personal-record tracking, volume analytics
 
 ### 4. ⌚ Health & Wearable Integration
 
-Syncs automatically with:
-- **Apple HealthKit** (iOS / Apple Watch)
-- **Google Health Connect** (Android / Galaxy Watch, Pixel Watch, Garmin, etc.)
-
-It pulls in step count, active & total calories burned, heart rate, and workout minutes. See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md) for platform setup details.
+Syncs automatically with **Apple HealthKit** and **Google Health Connect** — steps, active/total calories, heart rate, workout minutes. See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md).
 
 ### 5. 📈 Progress & Analytics
 
-- **Body Measurements** — Track weight, body fat %, and key metrics over time
-- **1RM / Personal Records** — Best weight per exercise, tracked automatically
-- **Workout History** — Completed sessions with full set logs
-- **Volume Tracking** — Total training volume per session
-- **Weekly Charts** — Calories, steps, and workouts with goal percentages
+Body measurements over time, weight charts, RM progress per exercise, weekly calories/steps/workout charts with goal percentages.
 
 ### 6. 🧑‍🏫 Coach Marketplace
 
-A two-sided marketplace connecting members with fitness coaches:
+- Coaches publish profiles, media galleries, certifications (PDFs), and reviews
+- Members browse, view details, and subscribe with **Stripe** (Checkout → webhook → verified status endpoint)
+- Coach dashboard with client management and data (a dedicated web dashboard is on the roadmap)
 
-- Coaches create profiles, add media/certifications, and publish their services
-- Members browse coach profiles and details
-- A coach dashboard shows client management, client data, and earnings stats
-- Coaches can view client progress data
+### 7. 💬 Realtime Chat
 
-### 7. 💬 Chat & Notifications
+Member ↔ coach messaging built on Supabase Realtime:
 
-- Real-time messaging between members and coaches (Supabase Realtime)
-- Per-conversation and global unread message counters
-- In-app notification center
+- 🎤 **Voice notes** — in-app recorder with waveform playback bubbles
+- 🖼️ **Images** — camera/gallery, compressed upload, pinch-zoom full-screen viewer
+- 📄 **PDFs** — in-app viewer with download
+- Read receipts (✓ / ✓✓), per-conversation unread counts, optimistic sending
+- All attachments live in **private storage buckets** with participant-only RLS
 
-### 8. 💳 Subscriptions & Payments
+### 8. 👤 Profile, Goals & Themes
 
-Stripe-powered subscriptions for premium/coach services:
+- Multi-step onboarding with live BMI, TDEE-based calorie/macro targets
+- Email/password and Google Sign-In
+- **System / Light / Dark** theme switch (Profile → Appearance), persisted
 
-- Secure checkout via Stripe Checkout Sessions
-- Webhook-driven subscription status updates
-- A subscription status verification endpoint
+---
 
-### 9. 👤 Profile & Goals
+## 🔔 Push Notification System (OneSignal)
 
-- **Onboarding Flow** — Multi-step setup (personal info, body metrics with live BMI, goals, activity level, targets)
-- **TDEE-based Targets** — Automatic calorie/macro calculation from BMR × activity level, adjusted for your goal
-- **Profile Management** — Age, weight, height, gender, avatar, fitness goal
-- **Authentication** — Email/password and Google Sign-In
+Every reminder respects per-user preferences (`notification_preferences`) and quiet hours — a missing preferences row means everything is ON. Users are targeted by their **Supabase auth id**, registered as OneSignal's `external_id` alias on every sign-in path, so the server never manages device tokens.
+
+| # | Notification | Trigger | Delivery | Status |
+|---|---|---|---|---|
+| 1 | **Welcome** | After account creation (email & first-time Google) | Server push via Edge Function, bilingual EN/AR — device language picks | ✅ Live |
+| 2 | **Meal reminder** | `pg_cron` at 08:00 / 14:00 / 20:00 (Cairo) — only if nothing logged that day | Server push, per-window dedupe | ✅ Live |
+| 3 | **Water reminder** | Every 2 hours, 08:00 → 22:00 | **Local** notifications — works offline; stops once the daily water goal is reached | ✅ Live |
+| 4 | **Calorie alert** | Crossing ~90% of the daily calorie goal | Event-triggered server push, once per day | 🚧 In progress |
+| 5 | **Chat message** | New message → push to the other participant with a deep-link into the conversation | Server push + tap-through routing | 🚧 In progress |
+| 6 | **In-app inbox** | Bell icon + unread badge + history screen | Reads `notification_log` | 🚧 In progress |
+
+Every server push is logged into `notification_log` (the in-app history) with type and deep-link payload.
+
+---
+
+## 🎨 Design System — "Graphite & Soft Volt"
+
+A calm-but-energetic identity tuned for extended daily use — no pure-black OLED strain, no neon fatigue. The original Electric Volt (`#D1FC00`) survives only as a micro-accent (the streak flame 🔥).
+
+| Token | Dark | Light |
+|---|---|---|
+| Background | `#121310` olive-graphite | `#F2F3E9` warm sage paper |
+| Surfaces | `#171814` → `#31322C` | `#FBFCF5` + soft shadows |
+| Primary (fills) | `#B2D742` muted lime | `#B2D742` + ink text `#161806` |
+| Primary (accent) | `#B2D742` | `#506B1A` (darkened for WCAG AA) |
+| Secondary / Tertiary | `#4FD1C5` teal / `#E8C468` gold | `#0F766E` / `#8A6A1E` |
+| Text hierarchy | `#ECEEE2` / `#A9ADA0` / `#70746A` | `#1B1D12` / `#555947` / `#83877A` |
+
+- **Mode-aware tokens** — every color flows through static `AppColors` fields re-resolved by `AppColors.apply(Brightness)`; widgets never hardcode hex
+- Semantic maps for muscle groups / difficulty / goals in `AppSemanticColors`; macro & data-viz accents are mode-safe constants
+- Typography: **Poppins** (EN) / **Cairo** (AR) via `google_fonts`; full RTL mirroring
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology | In plain terms |
-|---|---|---|
-| **Frontend** | Flutter 3.8+ / Dart 3.8+ | What you see on screen — same code runs on Android and iPhone |
-| **Backend** | Supabase | Database + login + file storage + small server functions |
-| **Payments** | Stripe | A secure, global payment gateway |
-| **AI** | Google Gemini | Understands food photos and voice, and turns them into nutrition numbers |
-| **State Management** | Provider + Riverpod | How the app organizes and shares its data internally |
-| **Charts** | fl_chart | The library behind all the graphs |
-| **Health Data** | health package | Bridges to HealthKit and Health Connect |
-| **Media** | youtube_player_flutter, image_picker, record, mobile_scanner, photo_view | Video playback, picking photos, recording audio, scanning barcodes |
-| **Localization** | flutter_localizations + intl | English and Arabic support |
-| **Fonts** | google_fonts | Google's font library |
+| Component | Technology |
+|---|---|
+| **Frontend** | Flutter 3.x / Dart 3.x |
+| **Backend** | Supabase — Postgres + RLS, Edge Functions (Deno), Storage, Realtime, pg_cron, Vault |
+| **Push** | OneSignal SDK 5.5.2 (server pushes via REST) + `flutter_local_notifications` (local water nudges) |
+| **Payments** | Stripe — Checkout Sessions, webhooks, verified status endpoint |
+| **AI** | Google Gemini (vision + audio food analysis) |
+| **State** | Provider (ChangeNotifiers) + Riverpod |
+| **Charts / Fonts** | fl_chart · google_fonts |
+| **Media** | image_picker, record, just_audio, photo_view, flutter_pdfview, cached_network_image, mobile_scanner, youtube_player_flutter |
+| **Health** | health package (HealthKit / Health Connect) |
+| **i18n** | flutter_localizations + intl (EN / AR) |
 
 ---
 
 ## 📁 Project Structure
 
-<details>
-<summary><strong>Click to view the full file tree</strong></summary>
+<details open>
+<summary><strong>Key layout</strong></summary>
 
 ```
 lib/
-├── main.dart                        # App entry point (Supabase init, providers)
-├── fitness_home_pages.dart          # Home screen with daily summary
-├── login_sign_up.dart               # Authentication screens
-├── profile.dart                     # User profile & settings
-├── progrems.dart                    # Programs browsing
-├── splashscreen.dart                # Splash screen + auth/onboarding routing
-├── gender.dart                      # Gender selection
-├── forgetpassword.dart              # Password recovery
-│
-├── l10n/                            # Localization (ARB files: EN, AR)
-├── theme/                           # Colors & typography
-├── providers/                       # Locale + profile state (Provider)
-│
-├── screens/                         # Main app screens
-│   ├── onboarding_flow.dart         # New user onboarding
-│   ├── nutrition_screen.dart        # Nutrition tracking
-│   ├── food_scan_screen.dart        # AI photo food scanner
-│   ├── voice_food_log_screen.dart   # AI voice food logging
-│   ├── barcode_scan_screen.dart     # Barcode scanner
-│   ├── workout_screen.dart          # Workout tab container
-│   ├── workout_tabs/                # Log workout / my program / programs library
-│   ├── active_workout_sheet.dart    # Live workout session sheet
-│   ├── exercise_detail_sheet.dart   # Exercise details + set logging
-│   ├── progress_screen.dart         # Progress & analytics
-│   └── fitness_coach_screen.dart    # AI workout generator
-│
+├── main.dart                       # Bootstrap: Supabase, OneSignal, providers, dual themes
+├── theme/                          # AppColors (mode-aware) · AppText · AppSemanticColors
+├── l10n/                           # ARB files + generated localizations (en/ar)
+├── providers/                      # Locale · Profile · ThemeMode (ChangeNotifiers)
+├── services/                       # Nutrition · Workout · Stats · Streak · Health
+│   ├── notification_service.dart   #   OneSignal wrapper (single SDK choke-point)
+│   └── water_reminder_service.dart #   Local every-2h water nudges
+├── screens/                        # Home shell · nutrition · scan/voice/text/barcode logging
+│   └── workout_tabs/               # Library · My Program · Log
 ├── features/
-│   ├── coach/                       # Coach marketplace (Clean Architecture)
-│   │   ├── domain/                  # Entities + repository interfaces
-│   │   ├── data/                    # Repository implementations
-│   │   └── presentation/            # Screens, providers (Riverpod)
-│   ├── health/                      # HealthKit / Health Connect integration
-│   └── notifications/               # Notification center UI
-│
-├── chat/                            # Real-time chat (Clean Architecture)
-│   ├── domain/                      # Entities + repositories
-│   ├── data/                        # Models + repositories (Supabase Realtime)
-│   └── presentation/                # Chat list, chat room, providers
-│
-├── models/                          # Food scan / barcode / voice log results
-├── services/                        # Business logic (auth, workouts, nutrition,
-│                                    # stats, measurements, onboarding, health,
-│                                    # food scan, barcode, voice log, plan gen)
-├── supabase/                        # Supabase config + legacy services
-└── widgets/                         # Reusable components (navbar, charts, sheets)
+│   ├── coach/                      # Marketplace · detail · dashboard · media (clean arch)
+│   ├── chat/                       # domain/ data/ presentation/ — realtime chat
+│   ├── health/                     # Wearable sync
+│   └── notifications/              # In-app inbox UI
+├── chat/                           # Chat entities / repositories / providers
+├── models/                         # Food scan / barcode / voice log results
+├── supabase/                       # Config + auth service
+└── widgets/                        # Shared cards, state views, charts, sheets
+
+supabase/
+├── functions/                      # 9 Deno edge functions + _shared/onesignal.ts helper
+└── migrations/                     # RLS, subscriptions, chat storage buckets, notification tables
+
+docs/screenshots/                   # Screenshots used in this README
 ```
 
 </details>
@@ -230,93 +225,176 @@ lib/
 ## 🗄️ Supabase Backend
 
 <details>
-<summary><strong>Click to view the main database tables</strong></summary>
+<summary><strong>Database tables (click)</strong></summary>
 
 | Table | What it stores |
 |---|---|
-| `profiles` | User profile data (weight, height, goals) |
-| `onboarding` | Onboarding answers per user |
-| `user_goals` | Daily targets (calories, protein, steps) |
-| `daily_summary` | One row per user per day (auto-updated by triggers) |
-| `nutrition_logs` | Food entries per meal per day |
-| `foods` | Food database (seeded + custom) |
-| `food_scans` | AI photo scan results |
-| `voice_food_logs` / `voice_food_log_items` | Voice logging results |
-| `workout_sessions` / `workout_sets` | Workout records |
-| `body_measurements` | Body metric history |
-| `daily_activity` | Health-synced steps/calories/heart rate |
-| `weekly_activity`, `streaks` | Activity charting and streaks |
-| `coach_profiles`, `coach_media`, `client_assignments` | Coach marketplace |
-| `conversations`, `messages` | Chat |
+| `profiles`, `onboarding`, `user_goals` | Users, onboarding answers, daily targets |
+| `nutrition_logs`, `foods` | Food entries per meal/day; seeded + custom foods |
+| `food_scans`, `voice_food_log_items` | AI scan & voice results |
+| `workout_sessions`, `workout_sets` | Workout records |
+| `body_measurements`, `daily_activity`, `daily_summary` | Measurements, health sync, per-day rollups (trigger-maintained) |
+| `coach_profiles`, `coach_media`, `coach_subscriptions` | Coach marketplace |
+| `conversations`, `messages` | Realtime chat (text / voice / image / file) |
 | `subscriptions` | Stripe subscription state |
-| `notifications` | In-app notifications |
+| `notification_preferences`, `notification_log` | Reminder settings & in-app notification history |
 
 **Views:** `weekly_progress`, `weight_progress`, `personal_records`
-
-Migrations live in [`supabase/migrations/`](supabase/migrations/).
+**Migrations:** [`supabase/migrations/`](supabase/migrations/)
 
 </details>
 
 <details>
-<summary><strong>Click to view the Edge Functions (small server-side functions)</strong></summary>
+<summary><strong>Edge Functions (click)</strong></summary>
 
 | Function | Purpose |
-|----------|---------|
+|---|---|
 | `analyze-food` | Gemini vision analysis of meal photos |
+| `log-food-text` | Gemini text parsing (*"دجاج و رز"*) → log entries |
 | `log-food-voice` | Gemini audio analysis; uploads audio + saves logs server-side |
 | `lookup-barcode` | Product lookup by barcode |
-| `create-checkout-session` | Create Stripe Checkout session |
-| `stripe-webhook` | Sync subscription state from Stripe events |
-| `get-subscription-status` | Verify current subscription |
+| `create-checkout-session` | Stripe Checkout session creation |
+| `stripe-webhook` | Subscription state sync from Stripe events |
+| `get-subscription-status` | Verified current-subscription check |
+| `send-notification` | OneSignal push helper (user self-push or server `x-admin-key`) |
+| `send-meal-reminders` | Cron-driven meal nudges (see notifications table above) |
 
-Deploy functions:
-
-```bash
-supabase functions deploy analyze-food
-supabase functions deploy log-food-voice
-# ...etc
-```
-
-Required secrets include `GEMINI_API_KEY` and Stripe keys.
+Shared OneSignal helper: [`supabase/functions/_shared/onesignal.ts`](supabase/functions/_shared/onesignal.ts)
 
 </details>
+
+<details>
+<summary><strong>Storage buckets (click)</strong></summary>
+
+| Bucket | Access |
+|---|---|
+| `chat-voice-notes`, `chat-images`, `chat-files` | Private — participants of the conversation only (RLS on folder = conversation id) |
+| `food-scans`, `voice-food-logs` | Private — owner only |
+| `avatars`, `coach-media`, `coach-pdfs` | Public read |
+
+</details>
+
+**Scheduled jobs (pg_cron):** meal reminders (`0 6,12,18 * * *` UTC = 8ص/2م/8م Cairo) and a monthly streak-freeze reset. Cron calls authenticate with a Vault-stored secret header.
 
 ---
 
 ## 🚀 Getting Started
 
-> Even if you're new to development, just follow these steps in order.
+> Follow these steps in order.
 
-**Before you start, make sure you have:**
-- ✅ Flutter SDK >= 3.8.0
-- ✅ A Supabase project with migrations applied
-- ✅ Deployed Edge Functions (needed for AI features and payments)
+**Prerequisites**
+- ✅ Flutter SDK ≥ 3.8
+- ✅ A Supabase project · a OneSignal app (Android platform configured) · a Stripe account
+- ✅ Android SDK — minSdk 26, **core library desugaring enabled** (required by local notifications)
 
-### Step 1 — Clone the repository
+### 1 · Clone & install
 ```bash
-git clone <repository-url>
+git clone https://github.com/alimohammedassi/coregymali.git
 cd coregymali
-```
-
-### Step 2 — Install dependencies
-```bash
 flutter pub get
 ```
 
-### Step 3 — Configure Supabase
-1. Create a project at [supabase.com](https://supabase.com)
-2. Apply the SQL migrations from `supabase/migrations/`
-3. Set your credentials in `lib/supabase/supabase_config.dart`
+### 2 · Configure the app
+Fill in `lib/supabase/supabase_config.dart`:
 
-### Step 4 — Configure Edge Function secrets
-```bash
-supabase secrets set GEMINI_API_KEY=<your-key>
+```dart
+static const String supabaseUrl     = 'https://<ref>.supabase.co';
+static const String supabaseAnonKey = '<anon-key>';    // public by design
+static const String oneSignalAppId  = '<onesignal-app-id>';
 ```
 
-### Step 5 — Run the app
+### 3 · Database
+Run the SQL files in [`supabase/migrations/`](supabase/migrations/) in order via the Supabase SQL Editor (RLS policies, chat buckets, notification tables).
+
+### 4 · Edge Function secrets (server-side only — never in the app)
+```bash
+supabase secrets set \
+  ONESIGNAL_APP_ID=<app-id> \
+  ONESIGNAL_REST_API_KEY=<rest-key> \
+  ADMIN_API_KEY=<random-32-byte-hex> \
+  CRON_SECRET=<random-32-byte-hex> \
+  STRIPE_SECRET_KEY=<sk_test|live> \
+  GEMINI_API_KEY=<gemini-key>
+```
+
+### 5 · Deploy Edge Functions
+```bash
+supabase functions deploy analyze-food log-food-text log-food-voice lookup-barcode
+supabase functions deploy create-checkout-session get-subscription-status stripe-webhook
+supabase functions deploy send-notification
+supabase functions deploy send-meal-reminders --no-verify-jwt   # cron-authenticated instead
+```
+
+### 6 · Schedule the cron job
+```sql
+select vault.create_secret('<random-32-byte-hex>', 'coregym_cron_secret');
+
+select cron.schedule('coregym-meal-reminders', '0 6,12,18 * * *', $$  -- 8ص/2م/8م Cairo
+  select net.http_post(
+    url := 'https://<ref>.supabase.co/functions/v1/send-meal-reminders',
+    headers := jsonb_build_object('Content-Type','application/json',
+      'x-cron-secret', (select decrypted_secret from vault.decrypted_secrets
+                         where name = 'coregym_cron_secret')),
+    body := '{}'::jsonb)
+$$);
+```
+
+### 7 · Run
 ```bash
 flutter run
 ```
+
+---
+
+## 🔐 Security
+
+- **Row Level Security** on user-scoped tables; `notification_log` inserts happen only server-side (service role)
+- REST / admin / cron keys live in **Supabase secrets & Vault** — the app ships only the anon key
+- `send-notification` accepts a signed-in user JWT (**self-push only**) or the server `x-admin-key`
+- Stripe webhooks verify signatures; subscription status is re-verified server-side against the JWT
+- Private chat buckets enforce participant-only access via storage RLS
+
+---
+
+## 🧪 Testing
+
+```bash
+flutter analyze   # 0 errors (pre-existing lint infos only)
+flutter test      # 9 passing: food-search ranking (EN/AR), workout logging contract, coach dashboard smoke
+```
+
+Features shipped in this repository were **live-tested on real Android hardware** — push delivery confirmed end-to-end through OneSignal (welcome + meal reminders + water scheduling verified via logcat), chat voice/image/PDF round-trips, and Stripe checkout flows.
+
+---
+
+## 🌐 Localization
+
+Fully localized into **English** and **Arabic** with RTL layout switching. To add a language:
+
+1. Create a new ARB file in `lib/l10n/` (e.g. `app_fr.arb`)
+2. Add the locale to `supportedLocales` in `lib/main.dart`
+3. Run `flutter gen-l10n`
+
+---
+
+## 📦 Building for Production
+
+```bash
+flutter build apk --release     # Android
+flutter build ios --release     # iOS
+```
+
+> **Notes:** Health integration requires the HealthKit capability (iOS) and Health Connect permissions in `AndroidManifest.xml` (see [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md)). Android builds require core library desugaring (already configured). iOS rich-push Notification Service Extension is on the roadmap.
+
+---
+
+## 🗺️ Roadmap
+
+- [ ] Calorie-limit alert (~90% of daily goal) — event-triggered push
+- [ ] Chat push notifications + tap-to-open-conversation deep-linking
+- [ ] In-app notification inbox (bell + unread badge)
+- [ ] Coach dashboard → dedicated web app
+- [ ] iOS Notification Service Extension (rich media pushes)
 
 ---
 
@@ -324,55 +402,30 @@ flutter run
 
 <details>
 <summary><strong>Does the app need an internet connection all the time?</strong></summary>
-<br/>
-Most features (photo/voice food scanning, chat, and health sync) rely on Supabase and Gemini, which run online — so most of the app requires an internet connection.
-</details>
 
-<details>
-<summary><strong>Do I need to be a developer to just use the app?</strong></summary>
-<br/>
-No — as an end user you don't. To build or modify the code, though, you'll need basic Flutter/Dart experience and familiarity with Supabase.
+Most features (AI food scanning, chat, payments, server reminders) rely on Supabase and Gemini online. Water reminders are local and work offline.
 </details>
 
 <details>
 <summary><strong>What's the difference between the AI Smart Trainer and the Coach Marketplace?</strong></summary>
-<br/>
-The AI Smart Trainer instantly generates a workout plan with no human involved. The Coach Marketplace connects you with a real human coach you can message and get personalized (paid) guidance from.
+
+The AI Smart Trainer instantly generates a workout plan with no human involved. The Coach Marketplace connects you with a real human coach you can message (voice/photos/PDFs) and subscribe to.
 </details>
 
----
+<details>
+<summary><strong>How do notifications find me without managing device tokens?</strong></summary>
 
-## 🌐 Localization
-
-The app is fully localized into **English** and **Arabic** (with RTL layout switching). To add a new language:
-
-1. Create a new ARB file in `lib/l10n/` (e.g., `app_fr.arb`)
-2. Add the locale to `supportedLocales` in `lib/main.dart`
-3. Run `flutter gen-l10n` to regenerate localization files
-
----
-
-## 📦 Building for Production
-
-### Android
-```bash
-flutter build apk --release
-```
-
-### iOS
-```bash
-flutter build ios --release
-```
-
-> **Note:** Health integration requires the HealthKit capability (iOS) and Health Connect permissions declared in `AndroidManifest.xml` (Android). See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md).
+The app tags your OneSignal user with your Supabase auth id (`external_id`). Server functions target that id — OneSignal handles every device and platform detail.
+</details>
 
 ---
 
 ## 📚 Additional Documentation
 
-- [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md) — Wearable/health data sync architecture and platform permissions
-- [VOICE_FOOD_LOG_SUPABASE_SETUP.md](VOICE_FOOD_LOG_SUPABASE_SETUP.md) — Voice food logging database schema and wiring guide
+- [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md) — Wearable/health data sync
+- [VOICE_FOOD_LOG_SUPABASE_SETUP.md](VOICE_FOOD_LOG_SUPABASE_SETUP.md) — Voice logging schema & wiring
 - [MIGRATE_TO_SUPABASE.md](MIGRATE_TO_SUPABASE.md) — Backend migration notes
+- [CHAT_IMPLEMENTATION.md](CHAT_IMPLEMENTATION.md) — Chat system: send-bug fix, voice/image/PDF sharing
 
 ---
 

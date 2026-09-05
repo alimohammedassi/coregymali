@@ -74,6 +74,7 @@ class MyApp extends StatelessWidget {
     final localeProvider = context.watch<LocaleProvider>();
     final themeProvider = context.watch<ThemeModeProvider>();
     return MaterialApp(
+      navigatorKey: NotificationService.navigatorKey,
       locale: localeProvider.locale,
       supportedLocales: const [Locale('en'), Locale('ar')],
       localizationsDelegates: const [

@@ -2155,6 +2155,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Or log another way'**
   String get logAnotherWay;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @markAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all read'**
+  String get markAllRead;
+
+  /// No description provided for @notificationsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notificationsEmpty;
 }
 
 class _AppLocalizationsDelegate

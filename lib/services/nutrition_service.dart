@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/food_scan_result.dart';
@@ -159,6 +161,7 @@ class NutritionService {
       // Logged food → count today as active for the streak.
       _streakService.recordActivity('nutrition');
       debugPrint('✅ nutrition_log inserted & daily_summary updated for $d');
+      unawaited(maybeSendCalorieAlert());
       return true;
     } on PostgrestException catch (e) {
       debugPrint('❌ Supabase error logging food: ${e.message} | code: ${e.code} | details: ${e.details}');
@@ -223,6 +226,7 @@ class NutritionService {
       // AI food scan → count today as active for the streak.
       _streakService.recordActivity('nutrition');
       debugPrint('✅ saved $savedCount/${items.length} scanned items for $d');
+      unawaited(maybeSendCalorieAlert());
       return true;
     }
     return false;
@@ -282,6 +286,7 @@ class NutritionService {
       // Voice food log → count today as active for the streak.
       _streakService.recordActivity('nutrition');
       debugPrint('✅ saved $savedCount/${items.length} voice items for $d');
+      unawaited(maybeSendCalorieAlert());
       return true;
     }
     return false;
@@ -461,6 +466,7 @@ class NutritionService {
       if (log['logged_date'] != null) {
         await _updateDailySummary(log['logged_date'].toString());
       }
+      unawaited(maybeSendCalorieAlert());
       return true;
     } on PostgrestException catch (e) {
       debugPrint('❌ Supabase error updating log: ${e.message} | code: ${e.code}');
@@ -491,5 +497,67 @@ class NutritionService {
       fatG: fatG,
     );
   }
-}
 
+
+  // ── Task 5 — calorie-limit alert ────────────────────────────────────────
+  /// Called after any successful food logging/edit. Fires a one-per-day
+  /// bilingual push once today's total crosses 90% of daily_calories.
+  /// Respects notification_preferences.calorie_alerts_enabled (missing row
+  /// = enabled). Failures are silent — logging already succeeded.
+  Future<void> maybeSendCalorieAlert() async {
+    try {
+      final uid = currentUserId;
+      if (uid == null) return;
+
+      final pref = await supabase
+          .from('notification_preferences')
+          .select('calorie_alerts_enabled')
+          .eq('user_id', uid)
+          .maybeSingle();
+      if (pref != null && pref['calorie_alerts_enabled'] == false) return;
+
+      final today = DateTime.now().toIso8601String().substring(0, 10);
+      final startIso = DateTime.parse(today).toIso8601String();
+
+      final rows = await supabase
+          .from('nutrition_logs')
+          .select('calories')
+          .eq('user_id', uid)
+          .gte('logged_at', startIso);
+      final total = rows.fold<double>(
+        0,
+        (sum, r) => sum + ((r['calories'] as num?)?.toDouble() ?? 0),
+      );
+
+      final goals = await supabase
+          .from('user_goals')
+          .select('daily_calories')
+          .eq('user_id', uid)
+          .maybeSingle();
+      final goal = (goals?['daily_calories'] as num?)?.toDouble() ?? 2000;
+      if (goal <= 0 || total < goal * 0.9) return;
+
+      final prior = await supabase
+          .from('notification_log')
+          .select('id')
+          .eq('user_id', uid)
+          .eq('type', 'calorie_alert')
+          .gte('sent_at', startIso)
+          .limit(1);
+      if ((prior as List).isNotEmpty) return;
+
+      final left = (goal - total).round();
+      await supabase.functions.invoke('send-notification', body: {
+        'user_id': uid,
+        'title': 'Close to your calorie goal 🔥',
+        'body': 'You have $left kcal left today — nice pacing!',
+        'title_ar': 'قربت توصل لهدف سعراتك 🔥',
+        'body_ar': 'باقي $left كالوري النهاردة — ممتاز! 💪',
+        'type': 'calorie_alert',
+        'data': {'left_kcal': left},
+      });
+    } catch (e) {
+      debugPrint('calorie alert check skipped: $e');
+    }
+  }
+}

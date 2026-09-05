@@ -17,6 +17,7 @@ import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../services/notification_service.dart';
 import '../../../theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../domain/entities/conversation_entity.dart';
@@ -61,6 +62,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     // Send failures surface as a transient SnackBar — the conversation list
     // must never be replaced by an error screen because one message failed.
     _chatNotifier.addListener(_onChatNotifierChanged);
+    // Task 6 — while this room is open in the foreground, its own pushes are
+    // suppressed (the messages arrive via realtime anyway).
+    NotificationService.instance
+        .setSuppressedConversation(widget.conversation.id);
     _inputBarAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
@@ -123,6 +128,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
 
   @override
   void dispose() {
+    NotificationService.instance.setSuppressedConversation(null);
     _chatNotifier.removeListener(_onChatNotifierChanged);
     _textController.removeListener(_onTextChanged);
     _textController.dispose();

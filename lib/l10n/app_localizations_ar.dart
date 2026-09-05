@@ -1089,4 +1089,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get logAnotherWay => 'أو سجّل بطريقة تانية';
+
+  @override
+  String get notificationsTitle => 'الإشعارات';
+
+  @override
+  String get markAllRead => 'تعليم الكل كمقروء';
+
+  @override
+  String get notificationsEmpty => 'مفيش إشعارات لسه';
 }

@@ -1,5 +1,9 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import '../chat/data/repositories/chat_repository.dart';
+import '../chat/domain/entities/conversation_entity.dart';
+import '../chat/presentation/screens/chat_room_screen.dart';
 import '../supabase/supabase_config.dart';
 
 /// OneSignal push notification infrastructure (Task 1 of the notification
@@ -18,6 +22,17 @@ import '../supabase/supabase_config.dart';
 class NotificationService {
   NotificationService._();
   static final NotificationService instance = NotificationService._();
+
+  /// Global navigator — lets notification taps deep-link from anywhere.
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  /// Conversation whose pushes are suppressed (set while its chat room is
+  /// open in the foreground — Task 6 "don't notify about what you're reading").
+  String? _suppressedConversationId;
+  void setSuppressedConversation(String? conversationId) {
+    _suppressedConversationId = conversationId;
+  }
 
   bool _initialized = false;
   bool get isReady => _initialized;
@@ -87,6 +102,30 @@ class NotificationService {
       // Session restored on app start - tag immediately.
       final userId = SupabaseConfig.client.auth.currentUser?.id;
       if (userId != null) await login(userId);
+
+      // Task 6 — foreground suppression: a push for the conversation the
+      // user is currently reading never displays.
+      OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+        final data = event.notification.additionalData;
+        final pushedConversation = data?['conversation_id']?.toString();
+        if (pushedConversation != null &&
+            pushedConversation == _suppressedConversationId) {
+          event.preventDefault();
+        } else {
+          OneSignal.Notifications.displayNotification(
+            event.notification.notificationId,
+          );
+        }
+      });
+
+      // Task 6 — tap deep-link: open the conversation the push is about.
+      OneSignal.Notifications.addClickListener((event) {
+        final data = event.notification.additionalData;
+        final conversationId = data?['conversation_id']?.toString();
+        if (conversationId != null && conversationId.isNotEmpty) {
+          openConversation(conversationId);
+        }
+      });
     } catch (e) {
       debugPrint('OneSignal init failed: $e');
     }
@@ -145,6 +184,33 @@ class NotificationService {
       await OneSignal.login(userId);
     } catch (e) {
       debugPrint('OneSignal login failed: $e');
+    }
+  }
+
+  /// Deep-link: fetch the conversation (with profile names) and open its
+  /// chat room on top of whatever is on screen.
+  Future<void> openConversation(String conversationId) async {
+    try {
+      final userId = SupabaseConfig.client.auth.currentUser?.id;
+      if (userId == null) return;
+      final repo = ChatRepository(SupabaseConfig.client);
+      final conversations = await repo.getConversations(userId);
+      ConversationEntity? match;
+      for (final c in conversations) {
+        if (c.id == conversationId) {
+          match = c;
+          break;
+        }
+      }
+      final context = navigatorKey.currentContext;
+      if (match == null || context == null || !context.mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatRoomScreen(conversation: match!),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Chat deep-link failed: $e');
     }
   }
 

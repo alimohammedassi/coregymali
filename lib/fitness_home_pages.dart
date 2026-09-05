@@ -20,6 +20,8 @@ import 'screens/text_food_log_screen.dart';
 import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/stats_service.dart';
+import 'screens/notifications_inbox_screen.dart';
+import 'supabase/supabase_config.dart';
 import 'services/notification_service.dart';
 import 'services/streak_service.dart';
 import 'services/supabase_client.dart';
@@ -1508,6 +1510,11 @@ class _KaleeHeader extends StatelessWidget {
 
           const SizedBox(width: 8),
 
+          // Notification bell — unread badge from notification_log (Task 7).
+          const _NotificationBell(),
+
+          const SizedBox(width: 8),
+
           // Chat Button
           _InteractiveScaleDetector(
             onTap: onOpenChat,
@@ -1672,6 +1679,105 @@ class _StatChipData {
     required this.value,
     required this.label,
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1a-1. Notification bell (Task 7) — unread badge over notification_log
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _NotificationBell extends StatefulWidget {
+  const _NotificationBell();
+
+  @override
+  State<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends State<_NotificationBell> {
+  int _unread = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnread();
+  }
+
+  Future<void> _loadUnread() async {
+    final userId = SupabaseConfig.client.auth.currentUser?.id;
+    if (userId == null || !mounted) return;
+    try {
+      final rows = await SupabaseConfig.client
+          .from('notification_log')
+          .select('id')
+          .eq('user_id', userId)
+          .filter('read_at', 'is', null);
+      if (!mounted) return;
+      setState(() => _unread = (rows as List).length);
+    } catch (_) {}
+  }
+
+  void _openInbox() async {
+    HapticFeedback.selectionClick();
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const NotificationsInboxScreen()),
+    );
+    if (mounted) _loadUnread();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _InteractiveScaleDetector(
+      onTap: _openInbox,
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cardShadow,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.notifications_none_rounded,
+              size: 20,
+              color: AppColors.textSecondary,
+            ),
+            if (_unread > 0)
+              Positioned(
+                top: 5,
+                right: 5,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  constraints: const BoxConstraints(minWidth: 15),
+                  height: 15,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _unread > 99 ? '99+' : '$_unread',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -443,5 +443,8 @@
   "themeDark": "داكن",
   "saveFailed": "تعذّر الحفظ — تأكد من الاتصال بالإنترنت وحاول مرة أخرى.",
   "aiScanSubtitle": "صوّر أكلك والـ AI يسجّله لك",
-  "logAnotherWay": "أو سجّل بطريقة تانية"
+  "logAnotherWay": "أو سجّل بطريقة تانية",
+  "notificationsTitle": "الإشعارات",
+  "markAllRead": "تعليم الكل كمقروء",
+  "notificationsEmpty": "مفيش إشعارات لسه"
 }

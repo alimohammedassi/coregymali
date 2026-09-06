@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../services/exercise_database.dart';
@@ -460,50 +461,66 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
           ),
           const SizedBox(height: 24),
 
-          // Rest Timer (if resting)
+          // Rest Timer (if resting) — with shrinking progress ring
           if (_isResting) ...[
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.orange.withValues(alpha: 0.2),
-                    Colors.orange.withValues(alpha: 0.1),
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 1, end: _restSecondsRemaining / widget.plannedExercise.restSeconds),
+              duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppDurations.medium,
+              curve: AppCurves.standard,
+              builder: (context, progress, _) => Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.orange.withValues(alpha: 0.2),
+                      Colors.orange.withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                ),
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 96,
+                          height: 96,
+                          child: CircularProgressIndicator(
+                            value: progress.clamp(0.0, 1.0),
+                            strokeWidth: 6,
+                            backgroundColor: Colors.orange.withValues(alpha: 0.15),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Colors.orange),
+                          ),
+                        ),
+                        const Icon(Icons.timer_rounded, color: Colors.orange, size: 38),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '$_restSecondsRemaining',
+                      style: AppText.headlineLg.copyWith(
+                        color: Colors.orange,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 48,
+                      ),
+                    ),
+                    Text(
+                      'ثانية راحة متبقية',
+                      style: AppText.bodySm.copyWith(color: Colors.orange),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => setState(() => _isResting = false),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.orange,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('تخطي الراحة'),
+                    ),
                   ],
                 ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
-              ),
-              child: Column(
-                children: [
-                  const Icon(
-                    Icons.timer_rounded,
-                    color: Colors.orange,
-                    size: 48,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '$_restSecondsRemaining',
-                    style: AppText.headlineLg.copyWith(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 48,
-                    ),
-                  ),
-                  Text(
-                    'ثانية راحة متبقية',
-                    style: AppText.bodySm.copyWith(color: Colors.orange),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => setState(() => _isResting = false),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('تخطي الراحة'),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 24),
@@ -519,36 +536,55 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
             ..._completedSets.asMap().entries.map((entry) {
               final index = entry.key;
               final set = entry.value;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
+              final isLatest = index == _completedSets.length - 1;
+              return TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: 1),
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : AppDurations.fast,
+                curve: AppCurves.standard,
+                builder: (context, value, child) => Opacity(
+                  opacity: value,
+                  child: Transform.scale(
+                    scale: 0.96 + 0.04 * value,
+                    child: child,
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: set.isWarmup
-                            ? Colors.orange.withValues(alpha: 0.2)
-                            : AppColors.primaryFixed.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${index + 1}',
-                          style: TextStyle(
-                            color: set.isWarmup
-                                ? Colors.orange
-                                : AppColors.primaryFixed,
-                            fontWeight: FontWeight.w900,
+                child: AnimatedContainer(
+                  duration: AppDurations.fast,
+                  curve: AppCurves.standard,
+                  margin: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isLatest
+                        ? AppColors.primaryFixed.withValues(alpha: 0.08)
+                        : AppColors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isLatest
+                        ? Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.25))
+                        : null,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: set.isWarmup
+                              ? Colors.orange.withValues(alpha: 0.2)
+                              : AppColors.primaryFixed.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              color: set.isWarmup ? Colors.orange : AppColors.primaryFixed,
+                              fontWeight: FontWeight.w900,
+                            ),
                           ),
                         ),
                       ),
-                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
@@ -583,7 +619,8 @@ class _ExerciseDetailSheetState extends State<ExerciseDetailSheet>
                       ),
                   ],
                 ),
-              );
+              ),
+            );
             }),
             const SizedBox(height: 24),
           ],

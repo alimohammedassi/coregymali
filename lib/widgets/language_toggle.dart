@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/locale_provider.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 
 class LanguageToggle extends StatelessWidget {
@@ -86,8 +87,8 @@ class _LangOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
+        duration: AppDurations.medium,
+        curve: AppCurves.standard,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryFixed : Colors.transparent,

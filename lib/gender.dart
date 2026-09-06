@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'login_sign_up.dart';
+import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';
 
@@ -35,7 +36,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
     )..repeat(reverse: true);
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _animationController, curve: AppCurves.emphasized),
     );
 
     _slideAnimation = Tween<double>(begin: 50.0, end: 0.0).animate(
@@ -239,8 +240,8 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
+            duration: AppDurations.medium,
+            curve: AppCurves.emphasized,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: isSelected

@@ -79,24 +79,23 @@ class BarcodeLookupService {
         : '${product.productName} (${product.brand})';
 
     try {
-      final inserted = await supabase
-          .from('nutrition_logs')
-          .insert({
-            'user_id': userId,
-            'food_name': name,
-            'meal_type': mealType,
-            'quantity': quantityG,
-            'serving_unit': 'g',
-            'calories': product.caloriesFor(quantityG),
-            'protein_g': product.proteinFor(quantityG),
-            'carbs_g': product.carbsFor(quantityG),
-            'fat_g': product.fatFor(quantityG),
-            'logged_date': d,
-          })
-          .select('id')
-          .single();
+      // Shared insert helper: adds the micro-nutrient columns scaled to the
+      // quantity and transparently degrades to the legacy schema when the
+      // additional-nutrients migration hasn't been applied yet.
+      final inserted = await _nutritionService.insertNutritionLogRow({
+        'user_id': userId,
+        'food_name': name,
+        'meal_type': mealType,
+        'quantity': quantityG,
+        'serving_unit': 'g',
+        'calories': product.caloriesFor(quantityG),
+        'protein_g': product.proteinFor(quantityG),
+        'carbs_g': product.carbsFor(quantityG),
+        'fat_g': product.fatFor(quantityG),
+        'logged_date': d,
+      }, product.nutrientsFor(quantityG));
 
-      final logId = inserted['id']?.toString();
+      final logId = inserted?['id']?.toString();
       debugPrint('✅ barcode "${product.barcode}" → nutrition_log $logId');
 
       // Keep daily_summary in sync so the Nutrition tab / home ring reflect

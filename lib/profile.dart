@@ -11,6 +11,7 @@ import 'supabase/supabase_config.dart';
 import 'services/stats_service.dart';
 import 'services/streak_service.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'login_sign_up.dart';
@@ -1773,14 +1774,17 @@ class _ProfilePageState extends State<ProfilePage>
                   Navigator.of(ctx).pushAndRemoveUntil(
                     PageRouteBuilder(
                       pageBuilder: (_, a, __) => const AuthWrapper(),
-                      transitionsBuilder: (_, a, __, child) => FadeTransition(
-                        opacity: CurvedAnimation(
-                          parent: a,
-                          curve: Curves.easeOut,
-                        ),
-                        child: child,
-                      ),
-                      transitionDuration: const Duration(milliseconds: 400),
+                      transitionsBuilder: (context, a, __, child) {
+                        if (MediaQuery.disableAnimationsOf(context)) return child;
+                        return FadeTransition(
+                          opacity: CurvedAnimation(
+                            parent: a,
+                            curve: AppCurves.standard,
+                          ),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: AppDurations.slow,
                     ),
                     (_) => false,
                   );
@@ -1951,11 +1955,11 @@ class _PressCardState extends State<_PressCard>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
+    _c = AnimationController(vsync: this, duration: AppDurations.fast);
     _s = Tween<double>(
       begin: 1.0,
       end: .98,
-    ).animate(CurvedAnimation(parent: _c, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _c, curve: AppCurves.standard));
   }
 
   @override

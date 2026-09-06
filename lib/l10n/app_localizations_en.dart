@@ -75,6 +75,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get dayStreakLabel => 'day streak';
+
+  @override
   String get dailyMetrics => 'DAILY METRIC MATRIX';
 
   @override

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../theme/app_animations.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_text.dart';
@@ -29,15 +30,16 @@ class _MyProgramTabState extends State<MyProgramTab>
   @override
   void initState() {
     super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
     _heroController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: reduce ? Duration.zero : const Duration(milliseconds: 600),
     );
-    _heroFade = CurvedAnimation(parent: _heroController, curve: Curves.easeOut);
+    _heroFade = CurvedAnimation(parent: _heroController, curve: AppCurves.standard);
     _heroSlide = Tween<Offset>(
       begin: const Offset(0, 0.06),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _heroController, curve: Curves.easeOut));
+    ).animate(CurvedAnimation(parent: _heroController, curve: AppCurves.standard));
 
     _loadActiveProgram();
   }
@@ -358,11 +360,18 @@ class _MyProgramTabState extends State<MyProgramTab>
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: AppColors.borderSubtle,
-                  valueColor: AlwaysStoppedAnimation<Color>(levelColor),
-                  minHeight: 6,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween<double>(begin: 0, end: progress),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : AppDurations.medium,
+                  curve: AppCurves.standard,
+                  builder: (context, value, _) => LinearProgressIndicator(
+                    value: value,
+                    backgroundColor: AppColors.borderSubtle,
+                    valueColor: AlwaysStoppedAnimation<Color>(levelColor),
+                    minHeight: 6,
+                  ),
                 ),
               ),
             ],

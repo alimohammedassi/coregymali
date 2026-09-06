@@ -12,6 +12,7 @@ import 'features/coach/presentation/screens/coach_profile_setup_screen.dart';
 import 'features/coach/presentation/providers/coach_dashboard_providers.dart';
 import 'package:provider/provider.dart';
 import 'features/coach/presentation/providers/coach_setup_provider.dart';
+import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';
 import 'widgets/language_toggle.dart';
@@ -1695,11 +1696,14 @@ String? _passwordValidator(String? v) {
 
 PageRoute _route(Widget page) => PageRouteBuilder(
   pageBuilder: (_, a, __) => page,
-  transitionsBuilder: (_, a, __, child) => FadeTransition(
-    opacity: CurvedAnimation(parent: a, curve: Curves.easeOut),
-    child: child,
-  ),
-  transitionDuration: const Duration(milliseconds: 350),
+  transitionsBuilder: (context, a, __, child) {
+    if (MediaQuery.disableAnimationsOf(context)) return child;
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: a, curve: AppCurves.standard),
+      child: child,
+    );
+  },
+  transitionDuration: AppDurations.medium,
 );
 
 extension on BuildContext {

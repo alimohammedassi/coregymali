@@ -87,24 +87,23 @@ class TextFoodLogService {
       final item = items[i];
       final w = weightsG[i].clamp(10.0, 5000.0);
       try {
-        final inserted = await supabase
-            .from('nutrition_logs')
-            .insert({
-              'user_id': userId,
-              'food_name': item.name,
-              'meal_type': mealType,
-              'quantity': w,
-              'serving_unit': 'g',
-              'calories': item.caloriesFor(w),
-              'protein_g': item.proteinFor(w),
-              'carbs_g': item.carbsFor(w),
-              'fat_g': item.fatFor(w),
-              'logged_date': d,
-            })
-            .select('id')
-            .single();
+        // Shared insert helper: carries the AI-extracted micro-nutrients
+        // (rescaled to the edited weight) and transparently degrades to the
+        // legacy schema when the additional-nutrients migration is missing.
+        final inserted = await _nutritionService.insertNutritionLogRow({
+          'user_id': userId,
+          'food_name': item.name,
+          'meal_type': mealType,
+          'quantity': w,
+          'serving_unit': 'g',
+          'calories': item.caloriesFor(w),
+          'protein_g': item.proteinFor(w),
+          'carbs_g': item.carbsFor(w),
+          'fat_g': item.fatFor(w),
+          'logged_date': d,
+        }, item.nutrientsFor(w));
 
-        final logId = inserted['id']?.toString();
+        final logId = inserted?['id']?.toString();
         debugPrint('✅ text item "${item.name}" → nutrition_log $logId');
         savedCount++;
       } on PostgrestException catch (e) {

@@ -82,8 +82,9 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
           .eq('id', item['id'].toString());
     }
     final data = item['data'];
-    final conversationId =
-        data is Map ? data['conversation_id']?.toString() : null;
+    final conversationId = data is Map
+        ? data['conversation_id']?.toString()
+        : null;
     if (item['type'] == 'chat' &&
         conversationId != null &&
         conversationId.isNotEmpty) {
@@ -127,24 +128,21 @@ class _NotificationsInboxScreenState extends State<NotificationsInboxScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _ErrorBox(error: _error!, onRetry: _load)
-              : _items.isEmpty
-                  ? _EmptyBox(label: l?.notificationsEmpty ?? 'No notifications yet')
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      child: ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                        itemCount: _items.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
-                        itemBuilder: (_, i) {
-                          final item = _items[i];
-                          return _InboxTile(
-                            item: item,
-                            onTap: () => _onTap(item),
-                          );
-                        },
-                      ),
-                    ),
+          ? _ErrorBox(error: _error!, onRetry: _load)
+          : _items.isEmpty
+          ? _EmptyBox(label: l?.notificationsEmpty ?? 'No notifications yet')
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                itemCount: _items.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final item = _items[i];
+                  return _InboxTile(item: item, onTap: () => _onTap(item));
+                },
+              ),
+            ),
     );
   }
 }
@@ -228,7 +226,9 @@ class _InboxTile extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: AppColors.textPrimary,
-                              fontWeight: unread ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight: unread
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
                               fontSize: 14,
                             ),
                           ),
@@ -316,8 +316,11 @@ class _EmptyBox extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.notifications_off_outlined,
-              color: AppColors.textMuted, size: 44),
+          Icon(
+            Icons.notifications_off_outlined,
+            color: AppColors.textMuted,
+            size: 44,
+          ),
           const SizedBox(height: 12),
           Text(
             label,
@@ -370,8 +373,7 @@ Future<void> openChatById(BuildContext context, String conversationId) async {
   if (conversation == null || !context.mounted) return;
   Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (_) =>
-          ChatRoomScreen(conversation: conversation),
+      builder: (_) => ChatRoomScreen(conversation: conversation),
     ),
   );
 }

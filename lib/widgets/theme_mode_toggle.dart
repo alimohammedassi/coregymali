@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_mode_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 
 /// Segmented System / Light / Dark control for the Profile screen.
@@ -82,8 +83,8 @@ class _ModeOption extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
+        duration: AppDurations.medium,
+        curve: AppCurves.standard,
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.primaryFixed : Colors.transparent,

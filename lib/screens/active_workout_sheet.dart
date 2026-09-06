@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../services/workout_service.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 
@@ -120,24 +121,59 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
           ),
           const SizedBox(height: 16),
           if (_restTimer > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              margin: const EdgeInsets.only(bottom: 16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primaryFixed),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   Icon(Icons.timer, color: AppColors.primaryFixed),
-                  const SizedBox(width: 8),
-                  Text(
-                    'REST: 00:${_restTimer.toString().padLeft(2, '0')}',
-                    style: AppText.titleMd.copyWith(color: AppColors.primaryFixed),
-                  ),
-                ],
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: _restTimer / 60),
+              duration: MediaQuery.disableAnimationsOf(context) ? Duration.zero : AppDurations.medium,
+              curve: AppCurves.standard,
+              builder: (context, value, _) => Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryFixed.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryFixed),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 26,
+                      height: 26,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            value: value,
+                            strokeWidth: 2.5,
+                            color: AppColors.primaryFixed,
+                            backgroundColor: AppColors.primaryFixed.withValues(alpha: 0.15),
+                          ),
+                          Icon(Icons.timer, color: AppColors.primaryFixed, size: 14),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'REST: 00:${_restTimer.toString().padLeft(2, '0')}',
+                      style: AppText.titleMd.copyWith(color: AppColors.primaryFixed),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        _timer?.cancel();
+                        setState(() => _restTimer = 0);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryFixed,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text('Skip', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           Row(
@@ -208,20 +244,49 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
                     itemCount: _sets.length,
                     itemBuilder: (context, index) {
                       final set = _sets[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainer,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: AppColors.glassBorder),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Set ${set['set_number']}', style: AppText.titleSm),
-                            Text('${set['weight_kg']} kg  ×  ${set['reps']} reps', style: AppText.bodyLg),
-                          ],
+                      final isLatest = index == _sets.length - 1 && _sets.length > 0;
+                      return _AnimatedSetRow(
+                        isLatest: isLatest,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isLatest
+                                ? AppColors.primaryFixed.withValues(alpha: 0.06)
+                                : AppColors.surfaceContainer,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isLatest ? AppColors.primaryFixed.withValues(alpha: 0.3) : AppColors.glassBorder,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  AnimatedContainer(
+                                    duration: AppDurations.fast,
+                                    curve: AppCurves.standard,
+                                    width: 22,
+                                    height: 22,
+                                    decoration: BoxDecoration(
+                                      color: isLatest ? AppColors.primaryFixed : Colors.transparent,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isLatest ? AppColors.primaryFixed : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    child: isLatest
+                                        ? const Icon(Icons.check_rounded, size: 14, color: Colors.white)
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text('Set ${set['set_number']}', style: AppText.titleSm),
+                                ],
+                              ),
+                              Text('${set['weight_kg']} kg  ×  ${set['reps']} reps', style: AppText.bodyLg),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -241,5 +306,46 @@ class _ActiveWorkoutSheetState extends State<ActiveWorkoutSheet> {
         ],
       ),
     );
+  }
+}
+
+class _AnimatedSetRow extends StatefulWidget {
+  final Widget child;
+  final bool isLatest;
+  const _AnimatedSetRow({required this.child, required this.isLatest});
+
+  @override
+  State<_AnimatedSetRow> createState() => _AnimatedSetRowState();
+}
+
+class _AnimatedSetRowState extends State<_AnimatedSetRow> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _c = AnimationController(vsync: this, duration: reduce ? Duration.zero : AppDurations.fast);
+    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(CurvedAnimation(parent: _c, curve: AppCurves.standard));
+    if (widget.isLatest) _c.forward();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnimatedSetRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isLatest && !oldWidget.isLatest) _c.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context) || !widget.isLatest) return widget.child;
+    return ScaleTransition(scale: _scale, child: widget.child);
   }
 }

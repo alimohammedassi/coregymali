@@ -18,6 +18,7 @@ import 'package:record/record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../services/notification_service.dart';
+import '../../../theme/app_animations.dart';
 import '../../../theme/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../domain/entities/conversation_entity.dart';
@@ -679,7 +680,7 @@ class _MessageList extends StatelessWidget {
         final isLastInGroup = index == messages.length - 1 ||
             messages[index + 1].senderId != msg.senderId;
 
-        return Column(
+        final bubble = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (showDate) _DateDivider(date: msg.createdAt),
@@ -692,7 +693,98 @@ class _MessageList extends StatelessWidget {
             ),
           ],
         );
+
+        // New messages (last few) animate in; older history appears instantly for perf
+        final bool shouldAnimate = index >= messages.length - 8;
+        if (!shouldAnimate || MediaQuery.disableAnimationsOf(context)) return bubble;
+        return _AnimatedMessageItem(
+          key: ValueKey(msg.id),
+          isMe: isMe,
+          child: bubble,
+        );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Animated message entrance — slide up + fade, respects reduced motion
+// ---------------------------------------------------------------------------
+class _AnimatedMessageItem extends StatefulWidget {
+  final Widget child;
+  final bool isMe;
+  const _AnimatedMessageItem({super.key, required this.child, required this.isMe});
+
+  @override
+  State<_AnimatedMessageItem> createState() => _AnimatedMessageItemState();
+}
+
+class _AnimatedMessageItemState extends State<_AnimatedMessageItem> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _c = AnimationController(vsync: this, duration: reduce ? Duration.zero : AppDurations.medium);
+    _fade = CurvedAnimation(parent: _c, curve: AppCurves.standard);
+    _slide = Tween<Offset>(
+      begin: Offset(0, widget.isMe ? 0.12 : 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _c, curve: AppCurves.standard));
+    _c.forward();
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return FadeTransition(opacity: _fade, child: SlideTransition(position: _slide, child: widget.child));
+  }
+}
+
+// Typing indicator — three dots with staggered opacity
+class _TypingIndicator extends StatelessWidget {
+  final AnimationController controller;
+  const _TypingIndicator({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 50, top: 8, bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(3, (i) {
+          return AnimatedBuilder(
+            animation: controller,
+            builder: (_, __) {
+              final t = (controller.value + i * 0.33) % 1.0;
+              final opacity = (0.3 + 0.7 * (1 - (t - 0.5).abs() * 2).clamp(0.0, 1.0));
+              return Container(
+                margin: EdgeInsets.only(left: i == 0 ? 0 : 4),
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: AppColors.onSurfaceVariant.withValues(alpha: opacity),
+                  shape: BoxShape.circle,
+                ),
+              );
+            },
+          );
+        }),
+      ),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
 import '../services/onboarding_service.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 import '../fitness_home_pages.dart';
 import 'package:provider/provider.dart';
@@ -44,8 +45,8 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     HapticFeedback.lightImpact();
     if (_currentStep < _totalSteps - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
+        duration: AppDurations.medium,
+        curve: AppCurves.emphasized,
       );
       setState(() => _currentStep++);
     } else {
@@ -57,8 +58,8 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     if (_currentStep > 0) {
       HapticFeedback.selectionClick();
       _pageController.previousPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
+        duration: AppDurations.medium,
+        curve: AppCurves.emphasized,
       );
       setState(() => _currentStep--);
     }

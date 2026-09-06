@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'gender.dart';
+import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';
 import 'services/supabase_client.dart';
@@ -14,23 +15,10 @@ import 'package:provider/provider.dart';
 import 'features/coach/presentation/providers/coach_setup_provider.dart';
 import 'providers/profile_provider.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Core Gym',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const SplashScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
+// NOTE: App entry is lib/main.dart → MyApp with providers + navigatorKey.
+// The standalone demo `main()/MyApp` previously here created a SECOND
+// MaterialApp definition and shadowed the real MyApp on import, which is
+// confusing and can hide analyzer errors. Removed to keep a single entry point.
 
 // ────────────────────────────────────────────────────────────────────────────
 // Shared bits
@@ -179,10 +167,7 @@ class _SplashScreenState extends State<SplashScreen>
       if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => destination,
-          transitionDuration: Duration.zero,
-        ),
+        FadeScalePageRoute(page: destination),
       );
     } catch (error, stackTrace) {
       // Previously swallowed with `catch (_)`, which made a broken
@@ -494,8 +479,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       _navigateToLogin();
     } else {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: AppDurations.medium,
+        curve: AppCurves.standard,
       );
     }
   }
@@ -506,15 +491,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         pageBuilder: (context, animation, secondaryAnimation) =>
             const GenderSelectionScreen(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          if (MediaQuery.disableAnimationsOf(context)) return child;
           return SlideTransition(
             position: Tween<Offset>(
               begin: const Offset(1.0, 0.0),
               end: Offset.zero,
-            ).animate(animation),
+            ).animate(
+              CurvedAnimation(parent: animation, curve: AppCurves.standard),
+            ),
             child: child,
           );
         },
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: AppDurations.slow,
       ),
     );
   }

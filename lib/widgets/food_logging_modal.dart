@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../models/additional_nutrients.dart';
 import '../services/nutrition_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
@@ -153,9 +154,18 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
     required double fat,
     double quantity = 1.0,
     String? foodId,
+    // Catalog row the food came from (per-serving values) — used to carry
+    // the micro-nutrient columns into the log; null for custom entries.
+    Map<String, dynamic>? foodRow,
   }) async {
     setState(() => _isSaving = true);
     HapticFeedback.mediumImpact();
+
+    final rowExtras = foodRow == null
+        ? null
+        : AdditionalNutrients.fromFoodRow(foodRow).hasAny
+            ? AdditionalNutrients.fromFoodRow(foodRow).scaledBy(quantity)
+            : null;
 
     // foodId is the real UUID from Supabase foods table (or null for custom)
     final bool success = await _nutritionService.logFood(
@@ -167,6 +177,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
       proteinG: protein * quantity,
       carbsG: carbs * quantity,
       fatG: fat * quantity,
+      extras: rowExtras,
       date: widget.logDate,
     );
 
@@ -602,6 +613,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
         carbs: carb,
         fat: fat,
         foodId: food['id']?.toString(),
+        foodRow: food,
       ),
     );
   }

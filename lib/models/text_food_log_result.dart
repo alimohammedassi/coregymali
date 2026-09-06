@@ -1,3 +1,5 @@
+import 'additional_nutrients.dart';
+
 /// Result of an AI text food log — mirrors the JSON shape returned by the
 /// stateless `log-food-text` Edge Function (no persistence server-side).
 class TextFoodLogResult {
@@ -37,6 +39,9 @@ class TextFoodLogItem {
   final double carbsG;
   final double fatG;
 
+  /// Micro-nutrients when the AI returned them; null fields = unknown.
+  final AdditionalNutrients? extras;
+
   const TextFoodLogItem({
     required this.name,
     this.nameAr,
@@ -45,6 +50,7 @@ class TextFoodLogItem {
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+    this.extras,
   });
 
   factory TextFoodLogItem.fromJson(Map<String, dynamic> json) {
@@ -56,6 +62,9 @@ class TextFoodLogItem {
       proteinG: _num(json['protein_g']),
       carbsG: _num(json['carbs_g']),
       fatG: _num(json['fat_g']),
+      extras: AdditionalNutrients.fromJson(json).hasAny
+          ? AdditionalNutrients.fromJson(json)
+          : null,
     );
   }
 
@@ -69,6 +78,11 @@ class TextFoodLogItem {
   double proteinFor(double weightG) => proteinG * _scale(weightG);
   double carbsFor(double weightG) => carbsG * _scale(weightG);
   double fatFor(double weightG) => fatG * _scale(weightG);
+
+  /// Micro-nutrients rescaled to the edited portion; null when the AI
+  /// provided none.
+  AdditionalNutrients? nutrientsFor(double weightG) =>
+      extras?.scaledBy(_scale(weightG));
 }
 
 TextLogConfidence textLogConfidenceFromString(String? value) {

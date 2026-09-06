@@ -15,6 +15,47 @@ const CORS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Micro-nutrient fields may be absent/null — keep them NULL end-to-end
+// instead of forcing 0 (0 means "measured zero").
+const numOrNull = (v: any): number | null => {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+// Per-100g micro-nutrients from Open Food Facts nutriments. OFF annotates
+// each field with a `*_unit` companion; sodium is usually grams while the
+// minerals are mg, so convert to the column's target unit (g for *_g,
+// mg for *_mg) using the unit when present, else OFF's documented default.
+const EXTRA_NUTRIENTS: Record<string, { off: string; target: 'g' | 'mg'; defaultUnit: 'g' | 'mg' }> = {
+  fiber_g:        { off: 'fiber',       target: 'g',  defaultUnit: 'g'  },
+  sugars_g:       { off: 'sugars',      target: 'g',  defaultUnit: 'g'  },
+  sodium_mg:      { off: 'sodium',      target: 'mg', defaultUnit: 'g'  },
+  potassium_mg:   { off: 'potassium',   target: 'mg', defaultUnit: 'mg' },
+  calcium_mg:     { off: 'calcium',     target: 'mg', defaultUnit: 'mg' },
+  iron_mg:        { off: 'iron',        target: 'mg', defaultUnit: 'mg' },
+  cholesterol_mg: { off: 'cholesterol', target: 'mg', defaultUnit: 'mg' },
+  caffeine_mg:    { off: 'caffeine',    target: 'mg', defaultUnit: 'mg' },
+};
+
+function extractExtras(nutriments: any): Record<string, number | null> {
+  const out: Record<string, number | null> = {};
+  for (const [col, spec] of Object.entries(EXTRA_NUTRIENTS)) {
+    const raw = nutriments?.[`${spec.off}_100g`];
+    const v = Number(raw);
+    if (raw == null || !Number.isFinite(v)) {
+      out[col] = null;
+      continue;
+    }
+    const unit = nutriments?.[`${spec.off}_unit`] ?? spec.defaultUnit;
+    let value = v;
+    if (unit === 'g' && spec.target === 'mg') value = v * 1000;
+    else if (unit === 'mg' && spec.target === 'g') value = v / 1000;
+    out[col] = value;
+  }
+  return out;
+}
+
 const GEMINI_ESTIMATE_PROMPT = `You are a nutrition database expert for a fitness app.
 A user scanned a product barcode that was not found in Open Food Facts.
 Estimate the standard per-100g nutrition facts for this packaged product.
@@ -28,12 +69,21 @@ Return ONLY a JSON object with exactly this shape:
   "protein_g": number,
   "carbs_g": number,
   "fat_g": number,
+  "fiber_g": number | null,        // grams per 100g, null if unknown
+  "sugars_g": number | null,       // grams per 100g
+  "sodium_mg": number | null,      // mg per 100g
+  "potassium_mg": number | null,   // mg per 100g
+  "calcium_mg": number | null,     // mg per 100g
+  "iron_mg": number | null,        // mg per 100g
+  "cholesterol_mg": number | null, // mg per 100g
+  "caffeine_mg": number | null,    // mg per 100g
   "confidence": "low" | "medium" | "high"
 }
 
 Rules:
 - Base the estimate on what this product typically contains per 100g.
 - Numbers must be plain numbers, no units or ranges.
+- Micro-nutrients: use null when unknown or negligible — never guess wildly.
 - confidence reflects how sure you are about the identification and estimates.`;
 
 function json(body: unknown, status = 200) {
@@ -87,6 +137,7 @@ async function fetchFromOpenFoodFacts(barcode: string) {
       protein_g: protein,
       carbs_g: carbs,
       fat_g: fat,
+      ...extractExtras(n),
       source: 'openfoodfacts' as const,
       confidence: kcal > 0 ? 'high' : 'medium',
     };
@@ -151,6 +202,14 @@ async function estimateWithGemini(barcode: string, productNameHint?: string, par
     protein_g: Number(parsed.protein_g) || 0,
     carbs_g: Number(parsed.carbs_g) || 0,
     fat_g: Number(parsed.fat_g) || 0,
+    fiber_g: numOrNull(parsed.fiber_g),
+    sugars_g: numOrNull(parsed.sugars_g),
+    sodium_mg: numOrNull(parsed.sodium_mg),
+    potassium_mg: numOrNull(parsed.potassium_mg),
+    calcium_mg: numOrNull(parsed.calcium_mg),
+    iron_mg: numOrNull(parsed.iron_mg),
+    cholesterol_mg: numOrNull(parsed.cholesterol_mg),
+    caffeine_mg: numOrNull(parsed.caffeine_mg),
     source: 'gemini_estimate' as const,
     confidence: ['low', 'medium', 'high'].includes(parsed.confidence)
       ? parsed.confidence
@@ -228,6 +287,14 @@ Deno.serve(async (req: Request) => {
           protein_g: Number(cached.protein_g),
           carbs_g: Number(cached.carbs_g),
           fat_g: Number(cached.fat_g),
+          fiber_g: cached.fiber_g != null ? Number(cached.fiber_g) : null,
+          sugars_g: cached.sugars_g != null ? Number(cached.sugars_g) : null,
+          sodium_mg: cached.sodium_mg != null ? Number(cached.sodium_mg) : null,
+          potassium_mg: cached.potassium_mg != null ? Number(cached.potassium_mg) : null,
+          calcium_mg: cached.calcium_mg != null ? Number(cached.calcium_mg) : null,
+          iron_mg: cached.iron_mg != null ? Number(cached.iron_mg) : null,
+          cholesterol_mg: cached.cholesterol_mg != null ? Number(cached.cholesterol_mg) : null,
+          caffeine_mg: cached.caffeine_mg != null ? Number(cached.caffeine_mg) : null,
           source: 'cache',
           confidence: cached.confidence,
           needs_name_hint: false,

@@ -1,3 +1,5 @@
+import 'additional_nutrients.dart';
+
 /// Result of an AI food scan — mirrors the two-table shape returned by the
 /// `analyze-food` Edge Function (`food_scans` + `food_scan_items` rows).
 class FoodScanResult {
@@ -46,6 +48,9 @@ class FoodScanItem {
   final double carbsG;
   final double fatG;
 
+  /// Micro-nutrients when the AI returned them; null fields = unknown.
+  final AdditionalNutrients? extras;
+
   const FoodScanItem({
     required this.id,
     required this.name,
@@ -55,6 +60,7 @@ class FoodScanItem {
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+    this.extras,
   });
 
   factory FoodScanItem.fromJson(Map<String, dynamic> json) {
@@ -67,6 +73,9 @@ class FoodScanItem {
       proteinG: _num(json['protein_g']),
       carbsG: _num(json['carbs_g']),
       fatG: _num(json['fat_g']),
+      extras: AdditionalNutrients.fromJson(json).hasAny
+          ? AdditionalNutrients.fromJson(json)
+          : null,
     );
   }
 }

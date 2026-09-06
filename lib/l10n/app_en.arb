@@ -34,6 +34,7 @@
       "count": { "type": "int" }
     }
   },
+  "dayStreakLabel": "day streak",
 
   "dailyMetrics": "DAILY METRIC MATRIX",
   "details": "Details",

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
+import '../models/additional_nutrients.dart';
 import '../services/nutrition_service.dart';
+import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 
@@ -42,13 +44,27 @@ class AddFoodSheet extends StatefulWidget {
   State<AddFoodSheet> createState() => _AddFoodSheetState();
 }
 
-class _AddFoodSheetState extends State<AddFoodSheet> {
+class _AddFoodSheetState extends State<AddFoodSheet> with SingleTickerProviderStateMixin {
   final _nutritionService = NutritionService();
   final _searchController = TextEditingController();
   List<Map<String, dynamic>> _results = [];
   bool _searching = false;
   bool _hasSearched = false;
   String _selectedCategory = 'all';
+  late final AnimationController _sheetCtrl;
+  late final Animation<Offset> _sheetSlide;
+  late final Animation<double> _sheetFade;
+
+  @override
+  void initState() {
+    super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _sheetCtrl = AnimationController(vsync: this, duration: reduce ? Duration.zero : AppDurations.medium);
+    _sheetSlide = Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _sheetCtrl, curve: AppCurves.standard));
+    _sheetFade = CurvedAnimation(parent: _sheetCtrl, curve: AppCurves.standard);
+    _sheetCtrl.forward();
+  }
 
   List<({String label, String db, String emoji})> get _categories => [
         (label: 'All', db: 'all', emoji: '🍽'),
@@ -85,13 +101,15 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
 
   @override
   void dispose() {
+    _sheetCtrl.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final bool reduce = MediaQuery.disableAnimationsOf(context);
+    final Widget sheet = Container(
       height: MediaQuery.of(context).size.height * 0.90,
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -270,13 +288,20 @@ class _AddFoodSheetState extends State<AddFoodSheet> {
                             padding:
                                 const EdgeInsets.fromLTRB(20, 4, 20, 24),
                             itemCount: _results.length,
-                            itemBuilder: (_, i) =>
-                                _buildFoodResultTile(_results[i]),
+                            itemBuilder: (_, i) {
+                              final item = _StaggeredFoodTile(
+                                index: i,
+                                child: _buildFoodResultTile(_results[i]),
+                              );
+                              return item;
+                            },
                           ),
           ),
         ],
       ),
     );
+    if (reduce) return sheet;
+    return SlideTransition(position: _sheetSlide, child: FadeTransition(opacity: _sheetFade, child: sheet));
   }
 
   Widget _buildSearchSuggestions() {
@@ -488,13 +513,16 @@ class _LogFoodSheet extends StatefulWidget {
   State<_LogFoodSheet> createState() => _LogFoodSheetState();
 }
 
-class _LogFoodSheetState extends State<_LogFoodSheet> {
+class _LogFoodSheetState extends State<_LogFoodSheet> with SingleTickerProviderStateMixin {
   final _nutritionService = NutritionService();
   late TextEditingController _quantityCtrl;
   late String _mealType;
   late double _quantity;
   late String _unit;
   bool _logging = false;
+  bool _confirmed = false;
+  late final AnimationController _confirmCtrl;
+  late final Animation<double> _confirmScale;
 
   @override
   void initState() {
@@ -504,6 +532,9 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
     _unit = units.first.label;
     _quantity = _unit == 'g' ? 100.0 : 1.0;
     _quantityCtrl = TextEditingController(text: _quantity.toStringAsFixed(0));
+    _confirmCtrl = AnimationController(vsync: this, duration: AppDurations.fast);
+    _confirmScale = Tween<double>(begin: 1.0, end: 1.06)
+        .animate(CurvedAnimation(parent: _confirmCtrl, curve: AppCurves.standard));
   }
 
   bool _kw(String name, List<String> keys) =>
@@ -610,6 +641,7 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
 
   @override
   void dispose() {
+    _confirmCtrl.dispose();
     _quantityCtrl.dispose();
     super.dispose();
   }
@@ -834,7 +866,7 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                   ),
                   elevation: 0,
                 ),
-                onPressed: _logging
+                onPressed: (_logging || _confirmed)
                     ? null
                     : () async {
                         final messenger = ScaffoldMessenger.of(context);
@@ -849,6 +881,13 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                           proteinG: _calc('protein_g'),
                           carbsG: _calc('carbs_g'),
                           fatG: _calc('fat_g'),
+                          // Catalog micro-nutrients (per-100g) scaled to the
+                          // logged grams; null when the catalog row has none.
+                          extras: AdditionalNutrients.fromFoodRow(widget.food)
+                              .hasAny
+                              ? AdditionalNutrients.fromFoodRow(widget.food)
+                                  .scaledBy(_grams / 100)
+                              : null,
                         );
                         if (!ok) {
                           if (!mounted) return;
@@ -863,7 +902,19 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                           );
                           return;
                         }
-                        widget.onLogged();
+                        if (!mounted) return;
+                        setState(() {
+                          _logging = false;
+                          _confirmed = true;
+                        });
+                        HapticFeedback.lightImpact();
+                        if (!MediaQuery.disableAnimationsOf(context)) {
+                          await _confirmCtrl.forward();
+                          await _confirmCtrl.reverse();
+                        }
+                        // Brief checkmark moment before closing sheets
+                        await Future.delayed(const Duration(milliseconds: 180));
+                        if (mounted) widget.onLogged();
                       },
                 child: _logging
                     ? const SizedBox(
@@ -872,16 +923,30 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2.5),
                       )
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.add_circle_rounded, size: 20),
-                          SizedBox(width: 8),
-                          Text('Confirm & Log Food',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.w800, fontSize: 16)),
-                        ],
-                      ),
+                    : _confirmed
+                        ? ScaleTransition(
+                            scale: _confirmScale,
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.check_circle_rounded, size: 20),
+                                SizedBox(width: 8),
+                                Text('Logged ✓',
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w800, fontSize: 16)),
+                              ],
+                            ),
+                          )
+                        : const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_circle_rounded, size: 20),
+                              SizedBox(width: 8),
+                              Text('Confirm & Log Food',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w800, fontSize: 16)),
+                            ],
+                          ),
               ),
             ),
           ],
@@ -907,4 +972,49 @@ class _LogFoodSheetState extends State<_LogFoodSheet> {
                   fontWeight: FontWeight.w600)),
         ],
       );
+}
+
+class _StaggeredFoodTile extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggeredFoodTile({required this.index, required this.child});
+
+  @override
+  State<_StaggeredFoodTile> createState() => _StaggeredFoodTileState();
+}
+
+class _StaggeredFoodTileState extends State<_StaggeredFoodTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _c = AnimationController(vsync: this, duration: reduce ? Duration.zero : AppDurations.medium);
+    _fade = CurvedAnimation(parent: _c, curve: AppCurves.standard);
+    _slide = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _c, curve: AppCurves.standard));
+    final delay = (widget.index * 30).clamp(0, 200);
+    Future.delayed(Duration(milliseconds: delay), () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return FadeTransition(
+      opacity: _fade,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
 }

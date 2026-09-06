@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'{count} DAYS'**
   String daysStreak(int count);
 
+  /// No description provided for @dayStreakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'day streak'**
+  String get dayStreakLabel;
+
   /// No description provided for @dailyMetrics.
   ///
   /// In en, this message translates to:

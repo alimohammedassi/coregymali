@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../supabase/auth_service.dart';
 import '../../../../login_sign_up.dart' show AuthWrapper;
+import '../../../../theme/app_animations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -216,12 +217,15 @@ class _SignOutBtn extends StatelessWidget {
                 Navigator.of(ctx).pushAndRemoveUntil(
                   PageRouteBuilder(
                     pageBuilder: (_, a, __) => const AuthWrapper(),
-                    transitionsBuilder: (_, a, __, child) => FadeTransition(
-                      opacity:
-                          CurvedAnimation(parent: a, curve: Curves.easeOut),
-                      child: child,
-                    ),
-                    transitionDuration: const Duration(milliseconds: 400),
+                    transitionsBuilder: (context, a, __, child) {
+                      if (MediaQuery.disableAnimationsOf(context)) return child;
+                      return FadeTransition(
+                        opacity:
+                            CurvedAnimation(parent: a, curve: AppCurves.standard),
+                        child: child,
+                      );
+                    },
+                    transitionDuration: AppDurations.slow,
                   ),
                   (route) => false,
                 );
@@ -362,39 +366,43 @@ class _StatsRow extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final cardWidth = (constraints.maxWidth - 12) / 2;
+        final cards = [
+          _StatCard(
+            width: cardWidth,
+            title: l10n.statActiveSubscribers,
+            value: stats?.activeSubscribers.toString() ?? '0',
+            icon: Icons.people_rounded,
+            accentColor: _kSuccess,
+          ),
+          _StatCard(
+            width: cardWidth,
+            title: l10n.statAvgRating,
+            value: stats?.avgRating.toStringAsFixed(1) ?? '0.0',
+            icon: Icons.star_rounded,
+            accentColor: _kWarning,
+          ),
+          _StatCard(
+            width: cardWidth,
+            title: l10n.statMonthlyRevenue,
+            value: '\$${stats?.monthlyRevenue.toStringAsFixed(0) ?? '0'}',
+            icon: Icons.attach_money_rounded,
+            accentColor: _kGold,
+          ),
+          _StatCard(
+            width: cardWidth,
+            title: l10n.statOpenSlots,
+            value: stats?.openSlots.toString() ?? '0',
+            icon: Icons.event_seat_rounded,
+            accentColor: _kBlue,
+          ),
+        ];
         return Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: [
-            _StatCard(
-              width: cardWidth,
-              title: l10n.statActiveSubscribers,
-              value: stats?.activeSubscribers.toString() ?? '0',
-              icon: Icons.people_rounded,
-              accentColor: _kSuccess,
-            ),
-            _StatCard(
-              width: cardWidth,
-              title: l10n.statAvgRating,
-              value: stats?.avgRating.toStringAsFixed(1) ?? '0.0',
-              icon: Icons.star_rounded,
-              accentColor: _kWarning,
-            ),
-            _StatCard(
-              width: cardWidth,
-              title: l10n.statMonthlyRevenue,
-              value: '\$${stats?.monthlyRevenue.toStringAsFixed(0) ?? '0'}',
-              icon: Icons.attach_money_rounded,
-              accentColor: _kGold,
-            ),
-            _StatCard(
-              width: cardWidth,
-              title: l10n.statOpenSlots,
-              value: stats?.openSlots.toString() ?? '0',
-              icon: Icons.event_seat_rounded,
-              accentColor: _kBlue,
-            ),
-          ],
+          children: List.generate(
+            cards.length,
+            (i) => _StaggeredItem(index: i, child: cards[i]),
+          ),
         );
       },
     );
@@ -633,7 +641,7 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
             physics: const NeverScrollableScrollPhysics(),
             itemCount: list.length,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _SubscriptionCard(model: list[i]),
+            itemBuilder: (_, i) => _StaggeredItem(index: i, child: _SubscriptionCard(model: list[i])),
           ),
       ],
     );
@@ -665,8 +673,8 @@ class _SubscriptionsListState extends State<_SubscriptionsList> {
               child: GestureDetector(
                 onTap: () => setState(() => _selectedTab = i),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeOut,
+                  duration: AppDurations.fast,
+                  curve: AppCurves.standard,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 12,
@@ -1526,5 +1534,46 @@ class _StepLine extends StatelessWidget {
         color: active ? _kGold : AppColors.onSurfaceVariant.withValues(alpha: 0.25),
       ),
     );
+  }
+}
+
+class _StaggeredItem extends StatefulWidget {
+  final int index;
+  final Widget child;
+  const _StaggeredItem({required this.index, required this.child});
+
+  @override
+  State<_StaggeredItem> createState() => _StaggeredItemState();
+}
+
+class _StaggeredItemState extends State<_StaggeredItem> with SingleTickerProviderStateMixin {
+  late final AnimationController _c;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    final bool reduce = WidgetsBinding.instance.platformDispatcher.accessibilityFeatures.disableAnimations;
+    _c = AnimationController(vsync: this, duration: reduce ? Duration.zero : AppDurations.medium);
+    _fade = CurvedAnimation(parent: _c, curve: AppCurves.standard);
+    _slide = Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero)
+        .animate(CurvedAnimation(parent: _c, curve: AppCurves.standard));
+    final delay = (widget.index * 45).clamp(0, 200);
+    Future.delayed(Duration(milliseconds: delay), () {
+      if (mounted) _c.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.disableAnimationsOf(context)) return widget.child;
+    return FadeTransition(opacity: _fade, child: SlideTransition(position: _slide, child: widget.child));
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/additional_nutrients.dart';
 import '../models/food_scan_result.dart';
 import '../models/voice_food_log_result.dart';
 import 'streak_service.dart';
@@ -9,6 +10,65 @@ import 'supabase_client.dart';
 
 class NutritionService {
   final StreakService _streakService = StreakService();
+
+  /// Whether the DB has the additional-nutrient columns (fiber_g, sodium_mg,
+  /// …). Flips to false the first time Postgres says one is missing, so the
+  /// app keeps logging macros normally when the migration hasn't been
+  /// applied yet. Reset on every app start.
+  bool _extraNutrientsReady = true;
+
+  static const List<String> _extraNutrientColumns = [
+    'fiber_g', 'sugars_g', 'sodium_mg', 'potassium_mg',
+    'calcium_mg', 'iron_mg', 'cholesterol_mg', 'caffeine_mg',
+  ];
+
+  /// Inserts one `nutrition_logs` row and returns it (with `id`), or null on
+  /// failure. Transparently strips the extra-nutrient columns and retries
+  /// once when the deployment predates the migration.
+  Future<Map<String, dynamic>?> insertNutritionLogRow(
+    Map<String, dynamic> base,
+    AdditionalNutrients? extras,
+  ) async {
+    final map = Map<String, dynamic>.from(base);
+    if (extras != null && extras.hasAny && _extraNutrientsReady) {
+      map.addAll(extras.toInsertColumns());
+    }
+    try {
+      return await supabase
+          .from('nutrition_logs')
+          .insert(map)
+          .select('id')
+          .single();
+    } on PostgrestException catch (e) {
+      if (_extraNutrientsReady &&
+          (e.code == 'PGRST204' || e.code == '42703')) {
+        _extraNutrientsReady = false;
+        debugPrint('⚠️ additional-nutrient columns missing in DB — '
+            'falling back to legacy schema for this session');
+        for (final c in _extraNutrientColumns) {
+          map.remove(c);
+        }
+        return await supabase
+            .from('nutrition_logs')
+            .insert(map)
+            .select('id')
+            .single();
+      }
+      rethrow;
+    }
+  }
+
+  /// True (once) when [e] means the extra-nutrient columns aren't in the DB
+  /// yet; also flips [_extraNutrientsReady] so later calls skip them.
+  bool _maybeDisableExtraNutrients(PostgrestException e) {
+    if (_extraNutrientsReady && (e.code == 'PGRST204' || e.code == '42703')) {
+      _extraNutrientsReady = false;
+      debugPrint('⚠️ additional-nutrient columns missing in DB — '
+          'falling back to legacy schema for this session');
+      return true;
+    }
+    return false;
+  }
 
   /// Ranks DB matches by relevance: exact name first, then names that start
   /// with the query, then by the position of the first match (earlier wins),
@@ -124,6 +184,7 @@ class NutritionService {
     required double proteinG,
     required double carbsG,
     required double fatG,
+    AdditionalNutrients? extras,
     DateTime? date,
   }) async {
     if (currentUserId == null) {
@@ -150,13 +211,14 @@ class NutritionService {
         'logged_date': d,
       };
 
+      // Micro-nutrients: omitted keys stay SQL NULL (unknown), never 0.
       if (isUuid) {
         insertMap['food_id'] = foodId;
       }
 
       debugPrint('✅ Inserting nutrition_log: $insertMap');
 
-      await supabase.from('nutrition_logs').insert(insertMap);
+      await insertNutritionLogRow(insertMap, extras);
       await _updateDailySummary(d);
       // Logged food → count today as active for the streak.
       _streakService.recordActivity('nutrition');
@@ -164,6 +226,20 @@ class NutritionService {
       unawaited(maybeSendCalorieAlert());
       return true;
     } on PostgrestException catch (e) {
+      if (_maybeDisableExtraNutrients(e)) {
+        return logFood(
+          foodId: foodId,
+          foodName: foodName,
+          mealType: mealType,
+          quantity: quantity,
+          calories: calories,
+          proteinG: proteinG,
+          carbsG: carbsG,
+          fatG: fatG,
+          extras: null,
+          date: date,
+        );
+      }
       debugPrint('❌ Supabase error logging food: ${e.message} | code: ${e.code} | details: ${e.details}');
       return false;
     } catch (e, st) {
@@ -187,24 +263,22 @@ class NutritionService {
 
     for (final item in items) {
       try {
-        final inserted = await supabase
-            .from('nutrition_logs')
-            .insert({
-              'user_id': userId,
-              'food_name': item.name,
-              'meal_type': mealType,
-              'quantity': item.estimatedWeightG,
-              'serving_unit': 'g',
-              'calories': item.calories,
-              'protein_g': item.proteinG,
-              'carbs_g': item.carbsG,
-              'fat_g': item.fatG,
-              'logged_date': d,
-            })
-            .select('id')
-            .single();
+        final insertMap = <String, dynamic>{
+          'user_id': userId,
+          'food_name': item.name,
+          'meal_type': mealType,
+          'quantity': item.estimatedWeightG,
+          'serving_unit': 'g',
+          'calories': item.calories,
+          'protein_g': item.proteinG,
+          'carbs_g': item.carbsG,
+          'fat_g': item.fatG,
+          'logged_date': d,
+        };
 
-        final logId = inserted['id']?.toString();
+        final inserted = await insertNutritionLogRow(insertMap, item.extras);
+
+        final logId = inserted?['id']?.toString();
         debugPrint('✅ scanned item "${item.name}" → nutrition_log $logId');
 
         if (logId != null && logId.isNotEmpty) {
@@ -247,24 +321,22 @@ class NutritionService {
 
     for (final item in items) {
       try {
-        final inserted = await supabase
-            .from('nutrition_logs')
-            .insert({
-              'user_id': userId,
-              'food_name': item.name,
-              'meal_type': mealType,
-              'quantity': item.estimatedWeightG,
-              'serving_unit': 'g',
-              'calories': item.calories,
-              'protein_g': item.proteinG,
-              'carbs_g': item.carbsG,
-              'fat_g': item.fatG,
-              'logged_date': d,
-            })
-            .select('id')
-            .single();
+        final insertMap = <String, dynamic>{
+          'user_id': userId,
+          'food_name': item.name,
+          'meal_type': mealType,
+          'quantity': item.estimatedWeightG,
+          'serving_unit': 'g',
+          'calories': item.calories,
+          'protein_g': item.proteinG,
+          'carbs_g': item.carbsG,
+          'fat_g': item.fatG,
+          'logged_date': d,
+        };
 
-        final logId = inserted['id']?.toString();
+        final inserted = await insertNutritionLogRow(insertMap, item.extras);
+
+        final logId = inserted?['id']?.toString();
         debugPrint('✅ voice item "${item.name}" → nutrition_log $logId');
 
         if (logId != null && logId.isNotEmpty) {
@@ -366,7 +438,11 @@ class NutritionService {
     try {
       final logs = await supabase
           .from('nutrition_logs')
-          .select('calories, protein_g, carbs_g, fat_g')
+          .select(_extraNutrientsReady
+              ? 'calories, protein_g, carbs_g, fat_g, '
+                  'fiber_g, sugars_g, sodium_mg, potassium_mg, '
+                  'calcium_mg, iron_mg, cholesterol_mg, caffeine_mg'
+              : 'calories, protein_g, carbs_g, fat_g')
           .eq('user_id', currentUserId!)
           .eq('logged_date', dateStr);
 
@@ -374,33 +450,71 @@ class NutritionService {
       double totalProtein = 0;
       double totalCarbs = 0;
       double totalFat = 0;
+      double totalFiber = 0;
+      double totalSugars = 0;
+      double totalSodium = 0;
+      double totalPotassium = 0;
+      double totalCalcium = 0;
+      double totalIron = 0;
+      double totalCholesterol = 0;
+      double totalCaffeine = 0;
 
       for (var log in logs) {
         totalCals += (log['calories'] as num?)?.toDouble() ?? 0;
         totalProtein += (log['protein_g'] as num?)?.toDouble() ?? 0;
         totalCarbs += (log['carbs_g'] as num?)?.toDouble() ?? 0;
         totalFat += (log['fat_g'] as num?)?.toDouble() ?? 0;
+        totalFiber += (log['fiber_g'] as num?)?.toDouble() ?? 0;
+        totalSugars += (log['sugars_g'] as num?)?.toDouble() ?? 0;
+        totalSodium += (log['sodium_mg'] as num?)?.toDouble() ?? 0;
+        totalPotassium += (log['potassium_mg'] as num?)?.toDouble() ?? 0;
+        totalCalcium += (log['calcium_mg'] as num?)?.toDouble() ?? 0;
+        totalIron += (log['iron_mg'] as num?)?.toDouble() ?? 0;
+        totalCholesterol += (log['cholesterol_mg'] as num?)?.toDouble() ?? 0;
+        totalCaffeine += (log['caffeine_mg'] as num?)?.toDouble() ?? 0;
       }
 
-      debugPrint('📊 _updateDailySummary [$dateStr]: cals=$totalCals protein=$totalProtein carbs=$totalCarbs fat=$totalFat (from ${logs.length} logs)');
+      debugPrint('📊 _updateDailySummary [$dateStr]: cals=$totalCals protein=$totalProtein carbs=$totalCarbs fat=$totalFat fiber=$totalFiber sodium=$totalSodium (from ${logs.length} logs)');
 
-      await supabase.from('daily_summary').upsert({
+      final summaryMap = <String, dynamic>{
         'user_id': currentUserId,
         'summary_date': dateStr,
         'calories_consumed': totalCals.round(),
         'protein_g': totalProtein.round(),
         'carbs_g': totalCarbs.round(),
         'fat_g': totalFat.round(),
+        if (_extraNutrientsReady) ...{
+          'fiber_g': _round1(totalFiber),
+          'sugars_g': _round1(totalSugars),
+          'sodium_mg': totalSodium.round(),
+          'potassium_mg': totalPotassium.round(),
+          'calcium_mg': totalCalcium.round(),
+          'iron_mg': _round1(totalIron),
+          'cholesterol_mg': totalCholesterol.round(),
+          'caffeine_mg': totalCaffeine.round(),
+        },
         'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'user_id,summary_date');
+      };
+
+      await supabase
+          .from('daily_summary')
+          .upsert(summaryMap, onConflict: 'user_id,summary_date');
 
       debugPrint('✅ daily_summary upserted for $dateStr');
     } on PostgrestException catch (e) {
+      if (_maybeDisableExtraNutrients(e)) {
+        await _updateDailySummary(dateStr);
+        return;
+      }
       debugPrint('❌ _updateDailySummary Supabase error: ${e.message} | code: ${e.code} | details: ${e.details}');
     } catch (e, st) {
       debugPrint('❌ _updateDailySummary error: $e\n$st');
     }
   }
+
+  /// One decimal place for gram-scale micros (fiber/sugars/iron); mg-scale
+  /// values round to whole numbers.
+  static double _round1(double v) => (v * 10).round() / 10;
 
   /// Public wrapper so other logging entry points (e.g. the barcode scanner)
   /// refresh the same daily-summary row without duplicating the logic.
@@ -445,6 +559,18 @@ class NutritionService {
   }) async {
     if (currentUserId == null) return false;
     try {
+      // Read the old row's micro-nutrients so they can be rescaled to the
+      // new quantity (same proportional treatment as the macros in the UI).
+      final oldRow = await supabase
+          .from('nutrition_logs')
+          .select(_extraNutrientsReady
+              ? 'quantity, fiber_g, sugars_g, sodium_mg, potassium_mg, '
+                  'calcium_mg, iron_mg, cholesterol_mg, caffeine_mg'
+              : 'quantity')
+          .eq('id', logId)
+          .eq('user_id', currentUserId!)
+          .maybeSingle();
+
       final updateData = <String, dynamic>{
         'quantity': quantity,
         'calories': calories,
@@ -455,6 +581,16 @@ class NutritionService {
       if (mealType != null) {
         updateData['meal_type'] = mealType;
       }
+
+      if (oldRow != null) {
+        final oldExtras = AdditionalNutrients.fromJson(oldRow);
+        if (oldExtras.hasAny) {
+          final oldQty = (oldRow['quantity'] as num?)?.toDouble() ?? 0;
+          final factor = oldQty > 0 ? quantity / oldQty : 1.0;
+          updateData.addAll(oldExtras.scaledBy(factor).toInsertColumns());
+        }
+      }
+
       final log = await supabase
           .from('nutrition_logs')
           .update(updateData)
@@ -469,6 +605,17 @@ class NutritionService {
       unawaited(maybeSendCalorieAlert());
       return true;
     } on PostgrestException catch (e) {
+      if (_maybeDisableExtraNutrients(e)) {
+        return updateLog(
+          logId: logId,
+          quantity: quantity,
+          calories: calories,
+          proteinG: proteinG,
+          carbsG: carbsG,
+          fatG: fatG,
+          mealType: mealType,
+        );
+      }
       debugPrint('❌ Supabase error updating log: ${e.message} | code: ${e.code}');
       return false;
     } catch (e) {

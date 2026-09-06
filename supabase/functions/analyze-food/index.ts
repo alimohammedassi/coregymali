@@ -30,7 +30,15 @@ Return ONLY a JSON object with exactly this shape:
       "calories": number,
       "protein_g": number,
       "carbs_g": number,
-      "fat_g": number
+      "fat_g": number,
+      "fiber_g": number | null,        // null when unknown or trace
+      "sugars_g": number | null,
+      "sodium_mg": number | null,      // milligrams
+      "potassium_mg": number | null,   // milligrams
+      "calcium_mg": number | null,     // milligrams
+      "iron_mg": number | null,        // milligrams
+      "cholesterol_mg": number | null, // milligrams
+      "caffeine_mg": number | null     // milligrams
     }
   ]
 }
@@ -38,6 +46,7 @@ Return ONLY a JSON object with exactly this shape:
 Rules:
 - If the image does not clearly contain edible food/drink: set is_food to false, items to [], and explain briefly in notes.
 - If it is food: identify each distinct item on the plate/in the frame, estimate its portion weight in grams from visual cues (plate size, utensils, packaging), then estimate calories and macros for THAT estimated portion.
+- The micro-nutrient fields are for THAT estimated portion too. Estimate them from typical composition of the food; use null when unknown, negligible, or you are not confident — never guess wildly. Packaged foods with visible labels take priority.
 - confidence reflects how sure you are about the identification AND portion estimates overall.
 - notes should be one short sentence in English about the meal or any caveats.
 - Numbers must be plain numbers, no units or ranges.`;
@@ -45,6 +54,14 @@ Rules:
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { 'Access-Control-Allow-Origin': '*' } });
 }
+
+// Micro-nutrient fields may be absent/null from Gemini — keep them NULL
+// end-to-end instead of forcing 0 (0 means "measured zero").
+const numOrNull = (v: any): number | null => {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -153,14 +170,37 @@ Deno.serve(async (req: Request) => {
           protein_g: Number(i.protein_g) || 0,
           carbs_g: Number(i.carbs_g) || 0,
           fat_g: Number(i.fat_g) || 0,
+          fiber_g: numOrNull(i.fiber_g),
+          sugars_g: numOrNull(i.sugars_g),
+          sodium_mg: numOrNull(i.sodium_mg),
+          potassium_mg: numOrNull(i.potassium_mg),
+          calcium_mg: numOrNull(i.calcium_mg),
+          iron_mg: numOrNull(i.iron_mg),
+          cholesterol_mg: numOrNull(i.cholesterol_mg),
+          caffeine_mg: numOrNull(i.caffeine_mg),
         }));
 
-        const { data, error: itemsInsertError } = await admin
-          .from('food_scan_items')
-          .insert(itemPayload)
-          .select();
-        if (itemsInsertError) throw new Error(`food_scan_items: ${itemsInsertError.message}`);
-        itemRows = data ?? [];
+        // Strip the micro-nutrient keys and retry once if the deployment
+        // predates the additional-nutrients migration (missing column).
+        const insertItems = async (payload: any[]) => {
+          const { data, error } = await admin
+            .from('food_scan_items')
+            .insert(payload)
+            .select();
+          if (error && error.code === 'PGRST204') {
+            const legacy = payload.map((row) => {
+              const { fiber_g, sugars_g, sodium_mg, potassium_mg, calcium_mg,
+                iron_mg, cholesterol_mg, caffeine_mg, ...rest } = row;
+              return rest;
+            });
+            const retry = await admin.from('food_scan_items').insert(legacy).select();
+            if (retry.error) throw new Error(`food_scan_items: ${retry.error.message}`);
+            return retry.data ?? [];
+          }
+          if (error) throw new Error(`food_scan_items: ${error.message}`);
+          return data ?? [];
+        };
+        itemRows = await insertItems(itemPayload);
       }
 
       return json({
@@ -178,6 +218,14 @@ Deno.serve(async (req: Request) => {
           protein_g: Number(i.protein_g),
           carbs_g: Number(i.carbs_g),
           fat_g: Number(i.fat_g),
+          fiber_g: i.fiber_g ?? null,
+          sugars_g: i.sugars_g ?? null,
+          sodium_mg: i.sodium_mg ?? null,
+          potassium_mg: i.potassium_mg ?? null,
+          calcium_mg: i.calcium_mg ?? null,
+          iron_mg: i.iron_mg ?? null,
+          cholesterol_mg: i.cholesterol_mg ?? null,
+          caffeine_mg: i.caffeine_mg ?? null,
         })),
       });
     } catch (err) {

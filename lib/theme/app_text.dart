@@ -260,4 +260,125 @@ class AppText {
       );
   static TextStyle styledlabelLg({bool isArabic = false, Color? color}) =>
       styledLabelLg(isArabic: isArabic, color: color);
+
+  // ── Fixed Type Scale (Home tab spec — all ad-hoc sizes map here) ──
+  // caption:10, bodySm:12, bodyMd:14, titleSm:16, titleMd:20, headlineSm:24, headlineLg:34
+  static TextStyle get scaleCaption => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textMuted,
+        height: 1.3,
+      );
+  static TextStyle get scaleBodySm => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+        height: 1.4,
+      );
+  static TextStyle get scaleBodyMd => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: AppColors.textSecondary,
+        height: 1.45,
+      );
+  static TextStyle get scaleTitleSm => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+        height: 1.3,
+      );
+  static TextStyle get scaleTitleMd => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.25,
+      );
+  static TextStyle get scaleHeadlineSm => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.2,
+      );
+  static TextStyle get scaleHeadlineLg => TextStyle(
+        fontFamily: GoogleFonts.poppins().fontFamily,
+        fontSize: 34,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.8,
+        color: AppColors.textPrimary,
+        height: 1.1,
+      );
+
+  static TextStyle styledScaleCaption({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 10,
+        fontWeight: FontWeight.w600,
+        color: color ?? AppColors.textMuted,
+        height: 1.3,
+      );
+  static TextStyle styledScaleBodySm({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: color ?? AppColors.textSecondary,
+        height: 1.4,
+      );
+  static TextStyle styledScaleBodyMd({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: color ?? AppColors.textSecondary,
+        height: 1.45,
+      );
+  static TextStyle styledScaleTitleSm({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 16,
+        fontWeight: FontWeight.w600,
+        color: color ?? AppColors.textPrimary,
+        height: 1.3,
+      );
+  static TextStyle styledScaleTitleMd({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.textPrimary,
+        height: 1.25,
+      );
+  static TextStyle styledScaleHeadlineSm({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: color ?? AppColors.textPrimary,
+        height: 1.2,
+      );
+  static TextStyle styledScaleHeadlineLg({bool isArabic = false, Color? color}) =>
+      TextStyle(
+        fontFamily: fontFamily(isArabic: isArabic),
+        fontSize: 34,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.8,
+        color: color ?? AppColors.textPrimary,
+        height: 1.1,
+      );
+}
+
+/// 8pt Spacing Scale — multiples of 4/8 only (4,8,12,16,24,32)
+abstract final class AppSpacing {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
+  static const double xxl = 32;
 }

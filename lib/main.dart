@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase/supabase_config.dart';
+import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'splashScreen.dart';
@@ -87,9 +88,6 @@ class MyApp extends StatelessWidget {
       darkTheme: _buildTheme(Brightness.dark, localeProvider.isArabic),
       themeMode: themeProvider.mode,
       builder: (context, child) {
-        // Re-resolve the static AppColors palette for the brightness that is
-        // about to paint, then key the tree on it so every widget re-reads the
-        // tokens when the mode flips (statics aren't inherited).
         final Brightness effective = switch (themeProvider.mode) {
           ThemeMode.light => Brightness.light,
           ThemeMode.dark => Brightness.dark,
@@ -98,10 +96,17 @@ class MyApp extends StatelessWidget {
                 View.of(context).platformDispatcher.platformBrightness,
         };
         AppColors.apply(effective);
+        // NOTE: Do NOT wrap `child` (which contains the Navigator with
+        // `NotificationService.navigatorKey`) in an AnimatedSwitcher that keeps
+        // both previousChildren + currentChild in a Stack. During the fade
+        // `duration` both subtrees are mounted simultaneously with the SAME
+        // GlobalKey<NavigatorState>, which throws:
+        // "Duplicate GlobalKey detected in widget tree."
+        // A plain KeyedSubtree remounts on brightness change without ever
+        // having two Navigators alive at once. If a fade is desired, animate
+        // the Theme (AnimatedTheme) instead of the whole Navigator.
         return Directionality(
-          textDirection: localeProvider.isArabic
-              ? TextDirection.rtl
-              : TextDirection.ltr,
+          textDirection: localeProvider.isArabic ? TextDirection.rtl : TextDirection.ltr,
           child: KeyedSubtree(
             key: ValueKey<Brightness>(effective),
             child: child!,
@@ -139,6 +144,17 @@ class MyApp extends StatelessWidget {
       ),
       splashColor: AppColors.primaryGlow,
       highlightColor: AppColors.glass1,
+      // ── Motion — one transition language app-wide (app_animations.dart) ──
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: AppPageTransitionsBuilder(),
+          TargetPlatform.iOS: AppPageTransitionsBuilder(),
+          TargetPlatform.fuchsia: AppPageTransitionsBuilder(),
+          TargetPlatform.linux: AppPageTransitionsBuilder(),
+          TargetPlatform.macOS: AppPageTransitionsBuilder(),
+          TargetPlatform.windows: AppPageTransitionsBuilder(),
+        },
+      ),
       // ── Component defaults — one language app-wide (Kinetic Obsidian) ──
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.background,

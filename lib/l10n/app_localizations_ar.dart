@@ -74,6 +74,9 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get dayStreakLabel => 'يوم متتالي';
+
+  @override
   String get dailyMetrics => 'مؤشرات اليوم';
 
   @override

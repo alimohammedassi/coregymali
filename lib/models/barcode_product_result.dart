@@ -1,3 +1,5 @@
+import 'additional_nutrients.dart';
+
 /// Result of a barcode product lookup — mirrors the shape returned by the
 /// `lookup-barcode` Edge Function (a row from the shared `barcode_products`
 /// cache, Open Food Facts, or a Gemini estimate).
@@ -11,6 +13,9 @@ class BarcodeProductResult {
   final double proteinG;
   final double carbsG;
   final double fatG;
+
+  /// Per-100g micro-nutrients when the source provided them; null = unknown.
+  final AdditionalNutrients? extras;
 
   /// `cache` | `openfoodfacts` | `gemini_estimate` | `manual` — lets the UI
   /// distinguish verified data from AI estimates.
@@ -28,6 +33,7 @@ class BarcodeProductResult {
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+    this.extras,
     this.source = 'openfoodfacts',
     this.confidence = BarcodeConfidence.high,
     this.needsNameHint = false,
@@ -44,6 +50,9 @@ class BarcodeProductResult {
       proteinG: _num(json['protein_g']),
       carbsG: _num(json['carbs_g']),
       fatG: _num(json['fat_g']),
+      extras: AdditionalNutrients.fromJson(json).hasAny
+          ? AdditionalNutrients.fromJson(json)
+          : null,
       source: (json['source'] ?? 'openfoodfacts').toString(),
       confidence: barcodeConfidenceFromString(json['confidence']?.toString()),
       needsNameHint: json['needs_name_hint'] == true,
@@ -57,6 +66,11 @@ class BarcodeProductResult {
   double proteinFor(double quantityG) => proteinG * quantityG / 100;
   double carbsFor(double quantityG) => carbsG * quantityG / 100;
   double fatFor(double quantityG) => fatG * quantityG / 100;
+
+  /// Micro-nutrients scaled to [quantityG] (per-100g base data); null when
+  /// the source provided none.
+  AdditionalNutrients? nutrientsFor(double quantityG) =>
+      extras?.scaledBy(quantityG / 100);
 }
 
 BarcodeConfidence barcodeConfidenceFromString(String? value) {

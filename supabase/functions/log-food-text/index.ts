@@ -34,7 +34,15 @@ Return ONLY a JSON object with exactly this shape:
       "calories": number,
       "protein_g": number,
       "carbs_g": number,
-      "fat_g": number
+      "fat_g": number,
+      "fiber_g": number | null,        // null when unknown or trace
+      "sugars_g": number | null,
+      "sodium_mg": number | null,      // milligrams
+      "potassium_mg": number | null,   // milligrams
+      "calcium_mg": number | null,     // milligrams
+      "iron_mg": number | null,        // milligrams
+      "cholesterol_mg": number | null, // milligrams
+      "caffeine_mg": number | null     // milligrams
     }
   ]
 }
@@ -45,6 +53,7 @@ Rules:
 - Estimate each item's portion weight in grams from any cues (numbers mean piece counts; cups, spoons, loaves);
   use a typical Egyptian portion when nothing is specified.
 - calories and macros are estimates for THAT estimated portion.
+- The micro-nutrient fields are for THAT estimated portion too. Estimate them from typical composition of the food; use null when unknown, negligible, or you are not confident — never guess wildly.
 - confidence reflects your certainty about identification AND portion estimates overall.
 - notes should be one short sentence in English about the meal or any caveats.
 - Numbers must be plain numbers, no units or ranges.`;
@@ -52,6 +61,14 @@ Rules:
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { 'Access-Control-Allow-Origin': '*' } });
 }
+
+// Micro-nutrient fields may be absent/null from Gemini — keep them NULL
+// end-to-end instead of forcing 0 (0 means "measured zero").
+const numOrNull = (v: any): number | null => {
+  if (v == null) return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
@@ -129,6 +146,14 @@ Deno.serve(async (req: Request) => {
           protein_g: Number(i.protein_g) || 0,
           carbs_g: Number(i.carbs_g) || 0,
           fat_g: Number(i.fat_g) || 0,
+          fiber_g: numOrNull(i.fiber_g),
+          sugars_g: numOrNull(i.sugars_g),
+          sodium_mg: numOrNull(i.sodium_mg),
+          potassium_mg: numOrNull(i.potassium_mg),
+          calcium_mg: numOrNull(i.calcium_mg),
+          iron_mg: numOrNull(i.iron_mg),
+          cholesterol_mg: numOrNull(i.cholesterol_mg),
+          caffeine_mg: numOrNull(i.caffeine_mg),
         })),
       });
     } catch (err) {

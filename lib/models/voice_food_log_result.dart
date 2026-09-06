@@ -1,3 +1,5 @@
+import 'additional_nutrients.dart';
+
 /// Result of an AI voice food log — mirrors the two-table shape returned by
 /// the `log-food-voice` Edge Function (`voice_food_logs` + `voice_food_log_items` rows).
 class VoiceFoodLogResult {
@@ -52,6 +54,9 @@ class VoiceFoodLogItem {
   final double carbsG;
   final double fatG;
 
+  /// Micro-nutrients when the AI returned them; null fields = unknown.
+  final AdditionalNutrients? extras;
+
   const VoiceFoodLogItem({
     required this.id,
     required this.name,
@@ -61,6 +66,7 @@ class VoiceFoodLogItem {
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+    this.extras,
   });
 
   factory VoiceFoodLogItem.fromJson(Map<String, dynamic> json) {
@@ -73,6 +79,9 @@ class VoiceFoodLogItem {
       proteinG: _num(json['protein_g']),
       carbsG: _num(json['carbs_g']),
       fatG: _num(json['fat_g']),
+      extras: AdditionalNutrients.fromJson(json).hasAny
+          ? AdditionalNutrients.fromJson(json)
+          : null,
     );
   }
 }

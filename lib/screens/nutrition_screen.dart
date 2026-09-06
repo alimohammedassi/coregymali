@@ -177,7 +177,8 @@ class NutritionScreenState extends State<NutritionScreen>
   int get _waterGoal => (_goals['daily_water_ml'] as num?)?.toInt() ?? 2500;
 
   double get _fiberConsumed => (_summary['fiber_g'] as num?)?.toDouble() ?? 0;
-  double get _sugarConsumed => (_summary['sugar_g'] as num?)?.toDouble() ?? 0;
+  // Column is `sugars_g` in both nutrition_logs and daily_summary.
+  double get _sugarConsumed => (_summary['sugars_g'] as num?)?.toDouble() ?? 0;
   double get _sodiumConsumed =>
       (_summary['sodium_mg'] as num?)?.toDouble() ?? 0;
 

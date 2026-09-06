@@ -89,6 +89,17 @@ class AppColors {
     error = light ? const Color(0xFFB84A30) : const Color(0xFFEE7F60);
     errorDim = light ? const Color(0xFFA8432B) : const Color(0xFFD96A47);
 
+    // ── Warning — over-goal (warm amber, not error red) ──
+    // Used for "over calories" border/pill/text. Red is reserved for real
+    // errors (failed loads, destructive actions).
+    overGoalWarning = light ? const Color(0xFFB45309) : const Color(0xFFF59E0B);
+    overGoalWarningBg = light
+        ? const Color(0xFFFFF7ED)
+        : const Color(0xFFFFF7ED).withValues(alpha: 0.12);
+    overGoalWarningBorder = light
+        ? const Color(0xFFB45309).withValues(alpha: 0.45)
+        : const Color(0xFFF59E0B).withValues(alpha: 0.45);
+
     // ── Text & Content Hierarchy ──
     textPrimary = light ? const Color(0xFF1B1D12) : const Color(0xFFECEEE2);
     textSecondary = light ? const Color(0xFF555947) : const Color(0xFFA9ADA0);
@@ -177,6 +188,11 @@ class AppColors {
   // Error
   static Color error = const Color(0xFFEE7F60);
   static Color errorDim = const Color(0xFFD96A47);
+
+  // Warning — over-goal (warm amber, not error red)
+  static Color overGoalWarning = const Color(0xFFF59E0B);
+  static Color overGoalWarningBg = const Color(0xFFFFF7ED);
+  static Color overGoalWarningBorder = const Color(0xFFF59E0B);
 
   // Text & Content Hierarchy
   static Color textPrimary = const Color(0xFFECEEE2);

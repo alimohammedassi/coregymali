@@ -1,5 +1,7 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'gender.dart';
 import 'l10n/app_localizations.dart';
 import 'theme/app_animations.dart';
@@ -66,17 +68,27 @@ class _GlassPanel extends StatelessWidget {
 // ────────────────────────────────────────────────────────────────────────────
 // Splash
 //
-// Animation timing/behavior is unchanged: "CORE" still types on letter at a
-// time, holds briefly, then zooms centered exactly on the "O" until it
-// expands past the edges of the screen and fades out. Auth/profile bootstrap
-// still runs underneath, navigation still waits on it (not a fixed timer),
-// a minimum splash duration is still enforced, and a failed fetchProfile()
-// still falls back to a retryable error state instead of hanging forever.
+// Brand animation modeled on the owner's reference clip: two dumbbell
+// capsules fly in from opposite corners, collide at the mark slot, morph
+// into a four-lobe lime clover (with small violet/steel impact arcs), then
+// the wordmark slides in beside the mark.
 //
-// What changed is code quality around that: the error is no longer silently
-// swallowed (it's logged so a real bootstrap failure is diagnosable), and
-// the alignment/typing/zoom math is unchanged but now sits behind clearer
-// names.
+// Smoothness: ONE AnimationController drives everything through Interval
+// curves; the capsules and impact arcs are a single CustomPaint behind one
+// RepaintBoundary, so every frame is transform/alpha/arc work only — no
+// layout, no image filters.
+//
+// Locale: the wordmark follows the app locale (which follows the device on
+// first run). English animates "CoreGym" per letter with a violet→white
+// sweep; Arabic renders «كور جيم» as ONE unit because per-letter animation
+// would break cursive joining — it slides in as a whole word. The lockup
+// mirrors for RTL via the MaterialApp-set Directionality.
+//
+// Bootstrap behavior unchanged: auth/profile resolution still runs under the
+// animation, navigation still waits on it plus a minimum duration (so the
+// animation always completes even on a fast network), and a failed
+// fetchProfile() still falls back to a retryable error state instead of
+// hanging forever.
 // ────────────────────────────────────────────────────────────────────────────
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -86,73 +98,24 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen>
-    with TickerProviderStateMixin {
-  static const _word = 'CORE';
-  static const _letterDuration = Duration(milliseconds: 160);
-  static const _pauseBeforeZoom = Duration(milliseconds: 450);
-  static const _zoomDuration = Duration(milliseconds: 700);
-  static const _minSplashDuration = Duration(milliseconds: 1900);
-  static const _maxScale = 30.0;
+    with SingleTickerProviderStateMixin {
+  static const _animDuration = Duration(milliseconds: 2600);
+  static const _minSplashDuration = _animDuration;
 
-  // Splash-specific palette: full green background with near-black text
-  // gives the strongest contrast of the options tried, so it's kept local
-  // to this screen rather than pulled from AppColors (which still backs
-  // the rest of the app).
-  static const _bgColor = Color(0xFFD4FF57);
-  static const _onBgColor = Color(0xFF14140F);
+  // Splash-local palette — the canvas stays dark in BOTH theme modes (it's
+  // a brand moment, per the reference clip); accents ride the app tokens.
+  static const _bgColor = AppColors.darkBackground;
+  static const _ink = Color(0xFFF2F4EC);
 
-  static const _textStyle = TextStyle(
-    fontSize: 64,
-    fontWeight: FontWeight.w900,
-    letterSpacing: 4,
-    color: _onBgColor,
-  );
-
-  late final AnimationController _typeController;
-  late final AnimationController _zoomController;
-  late final double _zoomAlignmentX; // -1..1, centered exactly on the "O"
-
+  late final AnimationController _controller;
   bool _hasError = false;
 
   @override
   void initState() {
     super.initState();
-
-    // Computed analytically from font metrics (not layout timing), so it's
-    // correct on the very first frame with no post-frame measuring step.
-    _zoomAlignmentX = _alignmentXForLetter(_word, 'O', _textStyle);
-
-    _typeController = AnimationController(
-      vsync: this,
-      duration: _letterDuration * _word.length,
-    )..forward();
-
-    _zoomController = AnimationController(vsync: this, duration: _zoomDuration);
-
+    _controller = AnimationController(vsync: this, duration: _animDuration)
+      ..forward();
     _run();
-  }
-
-  /// Horizontal Alignment (-1..1) of [letter]'s center within [word] as
-  /// rendered in [style]. Lets the zoom transform be centered exactly on
-  /// that letter regardless of font/weight/letterSpacing changes later.
-  double _alignmentXForLetter(String word, String letter, TextStyle style) {
-    double widthOf(String s) {
-      final painter = TextPainter(
-        text: TextSpan(text: s, style: style),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      return painter.width;
-    }
-
-    final index = word.indexOf(letter);
-    if (index == -1) return 0.0;
-
-    final fullWidth = widthOf(word);
-    final beforeWidth = widthOf(word.substring(0, index));
-    final letterWidth = widthOf(word[index]);
-    final centerX = beforeWidth + letterWidth / 2;
-
-    return ((centerX / fullWidth) * 2) - 1;
   }
 
   Future<void> _run() async {
@@ -161,15 +124,19 @@ class _SplashScreenState extends State<SplashScreen>
     try {
       final destination = await _resolveDestination();
 
-      await _waitForTypingAndMinimum(started);
+      // A fast bootstrap must not cut the brand moment short — always let
+      // the animation reach its hold state before navigating.
+      final remaining = _minSplashDuration - DateTime.now().difference(started);
+      if (remaining > Duration.zero) {
+        await Future.delayed(remaining);
+      }
+      // Completes immediately if the animation already finished.
+      await _controller.forward();
       if (!mounted) return;
 
-      await _zoomController.forward();
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacement(
-        FadeScalePageRoute(page: destination),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(FadeScalePageRoute(page: destination));
     } catch (error, stackTrace) {
       // Previously swallowed with `catch (_)`, which made a broken
       // bootstrap (bad auth token, network failure, etc.) indistinguishable
@@ -206,142 +173,380 @@ class _SplashScreenState extends State<SplashScreen>
     return const FitnessHomePage();
   }
 
-  Future<void> _waitForTypingAndMinimum(DateTime started) async {
-    final typingDone = _letterDuration * _word.length + _pauseBeforeZoom;
-    final target = typingDone > _minSplashDuration
-        ? typingDone
-        : _minSplashDuration;
-    final remaining = target - DateTime.now().difference(started);
-    if (remaining > Duration.zero) {
-      await Future.delayed(remaining);
-    }
-  }
-
   void _retry() {
     setState(() => _hasError = false);
-    _typeController
-      ..reset()
-      ..forward();
-    _zoomController.reset();
+    _controller.forward(from: 0);
     _run();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isRtl = Directionality.of(context) == TextDirection.rtl;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: _bgColor,
-      body: Center(
-        child: _hasError
-            ? _buildError(context)
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildWord(),
-                  const SizedBox(height: 64),
-                  // Bootstrap (Supabase session + profile) runs while the
-                  // word types/zooms — keep a quiet loading cue for slower
-                  // connections so the wait reads as "loading", not "stuck".
-                  const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      valueColor: AlwaysStoppedAnimation(_onBgColor),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final w = constraints.maxWidth;
+          final h = constraints.maxHeight;
+          final s = ((w < h ? w : h) / 390).clamp(0.85, 1.35).toDouble();
+
+          // Mark slot: left of center in LTR, mirrored in RTL, so the
+          // finished lockup (mark + wordmark) reads centered like the
+          // reference clip.
+          final focusX = isRtl ? 0.33 : -0.33;
+          final markCx = w * (1 + focusX) / 2;
+          final markCy = h / 2;
+          final markR = 30 * s; // finished clover bounding radius
+          final gap = 15 * s; // mark ↔ wordmark gap
+
+          return Stack(
+            children: [
+              // Flying capsules + impact arcs — one paint layer.
+              Positioned.fill(
+                child: RepaintBoundary(
+                  child: CustomPaint(
+                    painter: _SplashMarkPainter(
+                      anim: _controller,
+                      center: Offset(markCx, markCy),
+                      scale: s,
                     ),
                   ),
-                ],
+                ),
               ),
-      ),
-    );
-  }
 
-  Widget _buildWord() {
-    return AnimatedBuilder(
-      animation: Listenable.merge([_typeController, _zoomController]),
-      builder: (context, child) {
-        final scale = 1 + (_zoomController.value * (_maxScale - 1));
-        final opacity = _zoomController.value == 0
-            ? 1.0
-            : (1 - Curves.easeIn.transform(_zoomController.value)).clamp(
-                0.0,
-                1.0,
-              );
-
-        return Transform.scale(
-          scale: scale,
-          alignment: Alignment(_zoomAlignmentX, 0),
-          child: Opacity(
-            opacity: opacity,
-            child: Semantics(
-              label: 'Loading CoreGym',
-              liveRegion: true,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: List.generate(_word.length, (i) {
-                  final start = i / _word.length;
-                  final end = (i + 1) / _word.length;
-                  final t = Interval(
-                    start,
-                    end,
-                    curve: Curves.easeOut,
-                  ).transform(_typeController.value);
-
-                  return Opacity(
-                    opacity: t,
-                    child: Transform.translate(
-                      offset: Offset(0, (1 - t) * 14),
-                      child: Text(_word[i], style: _textStyle),
+              // Wordmark — anchored to the mark slot's inner edge.
+              Positioned(
+                top: 0,
+                bottom: 0,
+                left: isRtl ? null : markCx + markR + gap,
+                right: isRtl ? w - markCx + markR + gap : null,
+                child: Center(
+                  child: Semantics(
+                    label: isArabic ? 'جارٍ تحميل كور جيم' : 'Loading CoreGym',
+                    liveRegion: true,
+                    textDirection: isArabic
+                        ? TextDirection.rtl
+                        : TextDirection.ltr,
+                    excludeSemantics: true,
+                    child: _Wordmark(
+                      anim: _controller,
+                      isArabic: isArabic,
+                      scale: s,
                     ),
-                  );
-                }),
+                  ),
+                ),
               ),
-            ),
-          ),
-        );
-      },
+
+              // Quiet loading cue while bootstrap finishes under the
+              // animation, so a slow network reads as "loading", not stuck.
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 48,
+                child: Center(
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (_, __) {
+                      final t = Interval(
+                        0.72,
+                        0.88,
+                        curve: Curves.easeOut,
+                      ).transform(_controller.value);
+                      return Opacity(
+                        opacity: _hasError ? 0 : t,
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.2,
+                            valueColor: AlwaysStoppedAnimation(
+                              AppColors.primaryFixed,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              if (_hasError) _buildError(context),
+            ],
+          );
+        },
+      ),
     );
   }
 
   Widget _buildError(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline_rounded, color: _onBgColor, size: 32),
-          const SizedBox(height: 12),
-          Text(
-            l10n.splashError,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: _onBgColor.withValues(alpha: 0.75),
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _retry,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _onBgColor,
-              foregroundColor: _bgColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+    return Positioned(
+      left: 24,
+      right: 24,
+      bottom: 88,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1B1D16),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: _ink, size: 30),
+            const SizedBox(height: 10),
+            Text(
+              l10n.splashError,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: _ink.withValues(alpha: 0.75),
+                fontSize: 14,
+                height: 1.4,
               ),
             ),
-            child: Text(l10n.retry.toUpperCase()),
-          ),
-        ],
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _retry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryFixed,
+                  foregroundColor: AppColors.onPrimary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(l10n.retry.toUpperCase()),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
-    _typeController.dispose();
-    _zoomController.dispose();
+    _controller.dispose();
     super.dispose();
   }
+}
+
+/// The wordmark half of the splash lockup. English animates per letter with a
+/// violet→white color sweep; Arabic animates as one unit (cursive joining
+/// must never be split) sliding in from the mark's side.
+class _Wordmark extends StatelessWidget {
+  const _Wordmark({
+    required this.anim,
+    required this.isArabic,
+    required this.scale,
+  });
+
+  final Animation<double> anim;
+  final bool isArabic;
+  final double scale;
+
+  static const _arWord = 'كور ';
+  static const _enWord = 'Core';
+  static const _ink = Color(0xFFF2F4EC);
+  static const _sweepFrom = Color(0xFF8B5CF6);
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: anim,
+      builder: (context, _) => isArabic ? _buildArabic() : _buildEnglish(),
+    );
+  }
+
+  Widget _buildArabic() {
+    final t = Interval(
+      0.58,
+      0.82,
+      curve: Curves.easeOutCubic,
+    ).transform(anim.value);
+    return Opacity(
+      opacity: t,
+      child: Transform.translate(
+        // Slides in from the mark's side — the mark is to the word's RIGHT
+        // in the RTL lockup, so that's the +x direction on screen.
+        offset: Offset((1 - t) * 18 * scale, 0),
+        child: Transform.scale(
+          scale: 0.97 + 0.03 * t,
+          child: Text(
+            _arWord,
+            textDirection: TextDirection.rtl,
+            style: GoogleFonts.cairo(
+              fontSize: 29 * scale,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+              color: _ink,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnglish() {
+    final letters = _enWord.split('');
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < letters.length; i++)
+          _buildLetter(letters[i], i, letters.length),
+      ],
+    );
+  }
+
+  Widget _buildLetter(String ch, int i, int n) {
+    const window = 0.16;
+    final start = (0.58 + i * 0.024).clamp(0.0, 0.86 - window);
+    final t = Interval(
+      start,
+      start + window,
+      curve: Curves.easeOutCubic,
+    ).transform(anim.value);
+    return Opacity(
+      opacity: t,
+      child: Transform.translate(
+        // Letters slide out from behind the mark (its left side in LTR).
+        offset: Offset((1 - t) * -16 * scale, 0),
+        child: Text(
+          ch,
+          style: GoogleFonts.poppins(
+            fontSize: 31 * scale,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.4,
+            color: Color.lerp(_sweepFrom, _ink, t),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Paints the two flying dumbbell capsules and their collision. Capsule A
+/// comes from the upper-left; capsule B is the same shape rotated π around
+/// the mark center (so it comes from the lower-right). On impact the gray
+/// handles retract, the violet tips fade, and lime lobes grow on both ends —
+/// two crossed lime stadiums = the four-lobe clover of the reference clip.
+class _SplashMarkPainter extends CustomPainter {
+  _SplashMarkPainter({
+    required Animation<double> anim,
+    required this.center,
+    required this.scale,
+  }) : _anim = anim,
+       super(repaint: anim);
+
+  final Animation<double> _anim;
+  final Offset center;
+  final double scale;
+
+  static const _lime = Color(0xFFB2D742);
+  static const _steel = Color(0xFFA9ADA0);
+  static const _violet = Color(0xFF7E71E0);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final v = _anim.value;
+
+    final flight = Interval(0.0, 0.30, curve: Curves.easeOutCubic).transform(v);
+    final arcsT = Interval(0.22, 0.46, curve: Curves.easeOut).transform(v);
+    final squashT = Interval(0.22, 0.40, curve: Curves.easeOut).transform(v);
+    // easeOutBack overshoots (>1) on purpose — the lobes pop past their
+    // resting size and settle, like the reference's collision squash.
+    final morph = Interval(0.30, 0.58, curve: Curves.easeOutBack).transform(v);
+
+    // Impact micro-bounce: the whole mark group pops on collision.
+    final bounce = 1.0 + 0.10 * sin(pi * squashT);
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(bounce, bounce);
+
+    // Impact sparks — small violet/steel arcs flanking the mark, fading out.
+    if (arcsT > 0 && arcsT < 1) {
+      final fade = sin(pi * arcsT);
+      final arcR = lerpDouble(15, 27, arcsT)! * scale;
+      final stroke = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.4 * scale
+        ..strokeCap = StrokeCap.round;
+      stroke.color = _violet.withValues(alpha: 0.9 * fade);
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: arcR),
+        pi * 0.80,
+        pi * 0.40,
+        false,
+        stroke,
+      );
+      stroke.color = _steel.withValues(alpha: 0.9 * fade);
+      canvas.drawArc(
+        Rect.fromCircle(center: Offset.zero, radius: arcR),
+        -pi * 0.20,
+        pi * 0.40,
+        false,
+        stroke,
+      );
+    }
+
+    final s = scale;
+    final rLobe = 13.0 * s;
+    final headX = lerpDouble(-26, -16, morph)! * s;
+    final tailX = lerpDouble(28, 16, morph)! * s;
+    final rTail = rLobe * morph.clamp(0.0, 1.0);
+    final rTip = 6.5 * s * (1 - morph).clamp(0.0, 1.0);
+    final barH = lerpDouble(9, 5, morph)! * s;
+    // The handle retracts into the lobes as the clover forms — at rest the
+    // mark is all lime, no gray residue at the center.
+    final barLen = (tailX - headX) * (1 - morph.clamp(0.0, 1.0));
+
+    for (var flip = 0; flip < 2; flip++) {
+      final mirrored = flip == 1;
+      canvas.save();
+
+      // A flies in from the upper-left corner, B from the lower-right.
+      final startPos = mirrored
+          ? Offset(size.width * 0.42, size.height * 0.34)
+          : Offset(-size.width * 0.42, -size.height * 0.34);
+      final pos = Offset.lerp(startPos, Offset.zero, flight)!;
+      final spin = (1 - flight) * 0.85;
+      canvas.translate(pos.dx, pos.dy);
+      // Rest axes are CROSSED (+45° and −45°) so the two capsules form the
+      // four-lobe clover; the spin decays as each capsule arrives.
+      final restAngle = mirrored ? -pi / 4 : pi / 4;
+      canvas.rotate(restAngle - spin);
+
+      // Gray handle — retracts to nothing as the clover forms.
+      if (barLen > 0.5) {
+        final bar = RRect.fromRectAndRadius(
+          Rect.fromLTWH(headX, -barH / 2, barLen, barH),
+          Radius.circular(barH / 2),
+        );
+        canvas.drawRRect(bar, Paint()..color = _steel);
+      }
+      // Lime lobes: the head is always there, the tail lobe grows on impact.
+      canvas.drawCircle(Offset(headX, 0), rLobe, Paint()..color = _lime);
+      if (rTail > 0.4) {
+        canvas.drawCircle(Offset(tailX, 0), rTail, Paint()..color = _lime);
+      }
+      // Violet tip — visible only in flight, collapses into the mark.
+      if (rTip > 0.4) {
+        canvas.drawCircle(Offset(tailX, 0), rTip, Paint()..color = _violet);
+      }
+      canvas.restore();
+    }
+
+    canvas.restore();
+  }
+
+  // Repaints are driven by the animation via `super(repaint: anim)`.
+  @override
+  bool shouldRepaint(_SplashMarkPainter oldDelegate) => false;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -516,12 +721,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           if (MediaQuery.disableAnimationsOf(context)) return child;
           return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(1.0, 0.0),
-              end: Offset.zero,
-            ).animate(
-              CurvedAnimation(parent: animation, curve: AppCurves.standard),
-            ),
+            position:
+                Tween<Offset>(
+                  begin: const Offset(1.0, 0.0),
+                  end: Offset.zero,
+                ).animate(
+                  CurvedAnimation(parent: animation, curve: AppCurves.standard),
+                ),
             child: child,
           );
         },
@@ -656,7 +862,7 @@ class OnboardingPage extends StatelessWidget {
                           data.description,
                           key: ValueKey('desc_$pageIndex'),
                           style: AuthAppText.bodyMd.copyWith(
-                            color: AppColors.onSurfaceVariant,
+                            color: AppColors.darkTextPrimary,
                             height: 1.6,
                           ),
                         ),
@@ -719,7 +925,9 @@ class OnboardingPage extends StatelessWidget {
             words[i].toUpperCase(),
             style: AuthAppText.displaySm.copyWith(
               fontSize: i == 1 ? 44 : 38,
-              color: i == 1 ? AppColors.primaryFixed : AppColors.onSurface,
+              color: i == 1
+                  ? AppColors.primaryFixed
+                  : AppColors.darkTextPrimary,
             ),
           ),
       ],
@@ -758,7 +966,7 @@ class _ImageFallback extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration:  BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

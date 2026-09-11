@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- API 31+: the system draws its own splash (windowBackground + centered
+         app icon), so the background color must also be set through the
+         platform's splash-screen attr to avoid a white cut before Flutter's
+         dark splash canvas paints. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+        <item name="android:windowSplashScreenBackground">#121310</item>
+    </style>
+</resources>

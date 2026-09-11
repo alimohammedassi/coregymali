@@ -510,3 +510,11 @@ This project is proprietary and confidential. All rights reserved.
 Built by **[Ali Mohamed Assi](https://github.com/alimohammedassi)**
 
 </div>
+
+---
+
+<div align="center">
+
+Built by **[Ali Mohamed Assi](https://github.com/alimohammedassi)**
+
+</div>

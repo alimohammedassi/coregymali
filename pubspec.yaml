@@ -56,7 +56,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
-                    
+    - lib/icons/IconKitchen-Output/android/play_store_512.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -15,6 +15,18 @@ import '../widgets/app_background.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FoodScanScreen — AI food photo scan: capture → analyze → review → save
+//
+// UI/UX pass notes:
+//  • Tap the photo in the result header to view it full-screen.
+//  • Removing an item now shows an "Undo" snackbar instead of being silent
+//    and irreversible.
+//  • Confidence pill now carries an icon + semantic color, not just text.
+//  • Macro bar shows percentage labels so the split is scannable at a glance.
+//  • Analyzing screen reassures the user if a scan is taking longer than usual.
+//  • Error state uses a distinct icon per error type instead of one generic
+//    icon for everything.
+//  • Idle screen rotates a short tip so the empty state feels less static.
+//  • Icon-only buttons carry Semantics/tooltips for screen readers.
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum _ScanPhase { idle, analyzing, result, error }
@@ -48,12 +60,25 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     'Calculating nutrition',
   ];
 
+  // Lightweight, rotating idle-state tips. Hardcoded copy on purpose — add
+  // these to your l10n arb files if you want them translated.
+  static const _idleTips = [
+    'Good lighting helps the scan spot every item on the plate.',
+    'Shoot from directly above for the most accurate portions.',
+    'You can remove or add items after scanning, before you save.',
+    'One photo, whole plate — no need to scan each item separately.',
+  ];
+
   late final AnimationController _scanController;
   late final AnimationController _pulseController;
   late final AnimationController _resultController;
 
   Timer? _stepTimer;
   int _stepIndex = 0;
+  int _elapsedSteps = 0; // how many analyzing-step ticks have elapsed
+
+  Timer? _idleTipTimer;
+  int _tipIndex = 0;
 
   _ScanPhase _phase = _ScanPhase.idle;
   String _mealType;
@@ -106,6 +131,15 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     }
   }
 
+  IconData _errorIcon(FoodScanErrorType type) => switch (type) {
+    FoodScanErrorType.network => Icons.wifi_off_rounded,
+    FoodScanErrorType.unauthorized => Icons.lock_outline_rounded,
+    FoodScanErrorType.notFood => Icons.no_food_rounded,
+    FoodScanErrorType.analysisFailed => Icons.psychology_alt_outlined,
+    FoodScanErrorType.serverError => Icons.cloud_off_rounded,
+    FoodScanErrorType.unknown => Icons.error_outline_rounded,
+  };
+
   @override
   void initState() {
     super.initState();
@@ -125,6 +159,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       vsync: this,
       duration: const Duration(milliseconds: 420),
     );
+    _startIdleTipCycle();
   }
 
   @override
@@ -133,7 +168,17 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     _pulseController.dispose();
     _resultController.dispose();
     _stepTimer?.cancel();
+    _idleTipTimer?.cancel();
     super.dispose();
+  }
+
+  // ─── idle tip rotation ────────────────────────────────────────────────────
+  void _startIdleTipCycle() {
+    _idleTipTimer?.cancel();
+    _idleTipTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || _phase != _ScanPhase.idle) return;
+      setState(() => _tipIndex = (_tipIndex + 1) % _idleTips.length);
+    });
   }
 
   // ─── actions ──────────────────────────────────────────────────────────────
@@ -160,6 +205,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       _errorType = null;
       _saveErrorType = null;
       _stepIndex = 0;
+      _elapsedSteps = 0;
     });
     _startStepCycle();
     await _analyze();
@@ -169,7 +215,10 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     _stepTimer?.cancel();
     _stepTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
       if (!mounted || _phase != _ScanPhase.analyzing) return;
-      setState(() => _stepIndex = (_stepIndex + 1) % _analyzingSteps.length);
+      setState(() {
+        _stepIndex = (_stepIndex + 1) % _analyzingSteps.length;
+        _elapsedSteps++;
+      });
     });
   }
 
@@ -215,6 +264,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       _errorType = null;
       _saveErrorType = null;
     });
+    _startIdleTipCycle();
   }
 
   Future<void> _saveToLog() async {
@@ -232,6 +282,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     if (!mounted) return;
 
     if (ok) {
+      HapticFeedback.lightImpact();
       Navigator.of(context).pop(true);
     } else {
       setState(() {
@@ -242,8 +293,77 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   }
 
   void _removeItem(int index) {
+    if (index < 0 || index >= _items.length) return;
     HapticFeedback.selectionClick();
+    final removedItem = _items[index];
+    final removedAt = index;
     setState(() => _items.removeAt(index));
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.surfaceContainerHigh,
+        duration: const Duration(seconds: 3),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        content: Text(
+          'Removed "${removedItem.name}"',
+          style: TextStyle(color: AppColors.textPrimary, fontSize: 13),
+        ),
+        action: SnackBarAction(
+          label: 'UNDO',
+          textColor: AppColors.primaryFixed,
+          onPressed: () {
+            if (!mounted) return;
+            setState(() {
+              final insertAt = removedAt.clamp(0, _items.length);
+              _items.insert(insertAt, removedItem);
+            });
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showImagePreview() {
+    final image = _imageFile;
+    if (image == null) return;
+    HapticFeedback.selectionClick();
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      builder: (ctx) => GestureDetector(
+        onTap: () => Navigator.of(ctx).pop(),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          body: Stack(
+            children: [
+              Center(
+                child: InteractiveViewer(
+                  minScale: 1,
+                  maxScale: 4,
+                  child: Image.file(File(image.path), fit: BoxFit.contain),
+                ),
+              ),
+              Positioned(
+                top: 12,
+                right: 12,
+                child: Semantics(
+                  label: 'Close photo preview',
+                  button: true,
+                  child: IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   // ─── computed helpers ─────────────────────────────────────────────────────
@@ -259,9 +379,13 @@ class _FoodScanScreenState extends State<FoodScanScreen>
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(false),
+        leading: Semantics(
+          label: 'Back',
+          button: true,
+          child: IconButton(
+            icon: Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
+            onPressed: () => Navigator.of(context).pop(false),
+          ),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -337,70 +461,77 @@ class _FoodScanScreenState extends State<FoodScanScreen>
             children: _meals.map((m) {
               final sel = _mealType == m.type;
               return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _mealType = m.type);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    curve: Curves.easeOutCubic,
-                    margin: EdgeInsetsDirectional.only(
-                      end: m.type == 'snack' ? 0 : 8,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 13),
-                    decoration: BoxDecoration(
-                      gradient: sel
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                AppColors.primaryFixed,
-                                AppColors.secondaryFixed,
-                              ],
-                            )
-                          : null,
-                      color: sel ? null : AppColors.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: sel
-                            ? Colors.transparent
-                            : Colors.white.withValues(alpha: 0.08),
+                child: Semantics(
+                  label: '${_mealName(l10n, m.type)}${sel ? ', selected' : ''}',
+                  button: true,
+                  selected: sel,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() => _mealType = m.type);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      margin: EdgeInsetsDirectional.only(
+                        end: m.type == 'snack' ? 0 : 8,
                       ),
-                      boxShadow: sel
-                          ? [
-                              BoxShadow(
-                                color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                                blurRadius: 14,
-                                offset: const Offset(0, 5),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      children: [
-                        AnimatedScale(
-                          duration: const Duration(milliseconds: 220),
-                          scale: sel ? 1.12 : 1.0,
-                          child: Text(
-                            m.emoji,
-                            style: const TextStyle(fontSize: 20),
-                          ),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      decoration: BoxDecoration(
+                        gradient: sel
+                            ? LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  AppColors.primaryFixed,
+                                  AppColors.secondaryFixed,
+                                ],
+                              )
+                            : null,
+                        color: sel ? null : AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: sel
+                              ? Colors.transparent
+                              : Colors.white.withValues(alpha: 0.08),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _mealName(l10n, m.type),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: sel
-                                ? Colors.white
-                                : AppColors.onSurfaceVariant,
+                        boxShadow: sel
+                            ? [
+                                BoxShadow(
+                                  color: AppColors.primaryFixed.withValues(
+                                    alpha: 0.35,
+                                  ),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ]
+                            : null,
+                      ),
+                      child: Column(
+                        children: [
+                          AnimatedScale(
+                            duration: const Duration(milliseconds: 220),
+                            scale: sel ? 1.12 : 1.0,
+                            child: Text(
+                              m.emoji,
+                              style: const TextStyle(fontSize: 20),
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          Text(
+                            _mealName(l10n, m.type),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: sel
+                                  ? Colors.white
+                                  : AppColors.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -418,7 +549,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   height: 160,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.primaryFixed.withValues(alpha: 0.05 + 0.03 * t),
+                    color: AppColors.primaryFixed.withValues(
+                      alpha: 0.05 + 0.03 * t,
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: child,
@@ -464,7 +597,54 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 14),
+          // Rotating tip — keeps the empty state feeling alive and teaches
+          // better scan habits over time instead of a static wall of text.
+          Center(
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 320),
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+              child: Container(
+                key: ValueKey(_tipIndex),
+                constraints: const BoxConstraints(maxWidth: 300),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline_rounded,
+                      size: 14,
+                      color: AppColors.primaryFixed,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        _idleTips[_tipIndex],
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppColors.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 28),
           _GradientButton(
             label: l10n.scanCameraCta,
             icon: Icons.photo_camera_rounded,
@@ -503,6 +683,13 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   // ─── ANALYZING ────────────────────────────────────────────────────────────
   Widget _buildAnalyzing() {
     final l10n = AppLocalizations.of(context)!;
+    // Rough visual progress: cycles through the step list, capping out at
+    // ~92% so it never falsely implies completion before the network call
+    // actually returns.
+    final progress = (0.15 + (_stepIndex + 1) / _analyzingSteps.length * 0.6)
+        .clamp(0.0, 0.92);
+    final takingAWhile = _elapsedSteps >= 4; // ~6s of real elapsed time
+
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -548,8 +735,8 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.primaryFixed.withValues(alpha: 
-                                    0.7,
+                                  color: AppColors.primaryFixed.withValues(
+                                    alpha: 0.7,
                                   ),
                                   blurRadius: 10,
                                   spreadRadius: 1,
@@ -604,17 +791,43 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 22),
+            const SizedBox(height: 16),
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: SizedBox(
                 width: 160,
                 height: 4,
-                child: LinearProgressIndicator(
-                  backgroundColor: AppColors.surfaceContainerHigh,
-                  valueColor: AlwaysStoppedAnimation(AppColors.primaryFixed),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: progress),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutCubic,
+                  builder: (_, value, __) => LinearProgressIndicator(
+                    value: value,
+                    backgroundColor: AppColors.surfaceContainerHigh,
+                    valueColor: AlwaysStoppedAnimation(AppColors.primaryFixed),
+                  ),
                 ),
               ),
+            ),
+            // Reassurance for slower connections so a long wait doesn't feel
+            // like the app has stalled.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 260),
+              child: takingAWhile
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 14),
+                      child: Text(
+                        'Taking a little longer than usual — still working…',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.onSurfaceVariant.withValues(
+                            alpha: 0.8,
+                          ),
+                        ),
+                      ),
+                    )
+                  : const SizedBox(width: double.infinity, height: 0),
             ),
           ],
         ),
@@ -717,7 +930,21 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                if (_items.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 10),
+                    child: Text(
+                      'Swipe an item left, or tap ×, to remove it',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: AppColors.onSurfaceVariant.withValues(
+                          alpha: 0.7,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 10),
                 if (_items.isEmpty)
                   _emptyItemsHint()
                 else
@@ -738,95 +965,144 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   }
 
   Widget _emptyItemsHint() => Container(
-    padding: const EdgeInsets.symmetric(vertical: 22),
+    padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 16),
     alignment: Alignment.center,
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
     ),
-    child: Text(
-      'All items removed — go back to rescan',
-      style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+    child: Column(
+      children: [
+        Icon(
+          Icons.remove_circle_outline_rounded,
+          color: AppColors.onSurfaceVariant,
+          size: 22,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'All items removed — go back to rescan',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 12, color: AppColors.onSurfaceVariant),
+        ),
+      ],
     ),
   );
 
   Widget _buildResultHeader(FoodScanResult r) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: SizedBox(
-        height: 152,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (_imageFile != null)
-              Image.file(
-                File(_imageFile!.path),
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _photoFallback(),
-              )
-            else
-              _photoFallback(),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.0),
-                    Colors.black.withValues(alpha: 0.65),
-                  ],
-                  stops: const [0.35, 1.0],
+    return Semantics(
+      label: 'Scanned photo, tap to view full screen',
+      button: true,
+      child: GestureDetector(
+        onTap: _showImagePreview,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: SizedBox(
+            height: 152,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_imageFile != null)
+                  Image.file(
+                    File(_imageFile!.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _photoFallback(),
+                  )
+                else
+                  _photoFallback(),
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.0),
+                        Colors.black.withValues(alpha: 0.65),
+                      ],
+                      stops: const [0.35, 1.0],
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            Positioned(
-              top: 12,
-              right: 12,
-              child: _confidencePill(r.confidence),
-            ),
-            Positioned(
-              left: 14,
-              right: 14,
-              bottom: 12,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.45),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.zoom_in_rounded,
+                      size: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: _confidencePill(r.confidence),
+                ),
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: 12,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.auto_awesome_rounded,
-                        size: 13,
-                        color: Colors.white,
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.auto_awesome_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            AppLocalizations.of(context)!.scanAi,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // Which meal this scan will be logged to — keeps the
+                          // context visible while scrolling the item list.
+                          Flexible(
+                            child: Text(
+                              '· ${_mealLabel(AppLocalizations.of(context)!)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 5),
-                      Text(
-                        AppLocalizations.of(context)!.scanAi,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                          letterSpacing: 0.3,
+                      if (r.notes != null && r.notes!.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          r.notes!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.85),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
-                  if (r.notes != null && r.notes!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      r.notes!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.white.withValues(alpha: 0.85),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -834,10 +1110,22 @@ class _FoodScanScreenState extends State<FoodScanScreen>
 
   Widget _confidencePill(FoodScanConfidence c) {
     final l10n = AppLocalizations.of(context)!;
-    final label = switch (c) {
-      FoodScanConfidence.high => l10n.scanConfidenceHigh,
-      FoodScanConfidence.medium => l10n.scanConfidenceMedium,
-      FoodScanConfidence.low => l10n.scanConfidenceLow,
+    final (label, icon, color) = switch (c) {
+      FoodScanConfidence.high => (
+        l10n.scanConfidenceHigh,
+        Icons.verified_rounded,
+        AppColors.accentProtein,
+      ),
+      FoodScanConfidence.medium => (
+        l10n.scanConfidenceMedium,
+        Icons.info_outline_rounded,
+        AppColors.accentCarbs,
+      ),
+      FoodScanConfidence.low => (
+        l10n.scanConfidenceLow,
+        Icons.help_outline_rounded,
+        AppColors.accentFat,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -846,13 +1134,20 @@ class _FoodScanScreenState extends State<FoodScanScreen>
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 10,
-          color: Colors.white,
-          fontWeight: FontWeight.w800,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -873,12 +1168,21 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     final c = _items.fold(0.0, (s, i) => s + i.carbsG);
     final f = _items.fold(0.0, (s, i) => s + i.fatG);
     final total = (p + c + f).clamp(0.0001, double.infinity);
+    final pPct = (p / total * 100).round();
+    final cPct = (c / total * 100).round();
+    final fPct = (100 - pPct - cPct).clamp(
+      0,
+      100,
+    ); // keeps the three sums to 100
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primaryFixed.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primaryFixed.withValues(alpha: 0.25)),
+        border: Border.all(
+          color: AppColors.primaryFixed.withValues(alpha: 0.25),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -948,6 +1252,37 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                 ],
               ),
             ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Text(
+                '$pPct% P',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accentProtein,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$cPct% C',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accentCarbs,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$fPct% F',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.accentFat,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1091,15 +1426,21 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               ),
               const SizedBox(width: 4),
               if (!_saving)
-                GestureDetector(
-                  onTap: () => _removeItem(index),
-                  behavior: HitTestBehavior.opaque,
-                  child: Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Icon(
-                      Icons.close_rounded,
-                      size: 16,
-                      color: AppColors.onSurfaceVariant.withValues(alpha: 0.5),
+                Semantics(
+                  label: 'Remove ${item.name}',
+                  button: true,
+                  child: GestureDetector(
+                    onTap: () => _removeItem(index),
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 16,
+                        color: AppColors.onSurfaceVariant.withValues(
+                          alpha: 0.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -1129,7 +1470,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+        border: Border(
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25),
@@ -1149,7 +1492,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                     colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
                   )
                 : null,
-            color: canSave ? null : AppColors.primaryFixed.withValues(alpha: 0.35),
+            color: canSave
+                ? null
+                : AppColors.primaryFixed.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
@@ -1215,6 +1560,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
             _errorCard(
               l10n.scanErrorTitle,
               _errorText(l10n, _errorType ?? FoodScanErrorType.unknown),
+              _errorIcon(_errorType ?? FoodScanErrorType.unknown),
             ),
             const SizedBox(height: 24),
             if (canRetrySamePhoto)
@@ -1225,6 +1571,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   setState(() {
                     _phase = _ScanPhase.analyzing;
                     _stepIndex = 0;
+                    _elapsedSteps = 0;
                   });
                   _startStepCycle();
                   _analyze();
@@ -1261,7 +1608,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     );
   }
 
-  Widget _errorCard(String title, String message) => Container(
+  Widget _errorCard(String title, String message, IconData icon) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerHigh,
@@ -1278,11 +1625,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
             shape: BoxShape.circle,
           ),
           alignment: Alignment.center,
-          child: Icon(
-            Icons.error_outline_rounded,
-            size: 28,
-            color: AppColors.error,
-          ),
+          child: Icon(icon, size: 28, color: AppColors.error),
         ),
         const SizedBox(height: 14),
         Text(

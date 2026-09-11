@@ -620,70 +620,70 @@ class AppLocalizationsEn extends AppLocalizations {
   String get weeklyWorkoutsLabel => 'Weekly Workouts';
 
   @override
-  String get loginTitle => 'IGNITE';
+  String get loginTitle => 'Welcome Back';
 
   @override
-  String get loginSubtitle => 'SYSTEM';
+  String get loginSubtitle => 'CoreGym';
 
   @override
-  String get loginDesc => 'ENTER CREDENTIALS TO AUTHORIZE ACCESS';
+  String get loginDesc => 'Sign in to continue your fitness journey';
 
   @override
-  String get operatorId => 'OPERATOR_ID';
+  String get operatorId => 'Email Address';
 
   @override
-  String get encryptedKey => 'ENCRYPTED_KEY';
+  String get encryptedKey => 'Password';
 
   @override
-  String get emailHint => 'user@coregym.app';
+  String get emailHint => 'name@example.com';
 
   @override
-  String get passwordHint => '••••••••••••';
+  String get passwordHint => '••••••••';
 
   @override
-  String get forgotPassword => 'FORGOT?';
+  String get forgotPassword => 'Forgot password?';
 
   @override
-  String get initializeSession => 'INITIALIZE SESSION';
+  String get initializeSession => 'Log In';
 
   @override
-  String get externalAuth => 'EXTERNAL AUTH';
+  String get externalAuth => 'Or continue with';
 
   @override
-  String get google => 'GOOGLE';
+  String get google => 'Google';
 
   @override
-  String get apple => 'APPLE';
+  String get apple => 'Apple';
 
   @override
-  String get newOperative => 'NEW OPERATIVE?  ';
+  String get newOperative => 'Don\'t have an account? ';
 
   @override
-  String get enrollNow => 'ENROLL NOW';
+  String get enrollNow => 'Sign up';
 
   @override
-  String get signupTitle => 'ENROLL';
+  String get signupTitle => 'Create Account';
 
   @override
-  String get signupSubtitle => 'OPERATIVE';
+  String get signupSubtitle => 'Join Core';
 
   @override
-  String get signupDesc => 'CREATE NEW SYSTEM ACCESS';
+  String get signupDesc => 'Start your fitness journey today';
 
   @override
-  String get operativeName => 'OPERATIVE_NAME';
+  String get operativeName => 'Full Name';
 
   @override
-  String get confirmKey => 'CONFIRM_KEY';
+  String get confirmKey => 'Confirm Password';
 
   @override
-  String get createOperative => 'CREATE OPERATIVE';
+  String get createOperative => 'Create Account';
 
   @override
-  String get alreadyEnrolled => 'ALREADY ENROLLED?  ';
+  String get alreadyEnrolled => 'Already have an account? ';
 
   @override
-  String get signIn => 'SIGN IN';
+  String get signIn => 'Sign In';
 
   @override
   String get agreeTerms => 'I agree to the ';
@@ -699,6 +699,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fullNameHint => 'Full Name';
+
+  @override
+  String get loginTab => 'Log in';
+
+  @override
+  String get signUpTab => 'Sign up';
+
+  @override
+  String get trustCalorieTracking => 'Calorie tracking';
+
+  @override
+  String get trustHydration => 'Hydration';
+
+  @override
+  String get trustWorkouts => 'Workouts';
+
+  @override
+  String get trustCoachVerified => 'Coach verified';
+
+  @override
+  String get joiningAs => 'I am joining as';
+
+  @override
+  String get athleteRole => 'Athlete';
+
+  @override
+  String get coachRole => 'Coach';
 
   @override
   String get language => 'Language';
@@ -1114,4 +1141,150 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsEmpty => 'No notifications yet';
+
+  @override
+  String get onbSkip => 'Skip';
+
+  @override
+  String get onbNext => 'Next';
+
+  @override
+  String get onbInitiate => 'INITIATE ENGINE';
+
+  @override
+  String get onbAlreadyMember => 'ALREADY A MEMBER?';
+
+  @override
+  String get onbSignInLink => 'SIGN IN';
+
+  @override
+  String get onbStepLabel => 'STEP';
+
+  @override
+  String get onb1Title => 'Transform your\nbody and mind';
+
+  @override
+  String get onb1Desc =>
+      'Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.';
+
+  @override
+  String get onb2Title => 'Professional\ntraining guidance';
+
+  @override
+  String get onb2Desc =>
+      'Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.';
+
+  @override
+  String get onb3Title => 'Achieve your\nfitness goals';
+
+  @override
+  String get onb3Desc =>
+      'Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.';
+
+  @override
+  String get onbSelectYour => 'SELECT YOUR';
+
+  @override
+  String get onbIdentity => 'IDENTITY';
+
+  @override
+  String get onbPersonalize =>
+      'HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU';
+
+  @override
+  String get onbFemale => 'FEMALE';
+
+  @override
+  String get onbMale => 'MALE';
+
+  @override
+  String get onbContinue => 'CONTINUE';
+
+  @override
+  String get pushDialogTitle => 'Enable notifications';
+
+  @override
+  String get pushDialogBody =>
+      'Enable notifications so we can remind you about meals, water and your daily calorie goal.';
+
+  @override
+  String get pushDialogCta => 'Got it';
+
+  @override
+  String get splashError =>
+      'Couldn\'t connect. Check your internet and try again.';
+
+  @override
+  String get splashLoading => 'Loading';
+
+  @override
+  String get rankTitle => 'Rankings';
+
+  @override
+  String get rankLast7 => 'Last 7 days';
+
+  @override
+  String get rankLast30 => 'Last 30 days';
+
+  @override
+  String get rankEmpty =>
+      'No ranked clients yet. Log your meals and water to enter the board!';
+
+  @override
+  String rankDaysLogged(int n) {
+    return '$n days logged';
+  }
+
+  @override
+  String cpDaysLoggedN(int n) {
+    return '$n days';
+  }
+
+  @override
+  String get cpDaysLogged => 'Days logged';
+
+  @override
+  String get cpAvgScore => 'Avg score';
+
+  @override
+  String get cpWorkouts => 'Workouts';
+
+  @override
+  String get cpCommitment => 'Commitment activity';
+
+  @override
+  String get cpLess => 'Less';
+
+  @override
+  String get cpMore => 'More';
+
+  @override
+  String get cpTrend => 'Trend';
+
+  @override
+  String get cpDaily => 'Daily';
+
+  @override
+  String get cpWeekly => 'Weekly';
+
+  @override
+  String get cpCumulative => 'Cumulative';
+
+  @override
+  String get cpCalories => 'Calories';
+
+  @override
+  String get cpWater => 'Water';
+
+  @override
+  String get cpSteps => 'Steps';
+
+  @override
+  String get cpNoData => 'No data logged yet';
+
+  @override
+  String get rankCard => 'Rankings';
+
+  @override
+  String get rankCardSub => 'Weekly leaderboard';
 }

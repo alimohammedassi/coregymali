@@ -1,8 +1,6 @@
 {
   "@@locale": "en",
-
   "appName": "CoreGym",
-
   "navHome": "Home",
   "navNutrition": "Nutrition",
   "navWorkout": "Workout",
@@ -15,7 +13,6 @@
   "moreMarketplaceSubtitle": "Browse coaches, compare plans, manage subscriptions",
   "moreProfileSubtitle": "Your body data, goals, settings and achievements",
   "dashboardOverview": "Dashboard Overview",
-
   "goodMorning": "Good morning",
   "goodAfternoon": "Good afternoon",
   "goodEvening": "Good evening",
@@ -24,18 +21,20 @@
   "calorieProgressMsg": "Completed {pct}% of daily energy target",
   "@calorieProgressMsg": {
     "placeholders": {
-      "pct": { "type": "int" }
+      "pct": {
+        "type": "int"
+      }
     }
   },
-
   "daysStreak": "{count} DAYS",
   "@daysStreak": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "dayStreakLabel": "day streak",
-
   "dailyMetrics": "DAILY METRIC MATRIX",
   "details": "Details",
   "todayCalories": "Calories Today",
@@ -49,47 +48,47 @@
   "protein": "Protein",
   "carbs": "Carbs",
   "fat": "Fat",
-
   "quickAddWater": "+250ml",
   "quickWorkout": "Workout",
   "setGoalsTitle": "Personalize Your Target Goals",
   "setGoalsSubtitle": "Set calories, macros & water for tailored tracking",
-
   "moodSectionTitle": "Choose Your Mood",
   "moodTired": "Tired",
   "moodLight": "Light",
   "moodMedium": "Medium",
   "moodActive": "Active",
   "moodFull": "Full Power",
-
   "muscleGroupsTitle": "Muscle Groups",
   "muscleChest": "Chest",
   "muscleArms": "Arms",
   "muscleLegs": "Legs",
   "muscleCore": "Core",
-
   "aiWorkoutCta": "Generate Your AI Workout",
   "aiWorkoutSub": "Smart Trainer — 45 min",
-
   "caloriesOf": "of {goal}",
   "@caloriesOf": {
     "placeholders": {
-      "goal": { "type": "int" }
+      "goal": {
+        "type": "int"
+      }
     }
   },
   "caloriesRemainingMsg": "{remaining} kcal remaining",
   "@caloriesRemainingMsg": {
     "placeholders": {
-      "remaining": { "type": "int" }
+      "remaining": {
+        "type": "int"
+      }
     }
   },
   "caloriesOverMsg": "{over} kcal over goal",
   "@caloriesOverMsg": {
     "placeholders": {
-      "over": { "type": "int" }
+      "over": {
+        "type": "int"
+      }
     }
   },
-
   "addMeal": "+ Add Meal",
   "scanAi": "AI Scan",
   "voiceLog": "Voice",
@@ -102,21 +101,19 @@
   "xpEarned": "+{count} XP",
   "@xpEarned": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "levelLabel": "LVL {lvl}",
   "@levelLabel": {
     "placeholders": {
-      "lvl": { "type": "int" }
+      "lvl": {
+        "type": "int"
+      }
     }
   },
-  "@caloriesOverMsg": {
-    "placeholders": {
-      "over": { "type": "int" }
-    }
-  },
-
   "todayMeals": "Today's Meals",
   "todaysFueling": "Today's Fueling",
   "addFood": "+ Add Food",
@@ -129,8 +126,13 @@
   "snack": "Snack",
   "notLogged": "not logged",
   "items": "{count} items",
-  "@items": { "placeholders": { "count": { "type": "int" } } },
-
+  "@items": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "yourProgram": "Your Program",
   "activeProgram": "ACTIVE PROGRAM",
   "activeTrainingProgram": "ACTIVE TRAINING PROGRAM",
@@ -142,20 +144,25 @@
   "weekOfTotal": "Week {current} of {total}",
   "@weekOfTotal": {
     "placeholders": {
-      "current": { "type": "int" },
-      "total": { "type": "int" }
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "percentComplete": "{pct}% complete",
   "@percentComplete": {
     "placeholders": {
-      "pct": { "type": "int" }
+      "pct": {
+        "type": "int"
+      }
     }
   },
   "beginner": "BEGINNER",
   "intermediate": "INTERMEDIATE",
   "advanced": "ADVANCED",
-
   "lastWorkout": "Last Workout",
   "lastWorkoutUpper": "LAST WORKOUT",
   "noWorkoutsYet": "No workouts logged yet",
@@ -163,7 +170,6 @@
   "history": "History",
   "min": "min",
   "kgVolume": "kg volume",
-
   "water": "Water",
   "glasses": "glasses",
   "ofGlasses": "of 8 glasses",
@@ -173,7 +179,9 @@
   "ofStepsGoal": "{pct}% of 10k",
   "@ofStepsGoal": {
     "placeholders": {
-      "pct": { "type": "int" }
+      "pct": {
+        "type": "int"
+      }
     }
   },
   "kcalBurned": "kcal burned",
@@ -181,13 +189,10 @@
   "updateSteps": "Update Steps",
   "cancel": "Cancel",
   "save": "Save",
-
   "coachBannerTitle": "Level up with a Pro Coach",
   "coachBannerSubtitle": "Certified coaches available · Personalized plans",
-
   "completeProfile": "Complete your profile to see personalized goals.",
   "fix": "Fix →",
-
   "nutritionTitle": "NUTRITION",
   "today": "TODAY",
   "historyTab": "HISTORY",
@@ -207,7 +212,6 @@
   "underGoal": "Under goal",
   "noHistory": "No history yet",
   "startLogging": "Start logging meals to see your progress",
-
   "workoutTitle": "WORKOUT",
   "myProgram": "My Program",
   "programs": "Programs",
@@ -222,7 +226,6 @@
   "legs": "Legs",
   "core": "Core",
   "fullBody": "Full Body",
-
   "activeWorkout": "Active Workout",
   "finish": "Finish",
   "addExercise": "+ Add Exercise",
@@ -233,8 +236,12 @@
   "lastBest": "Last: {weight}kg × {reps} reps",
   "@lastBest": {
     "placeholders": {
-      "weight": { "type": "double" },
-      "reps": { "type": "int" }
+      "weight": {
+        "type": "double"
+      },
+      "reps": {
+        "type": "int"
+      }
     }
   },
   "warmup": "W",
@@ -250,7 +257,6 @@
   "discard": "Discard",
   "personalRecord": "🏆 PR!",
   "searchExercise": "Search exercises...",
-
   "profileTitle": "PROFILE",
   "operativeData": "OPERATIVE DATA",
   "dailyTargets": "DAILY TARGETS",
@@ -278,47 +284,51 @@
   "signOutConfirm": "Are you sure you want to sign out?",
   "signOutTitle": "Sign Out",
   "weeklyWorkoutsLabel": "Weekly Workouts",
-
-  "loginTitle": "IGNITE",
-  "loginSubtitle": "SYSTEM",
-  "loginDesc": "ENTER CREDENTIALS TO AUTHORIZE ACCESS",
-  "operatorId": "OPERATOR_ID",
-  "encryptedKey": "ENCRYPTED_KEY",
-  "emailHint": "user@coregym.app",
-  "passwordHint": "••••••••••••",
-  "forgotPassword": "FORGOT?",
-  "initializeSession": "INITIALIZE SESSION",
-  "externalAuth": "EXTERNAL AUTH",
-  "google": "GOOGLE",
-  "apple": "APPLE",
-  "newOperative": "NEW OPERATIVE?  ",
-  "enrollNow": "ENROLL NOW",
-
-  "signupTitle": "ENROLL",
-  "signupSubtitle": "OPERATIVE",
-  "signupDesc": "CREATE NEW SYSTEM ACCESS",
-  "operativeName": "OPERATIVE_NAME",
-  "confirmKey": "CONFIRM_KEY",
-  "createOperative": "CREATE OPERATIVE",
-  "alreadyEnrolled": "ALREADY ENROLLED?  ",
-  "signIn": "SIGN IN",
+  "loginTitle": "Welcome Back",
+  "loginSubtitle": "CoreGym",
+  "loginDesc": "Sign in to continue your fitness journey",
+  "operatorId": "Email Address",
+  "encryptedKey": "Password",
+  "emailHint": "name@example.com",
+  "passwordHint": "••••••••",
+  "forgotPassword": "Forgot password?",
+  "initializeSession": "Log In",
+  "externalAuth": "Or continue with",
+  "google": "Google",
+  "apple": "Apple",
+  "newOperative": "Don't have an account? ",
+  "enrollNow": "Sign up",
+  "signupTitle": "Create Account",
+  "signupSubtitle": "Join Core",
+  "signupDesc": "Start your fitness journey today",
+  "operativeName": "Full Name",
+  "confirmKey": "Confirm Password",
+  "createOperative": "Create Account",
+  "alreadyEnrolled": "Already have an account? ",
+  "signIn": "Sign In",
   "agreeTerms": "I agree to the ",
   "termsConditions": "Terms & Conditions",
   "and": " and ",
   "privacyPolicy": "Privacy Policy",
   "fullNameHint": "Full Name",
-
+  "loginTab": "Log in",
+  "signUpTab": "Sign up",
+  "trustCalorieTracking": "Calorie tracking",
+  "trustHydration": "Hydration",
+  "trustWorkouts": "Workouts",
+  "trustCoachVerified": "Coach verified",
+  "joiningAs": "I am joining as",
+  "athleteRole": "Athlete",
+  "coachRole": "Coach",
   "language": "Language",
   "arabic": "العربية",
   "english": "English",
   "changeLanguage": "Change Language",
-
   "weightLoss": "Weight Loss",
   "muscleGain": "Muscle Gain",
   "endurance": "Endurance",
   "flexibility": "Flexibility",
   "generalFitness": "General Fitness",
-
   "onboarding": "Setup",
   "next": "Next",
   "back2": "Back",
@@ -335,7 +345,6 @@
   "moderatelyActive": "Moderately Active",
   "veryActive": "Very Active",
   "extraActive": "Extra Active",
-
   "chatTitle": "Messages",
   "noConversations": "No conversations yet",
   "noConversationsHint": "Subscribe to a coach to start chatting",
@@ -344,7 +353,6 @@
   "retry": "Retry",
   "coach": "Coach",
   "client": "Client",
-
   "scanTitle": "AI Food Scan",
   "scanSubtitle": "Snap your food, we'll do the rest",
   "scanSaveToMeal": "Log this meal to",
@@ -358,7 +366,13 @@
   "scanConfidenceMedium": "Medium accuracy",
   "scanConfidenceLow": "Low accuracy",
   "scanLogToMeal": "Log to {meal}",
-  "@scanLogToMeal": { "placeholders": { "meal": { "type": "String" } } },
+  "@scanLogToMeal": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
   "scanErrorTitle": "Oops!",
   "scanRetrySamePhoto": "Retry same photo",
   "scanNewPhoto": "New photo",
@@ -368,7 +382,6 @@
   "scanErrorAnalysis": "We couldn't analyze the photo. Please try again.",
   "scanErrorPersist": "The photo was analyzed but saving failed. Please try again.",
   "scanErrorUnknown": "Something unexpected went wrong. Please try again.",
-
   "voiceTitle": "Voice Food Log",
   "voiceSubtitle": "Just say what you ate",
   "voiceIdleHint": "Describe your meal in one sentence — we'll transcribe it and estimate the calories automatically.",
@@ -386,7 +399,6 @@
   "voiceErrorAnalysis": "We couldn't understand that recording. Please try again.",
   "voiceErrorPersist": "The recording was analyzed but saving failed. Please try again.",
   "voiceErrorUnknown": "Something unexpected went wrong. Please try again.",
-
   "textTitle": "Text Food Log",
   "textSubtitle": "Type what you ate",
   "textInputHint": "e.g. breakfast: 2 eggs, toast and tea…",
@@ -402,13 +414,17 @@
   "textErrorUnknown": "Something unexpected went wrong. Please try again.",
   "textEditDescription": "Edit description",
   "textNewDescription": "New description",
-
   "profileFirstRunNudge": "Log your first workout to start ranking up!",
-
   "dashboardEyebrow": "MY DASHBOARD",
   "dashboardSubscribers": "Subscribers",
   "subscriberCount": "{count} total",
-  "@subscriberCount": { "placeholders": { "count": { "type": "int" } } },
+  "@subscriberCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "statActiveSubscribers": "Active\nSubscribers",
   "statAvgRating": "Avg\nRating",
   "statMonthlyRevenue": "Monthly\nRevenue",
@@ -421,11 +437,29 @@
   "completeProfileHint": "Complete your coach profile so clients can find and subscribe to you.",
   "completeProfileCta": "Complete Your Profile",
   "failedToLoadStats": "Failed to load stats: {error}",
-  "@failedToLoadStats": { "placeholders": { "error": { "type": "String" } } },
+  "@failedToLoadStats": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "daysLeft": "{n} days left",
-  "@daysLeft": { "placeholders": { "n": { "type": "int" } } },
+  "@daysLeft": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "daysRemaining": "{n} days remaining",
-  "@daysRemaining": { "placeholders": { "n": { "type": "int" } } },
+  "@daysRemaining": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
   "statusExpired": "Expired",
   "statusPaused": "Paused",
   "statusCancelled": "Cancelled",
@@ -434,7 +468,13 @@
   "paymentUnpaid": "Unpaid",
   "paymentRefunded": "Refunded",
   "phaseWeek": "Week {w}",
-  "@phaseWeek": { "placeholders": { "w": { "type": "int" } } },
+  "@phaseWeek": {
+    "placeholders": {
+      "w": {
+        "type": "int"
+      }
+    }
+  },
   "previousDay": "Previous day",
   "nextDay": "Next day",
   "smartwatchSync": "Smartwatch sync",
@@ -447,5 +487,64 @@
   "logAnotherWay": "Or log another way",
   "notificationsTitle": "Notifications",
   "markAllRead": "Mark all read",
-  "notificationsEmpty": "No notifications yet"
+  "notificationsEmpty": "No notifications yet",
+  "onbSkip": "Skip",
+  "onbNext": "Next",
+  "onbInitiate": "INITIATE ENGINE",
+  "onbAlreadyMember": "ALREADY A MEMBER?",
+  "onbSignInLink": "SIGN IN",
+  "onbStepLabel": "STEP",
+  "onb1Title": "Transform your\nbody and mind",
+  "onb1Desc": "Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.",
+  "onb2Title": "Professional\ntraining guidance",
+  "onb2Desc": "Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.",
+  "onb3Title": "Achieve your\nfitness goals",
+  "onb3Desc": "Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.",
+  "onbSelectYour": "SELECT YOUR",
+  "onbIdentity": "IDENTITY",
+  "onbPersonalize": "HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU",
+  "onbFemale": "FEMALE",
+  "onbMale": "MALE",
+  "onbContinue": "CONTINUE",
+  "pushDialogTitle": "Enable notifications",
+  "pushDialogBody": "Enable notifications so we can remind you about meals, water and your daily calorie goal.",
+  "pushDialogCta": "Got it",
+  "splashError": "Couldn't connect. Check your internet and try again.",
+  "splashLoading": "Loading",
+  "rankTitle": "Rankings",
+  "rankLast7": "Last 7 days",
+  "rankLast30": "Last 30 days",
+  "rankEmpty": "No ranked clients yet. Log your meals and water to enter the board!",
+  "rankDaysLogged": "{n} days logged",
+  "cpDaysLoggedN": "{n} days",
+  "cpDaysLogged": "Days logged",
+  "cpAvgScore": "Avg score",
+  "cpWorkouts": "Workouts",
+  "cpCommitment": "Commitment activity",
+  "cpLess": "Less",
+  "cpMore": "More",
+  "cpTrend": "Trend",
+  "cpDaily": "Daily",
+  "cpWeekly": "Weekly",
+  "cpCumulative": "Cumulative",
+  "cpCalories": "Calories",
+  "cpWater": "Water",
+  "cpSteps": "Steps",
+  "cpNoData": "No data logged yet",
+  "rankCard": "Rankings",
+  "rankCardSub": "Weekly leaderboard",
+  "@rankDaysLogged": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "@cpDaysLoggedN": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  }
 }

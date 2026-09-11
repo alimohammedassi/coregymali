@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
@@ -278,10 +279,10 @@ class _AvatarState extends State<_Avatar>
             child: SizedBox(
               width: 44, height: 44,
               child: widget.avatarUrl.isNotEmpty
-                  ? Image.network(
-                      widget.avatarUrl,
+                  ? CachedNetworkImage(
+                      imageUrl: widget.avatarUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _initialsWidget(initial),
+                      errorWidget: (_, __, ___) => _initialsWidget(initial),
                     )
                   : _initialsWidget(initial),
             ),

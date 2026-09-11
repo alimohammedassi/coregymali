@@ -37,6 +37,11 @@ class NotificationService {
   bool _initialized = false;
   bool get isReady => _initialized;
 
+  /// Fires (value=true) once [init] completes. init is deferred past the
+  /// first frame for cold-start time, so late listeners (home's push-verify
+  /// dialog gate) can catch up when it lands.
+  static final ValueNotifier<bool> ready = ValueNotifier<bool>(false);
+
   OnPushSubscriptionChangeObserver? _subscriptionObserver;
   String? _subscriptionId;
   final List<void Function()> _verifiedCallbacks = [];
@@ -87,6 +92,7 @@ class NotificationService {
       }
 
       _initialized = true;
+      ready.value = true;
       debugPrint('OneSignal initialized');
 
       // One choke point for every sign-in path (email, Google, signup,
@@ -149,6 +155,11 @@ class NotificationService {
     final granted = await OneSignal.Notifications.requestPermission(true);
     debugPrint('OneSignal permission granted: $granted');
   }
+
+  /// Whether the OS notification permission is already granted — used to
+  /// skip the verification dialog entirely for users who already opted in.
+  bool get permissionGranted =>
+      _initialized && OneSignal.Notifications.permission;
 
   /// Task 2 — welcome push right after account creation. Fired with the
   /// user's own JWT (the function allows self-push), delayed a few seconds

@@ -616,13 +616,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get weeklyWorkoutsLabel => 'التمارين الأسبوعية';
 
   @override
-  String get loginTitle => 'مرحباً';
+  String get loginTitle => 'مرحباً بعودتك';
 
   @override
-  String get loginSubtitle => 'بعودتك';
+  String get loginSubtitle => 'CoreGym';
 
   @override
-  String get loginDesc => 'أدخل بياناتك للوصول إلى حسابك';
+  String get loginDesc => 'سجّل دخولك لمتابعة تدريبك وأهدافك الرياضية';
 
   @override
   String get operatorId => 'البريد الإلكتروني';
@@ -631,31 +631,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get encryptedKey => 'كلمة المرور';
 
   @override
-  String get emailHint => 'user@coregym.app';
+  String get emailHint => 'name@example.com';
 
   @override
-  String get passwordHint => '••••••••••••';
+  String get passwordHint => '••••••••';
 
   @override
-  String get forgotPassword => 'نسيت؟';
+  String get forgotPassword => 'نسيت كلمة المرور؟';
 
   @override
   String get initializeSession => 'تسجيل الدخول';
 
   @override
-  String get externalAuth => 'أو تابع بـ';
+  String get externalAuth => 'أو المتابعة عبر';
 
   @override
-  String get google => 'جوجل';
+  String get google => 'Google';
 
   @override
-  String get apple => 'آبل';
+  String get apple => 'Apple';
 
   @override
-  String get newOperative => 'مستخدم جديد؟  ';
+  String get newOperative => 'ليس لديك حساب؟ ';
 
   @override
-  String get enrollNow => 'أنشئ حساباً';
+  String get enrollNow => 'إنشاء حساب';
 
   @override
   String get signupTitle => 'إنشاء';
@@ -695,6 +695,33 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fullNameHint => 'الاسم الكامل';
+
+  @override
+  String get loginTab => 'تسجيل الدخول';
+
+  @override
+  String get signUpTab => 'إنشاء حساب';
+
+  @override
+  String get trustCalorieTracking => 'تتبع السعرات';
+
+  @override
+  String get trustHydration => 'الترطيب';
+
+  @override
+  String get trustWorkouts => 'التمارين';
+
+  @override
+  String get trustCoachVerified => 'مدرب معتمد';
+
+  @override
+  String get joiningAs => 'أنضم كـ';
+
+  @override
+  String get athleteRole => 'رياضي';
+
+  @override
+  String get coachRole => 'مدرب';
 
   @override
   String get language => 'اللغة';
@@ -1101,4 +1128,149 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get notificationsEmpty => 'مفيش إشعارات لسه';
+
+  @override
+  String get onbSkip => 'تخطي';
+
+  @override
+  String get onbNext => 'التالي';
+
+  @override
+  String get onbInitiate => 'انطلق';
+
+  @override
+  String get onbAlreadyMember => 'عضو بالفعل؟';
+
+  @override
+  String get onbSignInLink => 'تسجيل الدخول';
+
+  @override
+  String get onbStepLabel => 'الخطوة';
+
+  @override
+  String get onb1Title => 'حوّل جسمك\nوعقلك';
+
+  @override
+  String get onb1Desc =>
+      'اكتشف القوة اللي جواك. برامجنا الرياضية الشاملة مصممة تساعدك تحقق أهدافك وتوصل لأقصى إمكانياتك.';
+
+  @override
+  String get onb2Title => 'تدريب احترافي\nبإرشاد الخبراء';
+
+  @override
+  String get onb2Desc =>
+      'احصل على إرشاد من مدربين معتمدين يساعدوك تتقن الأداء الصحيح والأسلوب الأمثل لأفضل النتائج بأمان.';
+
+  @override
+  String get onb3Title => 'حقق أهدافك\nالرياضية';
+
+  @override
+  String get onb3Desc =>
+      'سواء عايز تخسّر وزن أو تبني عضلات أو تحسّن قدرتك على التحمل، أسلوبنا المخصص هيوصلك أسرع.';
+
+  @override
+  String get onbSelectYour => 'اختر';
+
+  @override
+  String get onbIdentity => 'هويتك';
+
+  @override
+  String get onbPersonalize => 'ساعدنا نخصص تجربتك\nبمحتوى يهمك أنت';
+
+  @override
+  String get onbFemale => 'أنثى';
+
+  @override
+  String get onbMale => 'ذكر';
+
+  @override
+  String get onbContinue => 'متابعة';
+
+  @override
+  String get pushDialogTitle => 'فعّل الإشعارات';
+
+  @override
+  String get pushDialogBody =>
+      'فعّل الإشعارات عشان نفكرك بالوجبات والمياه وهدف السعرات اليومي.';
+
+  @override
+  String get pushDialogCta => 'تمام';
+
+  @override
+  String get splashError =>
+      'مقدرناش نوصلك. اتأكد من اتصال الإنترنت وحاول تاني.';
+
+  @override
+  String get splashLoading => 'جاري التحميل';
+
+  @override
+  String get rankTitle => 'الترتيب';
+
+  @override
+  String get rankLast7 => 'آخر ٧ أيام';
+
+  @override
+  String get rankLast30 => 'آخر ٣٠ يوم';
+
+  @override
+  String get rankEmpty =>
+      'مفيش عملاء متسجلين بعد. سجل أكلك ومياك عشان تدخل الترتيب!';
+
+  @override
+  String rankDaysLogged(int n) {
+    return '$n يوم متسجل';
+  }
+
+  @override
+  String cpDaysLoggedN(int n) {
+    return '$n يوم';
+  }
+
+  @override
+  String get cpDaysLogged => 'أيام متسجلة';
+
+  @override
+  String get cpAvgScore => 'متوسط السكور';
+
+  @override
+  String get cpWorkouts => 'تمارين';
+
+  @override
+  String get cpCommitment => 'نشاط الالتزام';
+
+  @override
+  String get cpLess => 'أقل';
+
+  @override
+  String get cpMore => 'أكثر';
+
+  @override
+  String get cpTrend => 'منحنى الالتزام';
+
+  @override
+  String get cpDaily => 'يومي';
+
+  @override
+  String get cpWeekly => 'أسبوعي';
+
+  @override
+  String get cpCumulative => 'تراكمي';
+
+  @override
+  String get cpCalories => 'السعرات';
+
+  @override
+  String get cpWater => 'المياه';
+
+  @override
+  String get cpSteps => 'الخطوات';
+
+  @override
+  String get cpNoData => 'مفيش داتا متسجلة لسه';
+
+  @override
+  String get rankCard => 'الترتيب';
+
+  @override
+  String get rankCardSub => 'المتصدرون الأسبوعي';
 }

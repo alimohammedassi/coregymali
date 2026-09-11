@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'l10n/app_localizations.dart';
 import 'login_sign_up.dart';
 import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
@@ -55,6 +56,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: AppColors.surfaceLowest,
       body: Stack(
@@ -104,7 +106,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                       ),
                       const Spacer(),
                       Text(
-                        'STEP 01/03',
+                        '${l10n.onbStepLabel} 01/03',
                         style: AuthAppText.labelMd.copyWith(
                           color: AppColors.onSurfaceVariant,
                         ),
@@ -126,13 +128,13 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'SELECT YOUR',
+                                l10n.onbSelectYour,
                                 style: AuthAppText.displaySm.copyWith(
                                   color: AppColors.onSurface,
                                 ),
                               ),
                               Text(
-                                'IDENTITY',
+                                l10n.onbIdentity,
                                 style: AuthAppText.displaySm.copyWith(
                                   color: AppColors.primaryFixed,
                                 ),
@@ -148,7 +150,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU',
+                                l10n.onbPersonalize,
                                 style: AuthAppText.bodyMd.copyWith(
                                   color: AppColors.onSurfaceVariant,
                                   height: 1.6,
@@ -176,7 +178,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                             children: [
                               // Female Option
                               _buildGenderCard(
-                                label: 'FEMALE',
+                                label: l10n.onbFemale,
                                 icon: Icons.female,
                                 value: 'female',
                                 accentColor: const Color(0xFFFF6B9D),
@@ -186,7 +188,7 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
 
                               // Male Option
                               _buildGenderCard(
-                                label: 'MALE',
+                                label: l10n.onbMale,
                                 icon: Icons.male,
                                 value: 'male',
                                 accentColor: AppColors.secondary,
@@ -196,6 +198,65 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
                         ),
                       );
                     },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Explicit confirmation — the Continue button only appears
+                  // once a gender is picked, replacing the old invisible
+                  // "tap the selected card again" affordance.
+                  AnimatedSwitcher(
+                    duration: AppDurations.medium,
+                    switchInCurve: AppCurves.emphasized,
+                    switchOutCurve: AppCurves.emphasized,
+                    transitionBuilder: (child, animation) => FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(
+                        scale: Tween<double>(begin: 0.96, end: 1.0).animate(
+                          CurvedAnimation(
+                            parent: animation,
+                            curve: AppCurves.emphasized,
+                          ),
+                        ),
+                        child: child,
+                      ),
+                    ),
+                    child: selectedGender == null
+                        ? const SizedBox(width: double.infinity)
+                        : SizedBox(
+                            key: const ValueKey('gender-continue'),
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                                onPressed: _proceedToAuth,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryFixed,
+                                  foregroundColor: AppColors.onPrimary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      l10n.onbContinue.toUpperCase(),
+                                      style: AuthAppText.buttonPrimary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Icon(
+                                      Directionality.of(context) ==
+                                              TextDirection.rtl
+                                          ? Icons.arrow_back
+                                          : Icons.arrow_forward,
+                                      color: AppColors.onPrimary,
+                                      size: 18,
+                                    ),
+                                  ],
+                                ),
+                            ),
+                        ),
                   ),
 
                   const SizedBox(height: 40),
@@ -218,22 +279,10 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
 
     return GestureDetector(
       onTap: () {
-        // First tap selects (shows the highlight), tapping the already
-        // selected card proceeds. Previously a single tap navigated
-        // immediately, so the selection UI was invisible and the choice
-        // was never captured.
-        if (selectedGender == value) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              settings: const RouteSettings(name: 'auth'),
-              builder: (context) => const AuthWrapper(),
-            ),
-          );
-        } else {
-          HapticFeedback.selectionClick();
-          setState(() => selectedGender = value);
-        }
+        // Tapping a card only selects it — the Continue button that appears
+        // underneath is the explicit confirmation step to proceed.
+        HapticFeedback.selectionClick();
+        setState(() => selectedGender = value);
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -324,6 +373,17 @@ class _GenderSelectionScreenState extends State<GenderSelectionScreen>
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _proceedToAuth() {
+    if (selectedGender == null) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        settings: const RouteSettings(name: 'auth'),
+        builder: (context) => const AuthWrapper(),
       ),
     );
   }

@@ -43,19 +43,17 @@ class ProfileProvider extends ChangeNotifier {
         return;
       }
 
-      // Check user onboarding
-      final done = await OnboardingService().isCompleted();
+      // Onboarding state and role are independent reads — run them together
+      // (they used to add two sequential round-trips to cold start).
+      final results = await Future.wait<dynamic>([
+        OnboardingService().isCompleted(),
+        supabase.from('profiles').select('role').eq('id', user.id).maybeSingle(),
+      ]);
+      final done = results[0] as bool;
+      final profileRow = results[1] as Map<String, dynamic>?;
       _needsUserOnboarding = !done;
       debugPrint("ProfileProvider: User onboarding done: $done");
 
-      // check role
-      debugPrint("ProfileProvider: Checking role in profiles table...");
-      final profileRow = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
-      
       debugPrint("ProfileProvider: profileRow: $profileRow");
       
       if (profileRow == null || profileRow['role'] == null) {

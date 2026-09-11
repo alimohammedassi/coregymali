@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,6 +24,12 @@ const _kSpecializations = [
   'cardio',
   'flexibility',
 ];
+
+/// user_id → gallery_images for the card banner. Filled with ONE batched
+/// query per coach-list load instead of one query per card inside build
+/// (N+1). CoachCard falls back to a per-coach lookup on cache miss and
+/// fills the cache, so correctness never depends on the prefetch landing.
+final Map<String, List<dynamic>> kCoachGalleryCache = <String, List<dynamic>>{};
 
 class CoachMarketplaceScreen extends StatefulWidget {
   /// True when the marketplace is a root destination inside the home
@@ -51,11 +58,37 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _fetch());
   }
 
-  void _fetch() {
-    context.read<CoachListNotifier>().fetchCoaches(
+  Future<void> _fetch() async {
+    await context.read<CoachListNotifier>().fetchCoaches(
           specialization: _selectedSpec == 'All' ? null : _selectedSpec,
           maxPrice: _priceRange.end < 500 ? _priceRange.end : null,
         );
+    await _prefetchGalleryBanners();
+  }
+
+  /// One query for the whole loaded coach list — CoachCard used to fire its
+  /// own `coach_onboarding` lookup per card on every build.
+  Future<void> _prefetchGalleryBanners() async {
+    final coaches = context.read<CoachListNotifier>().coaches;
+    if (coaches == null || coaches.isEmpty) return;
+    final missing = coaches
+        .map((c) => c.userId)
+        .where((id) => !kCoachGalleryCache.containsKey(id))
+        .toList();
+    if (missing.isEmpty) return;
+    try {
+      final rows = await Supabase.instance.client
+          .from('coach_onboarding')
+          .select('user_id, gallery_images')
+          .inFilter('user_id', missing);
+      for (final row in (rows as List)) {
+        kCoachGalleryCache[row['user_id'] as String] =
+            (row['gallery_images'] as List?) ?? const [];
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      // Left uncached — CoachCard falls back to its own lookup.
+    }
   }
 
   @override
@@ -423,19 +456,30 @@ class CoachCard extends StatelessWidget {
         child: Column(
           children: [
             FutureBuilder<dynamic>(
-              future: Supabase.instance.client
-                  .from('coach_onboarding')
-                  .select('gallery_images')
-                  .eq('user_id', coach.userId)
-                  .maybeSingle(),
+              // Cache hit → zero queries. Miss → single lookup that fills
+              // the cache for every later rebuild of this card.
+              future: kCoachGalleryCache.containsKey(coach.userId)
+                  ? Future.value(kCoachGalleryCache[coach.userId])
+                  : Supabase.instance.client
+                      .from('coach_onboarding')
+                      .select('gallery_images')
+                      .eq('user_id', coach.userId)
+                      .maybeSingle()
+                      .then((row) {
+                        final images =
+                            (row?['gallery_images'] as List?) ?? const [];
+                        kCoachGalleryCache[coach.userId] = images;
+                        return images;
+                      }),
               builder: (context, snapshot) {
-                if (snapshot.hasData && snapshot.data != null && snapshot.data['gallery_images'] != null && (snapshot.data['gallery_images'] as List).isNotEmpty) {
-                  final bannerUrl = (snapshot.data['gallery_images'] as List).first;
+                final images = snapshot.data;
+                if (images is List && images.isNotEmpty) {
+                  final bannerUrl = images.first;
                   return Container(
                     height: 120,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      image: DecorationImage(image: NetworkImage(bannerUrl), fit: BoxFit.cover),
+                      image: DecorationImage(image: CachedNetworkImageProvider(bannerUrl), fit: BoxFit.cover),
                     ),
                   );
                 }

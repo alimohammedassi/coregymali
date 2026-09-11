@@ -34,11 +34,6 @@ void main() async {
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
-  await initializeDateFormatting('ar', null);
-
-  await NotificationService.instance.init();
-  unawaited(WaterReminderService.instance.refresh());
-
   runApp(
     ProviderScope(
       child: MultiProvider(
@@ -65,6 +60,17 @@ void main() async {
       ),
     ),
   );
+
+  // Non-critical startup work moved PAST the first frame — awaiting these
+  // before runApp added their full latency to every cold start. Nothing
+  // renders dates before they land (splash is plain text), and the home
+  // push-verify dialog waits on NotificationService.ready.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    Future.wait([
+      initializeDateFormatting('ar'),
+      NotificationService.instance.init(),
+    ]).then((_) => unawaited(WaterReminderService.instance.refresh()));
+  });
 }
 
 class MyApp extends StatelessWidget {

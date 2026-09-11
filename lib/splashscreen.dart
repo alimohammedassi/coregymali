@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'gender.dart';
+import 'l10n/app_localizations.dart';
 import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/auth_app_text.dart';
@@ -229,7 +230,28 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bgColor,
-      body: Center(child: _hasError ? _buildError() : _buildWord()),
+      body: Center(
+        child: _hasError
+            ? _buildError(context)
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildWord(),
+                  const SizedBox(height: 64),
+                  // Bootstrap (Supabase session + profile) runs while the
+                  // word types/zooms — keep a quiet loading cue for slower
+                  // connections so the wait reads as "loading", not "stuck".
+                  const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      valueColor: AlwaysStoppedAnimation(_onBgColor),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -280,7 +302,8 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 
-  Widget _buildError() {
+  Widget _buildError(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
@@ -289,7 +312,7 @@ class _SplashScreenState extends State<SplashScreen>
           const Icon(Icons.error_outline_rounded, color: _onBgColor, size: 32),
           const SizedBox(height: 12),
           Text(
-            "Couldn't connect. Check your internet and try again.",
+            l10n.splashError,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: _onBgColor.withValues(alpha: 0.75),
@@ -306,7 +329,7 @@ class _SplashScreenState extends State<SplashScreen>
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text('RETRY'),
+            child: Text(l10n.retry.toUpperCase()),
           ),
         ],
       ),
@@ -343,27 +366,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int currentPage = 0;
 
-  final List<OnboardingData> onboardingData = [
+  /// Page copy comes from l10n so the funnel follows the app/device language.
+  List<OnboardingData> _pages(AppLocalizations l10n) => [
     OnboardingData(
-      title: "Transform your\nbody and mind",
-      description:
-          "Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.",
+      title: l10n.onb1Title,
+      description: l10n.onb1Desc,
       imagePath: 'assets/images/unsplash_9MR78HGoflw.png',
       placeholderText: 'Workout Image 1',
       icon: Icons.fitness_center,
     ),
     OnboardingData(
-      title: "Professional\ntraining guidance",
-      description:
-          "Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.",
+      title: l10n.onb2Title,
+      description: l10n.onb2Desc,
       imagePath: 'assets/images/unsplash_sHfo3WOgGTU.png',
       placeholderText: 'Pull-up Exercise',
       icon: Icons.person,
     ),
     OnboardingData(
-      title: "Achieve your\nfitness goals",
-      description:
-          "Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.",
+      title: l10n.onb3Title,
+      description: l10n.onb3Desc,
       imagePath: 'assets/images/unsplash_Yuv-iwByVRQ.png',
       placeholderText: 'Weight Training',
       icon: Icons.trending_up,
@@ -378,6 +399,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final pages = _pages(l10n);
     return Scaffold(
       backgroundColor: AppColors.surfaceLowest,
       body: Stack(
@@ -385,15 +408,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           PageView.builder(
             controller: _pageController,
             onPageChanged: (int page) => setState(() => currentPage = page),
-            itemCount: onboardingData.length,
+            itemCount: pages.length,
             itemBuilder: (context, index) {
               return OnboardingPage(
-                data: onboardingData[index],
-                isLastPage: index == onboardingData.length - 1,
+                data: pages[index],
+                isLastPage: index == pages.length - 1,
                 pageIndex: index,
-                totalPages: onboardingData.length,
-                dotIndicator: _buildDots(),
-                onNextPressed: () => _handleNextPage(index),
+                totalPages: pages.length,
+                dotIndicator: _buildDots(pages.length),
+                onNextPressed: () => _handleNextPage(index, pages.length),
                 onSignInPressed: _navigateToLogin,
               );
             },
@@ -427,7 +450,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         vertical: 8,
                       ),
                       child: Text(
-                        'SKIP',
+                        l10n.onbSkip.toUpperCase(),
                         style: AuthAppText.labelMd.copyWith(
                           color: AppColors.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
@@ -445,11 +468,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildDots() {
+  Widget _buildDots(int pageCount) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: List.generate(
-        onboardingData.length,
+        pageCount,
         (index) => AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           margin: const EdgeInsets.only(right: 6),
@@ -474,8 +497,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  void _handleNextPage(int currentIndex) {
-    if (currentIndex == onboardingData.length - 1) {
+  void _handleNextPage(int currentIndex, int pageCount) {
+    if (currentIndex == pageCount - 1) {
       _navigateToLogin();
     } else {
       _pageController.nextPage(
@@ -533,6 +556,7 @@ class OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Stack(
       children: [
         _buildBackgroundImage(),
@@ -654,7 +678,7 @@ class OnboardingPage extends StatelessWidget {
               Center(
                 child: Semantics(
                   button: true,
-                  label: 'Already a member, sign in',
+                  label: '${l10n.onbAlreadyMember} ${l10n.onbSignInLink}',
                   child: GestureDetector(
                     onTap: onSignInPressed,
                     child: RichText(
@@ -663,9 +687,9 @@ class OnboardingPage extends StatelessWidget {
                           color: AppColors.onSurfaceVariant,
                         ),
                         children: [
-                          const TextSpan(text: 'ALREADY A MEMBER? '),
+                          TextSpan(text: '${l10n.onbAlreadyMember} '),
                           TextSpan(
-                            text: 'SIGN IN',
+                            text: l10n.onbSignInLink,
                             style: AuthAppText.labelMd.copyWith(
                               color: AppColors.onSurface,
                               fontWeight: FontWeight.w800,
@@ -795,9 +819,11 @@ class _NextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
     return Semantics(
       button: true,
-      label: isLastPage ? 'Initiate engine, continue to sign up' : 'Next',
+      label: isLastPage ? l10n.onbInitiate : l10n.onbNext,
       child: SizedBox(
         width: double.infinity,
         height: 56,
@@ -815,11 +841,17 @@ class _NextButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                isLastPage ? 'INITIATE ENGINE' : 'NEXT',
+                (isLastPage ? l10n.onbInitiate : l10n.onbNext).toUpperCase(),
                 style: AuthAppText.buttonPrimary,
               ),
               const SizedBox(width: 10),
-              Icon(Icons.arrow_forward, color: AppColors.onPrimary, size: 18),
+              Icon(
+                // Forward means "toward the next screen" — which is the
+                // left edge in RTL layouts.
+                rtl ? Icons.arrow_back : Icons.arrow_forward,
+                color: AppColors.onPrimary,
+                size: 18,
+              ),
             ],
           ),
         ),

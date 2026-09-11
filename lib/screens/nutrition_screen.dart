@@ -11,6 +11,7 @@ import '../widgets/add_food_sheet.dart';
 import '../widgets/app_background.dart';
 import '../widgets/pixel_art_icons.dart';
 import 'food_scan_screen.dart';
+import 'nutrition_history_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // NutritionScreen — Next-Gen CoreGym Fitness & Macro Tracker
@@ -168,8 +169,7 @@ class NutritionScreenState extends State<NutritionScreen>
   double get _proteinGoal =>
       (_goals['daily_protein_g'] as num?)?.toDouble() ?? 150;
   double get _carbsConsumed => (_summary['carbs_g'] as num?)?.toDouble() ?? 0;
-  double get _carbsGoal =>
-      (_goals['daily_carbs_g'] as num?)?.toDouble() ?? 250;
+  double get _carbsGoal => (_goals['daily_carbs_g'] as num?)?.toDouble() ?? 250;
   double get _fatConsumed => (_summary['fat_g'] as num?)?.toDouble() ?? 0;
   double get _fatGoal => (_goals['daily_fat_g'] as num?)?.toDouble() ?? 65;
 
@@ -182,18 +182,52 @@ class NutritionScreenState extends State<NutritionScreen>
   double get _sodiumConsumed =>
       (_summary['sodium_mg'] as num?)?.toDouble() ?? 0;
 
-  double get _calorieProgress =>
-      _caloriesGoal > 0 ? (_caloriesConsumed / _caloriesGoal).clamp(0.0, 1.0) : 0;
+  double get _calorieProgress => _caloriesGoal > 0
+      ? (_caloriesConsumed / _caloriesGoal).clamp(0.0, 1.0)
+      : 0;
   bool get _isOverGoal => _caloriesConsumed > _caloriesGoal;
 
   int get _totalFoodsLogged =>
       _todayLogs.values.fold(0, (s, list) => s + list.length);
 
+  /// Returns exactly 7 continuous calendar days ending today (left→right
+  /// oldest→newest). Gaps in DB are filled with 0 so the chart never drops
+  /// a point and dates are never out of order or missing.
+  List<Map<String, dynamic>> get _normalizedWeeklyProgress {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final mapByDate = <String, Map<String, dynamic>>{};
+    for (final r in _weeklyProgress) {
+      final raw = r['summary_date']?.toString() ?? '';
+      final key = raw.length >= 10 ? raw.substring(0, 10) : raw;
+      if (key.isNotEmpty) mapByDate[key] = Map<String, dynamic>.from(r);
+    }
+    return List.generate(7, (i) {
+      final d = today.subtract(Duration(days: 6 - i));
+      final key =
+          "${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
+      final row = mapByDate[key];
+      if (row != null) return row;
+      return <String, dynamic>{
+        'summary_date': key,
+        'calories_consumed': 0,
+        'protein_g': 0,
+        'carbs_g': 0,
+        'fat_g': 0,
+        'workout_done': false,
+      };
+    });
+  }
+
   String get _motivationalMessage {
-    if (_caloriesConsumed == 0) return 'Log your first meal to start your day! 🌟';
-    if (_calorieProgress < 0.35) return 'Great start! Fuel up with clean nutrients 🌱';
-    if (_calorieProgress < 0.7) return 'You are in the zone! Hit your protein target ⚡';
-    if (_calorieProgress < 0.95) return 'Almost at your target! Finish strong 🎯';
+    if (_caloriesConsumed == 0)
+      return 'Log your first meal to start your day! 🌟';
+    if (_calorieProgress < 0.35)
+      return 'Great start! Fuel up with clean nutrients 🌱';
+    if (_calorieProgress < 0.7)
+      return 'You are in the zone! Hit your protein target ⚡';
+    if (_calorieProgress < 0.95)
+      return 'Almost at your target! Finish strong 🎯';
     if (_calorieProgress <= 1.05) return 'Bullseye! Perfect nutrition day 🎉';
     return 'Over target — balance with light hydration 🧘';
   }
@@ -293,14 +327,18 @@ class NutritionScreenState extends State<NutritionScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Quick Log Calories',
-                            style: AppText.headlineSm.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary)),
+                        Text(
+                          'Quick Log Calories',
+                          style: AppText.headlineSm.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
                         Text(
                           'Add calories directly to ${mealType.toUpperCase()}',
-                          style: AppText.bodySm
-                              .copyWith(color: AppColors.textSecondary),
+                          style: AppText.bodySm.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -327,7 +365,9 @@ class NutritionScreenState extends State<NutritionScreen>
                 autofocus: true,
                 keyboardType: TextInputType.number,
                 style: AppText.displaySm.copyWith(
-                    color: AppColors.accentCalories, fontWeight: FontWeight.w900),
+                  color: AppColors.accentCalories,
+                  fontWeight: FontWeight.w900,
+                ),
                 decoration: InputDecoration(
                   labelText: 'Calories (kcal)',
                   suffixText: 'kcal',
@@ -424,7 +464,8 @@ class NutritionScreenState extends State<NutritionScreen>
                       messenger.showSnackBar(
                         SnackBar(
                           content: const Text(
-                              '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                            '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت',
+                          ),
                           backgroundColor: AppColors.error,
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -434,9 +475,10 @@ class NutritionScreenState extends State<NutritionScreen>
                     navigator.pop();
                     _loadData();
                   },
-                  child: const Text('Add to Log',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                  child: const Text(
+                    'Add to Log',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
                 ),
               ),
             ],
@@ -450,18 +492,15 @@ class NutritionScreenState extends State<NutritionScreen>
   void _showEditLogSheet(Map<String, dynamic> log) {
     HapticFeedback.lightImpact();
     final qtyCtrl = TextEditingController(
-        text: ((log['quantity'] as num?)?.toDouble() ?? 100).toStringAsFixed(0));
+      text: ((log['quantity'] as num?)?.toDouble() ?? 100).toStringAsFixed(0),
+    );
     String currentMeal = log['meal_type'] ?? 'breakfast';
-    final double originalQty =
-        (log['quantity'] as num?)?.toDouble() ?? 100.0;
-    final double originalCals =
-        (log['calories'] as num?)?.toDouble() ?? 0.0;
+    final double originalQty = (log['quantity'] as num?)?.toDouble() ?? 100.0;
+    final double originalCals = (log['calories'] as num?)?.toDouble() ?? 0.0;
     final double originalProtein =
         (log['protein_g'] as num?)?.toDouble() ?? 0.0;
-    final double originalCarbs =
-        (log['carbs_g'] as num?)?.toDouble() ?? 0.0;
-    final double originalFat =
-        (log['fat_g'] as num?)?.toDouble() ?? 0.0;
+    final double originalCarbs = (log['carbs_g'] as num?)?.toDouble() ?? 0.0;
+    final double originalFat = (log['fat_g'] as num?)?.toDouble() ?? 0.0;
 
     double factor(double currentQty) =>
         originalQty > 0 ? (currentQty / originalQty) : 1.0;
@@ -476,13 +515,15 @@ class NutritionScreenState extends State<NutritionScreen>
           final f = factor(q);
 
           return Padding(
-            padding:
-                EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            ),
             child: Container(
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(28),
+                ),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
               padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
@@ -510,18 +551,24 @@ class NutritionScreenState extends State<NutritionScreen>
                             Text(
                               log['food_name'] ?? 'Food item',
                               style: AppText.headlineSm.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textPrimary),
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                              ),
                             ),
-                            Text('Edit serving & meal section',
-                                style: AppText.bodySm
-                                    .copyWith(color: AppColors.textSecondary)),
+                            Text(
+                              'Edit serving & meal section',
+                              style: AppText.bodySm.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ],
                         ),
                       ),
                       IconButton(
-                        icon:  Icon(Icons.delete_outline_rounded,
-                            color: AppColors.error),
+                        icon: Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.error,
+                        ),
                         onPressed: () {
                           Navigator.pop(ctx);
                           _deleteLog(log['id'].toString());
@@ -542,25 +589,29 @@ class NutritionScreenState extends State<NutritionScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _editMacroTile(
-                            'Calories',
-                            '${(originalCals * f).toInt()}',
-                            'kcal',
-                            AppColors.accentCalories),
+                          'Calories',
+                          '${(originalCals * f).toInt()}',
+                          'kcal',
+                          AppColors.accentCalories,
+                        ),
                         _editMacroTile(
-                            'Protein',
-                            (originalProtein * f).toStringAsFixed(1),
-                            'g',
-                            AppColors.accentProtein),
+                          'Protein',
+                          (originalProtein * f).toStringAsFixed(1),
+                          'g',
+                          AppColors.accentProtein,
+                        ),
                         _editMacroTile(
-                            'Carbs',
-                            (originalCarbs * f).toStringAsFixed(1),
-                            'g',
-                            AppColors.accentCarbs),
+                          'Carbs',
+                          (originalCarbs * f).toStringAsFixed(1),
+                          'g',
+                          AppColors.accentCarbs,
+                        ),
                         _editMacroTile(
-                            'Fat',
-                            (originalFat * f).toStringAsFixed(1),
-                            'g',
-                            AppColors.accentFat),
+                          'Fat',
+                          (originalFat * f).toStringAsFixed(1),
+                          'g',
+                          AppColors.accentFat,
+                        ),
                       ],
                     ),
                   ),
@@ -568,11 +619,14 @@ class NutritionScreenState extends State<NutritionScreen>
                   // Quantity
                   TextField(
                     controller: qtyCtrl,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     onChanged: (_) => setSheetState(() {}),
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 18),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
                     decoration: InputDecoration(
                       labelText: 'Serving Amount (grams / units)',
                       suffixText: 'g',
@@ -608,17 +662,19 @@ class NutritionScreenState extends State<NutritionScreen>
                             ),
                             onPressed: () {
                               setSheetState(() {
-                                qtyCtrl.text =
-                                    (originalQty * m).toStringAsFixed(0);
+                                qtyCtrl.text = (originalQty * m)
+                                    .toStringAsFixed(0);
                               });
                             },
-                            child: Text('${m}x',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: (q == originalQty * m)
-                                      ? AppColors.primary
-                                      : AppColors.textSecondary,
-                                )),
+                            child: Text(
+                              '${m}x',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: (q == originalQty * m)
+                                    ? AppColors.primary
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
                       );
@@ -626,17 +682,44 @@ class NutritionScreenState extends State<NutritionScreen>
                   ),
                   const SizedBox(height: 16),
                   // Meal Type Selector
-                  Text('Assigned Meal',
-                      style: AppText.labelMd.copyWith(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    'Assigned Meal',
+                    style: AppText.labelMd.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      _mealChoiceButton('breakfast', 'Breakfast', '🍳', currentMeal, (m) => setSheetState(() => currentMeal = m)),
-                      _mealChoiceButton('lunch', 'Lunch', '🥗', currentMeal, (m) => setSheetState(() => currentMeal = m)),
-                      _mealChoiceButton('dinner', 'Dinner', '🍽', currentMeal, (m) => setSheetState(() => currentMeal = m)),
-                      _mealChoiceButton('snack', 'Snack', '🥜', currentMeal, (m) => setSheetState(() => currentMeal = m)),
+                      _mealChoiceButton(
+                        'breakfast',
+                        'Breakfast',
+                        '🍳',
+                        currentMeal,
+                        (m) => setSheetState(() => currentMeal = m),
+                      ),
+                      _mealChoiceButton(
+                        'lunch',
+                        'Lunch',
+                        '🥗',
+                        currentMeal,
+                        (m) => setSheetState(() => currentMeal = m),
+                      ),
+                      _mealChoiceButton(
+                        'dinner',
+                        'Dinner',
+                        '🍽',
+                        currentMeal,
+                        (m) => setSheetState(() => currentMeal = m),
+                      ),
+                      _mealChoiceButton(
+                        'snack',
+                        'Snack',
+                        '🥜',
+                        currentMeal,
+                        (m) => setSheetState(() => currentMeal = m),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -672,7 +755,8 @@ class NutritionScreenState extends State<NutritionScreen>
                           messenger.showSnackBar(
                             SnackBar(
                               content: const Text(
-                                  '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
+                                '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت',
+                              ),
                               backgroundColor: AppColors.error,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -682,9 +766,13 @@ class NutritionScreenState extends State<NutritionScreen>
                         navigator.pop();
                         _loadData();
                       },
-                      child: const Text('Save Changes',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16)),
+                      child: const Text(
+                        'Save Changes',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -696,7 +784,13 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  Widget _mealChoiceButton(String type, String label, String emoji, String selected, ValueChanged<String> onSelected) {
+  Widget _mealChoiceButton(
+    String type,
+    String label,
+    String emoji,
+    String selected,
+    ValueChanged<String> onSelected,
+  ) {
     final sel = selected == type;
     return Expanded(
       child: GestureDetector(
@@ -728,18 +822,25 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  Widget _editMacroTile(
-      String label, String value, String unit, Color color) {
+  Widget _editMacroTile(String label, String value, String unit, Color color) {
     return Column(
       children: [
-        Text(value,
-            style: TextStyle(
-                fontSize: 17, fontWeight: FontWeight.w900, color: color)),
-        Text('$label ($unit)',
-            style: TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.w900,
+            color: color,
+          ),
+        ),
+        Text(
+          '$label ($unit)',
+          style: TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ],
     );
   }
@@ -755,10 +856,7 @@ class NutritionScreenState extends State<NutritionScreen>
             ? _buildShimmer()
             : TabBarView(
                 controller: _tabController,
-                children: [
-                  _buildTodayTab(),
-                  _buildHistoryTab(),
-                ],
+                children: [_buildTodayTab(), _buildHistoryTab()],
               ),
       ),
     );
@@ -789,7 +887,7 @@ class NutritionScreenState extends State<NutritionScreen>
                 ),
                 child: Text(
                   '${_caloriesGoal.toInt()} kcal goal',
-                  style:  TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                     color: AppColors.primary,
@@ -822,8 +920,11 @@ class NutritionScreenState extends State<NutritionScreen>
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.borderSubtle),
             ),
-            child:  Icon(Icons.tune_rounded,
-                color: AppColors.textPrimary, size: 20),
+            child: Icon(
+              Icons.tune_rounded,
+              color: AppColors.textPrimary,
+              size: 20,
+            ),
           ),
           onPressed: _showGoalsEditorModal,
           tooltip: 'Configure Goals',
@@ -865,9 +966,13 @@ class NutritionScreenState extends State<NutritionScreen>
                 labelColor: Colors.white,
                 unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: const TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 13),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
                 unselectedLabelStyle: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 13),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
                 dividerColor: Colors.transparent,
                 tabs: [
                   Tab(text: AppLocalizations.of(context)!.today),
@@ -900,15 +1005,15 @@ class NutritionScreenState extends State<NutritionScreen>
   }
 
   Widget _shimmerBox(double h, {double radius = 16}) => Container(
-        width: double.infinity,
-        height: h,
-        margin: const EdgeInsets.only(bottom: 4),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-      );
+    width: double.infinity,
+    height: h,
+    margin: const EdgeInsets.only(bottom: 4),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: AppColors.borderSubtle),
+    ),
+  );
 
   // ─── TODAY TAB ─────────────────────────────────────────────────────────────
   Widget _buildTodayTab() {
@@ -1026,8 +1131,8 @@ class NutritionScreenState extends State<NutritionScreen>
     final statusColor = _calorieProgress > 1.0
         ? AppColors.error
         : _calorieProgress >= 0.85
-            ? AppColors.accentCalories
-            : AppColors.primary;
+        ? AppColors.accentCalories
+        : AppColors.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -1049,8 +1154,9 @@ class NutritionScreenState extends State<NutritionScreen>
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.08),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(23)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(23),
+              ),
               border: Border(
                 bottom: BorderSide(color: statusColor.withValues(alpha: 0.12)),
               ),
@@ -1065,7 +1171,9 @@ class NutritionScreenState extends State<NutritionScreen>
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                          color: statusColor.withValues(alpha: 0.5), blurRadius: 6),
+                        color: statusColor.withValues(alpha: 0.5),
+                        blurRadius: 6,
+                      ),
                     ],
                   ),
                 ),
@@ -1081,8 +1189,10 @@ class NutritionScreenState extends State<NutritionScreen>
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
@@ -1130,7 +1240,9 @@ class NutritionScreenState extends State<NutritionScreen>
                         children: [
                           TweenAnimationBuilder<double>(
                             tween: Tween(
-                                begin: 0, end: _caloriesConsumed.toDouble()),
+                              begin: 0,
+                              end: _caloriesConsumed.toDouble(),
+                            ),
                             duration: const Duration(milliseconds: 1400),
                             curve: Curves.easeOutCubic,
                             builder: (context, val, _) {
@@ -1195,7 +1307,9 @@ class NutritionScreenState extends State<NutritionScreen>
                             : '${_caloriesRemaining.toInt()}',
                         unit: 'kcal',
                         icon: PixelIconType.bolt,
-                        color: _isOverGoal ? AppColors.error : AppColors.primary,
+                        color: _isOverGoal
+                            ? AppColors.error
+                            : AppColors.primary,
                       ),
                     ],
                   ),
@@ -1222,14 +1336,21 @@ class NutritionScreenState extends State<NutritionScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('0 kcal',
-                        style: TextStyle(
-                            fontSize: 10, color: AppColors.textMuted)),
-                    Text('Target: ${_caloriesGoal.toInt()} kcal',
-                        style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textSecondary)),
+                    Text(
+                      '0 kcal',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    Text(
+                      'Target: ${_caloriesGoal.toInt()} kcal',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ],
@@ -1305,8 +1426,9 @@ class NutritionScreenState extends State<NutritionScreen>
 
   // ─── Hydration Card ────────────────────────────────────────────────────────
   Widget _buildHydrationCard() {
-    final progress =
-        _waterGoal > 0 ? (_waterConsumed / _waterGoal).clamp(0.0, 1.0) : 0.0;
+    final progress = _waterGoal > 0
+        ? (_waterConsumed / _waterGoal).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1344,13 +1466,19 @@ class NutritionScreenState extends State<NutritionScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Water Hydration',
-                        style: AppText.headlineSm.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary)),
-                    Text('Daily target: $_waterGoal ml',
-                        style: AppText.bodySm
-                            .copyWith(color: AppColors.textSecondary)),
+                    Text(
+                      'Water Hydration',
+                      style: AppText.headlineSm.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Daily target: $_waterGoal ml',
+                      style: AppText.bodySm.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -1365,9 +1493,13 @@ class NutritionScreenState extends State<NutritionScreen>
                       color: AppColors.accentWater,
                     ),
                   ),
-                  Text('ml logged',
-                      style: TextStyle(
-                          fontSize: 10, color: AppColors.textSecondary)),
+                  Text(
+                    'ml logged',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -1382,7 +1514,8 @@ class NutritionScreenState extends State<NutritionScreen>
               minHeight: 8,
               backgroundColor: AppColors.surfaceContainerHigh,
               valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.accentWater),
+                AppColors.accentWater,
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -1410,14 +1543,19 @@ class NutritionScreenState extends State<NutritionScreen>
                 onTap: () => _updateWater(-250),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.borderSubtle),
                   ),
-                  child:  Icon(Icons.undo_rounded,
-                      size: 18, color: AppColors.textSecondary),
+                  child: Icon(
+                    Icons.undo_rounded,
+                    size: 18,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -1439,7 +1577,9 @@ class NutritionScreenState extends State<NutritionScreen>
         decoration: BoxDecoration(
           color: AppColors.accentWater.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accentWater.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: AppColors.accentWater.withValues(alpha: 0.2),
+          ),
         ),
         child: FittedBox(
           fit: BoxFit.scaleDown,
@@ -1764,14 +1904,19 @@ class NutritionScreenState extends State<NutritionScreen>
     Color accentColor,
   ) {
     final logs = _todayLogs[mealType] ?? [];
-    final totalCals =
-        logs.fold(0.0, (s, l) => s + ((l['calories'] as num?) ?? 0));
-    final totalProtein =
-        logs.fold(0.0, (s, l) => s + ((l['protein_g'] as num?) ?? 0));
-    final totalCarbs =
-        logs.fold(0.0, (s, l) => s + ((l['carbs_g'] as num?) ?? 0));
-    final totalFat =
-        logs.fold(0.0, (s, l) => s + ((l['fat_g'] as num?) ?? 0));
+    final totalCals = logs.fold(
+      0.0,
+      (s, l) => s + ((l['calories'] as num?) ?? 0),
+    );
+    final totalProtein = logs.fold(
+      0.0,
+      (s, l) => s + ((l['protein_g'] as num?) ?? 0),
+    );
+    final totalCarbs = logs.fold(
+      0.0,
+      (s, l) => s + ((l['carbs_g'] as num?) ?? 0),
+    );
+    final totalFat = logs.fold(0.0, (s, l) => s + ((l['fat_g'] as num?) ?? 0));
     final hasLogs = logs.isNotEmpty;
     final isExpanded = _expandedMeals.contains(mealType);
 
@@ -1850,7 +1995,9 @@ class NutritionScreenState extends State<NutritionScreen>
                   if (hasLogs) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
@@ -1886,8 +2033,11 @@ class NutritionScreenState extends State<NutritionScreen>
                         color: AppColors.accentWorkout.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.camera_alt_rounded,
-                          color: AppColors.accentWorkout, size: 16),
+                      child: const Icon(
+                        Icons.camera_alt_rounded,
+                        color: AppColors.accentWorkout,
+                        size: 16,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -1903,8 +2053,11 @@ class NutritionScreenState extends State<NutritionScreen>
                         color: AppColors.primary.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child:  Icon(Icons.add_rounded,
-                          color: AppColors.primary, size: 18),
+                      child: Icon(
+                        Icons.add_rounded,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 4),
@@ -1912,8 +2065,11 @@ class NutritionScreenState extends State<NutritionScreen>
                   AnimatedRotation(
                     turns: isExpanded ? 0 : -0.25,
                     duration: const Duration(milliseconds: 200),
-                    child:  Icon(Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.textSecondary, size: 20),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.textSecondary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
@@ -1936,41 +2092,52 @@ class NutritionScreenState extends State<NutritionScreen>
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.restaurant_outlined,
-                              size: 16,
-                              color: AppColors.textSecondary.withValues(alpha: 0.5)),
+                          Icon(
+                            Icons.restaurant_outlined,
+                            size: 16,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text('No food logged yet',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.textSecondary)),
+                            child: Text(
+                              'No food logged yet',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
                           ),
                           TextButton.icon(
                             onPressed: () => _showAddFoodBottomSheet(
-                                preselectedMeal: mealType),
+                              preselectedMeal: mealType,
+                            ),
                             icon: const Icon(Icons.add_rounded, size: 14),
                             label: const Text('Add'),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.primary,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
                           ),
                           const SizedBox(width: 4),
                           TextButton.icon(
-                            onPressed: () =>
-                                _showQuickCaloriesDialog(mealType),
+                            onPressed: () => _showQuickCaloriesDialog(mealType),
                             icon: const Icon(Icons.bolt_rounded, size: 14),
                             label: const Text('Quick'),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.accentCalories,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -1989,8 +2156,11 @@ class NutritionScreenState extends State<NutritionScreen>
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 20),
                       color: AppColors.error.withValues(alpha: 0.12),
-                      child:  Icon(Icons.delete_outline_rounded,
-                          color: AppColors.error, size: 24),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        color: AppColors.error,
+                        size: 24,
+                      ),
                     ),
                     confirmDismiss: (_) =>
                         _showDeleteConfirm(context, log['food_name'] ?? ''),
@@ -2005,31 +2175,42 @@ class NutritionScreenState extends State<NutritionScreen>
                     decoration: BoxDecoration(
                       color: AppColors.surfaceContainerHigh,
                       borderRadius: const BorderRadius.vertical(
-                          bottom: Radius.circular(19)),
+                        bottom: Radius.circular(19),
+                      ),
                       border: Border(
-                          top: BorderSide(color: AppColors.borderSubtle)),
+                        top: BorderSide(color: AppColors.borderSubtle),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Text('Meal totals:',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary)),
+                        Text(
+                          'Meal totals:',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
                         const Spacer(),
                         _mealTotalPill(
-                            '${totalCals.toInt()} kcal', accentColor),
+                          '${totalCals.toInt()} kcal',
+                          accentColor,
+                        ),
                         const SizedBox(width: 4),
                         _mealTotalPill(
-                            'P ${totalProtein.toStringAsFixed(0)}g',
-                            AppColors.accentProtein),
+                          'P ${totalProtein.toStringAsFixed(0)}g',
+                          AppColors.accentProtein,
+                        ),
                         const SizedBox(width: 4),
                         _mealTotalPill(
-                            'C ${totalCarbs.toStringAsFixed(0)}g',
-                            AppColors.accentCarbs),
+                          'C ${totalCarbs.toStringAsFixed(0)}g',
+                          AppColors.accentCarbs,
+                        ),
                         const SizedBox(width: 4),
-                        _mealTotalPill('F ${totalFat.toStringAsFixed(0)}g',
-                            AppColors.accentFat),
+                        _mealTotalPill(
+                          'F ${totalFat.toStringAsFixed(0)}g',
+                          AppColors.accentFat,
+                        ),
                       ],
                     ),
                   ),
@@ -2088,17 +2269,22 @@ class NutritionScreenState extends State<NutritionScreen>
                     spacing: 4,
                     runSpacing: 4,
                     children: [
-                      _microPill('${(log['quantity'] as num?)?.toInt() ?? 100}g',
-                          AppColors.textSecondary),
                       _microPill(
-                          'P ${((log['protein_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
-                          AppColors.accentProtein),
+                        '${(log['quantity'] as num?)?.toInt() ?? 100}g',
+                        AppColors.textSecondary,
+                      ),
                       _microPill(
-                          'C ${((log['carbs_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
-                          AppColors.accentCarbs),
+                        'P ${((log['protein_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
+                        AppColors.accentProtein,
+                      ),
                       _microPill(
-                          'F ${((log['fat_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
-                          AppColors.accentFat),
+                        'C ${((log['carbs_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
+                        AppColors.accentCarbs,
+                      ),
+                      _microPill(
+                        'F ${((log['fat_g'] as num?)?.toDouble() ?? 0).toStringAsFixed(1)}g',
+                        AppColors.accentFat,
+                      ),
                     ],
                   ),
                 ],
@@ -2127,8 +2313,11 @@ class NutritionScreenState extends State<NutritionScreen>
               ],
             ),
             const SizedBox(width: 6),
-             Icon(Icons.chevron_right_rounded,
-                size: 18, color: AppColors.textMuted),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
           ],
         ),
       ),
@@ -2152,36 +2341,28 @@ class NutritionScreenState extends State<NutritionScreen>
   }
 
   Widget _microPill(String text, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 9,
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w800),
+    ),
+  );
 
   Widget _mealTotalPill(String text, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 9,
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: 9, color: color, fontWeight: FontWeight.w800),
+    ),
+  );
 
   Future<bool?> _showDeleteConfirm(BuildContext ctx, String name) {
     return showDialog<bool>(
@@ -2189,10 +2370,14 @@ class NutritionScreenState extends State<NutritionScreen>
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Remove item?',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-        content: Text('Remove "$name" from today\'s log?',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
+        title: const Text(
+          'Remove item?',
+          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        ),
+        content: Text(
+          'Remove "$name" from today\'s log?',
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -2214,393 +2399,57 @@ class NutritionScreenState extends State<NutritionScreen>
 
   // ─── HISTORY TAB ──────────────────────────────────────────────────────────
   Widget _buildHistoryTab() {
-    if (_weeklyProgress.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
-                shape: BoxShape.circle,
-              ),
-              child:  Icon(Icons.bar_chart_rounded,
-                  size: 36, color: AppColors.primary),
-            ),
-            const SizedBox(height: 16),
-            Text(AppLocalizations.of(context)!.noHistory,
-                style: AppText.headlineSm.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary)),
-            const SizedBox(height: 6),
-            Text('Log meals to see your weekly trends and analytics',
-                style: AppText.bodySm.copyWith(color: AppColors.textSecondary)),
-          ],
-        ),
-      );
-    }
+    // Delegates to dedicated History page — edit `lib/screens/nutrition_history_page.dart` for chart tweaks.
+    // Pass raw weeklyProgress; the page normalizes to exactly 7 chronological days itself.
+    return NutritionHistoryPage(
+      weeklyProgress: _weeklyProgress,
+      caloriesGoal: _caloriesGoal,
+    );
+  }
 
-    final maxY = (_weeklyProgress.fold(0.0, (m, d) {
-          final c = (d['calories_consumed'] as num?)?.toDouble() ?? 0;
-          return c > m ? c : m;
-        }) *
-        1.3).clamp(100.0, double.infinity);
+  Widget _buildWeeklyStatsRowNormalized(
+    List<Map<String, dynamic>> normalized,
+    double avgCals,
+  ) {
+    final daysOnTrack = normalized.where((d) {
+      final c = (d["calories_consumed"] as num?)?.toDouble() ?? 0;
+      final g = _caloriesGoal;
+      return c >= g * 0.85 && c <= g * 1.15;
+    }).length;
 
-    final avgCals = _weeklyProgress.isEmpty
-        ? 0.0
-        : _weeklyProgress.fold(
-                0.0,
-                (s, d) =>
-                    s + ((d['calories_consumed'] as num?)?.toDouble() ?? 0)) /
-            _weeklyProgress.length;
+    final workoutDays = normalized
+        .where((d) => d["workout_done"] == true)
+        .length;
 
-    // Account for: bottom safe area + nav bar (68) + nav margin (12) + gap (16)
-    final bottomPad = MediaQuery.of(context).padding.bottom + 68 + 12 + 16;
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomPad),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Weekly Summary Cards
-          _buildWeeklyStatsRow(avgCals),
-          const SizedBox(height: 16),
-
-          // Weekly Chart Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.borderSubtle, width: 1.2),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 12,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.last7Days,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textSecondary,
-                        letterSpacing: 1.1,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Target: ${_caloriesGoal.toInt()} kcal',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  height: 200,
-                  child: AnimatedBuilder(
-                    animation: _lineChartController,
-                    builder: (context, child) {
-                      final progress = _lineChartController.value;
-                      final spots = _weeklyProgress.asMap().entries.map((e) {
-                        final cals =
-                            (e.value['calories_consumed'] as num?)?.toDouble() ??
-                                0;
-                        return FlSpot(e.key.toDouble(), cals);
-                      }).toList();
-
-                      final animatedSpots = spots
-                          .where((s) => s.x <= (spots.length - 1) * progress)
-                          .toList();
-                      if (animatedSpots.isEmpty && spots.isNotEmpty) {
-                        animatedSpots.add(spots.first);
-                      }
-
-                      return LineChart(
-                        LineChartData(
-                          gridData: FlGridData(
-                            show: true,
-                            drawVerticalLine: false,
-                            horizontalInterval: maxY / 4,
-                            getDrawingHorizontalLine: (value) => FlLine(
-                              color: AppColors.borderLight,
-                              strokeWidth: 1,
-                            ),
-                          ),
-                          titlesData: FlTitlesData(
-                            leftTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            topTitles: const AxisTitles(
-                                sideTitles: SideTitles(showTitles: false)),
-                            bottomTitles: AxisTitles(
-                              sideTitles: SideTitles(
-                                showTitles: true,
-                                reservedSize: 24,
-                                interval: 1,
-                                getTitlesWidget: (value, meta) {
-                                  final i = value.toInt();
-                                  if (i >= 0 && i < _weeklyProgress.length) {
-                                    final dateStr = _weeklyProgress[i]
-                                            ['summary_date']
-                                        .toString();
-                                    final displayDate = dateStr.length >= 10
-                                        ? dateStr.substring(5, 10)
-                                        : dateStr;
-                                    return SideTitleWidget(
-                                      axisSide: meta.axisSide,
-                                      child: Text(
-                                        displayDate,
-                                        style: TextStyle(
-                                          color: (i == _selectedHistoryIndex)
-                                              ? AppColors.primary
-                                              : AppColors.textSecondary,
-                                          fontSize: 10,
-                                          fontWeight:
-                                              (i == _selectedHistoryIndex)
-                                                  ? FontWeight.w900
-                                                  : FontWeight.w600,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return const SizedBox.shrink();
-                                },
-                              ),
-                            ),
-                          ),
-                          borderData: FlBorderData(show: false),
-                          minX: 0,
-                          maxX: (_weeklyProgress.length - 1).toDouble(),
-                          minY: 0,
-                          maxY: maxY,
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: animatedSpots,
-                              isCurved: true,
-                              curveSmoothness: 0.35,
-                              color: AppColors.primary,
-                              barWidth: 3.5,
-                              isStrokeCapRound: true,
-                              dotData: FlDotData(
-                                show: true,
-                                getDotPainter:
-                                    (spot, percent, barData, index) {
-                                  final isSelected =
-                                      index == _selectedHistoryIndex;
-                                  return FlDotCirclePainter(
-                                    radius: isSelected ? 7 : 4,
-                                    color: isSelected
-                                        ? AppColors.primary
-                                        : Colors.white,
-                                    strokeWidth: 2.5,
-                                    strokeColor: AppColors.primary,
-                                  );
-                                },
-                              ),
-                              belowBarData: BarAreaData(
-                                show: true,
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    AppColors.primary.withValues(alpha: 0.25 * progress),
-                                    AppColors.primary.withValues(alpha: 0.0),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                          extraLinesData: ExtraLinesData(
-                            horizontalLines: [
-                              HorizontalLine(
-                                y: _caloriesGoal,
-                                color: AppColors.accentCalories.withValues(alpha: 0.6),
-                                strokeWidth: 1.5,
-                                dashArray: [6, 4],
-                              ),
-                            ],
-                          ),
-                          lineTouchData: LineTouchData(
-                            touchCallback: (event, response) {
-                              if (response?.lineBarSpots != null &&
-                                  response!.lineBarSpots!.isNotEmpty) {
-                                setState(() {
-                                  _selectedHistoryIndex =
-                                      response.lineBarSpots!.first.spotIndex;
-                                });
-                              }
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
+    return Row(
+      children: [
+        Expanded(
+          child: _weeklyStatCard(
+            "Avg Calories",
+            "${avgCals.toInt()}",
+            "kcal / day",
+            AppColors.primary,
           ),
-          const SizedBox(height: 24),
-
-          // Daily Breakdown Title
-          Text('Daily Breakdown',
-              style: AppText.headlineMd.copyWith(
-                  fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-          const SizedBox(height: 12),
-
-          ..._weeklyProgress.reversed.toList().asMap().entries.map((entry) {
-            final day = entry.value;
-            final cals = (day['calories_consumed'] as num?)?.toDouble() ?? 0;
-            final protein = (day['protein_g'] as num?)?.toDouble() ?? 0;
-            final carbs = (day['carbs_g'] as num?)?.toDouble() ?? 0;
-            final fat = (day['fat_g'] as num?)?.toDouble() ?? 0;
-            final goalCal = _caloriesGoal;
-            final pct = goalCal > 0 ? (cals / goalCal).clamp(0.0, 1.0) : 0.0;
-            final isWorkout = day['workout_done'] == true;
-            final dateStr = day['summary_date'].toString();
-            final isToday = entry.key == 0;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isToday
-                      ? AppColors.primary.withValues(alpha: 0.4)
-                      : AppColors.borderSubtle,
-                  width: isToday ? 1.5 : 1.0,
-                ),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (isToday)
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              AppLocalizations.of(context)!.today,
-                              style:  TextStyle(
-                                fontSize: 9,
-                                color: AppColors.onPrimary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        Expanded(
-                          child: Text(
-                            dateStr,
-                            style: AppText.headlineSm.copyWith(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15,
-                                color: AppColors.textPrimary),
-                          ),
-                        ),
-                        if (isWorkout)
-                          Container(
-                            margin: const EdgeInsets.only(right: 8),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: AppColors.accentWorkout.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              children: [
-                                const PixelArtIcon(
-                                  type: PixelIconType.dumbbell,
-                                  size: 12,
-                                  color: AppColors.accentWorkout,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Workout',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: AppColors.accentWorkout,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        Text(
-                          '${cals.toInt()} kcal',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                            color: pct >= 1.0
-                                ? AppColors.accentCalories
-                                : AppColors.primary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: pct,
-                        minHeight: 6,
-                        backgroundColor: AppColors.surfaceContainerHigh,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          pct >= 1.0
-                              ? AppColors.accentCalories
-                              : AppColors.primary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _historyMacroPill('P ${protein.toInt()}g',
-                            AppColors.accentProtein),
-                        _historyMacroPill(
-                            'C ${carbs.toInt()}g', AppColors.accentCarbs),
-                        _historyMacroPill(
-                            'F ${fat.toInt()}g', AppColors.accentFat),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _weeklyStatCard(
+            "On Track",
+            "$daysOnTrack",
+            "days in zone",
+            AppColors.accentCalories,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _weeklyStatCard(
+            "Workouts",
+            "$workoutDays",
+            "this week",
+            AppColors.accentWorkout,
+          ),
+        ),
+      ],
     );
   }
 
@@ -2611,8 +2460,9 @@ class NutritionScreenState extends State<NutritionScreen>
       return c >= g * 0.85 && c <= g * 1.15;
     }).length;
 
-    final workoutDays =
-        _weeklyProgress.where((d) => d['workout_done'] == true).length;
+    final workoutDays = _weeklyProgress
+        .where((d) => d['workout_done'] == true)
+        .length;
 
     return Row(
       children: [
@@ -2646,8 +2496,7 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  Widget _weeklyStatCard(
-      String label, String value, String sub, Color color) {
+  Widget _weeklyStatCard(String label, String value, String sub, Color color) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -2658,44 +2507,49 @@ class NutritionScreenState extends State<NutritionScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value,
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: color,
-                  height: 1)),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+              color: color,
+              height: 1,
+            ),
+          ),
           const SizedBox(height: 3),
-          Text(sub,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: color.withValues(alpha: 0.8),
-                  fontWeight: FontWeight.w700)),
+          Text(
+            sub,
+            style: TextStyle(
+              fontSize: 9,
+              color: color.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(label,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
   }
 
   Widget _historyMacroPill(String text, Color color) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 11,
-            color: color,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w800),
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -2714,6 +2568,58 @@ class _NutritionGoalsSheet extends StatefulWidget {
   State<_NutritionGoalsSheet> createState() => _NutritionGoalsSheetState();
 }
 
+// A named preset so we can detect "is this preset currently active" and
+// apply water alongside the macros — the original only touched three fields.
+class _GoalPreset {
+  final String emoji;
+  final String titleEn;
+  final String titleAr;
+  final double cal, protein, carbs, fat, water;
+  const _GoalPreset({
+    required this.emoji,
+    required this.titleEn,
+    required this.titleAr,
+    required this.cal,
+    required this.protein,
+    required this.carbs,
+    required this.fat,
+    required this.water,
+  });
+}
+
+const _presets = [
+  _GoalPreset(
+    emoji: '🔥',
+    titleEn: 'Fat Loss',
+    titleAr: 'خسارة دهون',
+    cal: 1750,
+    protein: 160,
+    carbs: 140,
+    fat: 50,
+    water: 2500,
+  ),
+  _GoalPreset(
+    emoji: '⚖️',
+    titleEn: 'Maintain',
+    titleAr: 'ثبات الوزن',
+    cal: 2100,
+    protein: 150,
+    carbs: 220,
+    fat: 65,
+    water: 2500,
+  ),
+  _GoalPreset(
+    emoji: '💪',
+    titleEn: 'Bulk / Gain',
+    titleAr: 'زيادة عضلات',
+    cal: 2600,
+    protein: 175,
+    carbs: 320,
+    fat: 75,
+    water: 3000,
+  ),
+];
+
 class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
   final _statsService = StatsService();
   late double _calories;
@@ -2726,31 +2632,150 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
   @override
   void initState() {
     super.initState();
-    _calories = (widget.currentGoals['daily_calories'] as num?)?.toDouble() ?? 2000;
-    _protein = (widget.currentGoals['daily_protein_g'] as num?)?.toDouble() ?? 150;
+    _calories =
+        (widget.currentGoals['daily_calories'] as num?)?.toDouble() ?? 2000;
+    _protein =
+        (widget.currentGoals['daily_protein_g'] as num?)?.toDouble() ?? 150;
     _carbs = (widget.currentGoals['daily_carbs_g'] as num?)?.toDouble() ?? 250;
     _fat = (widget.currentGoals['daily_fat_g'] as num?)?.toDouble() ?? 65;
-    _water = (widget.currentGoals['daily_water_ml'] as num?)?.toDouble() ?? 2500;
+    _water =
+        (widget.currentGoals['daily_water_ml'] as num?)?.toDouble() ?? 2500;
   }
 
-  void _applyPreset({
-    required double cal,
-    required double p,
-    required double c,
-    required double f,
-  }) {
-    HapticFeedback.lightImpact();
+  bool get _isArabic => Localizations.localeOf(context).languageCode == 'ar';
+
+  double get _macroCalories => (_protein * 4) + (_carbs * 4) + (_fat * 9);
+
+  double get _macroDelta => (_macroCalories - _calories);
+
+  bool get _macroBalanced => _macroDelta.abs() < 100;
+
+  void _applyPreset(_GoalPreset p) {
+    HapticFeedback.mediumImpact();
     setState(() {
-      _calories = cal;
-      _protein = p;
-      _carbs = c;
-      _fat = f;
+      _calories = p.cal;
+      _protein = p.protein;
+      _carbs = p.carbs;
+      _fat = p.fat;
+      _water = p.water;
     });
+  }
+
+  bool _isActivePreset(_GoalPreset p) =>
+      _calories == p.cal &&
+      _protein == p.protein &&
+      _carbs == p.carbs &&
+      _fat == p.fat;
+
+  /// Sets the calorie target to match the macro sum in one tap — the
+  /// original sheet only *told* the user the numbers disagreed and left
+  /// them to fix it by hand.
+  void _autoBalanceCalories() {
+    HapticFeedback.mediumImpact();
+    setState(() => _calories = _macroCalories.clamp(1000, 4500));
+  }
+
+  Future<void> _editValue({
+    required String title,
+    required double current,
+    required double min,
+    required double max,
+    required String unit,
+    required ValueChanged<double> onSaved,
+  }) async {
+    final controller = TextEditingController(text: current.toInt().toString());
+    final result = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w800,
+            fontFamily: AppText.fontFamily(isArabic: _isArabic),
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          decoration: InputDecoration(
+            suffixText: unit,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          onSubmitted: (_) =>
+              Navigator.pop(ctx, double.tryParse(controller.text)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            // L10N: 'إلغاء' / 'Cancel'
+            child: Text(_isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () =>
+                Navigator.pop(ctx, double.tryParse(controller.text)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.onPrimary,
+            ),
+            // L10N: 'تم' / 'Done'
+            child: Text(_isArabic ? 'تم' : 'Done'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) {
+      HapticFeedback.selectionClick();
+      onSaved(result.clamp(min, max));
+    }
+  }
+
+  Future<void> _save() async {
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
+    HapticFeedback.mediumImpact();
+    final newGoals = {
+      'daily_calories': _calories.toInt(),
+      'daily_protein_g': _protein.toInt(),
+      'daily_carbs_g': _carbs.toInt(),
+      'daily_fat_g': _fat.toInt(),
+      'daily_water_ml': _water.toInt(),
+    };
+    final ok = await _statsService.updateGoals(newGoals);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() => _saving = false);
+      messenger.showSnackBar(
+        SnackBar(
+          // L10N: keep the Arabic message but make it bilingual-aware
+          content: Text(
+            _isArabic
+                ? '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'
+                : '❌ Couldn\'t save — check your internet connection',
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: _isArabic ? 'إعادة المحاولة' : 'Retry',
+            textColor: Colors.white,
+            onPressed: _save,
+          ),
+        ),
+      );
+      return; // Leave the sheet open so the user doesn't lose their edits.
+    }
+    widget.onGoalsSaved(newGoals);
+    nav.pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final calculatedCals = (_protein * 4) + (_carbs * 4) + (_fat * 9);
+    final isArabic = _isArabic;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.88,
@@ -2777,19 +2802,35 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Configure Nutrition Goals',
-                          style: AppText.headlineSm.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary)),
-                      Text('Customize daily caloric & macronutrient targets',
-                          style: AppText.bodySm
-                              .copyWith(color: AppColors.textSecondary)),
+                      // L10N: 'إعداد أهداف التغذية' / 'Configure Nutrition Goals'
+                      Text(
+                        isArabic
+                            ? 'إعداد أهداف التغذية'
+                            : 'Configure Nutrition Goals',
+                        style: AppText.headlineSm.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                      ),
+                      // L10N: subtitle
+                      Text(
+                        isArabic
+                            ? 'اضبط السعرات والماكروز اليومية — اضغط على أي رقم لكتابته يدوياً'
+                            : 'Tap any number to type it directly, or drag to adjust',
+                        style: AppText.bodySm.copyWith(
+                          color: AppColors.textSecondary,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
+                      ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon:  Icon(Icons.close_rounded,
-                      color: AppColors.textSecondary),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textSecondary,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -2803,138 +2844,110 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('QUICK PRESETS',
-                      style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textSecondary,
-                          letterSpacing: 1.1)),
+                  Text(
+                    isArabic ? 'اختيارات سريعة' : 'QUICK PRESETS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 1.1,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   Row(
-                    children: [
-                      Expanded(
-                        child: _presetChip(
-                          title: '🔥 Fat Loss',
-                          sub: '1750 kcal',
-                          onTap: () => _applyPreset(
-                              cal: 1750, p: 160, c: 140, f: 50),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _presetChip(
-                          title: '⚖️ Maintain',
-                          sub: '2100 kcal',
-                          onTap: () => _applyPreset(
-                              cal: 2100, p: 150, c: 220, f: 65),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _presetChip(
-                          title: '💪 Bulk / Gain',
-                          sub: '2600 kcal',
-                          onTap: () => _applyPreset(
-                              cal: 2600, p: 175, c: 320, f: 75),
-                        ),
-                      ),
-                    ],
+                    children: _presets
+                        .map(
+                          (p) => Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                right: p == _presets.last ? 0 : 8,
+                              ),
+                              child: _presetChip(
+                                preset: p,
+                                isArabic: isArabic,
+                                active: _isActivePreset(p),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                   ),
                   const SizedBox(height: 24),
 
-                  // Daily Calorie Target
                   _sliderTarget(
-                    label: 'Daily Calories',
+                    label: isArabic ? 'السعرات اليومية' : 'Daily Calories',
                     value: _calories,
                     min: 1000,
                     max: 4500,
                     step: 50,
                     unit: 'kcal',
                     color: AppColors.primary,
+                    isArabic: isArabic,
                     onChanged: (v) => setState(() => _calories = v),
                   ),
                   const SizedBox(height: 16),
 
-                  // Protein Target
                   _sliderTarget(
-                    label: 'Daily Protein',
+                    label: isArabic ? 'البروتين اليومي' : 'Daily Protein',
                     value: _protein,
                     min: 50,
                     max: 300,
                     step: 5,
-                    unit: 'g (${(_protein * 4).toInt()} kcal)',
+                    unit: 'g',
+                    subLabel: '${(_protein * 4).toInt()} kcal',
                     color: AppColors.accentProtein,
+                    isArabic: isArabic,
                     onChanged: (v) => setState(() => _protein = v),
                   ),
                   const SizedBox(height: 16),
 
-                  // Carbs Target
                   _sliderTarget(
-                    label: 'Daily Carbohydrates',
+                    label: isArabic
+                        ? 'الكربوهيدرات اليومية'
+                        : 'Daily Carbohydrates',
                     value: _carbs,
                     min: 50,
                     max: 500,
                     step: 5,
-                    unit: 'g (${(_carbs * 4).toInt()} kcal)',
+                    unit: 'g',
+                    subLabel: '${(_carbs * 4).toInt()} kcal',
                     color: AppColors.accentCarbs,
+                    isArabic: isArabic,
                     onChanged: (v) => setState(() => _carbs = v),
                   ),
                   const SizedBox(height: 16),
 
-                  // Fat Target
                   _sliderTarget(
-                    label: 'Daily Fats',
+                    label: isArabic ? 'الدهون اليومية' : 'Daily Fats',
                     value: _fat,
                     min: 20,
                     max: 150,
                     step: 5,
-                    unit: 'g (${(_fat * 9).toInt()} kcal)',
+                    unit: 'g',
+                    subLabel: '${(_fat * 9).toInt()} kcal',
                     color: AppColors.accentFat,
+                    isArabic: isArabic,
                     onChanged: (v) => setState(() => _fat = v),
                   ),
                   const SizedBox(height: 16),
 
-                  // Water Target
                   _sliderTarget(
-                    label: 'Daily Water Intake',
+                    label: isArabic
+                        ? 'كمية المياه اليومية'
+                        : 'Daily Water Intake',
                     value: _water,
                     min: 1000,
                     max: 5000,
                     step: 250,
                     unit: 'ml',
                     color: AppColors.accentWater,
+                    isArabic: isArabic,
                     onChanged: (v) => setState(() => _water = v),
                   ),
                   const SizedBox(height: 20),
 
-                  // Macro Balance Indicator
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceContainerHigh,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Row(
-                      children: [
-                         Icon(Icons.info_outline_rounded,
-                            size: 18, color: AppColors.textSecondary),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Macro sum: ${calculatedCals.toInt()} kcal vs Goal: ${_calories.toInt()} kcal',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: (calculatedCals - _calories).abs() < 100
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  _macroBalanceCard(isArabic: isArabic),
                 ],
               ),
             ),
@@ -2954,49 +2967,23 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
                   ),
                   elevation: 0,
                 ),
-                onPressed: _saving
-                    ? null
-                    : () async {
-                        final nav = Navigator.of(context);
-                        final messenger = ScaffoldMessenger.of(context);
-                        setState(() => _saving = true);
-                        HapticFeedback.mediumImpact();
-                        final newGoals = {
-                          'daily_calories': _calories.toInt(),
-                          'daily_protein_g': _protein.toInt(),
-                          'daily_carbs_g': _carbs.toInt(),
-                          'daily_fat_g': _fat.toInt(),
-                          'daily_water_ml': _water.toInt(),
-                        };
-                        final ok =
-                            await _statsService.updateGoals(newGoals);
-                        if (!mounted) return;
-                        if (!ok) {
-                          setState(() => _saving = false);
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: const Text(
-                                  '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت'),
-                              backgroundColor: AppColors.error,
-                              behavior: SnackBarBehavior.floating,
-                            ),
-                          );
-                          return; // keep the sheet open
-                        }
-                        widget.onGoalsSaved(newGoals);
-                        nav.pop();
-                      },
+                onPressed: _saving ? null : _save,
                 child: _saving
-                    ?  SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                            color: AppColors.onPrimary, strokeWidth: 2.5),
+                          color: AppColors.onPrimary,
+                          strokeWidth: 2.5,
+                        ),
                       )
-                    : const Text(
-                        'Save Goals',
+                    : Text(
+                        isArabic ? 'حفظ الأهداف' : 'Save Goals',
                         style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          fontFamily: AppText.fontFamily(isArabic: isArabic),
+                        ),
                       ),
               ),
             ),
@@ -3006,32 +2993,134 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
     );
   }
 
-  Widget _presetChip({
-    required String title,
-    required String sub,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.borderSubtle),
-        ),
-        child: Column(
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 2),
-            Text(sub,
+  /// Live macro-vs-calorie balance indicator. Unlike the original (a static
+  /// info line), this shows a clear visual state (green/amber) AND gives
+  /// the user a one-tap way to fix a mismatch instead of dragging sliders
+  /// back and forth by trial and error.
+  Widget _macroBalanceCard({required bool isArabic}) {
+    final balanced = _macroBalanced;
+    final color = balanced ? AppColors.primary : AppColors.overGoalWarning;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            balanced ? Icons.check_circle_rounded : Icons.info_outline_rounded,
+            size: 20,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // L10N
+                  isArabic
+                      ? 'مجموع الماكروز: ${_macroCalories.toInt()} سعرة — الهدف: ${_calories.toInt()} سعرة'
+                      : 'Macro sum: ${_macroCalories.toInt()} kcal vs Goal: ${_calories.toInt()} kcal',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  ),
+                ),
+                if (!balanced) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic
+                        ? 'الماكروز ${_macroDelta > 0 ? "أعلى" : "أقل"} من هدف السعرات بـ ${_macroDelta.abs().toInt()} سعرة'
+                        : 'Macros are ${_macroDelta.abs().toInt()} kcal ${_macroDelta > 0 ? "over" : "under"} the calorie goal',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      color: AppColors.textSecondary,
+                      fontFamily: AppText.fontFamily(isArabic: isArabic),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (!balanced) ...[
+            const SizedBox(width: 6),
+            TextButton(
+              onPressed: _autoBalanceCalories,
+              style: TextButton.styleFrom(
+                foregroundColor: color,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+              ),
+              // L10N: 'ظبط' / 'Fix'
+              child: Text(
+                isArabic ? 'ظبط' : 'Fix',
                 style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600)),
+                  fontWeight: FontWeight.w800,
+                  fontFamily: AppText.fontFamily(isArabic: isArabic),
+                ),
+              ),
+            ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _presetChip({
+    required _GoalPreset preset,
+    required bool isArabic,
+    required bool active,
+  }) {
+    return Semantics(
+      button: true,
+      selected: active,
+      label: isArabic ? preset.titleAr : preset.titleEn,
+      child: GestureDetector(
+        onTap: () => _applyPreset(preset),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: active
+                ? AppColors.primary.withValues(alpha: 0.12)
+                : AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: active ? AppColors.primary : AppColors.borderSubtle,
+              width: active ? 1.4 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                '${preset.emoji} ${isArabic ? preset.titleAr : preset.titleEn}',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: active ? AppColors.primary : AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: isArabic),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${preset.cal.toInt()} kcal',
+                style: TextStyle(
+                  fontSize: 10,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3045,7 +3134,9 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
     required double step,
     required String unit,
     required Color color,
+    required bool isArabic,
     required ValueChanged<double> onChanged,
+    String? subLabel,
   }) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -3059,31 +3150,89 @@ class _NutritionGoalsSheetState extends State<_NutritionGoalsSheet> {
         children: [
           Row(
             children: [
-              Text(label,
-                  style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700)),
-              const Spacer(),
-              Text(
-                '${value.toInt()} $unit',
-                style: TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w900, color: color),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    fontFamily: AppText.fontFamily(isArabic: isArabic),
+                  ),
+                ),
+              ),
+              // Tapping the value opens a precise numeric-entry dialog —
+              // the original only offered coarse drag-to-adjust.
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () => _editValue(
+                  title: label,
+                  current: value,
+                  min: min,
+                  max: max,
+                  unit: unit,
+                  onSaved: onChanged,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            '${value.toInt()} $unit',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w900,
+                              color: color,
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(Icons.edit_rounded, size: 12, color: color),
+                        ],
+                      ),
+                      if (subLabel != null)
+                        Text(
+                          subLabel,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
-          SliderTheme(
-            data: SliderThemeData(
-              activeTrackColor: color,
-              inactiveTrackColor: color.withValues(alpha: 0.15),
-              thumbColor: color,
-              overlayColor: color.withValues(alpha: 0.2),
-              trackHeight: 4,
-            ),
-            child: Slider(
-              value: value,
-              min: min,
-              max: max,
-              divisions: ((max - min) / step).toInt(),
-              onChanged: onChanged,
+          Semantics(
+            label: label,
+            value: '${value.toInt()} $unit',
+            slider: true,
+            child: SliderTheme(
+              data: SliderThemeData(
+                activeTrackColor: color,
+                inactiveTrackColor: color.withValues(alpha: 0.15),
+                thumbColor: color,
+                overlayColor: color.withValues(alpha: 0.2),
+                trackHeight: 4,
+              ),
+              child: Slider(
+                value: value,
+                min: min,
+                max: max,
+                divisions: ((max - min) / step).toInt(),
+                onChanged: onChanged,
+                // Haptic only fires once the user releases the thumb, not
+                // on every intermediate value — dragging the original
+                // slider end-to-end fired dozens of setState calls with no
+                // tactile pacing.
+                onChangeEnd: (_) => HapticFeedback.selectionClick(),
+              ),
             ),
           ),
         ],
@@ -3144,6 +3293,59 @@ class _ModernCalorieRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ModernCalorieRingPainter old) =>
       old.progress != progress || old.ringColor != ringColor;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// History chart dot — single consistent circle, latest slightly larger (fix #4)
+// ─────────────────────────────────────────────────────────────────────────────
+class _HistoryDotPainter extends FlDotPainter {
+  final Color color;
+  final bool isLatest;
+  final Color borderColor;
+  final bool isTouched;
+  const _HistoryDotPainter({
+    required this.color,
+    this.isLatest = false,
+    this.borderColor = Colors.white,
+    this.isTouched = false,
+  });
+  @override
+  void draw(Canvas canvas, FlSpot spot, Offset offset) {
+    final double r = isTouched ? 5.0 : (isLatest ? 5.2 : 3.8);
+    final double border = isLatest ? 1.6 : 1.3;
+    canvas.drawCircle(
+      offset,
+      r + border,
+      Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.fill,
+    );
+    canvas.drawCircle(
+      offset,
+      r,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.fill,
+    );
+    if (isLatest) {
+      canvas.drawCircle(
+        offset,
+        1.3,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.92)
+          ..style = PaintingStyle.fill,
+      );
+    }
+  }
+
+  @override
+  Size getSize(FlSpot spot) => Size(isLatest ? 13 : 10, isLatest ? 13 : 10);
+  @override
+  Color get mainColor => color;
+  @override
+  FlDotPainter lerp(FlDotPainter a, FlDotPainter b, double t) => b;
+  @override
+  List<Object?> get props => [color, isLatest, borderColor, isTouched];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

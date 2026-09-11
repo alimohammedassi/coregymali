@@ -16,33 +16,46 @@ class ChatRepository implements IChatRepository {
   // Conversations
   // -------------------------------------------------------------------------
 
+  /// Valid PostgREST embed syntax — the response keys are the colon aliases
+  /// (`client_profile` / `coach_profile`). SQL-style `as <alias>` inside the
+  /// select string is not supported and fails the whole query (PGRST100).
+  static const String _conversationSelect = '''
+      *,
+      client_profile:profiles!conversations_client_id_fkey(name, avatar_url, full_name),
+      coach_profile:profiles!conversations_coach_id_fkey(name, avatar_url, full_name)
+    ''';
+
+  ConversationEntity _mapConversation(Map<String, dynamic> row) {
+    final map = Map<String, dynamic>.from(row);
+    // Flatten embedded profiles onto the flat keys ConversationModel reads.
+    final clientProfile = map['client_profile'];
+    if (clientProfile is Map) {
+      final profile = Map<String, dynamic>.from(clientProfile);
+      map['client_name'] =
+          ((profile['full_name'] ?? profile['name']) as String?)?.trim();
+      map['client_avatar_url'] = profile['avatar_url'];
+    }
+    final coachProfile = map['coach_profile'];
+    if (coachProfile is Map) {
+      final profile = Map<String, dynamic>.from(coachProfile);
+      map['coach_name'] =
+          ((profile['full_name'] ?? profile['name']) as String?)?.trim();
+      map['coach_avatar_url'] = profile['avatar_url'];
+    }
+    return ConversationModel.fromJson(map).toEntity();
+  }
+
   @override
   Future<List<ConversationEntity>> getConversations(String userId) async {
     final res = await _client
         .from('conversations')
-        .select('''
-          *,
-          client_profile:profiles!conversations_client_id_fkey(name, avatar_url, full_name) as client_profile_data,
-          coach_profile:profiles!conversations_coach_id_fkey(name, avatar_url, full_name) as coach_profile_data
-        ''')
+        .select(_conversationSelect)
         .or('client_id.eq.$userId,coach_id.eq.$userId')
         .order('last_message_at', ascending: false);
 
-    final list = (res as List).map((row) {
-      final map = Map<String, dynamic>.from(row);
-      // Flatten nested profile data
-      if (map['client_profile_data'] != null) {
-        final cp = Map<String, dynamic>.from(map['client_profile_data'] as Map);
-        map['client_name'] = cp['full_name'] ?? cp['name'];
-        map['client_avatar_url'] = cp['avatar_url'];
-      }
-      if (map['coach_profile_data'] != null) {
-        final cp = Map<String, dynamic>.from(map['coach_profile_data'] as Map);
-        map['coach_name'] = cp['full_name'] ?? cp['name'];
-        map['coach_avatar_url'] = cp['avatar_url'];
-      }
-      return ConversationModel.fromJson(map).toEntity();
-    }).toList();
+    final list = (res as List)
+        .map((row) => _mapConversation(Map<String, dynamic>.from(row)))
+        .toList();
 
     return list;
   }
@@ -53,17 +66,17 @@ class ChatRepository implements IChatRepository {
     required String coachId,
     String? subscriptionId,
   }) async {
-    // Check if a conversation already exists
+    // Check if a conversation already exists (with profile names so the
+    // chat room header works when opened straight from a coach profile).
     final existing = await _client
         .from('conversations')
-        .select()
+        .select(_conversationSelect)
         .eq('client_id', clientId)
         .eq('coach_id', coachId)
         .maybeSingle();
 
     if (existing != null) {
-      return ConversationModel.fromJson(Map<String, dynamic>.from(existing))
-          .toEntity();
+      return _mapConversation(Map<String, dynamic>.from(existing));
     }
 
     // Create a new one
@@ -75,11 +88,10 @@ class ChatRepository implements IChatRepository {
           if (subscriptionId != null) 'subscription_id': subscriptionId,
           'is_active': true,
         })
-        .select()
+        .select(_conversationSelect)
         .single();
 
-    return ConversationModel.fromJson(Map<String, dynamic>.from(newConv))
-        .toEntity();
+    return _mapConversation(Map<String, dynamic>.from(newConv));
   }
 
   // -------------------------------------------------------------------------

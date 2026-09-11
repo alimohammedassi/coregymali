@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../theme/app_colors.dart';
@@ -319,7 +320,7 @@ class CoachPhotoPicker extends StatelessWidget {
                 backgroundImage: localPath != null
                     ? FileImage(File(localPath!))
                     : (networkUrl != null
-                            ? NetworkImage(networkUrl!)
+                            ? CachedNetworkImageProvider(networkUrl!)
                             : null)
                         as ImageProvider?,
                 child: localPath == null && networkUrl == null

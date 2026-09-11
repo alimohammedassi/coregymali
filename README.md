@@ -7,24 +7,28 @@
 ### Your intelligent fitness companion — AI-powered logging, real coaches, and smart reminders
 **رفيقك الذكي لللياقة — تسجيل ذكي بالذكاء الاصطناعي، كوتشز حقيقيون، وتنبيهات مميزة**
 
-<img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=flat-square&logo=flutter&logoColor=white" alt="Flutter">
+<img src="assets/images/core_logo.png" alt="Flutter">
+<img src="https://img.shields.io/badge/Dart-3.x-0175C2?style=flat-square&logo=dart&logoColor=white" alt="Dart">
 <img src="https://img.shields.io/badge/Supabase-Postgres%20%2B%20Edge%20Functions-3ECF8E?style=flat-square&logo=supabase&logoColor=white" alt="Supabase">
 <img src="https://img.shields.io/badge/Push-OneSignal-E0513D?style=flat-square&logo=onesignal&logoColor=white" alt="OneSignal">
 <img src="https://img.shields.io/badge/Payments-Stripe-635BFF?style=flat-square&logo=stripe&logoColor=white" alt="Stripe">
+<img src="https://img.shields.io/badge/AI-Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white" alt="Gemini">
 <img src="https://img.shields.io/badge/Platform-Android-green?style=flat-square&logo=android&logoColor=white" alt="Android">
-<img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square" alt="iOS">
+<img src="https://img.shields.io/badge/Platform-iOS-blue?style=flat-square&logo=apple&logoColor=white" alt="iOS">
 <img src="https://img.shields.io/badge/Language-EN%20%7C%20AR-orange?style=flat-square" alt="Languages">
+<img src="https://img.shields.io/badge/License-Proprietary-lightgrey?style=flat-square" alt="License">
 
 </div>
 
 ---
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="30%" alt="Home — Graphite & Soft Volt theme, 3-tab navigation"/>
-  <img src="docs/screenshots/ai-hub.png" width="30%" alt="AI logging hub — Scan / Voice / Text / Barcode"/>
-  <img src="docs/screenshots/chat-voice.png" width="30%" alt="Coach chat with voice messages"/>
+  <img src="docs/screenshots/home.png" width="23%" alt="Home — Graphite & Soft Volt theme, 3-tab navigation"/>
+  <img src="docs/screenshots/ai-hub.png" width="23%" alt="AI logging hub — Scan / Voice / Text / Barcode"/>
+  <img src="docs/screenshots/chat-voice.png" width="23%" alt="Coach chat with voice messages"/>
+  <img src="docs/screenshots/workout.png" width="23%" alt="AI Smart Trainer session"/>
 </p>
-<p align="center"><i>Home · AI logging hub · Coach chat with voice notes</i></p>
+<p align="center"><i>Home · AI logging hub · Coach chat with voice notes · AI Smart Trainer</i></p>
 
 ---
 
@@ -34,16 +38,21 @@
 - [Key Features](#-key-features)
 - [Push Notification System](#-push-notification-system-onesignal)
 - [Design System — Graphite & Soft Volt](#-design-system--graphite--soft-volt)
+- [Architecture](#-architecture)
 - [Tech Stack](#%EF%B8%8F-tech-stack)
 - [Project Structure](#-project-structure)
 - [Supabase Backend](#%EF%B8%8F-supabase-backend)
 - [Getting Started](#-getting-started)
+- [Environment Variables & Secrets](#-environment-variables--secrets)
 - [Security](#-security)
 - [Testing](#-testing)
+- [Performance](#-performance)
 - [Localization](#-localization)
 - [Building for Production](#-building-for-production)
 - [Roadmap](#%EF%B8%8F-roadmap)
+- [Known Limitations](#-known-limitations)
 - [FAQ](#-faq)
+- [Additional Documentation](#-additional-documentation)
 - [License](#-license)
 
 ---
@@ -65,6 +74,8 @@ Picture having all of this in your pocket:
 
 CoreGym brings all of that together in one bilingual app (English / العربية, with full RTL). It's built with **Flutter**, runs on a serverless **Supabase** backend, understands food with **Google Gemini**, delivers pushes with **OneSignal**, and takes payments with **Stripe**.
 
+Unlike a generic calorie counter, CoreGym is built around three pillars working together: **AI-assisted logging** (so tracking takes seconds, not minutes), **real human coaching** (so users aren't left alone with a spreadsheet), and **habit reinforcement** (streaks, reminders, and progress visualization that make consistency the easy choice).
+
 </details>
 
 ---
@@ -82,7 +93,7 @@ The AI experience is the hero of the Home screen — a full-width gradient banne
 | ⌨️ **Text** | Type what you ate (*"٢ بيض و عيش بلدي"*) → AI extracts items & macros |
 | 🏷️ **Barcode** | Scan any product → instant nutrition lookup → serving-size picker |
 
-All paths write to one `nutrition_logs` table with real macros. The seeded food database ships with **~319 Egyptian foods** (كشري، فول، طعمية…) for instant manual search & browse.
+All paths write to one `nutrition_logs` table with real macros. The seeded food database ships with **~319 Egyptian foods** (كشري، فول، طعمية…) for instant manual search & browse. Regional coverage keeps AI results accurate for dishes that generic Western food databases usually mislabel or miss entirely.
 
 ### 2. 🍽️ Nutrition Tracking
 
@@ -90,7 +101,7 @@ All paths write to one `nutrition_logs` table with real macros. The seeded food 
 - Protein / carbs / fat progress rows with semantic colors
 - Water tracking with quick-add and local every-2-hour reminders
 - Weekly history charts, per-meal editing (quantity × multipliers), quick-calories entry
-- Date-aware logging — entries are attributed to the day you're viewing
+- Date-aware logging — entries are attributed to the day you're viewing, not just "today"
 
 ### 3. 🏋️ Workout Tracking
 
@@ -102,7 +113,7 @@ All paths write to one `nutrition_logs` table with real macros. The seeded food 
 
 ### 4. ⌚ Health & Wearable Integration
 
-Syncs automatically with **Apple HealthKit** and **Google Health Connect** — steps, active/total calories, heart rate, workout minutes. See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md).
+Syncs automatically with **Apple HealthKit** and **Google Health Connect** — steps, active/total calories, heart rate, workout minutes. Sync is permission-gated and quiet: it runs in the background on Home load with a hard timeout, so a slow or denied health-plugin call never stalls the UI. See [HEALTH_INTEGRATION.md](HEALTH_INTEGRATION.md).
 
 ### 5. 📈 Progress & Analytics
 
@@ -112,7 +123,7 @@ Body measurements over time, weight charts, RM progress per exercise, weekly cal
 
 - Coaches publish profiles, media galleries, certifications (PDFs), and reviews
 - Members browse, view details, and subscribe with **Stripe** (Checkout → webhook → verified status endpoint)
-- Coach dashboard with client management and data (a dedicated web dashboard is on the roadmap)
+- Coach dashboard with client management and data (a dedicated web dashboard is on the roadmap — see [Roadmap](#%EF%B8%8F-roadmap))
 
 ### 7. 💬 Realtime Chat
 
@@ -165,6 +176,19 @@ A calm-but-energetic identity tuned for extended daily use — no pure-black OLE
 - **Mode-aware tokens** — every color flows through static `AppColors` fields re-resolved by `AppColors.apply(Brightness)`; widgets never hardcode hex
 - Semantic maps for muscle groups / difficulty / goals in `AppSemanticColors`; macro & data-viz accents are mode-safe constants
 - Typography: **Poppins** (EN) / **Cairo** (AR) via `google_fonts`; full RTL mirroring
+
+---
+
+## 🏗️ Architecture
+
+CoreGym mixes two patterns depending on the maturity of the feature:
+
+- **Newer / larger features** (`features/coach`, `features/chat`, `features/health`) follow **Clean Architecture**: a `domain` layer (entities, repository interfaces), a `data` layer (Supabase-backed repository implementations, DTOs), and a `presentation` layer (screens, `ChangeNotifier`-based providers). This keeps business logic testable and independent of Supabase-specific details.
+- **Older / simpler screens** (`screens/`, `services/`) use a lighter service-layer pattern — a `services/` class wraps Supabase calls directly and screens consume it through `Provider`.
+
+State management is **Provider** (`ChangeNotifier`) throughout, with **Riverpod** available for newer state that benefits from finer-grained rebuild scoping (e.g. `Selector`/`select`-style subscriptions instead of broad `context.watch`).
+
+Data flows one way: **UI → Notifier/Provider → Repository (or Service) → Supabase (Postgres / Edge Function / Realtime)**, with `ChangeNotifier.notifyListeners()` triggering scoped rebuilds back up the tree.
 
 ---
 
@@ -285,6 +309,7 @@ Shared OneSignal helper: [`supabase/functions/_shared/onesignal.ts`](supabase/fu
 **Prerequisites**
 - ✅ Flutter SDK ≥ 3.8
 - ✅ A Supabase project · a OneSignal app (Android platform configured) · a Stripe account
+- ✅ A Google Gemini API key
 - ✅ Android SDK — minSdk 26, **core library desugaring enabled** (required by local notifications)
 
 ### 1 · Clone & install
@@ -346,6 +371,25 @@ flutter run
 
 ---
 
+## 🔑 Environment Variables & Secrets
+
+CoreGym splits configuration into two tiers — client-safe values shipped in the app, and server-only secrets never bundled into it.
+
+| Name | Where it lives | Client-safe? |
+|---|---|---|
+| `supabaseUrl` | `lib/supabase/supabase_config.dart` | ✅ Yes |
+| `supabaseAnonKey` | `lib/supabase/supabase_config.dart` | ✅ Yes (RLS-protected) |
+| `oneSignalAppId` | `lib/supabase/supabase_config.dart` | ✅ Yes |
+| `ONESIGNAL_REST_API_KEY` | Supabase Edge secrets | ❌ Server-only |
+| `ADMIN_API_KEY` | Supabase Edge secrets | ❌ Server-only |
+| `CRON_SECRET` | Supabase Vault | ❌ Server-only |
+| `STRIPE_SECRET_KEY` | Supabase Edge secrets | ❌ Server-only |
+| `GEMINI_API_KEY` | Supabase Edge secrets | ❌ Server-only |
+
+The Supabase anon key is safe to ship because every table it can touch is protected by Row Level Security — the key alone grants no access without a matching authenticated user.
+
+---
+
 ## 🔐 Security
 
 - **Row Level Security** on user-scoped tables; `notification_log` inserts happen only server-side (service role)
@@ -364,6 +408,18 @@ flutter test      # 9 passing: food-search ranking (EN/AR), workout logging cont
 ```
 
 Features shipped in this repository were **live-tested on real Android hardware** — push delivery confirmed end-to-end through OneSignal (welcome + meal reminders + water scheduling verified via logcat), chat voice/image/PDF round-trips, and Stripe checkout flows.
+
+---
+
+## ⚡ Performance
+
+Performance work is an ongoing, measured process rather than a one-time pass:
+
+- **Query efficiency** — count-style lookups use Postgres `count()` instead of fetching full row sets, and list screens that render per-item related data (e.g. coach gallery images) batch those lookups into a single query with a cache, avoiding N+1 patterns.
+- **Rebuild scoping** — state changes are scoped through `Selector`/targeted `ChangeNotifier` listening rather than triggering full-screen rebuilds.
+- **Image loading** — network images go through `cached_network_image` so repeat views don't re-fetch from the network.
+- **Lifecycle hygiene** — `AnimationController`, `ChangeNotifier`, and stream subscriptions created in `State` objects are paired with `dispose()`, and provider instances tied to a screen are created once rather than per rebuild.
+- Every change in this category is verified with Flutter DevTools (frame build time, rebuild counts) before/after, not assumed.
 
 ---
 
@@ -393,8 +449,16 @@ flutter build ios --release     # iOS
 - [ ] Calorie-limit alert (~90% of daily goal) — event-triggered push
 - [ ] Chat push notifications + tap-to-open-conversation deep-linking
 - [ ] In-app notification inbox (bell + unread badge)
-- [ ] Coach dashboard → dedicated web app
+- [ ] Coach dashboard → dedicated web app (shared realtime chat, subscriber management, Stripe Connect revenue split)
 - [ ] iOS Notification Service Extension (rich media pushes)
+
+---
+
+## ⚠️ Known Limitations
+
+- The Coach Marketplace currently has no dedicated coach-facing management surface inside the app itself — coaches rely on the upcoming web dashboard (see Roadmap) for anything beyond what members see.
+- Calorie-limit and chat push notifications are implemented server-side but not yet wired to their triggers in production (see the notification status table above).
+- iOS rich push (images/actions in notifications) isn't available yet — the Notification Service Extension is planned.
 
 ---
 
@@ -418,6 +482,12 @@ The AI Smart Trainer instantly generates a workout plan with no human involved. 
 The app tags your OneSignal user with your Supabase auth id (`external_id`). Server functions target that id — OneSignal handles every device and platform detail.
 </details>
 
+<details>
+<summary><strong>Why two state-management approaches (Provider and Riverpod)?</strong></summary>
+
+Provider covers the majority of the app and keeps the mental model simple. Riverpod is used selectively in newer features where finer-grained, scoped rebuilds meaningfully reduce unnecessary UI work.
+</details>
+
 ---
 
 ## 📚 Additional Documentation
@@ -432,3 +502,11 @@ The app tags your OneSignal user with your Supabase auth id (`external_id`). Ser
 ## 📄 License
 
 This project is proprietary and confidential. All rights reserved.
+
+---
+
+<div align="center">
+
+Built by **[Ali Mohamed Assi](https://github.com/alimohammedassi)**
+
+</div>

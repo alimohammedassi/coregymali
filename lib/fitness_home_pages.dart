@@ -2,8 +2,11 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
+import 'screens/leaderboard_screen.dart';
 
 import 'chat/presentation/screens/chat_list_screen.dart';
 import 'features/coach/data/repositories/coach_repository_impl.dart';
@@ -592,6 +595,13 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _maybeShowPushVerifyDialog(),
       );
+    } else {
+      // Init is deferred past the first frame now (cold-start time) —
+      // catch it the moment it lands.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        NotificationService.ready.addListener(_onNotificationsReady);
+        _onNotificationsReady();
+      });
     }
     _heroCtrl = AnimationController(
       vsync: this,
@@ -677,15 +687,32 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
   }
 
+  static const _pushVerifyDialogShownKey = 'push_verify_dialog_shown';
   bool _pushVerifyDialogShown = false;
 
-  void _maybeShowPushVerifyDialog() {
+  /// Runs once NotificationService.init completes (or immediately if it
+  /// already has) — the once-per-install dialog gate.
+  void _onNotificationsReady() {
+    if (!NotificationService.ready.value) return;
+    NotificationService.ready.removeListener(_onNotificationsReady);
+    if (mounted) _maybeShowPushVerifyDialog();
+  }
+
+  Future<void> _maybeShowPushVerifyDialog() async {
     if (_pushVerifyDialogShown || !mounted) return;
     _pushVerifyDialogShown = true;
+    // Permission already granted → nothing to ask, never show the dialog.
+    if (NotificationService.instance.permissionGranted) return;
+    // Show at most ONCE per install (persisted), not once per session —
+    // users shouldn't re-dismiss this on every launch.
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_pushVerifyDialogShownKey) ?? false) return;
+    await prefs.setBool(_pushVerifyDialogShownKey, true);
     // The callback can fire synchronously from initState when the
     // subscription already exists — dialog needs a completed frame first.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
       showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -694,7 +721,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
-            'Your OneSignal SDK integration is complete!',
+            l10n?.pushDialogTitle ??
+                'Enable notifications',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -702,8 +730,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             ),
           ),
           content: Text(
-            'Enable notifications so we can remind you about meals, water and '
-            'your daily calorie goal.',
+            l10n?.pushDialogBody ??
+                'Enable notifications so we can remind you about meals, water '
+                    'and your daily calorie goal.',
             style: TextStyle(color: AppColors.textSecondary, height: 1.4),
           ),
           actions: [
@@ -712,9 +741,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 Navigator.of(dialogContext).pop();
                 NotificationService.instance.requestPermission();
               },
-              child: const Text(
-                'Got it',
-                style: TextStyle(fontWeight: FontWeight.w800),
+              child: Text(
+                l10n?.pushDialogCta ?? 'Got it',
+                style: const TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -726,6 +755,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    NotificationService.ready.removeListener(_onNotificationsReady);
     StreakService.milestoneReached.removeListener(_showMilestoneDialog);
     _heroCtrl.dispose();
     _staggerCtrl.dispose();
@@ -1388,6 +1418,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   onOpenChat: () => Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ChatListScreen()),
                   ),
+                  onOpenRankings: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                        builder: (_) => const LeaderboardScreen()),
+                  ),
                 ),
               ),
             ),
@@ -1489,11 +1523,10 @@ class _KaleeHeader extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               child: ClipOval(
                 child: avatarUrl.isNotEmpty
-                    ? Image.network(
-                        avatarUrl,
+                    ? CachedNetworkImage(
+                        imageUrl: avatarUrl,
                         fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
+                        progressIndicatorBuilder: (context, url, progress) {
                           return Container(
                             color: AppColors.surfaceContainerHigh,
                             child: Center(
@@ -1502,18 +1535,14 @@ class _KaleeHeader extends StatelessWidget {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  value:
-                                      loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                      : null,
+                                  value: progress.progress,
                                   color: AppColors.primaryGreen,
                                 ),
                               ),
                             ),
                           );
                         },
-                        errorBuilder: (context, error, stackTrace) {
+                        errorWidget: (context, url, error) {
                           return Container(
                             color: AppColors.lightGreen,
                             child: Center(
@@ -3126,6 +3155,7 @@ class _FeatureHighlightsStrip extends StatelessWidget {
   final VoidCallback onOpenCoaches;
   final VoidCallback onOpenNutrition;
   final VoidCallback onOpenChat;
+  final VoidCallback onOpenRankings;
 
   const _FeatureHighlightsStrip({
     required this.isArabic,
@@ -3133,6 +3163,7 @@ class _FeatureHighlightsStrip extends StatelessWidget {
     required this.onOpenCoaches,
     required this.onOpenNutrition,
     required this.onOpenChat,
+    required this.onOpenRankings,
   });
 
   @override
@@ -3158,6 +3189,13 @@ class _FeatureHighlightsStrip extends StatelessWidget {
         title: isArabic ? 'تحليل التغذية' : 'Nutrition insights',
         subtitle: isArabic ? 'تفاصيل السعرات' : 'Full calorie details',
         onTap: onOpenNutrition,
+      ),
+      _FeatureCardData(
+        icon: Icons.emoji_events_rounded,
+        color: const Color(0xFFE8B93E),
+        title: isArabic ? 'الترتيب' : 'Rankings',
+        subtitle: isArabic ? 'المتصدرون الأسبوعي' : 'Weekly leaderboard',
+        onTap: onOpenRankings,
       ),
     ];
 

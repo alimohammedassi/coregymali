@@ -1265,133 +1265,133 @@ abstract class AppLocalizations {
   /// No description provided for @loginTitle.
   ///
   /// In en, this message translates to:
-  /// **'IGNITE'**
+  /// **'Welcome Back'**
   String get loginTitle;
 
   /// No description provided for @loginSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'SYSTEM'**
+  /// **'CoreGym'**
   String get loginSubtitle;
 
   /// No description provided for @loginDesc.
   ///
   /// In en, this message translates to:
-  /// **'ENTER CREDENTIALS TO AUTHORIZE ACCESS'**
+  /// **'Sign in to continue your fitness journey'**
   String get loginDesc;
 
   /// No description provided for @operatorId.
   ///
   /// In en, this message translates to:
-  /// **'OPERATOR_ID'**
+  /// **'Email Address'**
   String get operatorId;
 
   /// No description provided for @encryptedKey.
   ///
   /// In en, this message translates to:
-  /// **'ENCRYPTED_KEY'**
+  /// **'Password'**
   String get encryptedKey;
 
   /// No description provided for @emailHint.
   ///
   /// In en, this message translates to:
-  /// **'user@coregym.app'**
+  /// **'name@example.com'**
   String get emailHint;
 
   /// No description provided for @passwordHint.
   ///
   /// In en, this message translates to:
-  /// **'••••••••••••'**
+  /// **'••••••••'**
   String get passwordHint;
 
   /// No description provided for @forgotPassword.
   ///
   /// In en, this message translates to:
-  /// **'FORGOT?'**
+  /// **'Forgot password?'**
   String get forgotPassword;
 
   /// No description provided for @initializeSession.
   ///
   /// In en, this message translates to:
-  /// **'INITIALIZE SESSION'**
+  /// **'Log In'**
   String get initializeSession;
 
   /// No description provided for @externalAuth.
   ///
   /// In en, this message translates to:
-  /// **'EXTERNAL AUTH'**
+  /// **'Or continue with'**
   String get externalAuth;
 
   /// No description provided for @google.
   ///
   /// In en, this message translates to:
-  /// **'GOOGLE'**
+  /// **'Google'**
   String get google;
 
   /// No description provided for @apple.
   ///
   /// In en, this message translates to:
-  /// **'APPLE'**
+  /// **'Apple'**
   String get apple;
 
   /// No description provided for @newOperative.
   ///
   /// In en, this message translates to:
-  /// **'NEW OPERATIVE?  '**
+  /// **'Don\'t have an account? '**
   String get newOperative;
 
   /// No description provided for @enrollNow.
   ///
   /// In en, this message translates to:
-  /// **'ENROLL NOW'**
+  /// **'Sign up'**
   String get enrollNow;
 
   /// No description provided for @signupTitle.
   ///
   /// In en, this message translates to:
-  /// **'ENROLL'**
+  /// **'Create Account'**
   String get signupTitle;
 
   /// No description provided for @signupSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'OPERATIVE'**
+  /// **'Join Core'**
   String get signupSubtitle;
 
   /// No description provided for @signupDesc.
   ///
   /// In en, this message translates to:
-  /// **'CREATE NEW SYSTEM ACCESS'**
+  /// **'Start your fitness journey today'**
   String get signupDesc;
 
   /// No description provided for @operativeName.
   ///
   /// In en, this message translates to:
-  /// **'OPERATIVE_NAME'**
+  /// **'Full Name'**
   String get operativeName;
 
   /// No description provided for @confirmKey.
   ///
   /// In en, this message translates to:
-  /// **'CONFIRM_KEY'**
+  /// **'Confirm Password'**
   String get confirmKey;
 
   /// No description provided for @createOperative.
   ///
   /// In en, this message translates to:
-  /// **'CREATE OPERATIVE'**
+  /// **'Create Account'**
   String get createOperative;
 
   /// No description provided for @alreadyEnrolled.
   ///
   /// In en, this message translates to:
-  /// **'ALREADY ENROLLED?  '**
+  /// **'Already have an account? '**
   String get alreadyEnrolled;
 
   /// No description provided for @signIn.
   ///
   /// In en, this message translates to:
-  /// **'SIGN IN'**
+  /// **'Sign In'**
   String get signIn;
 
   /// No description provided for @agreeTerms.
@@ -1423,6 +1423,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full Name'**
   String get fullNameHint;
+
+  /// No description provided for @loginTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Log in'**
+  String get loginTab;
+
+  /// No description provided for @signUpTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get signUpTab;
+
+  /// No description provided for @trustCalorieTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Calorie tracking'**
+  String get trustCalorieTracking;
+
+  /// No description provided for @trustHydration.
+  ///
+  /// In en, this message translates to:
+  /// **'Hydration'**
+  String get trustHydration;
+
+  /// No description provided for @trustWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get trustWorkouts;
+
+  /// No description provided for @trustCoachVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach verified'**
+  String get trustCoachVerified;
+
+  /// No description provided for @joiningAs.
+  ///
+  /// In en, this message translates to:
+  /// **'I am joining as'**
+  String get joiningAs;
+
+  /// No description provided for @athleteRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Athlete'**
+  String get athleteRole;
+
+  /// No description provided for @coachRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach'**
+  String get coachRole;
 
   /// No description provided for @language.
   ///
@@ -2179,6 +2233,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No notifications yet'**
   String get notificationsEmpty;
+
+  /// No description provided for @onbSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get onbSkip;
+
+  /// No description provided for @onbNext.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onbNext;
+
+  /// No description provided for @onbInitiate.
+  ///
+  /// In en, this message translates to:
+  /// **'INITIATE ENGINE'**
+  String get onbInitiate;
+
+  /// No description provided for @onbAlreadyMember.
+  ///
+  /// In en, this message translates to:
+  /// **'ALREADY A MEMBER?'**
+  String get onbAlreadyMember;
+
+  /// No description provided for @onbSignInLink.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN IN'**
+  String get onbSignInLink;
+
+  /// No description provided for @onbStepLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'STEP'**
+  String get onbStepLabel;
+
+  /// No description provided for @onb1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Transform your\nbody and mind'**
+  String get onb1Title;
+
+  /// No description provided for @onb1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.'**
+  String get onb1Desc;
+
+  /// No description provided for @onb2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Professional\ntraining guidance'**
+  String get onb2Title;
+
+  /// No description provided for @onb2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.'**
+  String get onb2Desc;
+
+  /// No description provided for @onb3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Achieve your\nfitness goals'**
+  String get onb3Title;
+
+  /// No description provided for @onb3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.'**
+  String get onb3Desc;
+
+  /// No description provided for @onbSelectYour.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECT YOUR'**
+  String get onbSelectYour;
+
+  /// No description provided for @onbIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'IDENTITY'**
+  String get onbIdentity;
+
+  /// No description provided for @onbPersonalize.
+  ///
+  /// In en, this message translates to:
+  /// **'HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU'**
+  String get onbPersonalize;
+
+  /// No description provided for @onbFemale.
+  ///
+  /// In en, this message translates to:
+  /// **'FEMALE'**
+  String get onbFemale;
+
+  /// No description provided for @onbMale.
+  ///
+  /// In en, this message translates to:
+  /// **'MALE'**
+  String get onbMale;
+
+  /// No description provided for @onbContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'CONTINUE'**
+  String get onbContinue;
+
+  /// No description provided for @pushDialogTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications'**
+  String get pushDialogTitle;
+
+  /// No description provided for @pushDialogBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable notifications so we can remind you about meals, water and your daily calorie goal.'**
+  String get pushDialogBody;
+
+  /// No description provided for @pushDialogCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get pushDialogCta;
+
+  /// No description provided for @splashError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect. Check your internet and try again.'**
+  String get splashError;
+
+  /// No description provided for @splashLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get splashLoading;
+
+  /// No description provided for @rankTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rankings'**
+  String get rankTitle;
+
+  /// No description provided for @rankLast7.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get rankLast7;
+
+  /// No description provided for @rankLast30.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 30 days'**
+  String get rankLast30;
+
+  /// No description provided for @rankEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No ranked clients yet. Log your meals and water to enter the board!'**
+  String get rankEmpty;
+
+  /// No description provided for @rankDaysLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days logged'**
+  String rankDaysLogged(int n);
+
+  /// No description provided for @cpDaysLoggedN.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String cpDaysLoggedN(int n);
+
+  /// No description provided for @cpDaysLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Days logged'**
+  String get cpDaysLogged;
+
+  /// No description provided for @cpAvgScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg score'**
+  String get cpAvgScore;
+
+  /// No description provided for @cpWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get cpWorkouts;
+
+  /// No description provided for @cpCommitment.
+  ///
+  /// In en, this message translates to:
+  /// **'Commitment activity'**
+  String get cpCommitment;
+
+  /// No description provided for @cpLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get cpLess;
+
+  /// No description provided for @cpMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get cpMore;
+
+  /// No description provided for @cpTrend.
+  ///
+  /// In en, this message translates to:
+  /// **'Trend'**
+  String get cpTrend;
+
+  /// No description provided for @cpDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get cpDaily;
+
+  /// No description provided for @cpWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get cpWeekly;
+
+  /// No description provided for @cpCumulative.
+  ///
+  /// In en, this message translates to:
+  /// **'Cumulative'**
+  String get cpCumulative;
+
+  /// No description provided for @cpCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get cpCalories;
+
+  /// No description provided for @cpWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get cpWater;
+
+  /// No description provided for @cpSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'Steps'**
+  String get cpSteps;
+
+  /// No description provided for @cpNoData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data logged yet'**
+  String get cpNoData;
+
+  /// No description provided for @rankCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Rankings'**
+  String get rankCard;
+
+  /// No description provided for @rankCardSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly leaderboard'**
+  String get rankCardSub;
 }
 
 class _AppLocalizationsDelegate

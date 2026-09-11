@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'l10n/app_localizations.dart';
 import 'supabase/auth_service.dart';
@@ -199,7 +200,8 @@ class _ProfilePageState extends State<ProfilePage>
             .from('workout_sessions')
             .select('id')
             .eq('user_id', userId)
-            .gte('session_date', monthStart),
+            .gte('session_date', monthStart)
+            .count(CountOption.exact),
         db
             .from('daily_summary')
             .select('calories_consumed')
@@ -210,7 +212,11 @@ class _ProfilePageState extends State<ProfilePage>
             .select('*, training_programs(name)')
             .eq('user_id', userId)
             .maybeSingle(),
-        db.from('workout_sessions').select('id').eq('user_id', userId),
+        db
+            .from('workout_sessions')
+            .select('id')
+            .eq('user_id', userId)
+            .count(CountOption.exact),
         db
             .from('exercise_progress')
             .select()
@@ -221,7 +227,9 @@ class _ProfilePageState extends State<ProfilePage>
       if (!mounted) return;
 
       setState(() {
-        _totalWorkoutsThisMonth = (results[0] as List).length;
+        // Counted server-side — these used to pull every id row into Dart
+        // just to take .length (the all-time one grows without bound).
+        _totalWorkoutsThisMonth = (results[0] as dynamic).count as int;
         _totalCaloriesThisMonth = (results[1] as List).fold<int>(
           0,
           (sum, e) => sum + ((e['calories_consumed'] as num?)?.toInt() ?? 0),
@@ -233,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage>
               active!['training_programs']['name'] as String? ?? 'None';
         }
 
-        _totalWorkoutsAllTime = (results[3] as List).length;
+        _totalWorkoutsAllTime = (results[3] as dynamic).count as int;
         _exerciseProgress = List<Map<String, dynamic>>.from(results[4] as List);
       });
     } catch (_) {}
@@ -633,11 +641,16 @@ class _ProfilePageState extends State<ProfilePage>
               tag: 'profile_avatar_hero',
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(24),
-                child: Image.network(
-                  _avatarUrl,
+                child: CachedNetworkImage(
+                  imageUrl: _avatarUrl,
                   width: MediaQuery.of(ctx).size.width * 0.85,
                   height: MediaQuery.of(ctx).size.width * 0.85,
                   fit: BoxFit.cover,
+                  placeholder: (_, __) =>
+                      Container(color: AppColors.surfaceContainerHigh),
+                  errorWidget: (_, __, ___) => Container(
+                    color: AppColors.surfaceContainerHigh,
+                  ),
                 ),
               ),
             ),

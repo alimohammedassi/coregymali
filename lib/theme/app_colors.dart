@@ -228,6 +228,8 @@ class AppColors {
   static Color secondaryGlow = const Color(0xFF4FD1C5).withValues(alpha: 0.08);
   static Color errorGlow = const Color(0xFFEE7F60).withValues(alpha: 0.08);
   static Color cardShadow = const Color(0xFF000000).withValues(alpha: 0.30);
+  static Color cardShadowMedium = const Color(0x140F172A);
+  static Color cardShadowLight = const Color(0x0F0F172A);
   static Color glowOrbPrimary = const Color(0xFFB2D742).withValues(alpha: 0.04);
   static Color glowOrbSecondary = const Color(0xFF4FD1C5).withValues(alpha: 0.03);
 
@@ -263,6 +265,14 @@ class AppColors {
   // ── Primary Action Gradient (soft lime fill, both modes) ──
   static const LinearGradient primaryActionGradient = LinearGradient(
     colors: [Color(0xFFB2D742), Color(0xFF9CC338)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // ── Volt Gradient — Electric Volt #D1FC00 sparing high-contrast accent ──
+  // Use for AI Scan button / active nav icon in light theme for pop (see spec)
+  static const LinearGradient voltGradient = LinearGradient(
+    colors: [Color(0xFFD1FC00), Color(0xFFB2D742)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

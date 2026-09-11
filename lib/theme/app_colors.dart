@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
-/// Graphite & Soft Volt — CoreGym Design System Colors (v2)
+/// Graphite & Soft Volt — CoreGym Design System Colors (v2.1)
 ///
 /// Single source of truth. Successor to "Kinetic Obsidian & Electric Volt":
-/// the pure-black canvas and 100%-saturation neon primary caused eye strain,
-/// so both modes now run on a soft olive-graphite surface ladder with a
-/// muted-lime primary (#B2D742) that keeps the energetic identity without
-/// glowing. The original volt (#D1FC00) survives ONLY as [volt] — a
-/// micro-accent for the streak flame and tiny badges; never use it for
-/// buttons, rings, or active tabs.
+/// the 100%-saturation neon primary caused eye strain, so the dark mode runs
+/// on a soft olive-graphite surface ladder with a muted-lime fill (#B2D742).
+/// The Home redesign (2026-09) revised the LIGHT mode to a neutral paper
+/// system (#FAFAFA canvas, pure-white cards, #1A1A1A/#6B6B6B ink) and
+/// reintroduced the volt identity as [accent]: #D1FC00 on dark, darkened to
+/// #8FB800 on light, for progress rings and active states only. The original
+/// volt (#D1FC00) survives directly as [volt] — micro-accent for the streak
+/// flame and tiny badges; never for buttons or large fills.
 ///
 /// MODE-AWARE: every surface/text token resolves through [apply] to the
 /// active brightness; widgets consume `AppColors.x` statically. Call [apply]
@@ -16,13 +18,15 @@ import 'package:flutter/material.dart';
 /// key the widget tree on the resolved brightness so a switch rebuilds.
 ///
 /// Token API notes:
-/// - `primary` is the ACCENT (icons/text/selected borders): soft lime on
-///   dark, dark olive-lime on light (AA on the light canvas).
+/// - `accent` is the Home redesign's ring/active-state accent (graphics).
+///   Accent-colored TEXT must use [onPrimaryContainer] to stay AA on light.
+/// - `primary` is the app-wide chrome accent: soft lime on dark, dark
+///   olive-lime on light.
 /// - `primaryFixed` / `primaryGreen` are the FILL lime (#B2D742) in BOTH
-///   modes — always pair them with [onPrimary] (near-black ink).
-/// - Muscle gradients and the data-viz accents (`accent*`, `redAccent`, …)
-///   are intentionally constant: one calm mid-saturation family that reads
-///   on both canvases, like the pixel-art palette.
+///   modes — always pair them with [onPrimary] (near-black ink), never white.
+/// - Muscle gradients are intentionally constant. The data-viz accents
+///   (`accent*`, `redAccent`, …) form one coherent mid-saturation family
+///   (coral/gold/green/teal/orange) that reads on both canvases.
 class AppColors {
   AppColors._();
 
@@ -40,24 +44,37 @@ class AppColors {
     _brightness = brightness;
     final bool light = brightness == Brightness.light;
 
-    // ── Surface Hierarchy (olive-graphite, never pure black/white) ──
-    background = light ? const Color(0xFFF2F3E9) : const Color(0xFF121310);
+    // ── Surface Hierarchy ──
+    // Dark: olive-graphite ladder (v2 base, kept per Home redesign spec).
+    // Light: neutral paper per Home redesign spec — #FAFAFA canvas, pure
+    // white cards; the old sage cast is gone so white cards read on a
+    // neutral, not tinted, ground.
+    background = light ? const Color(0xFFFAFAFA) : const Color(0xFF121310);
     surfaceLowest =
-        light ? const Color(0xFFF6F7EE) : const Color(0xFF121310);
-    surface = light ? const Color(0xFFFBFCF5) : const Color(0xFF171814);
-    surfaceDim = light ? const Color(0xFFE9EBDD) : const Color(0xFF151612);
+        light ? const Color(0xFFFAFAFA) : const Color(0xFF121310);
+    surface = light ? const Color(0xFFFFFFFF) : const Color(0xFF171814);
+    surfaceDim = light ? const Color(0xFFEFEFEF) : const Color(0xFF151612);
     surfaceContainerLow =
-        light ? const Color(0xFFF4F5EC) : const Color(0xFF1B1C17);
+        light ? const Color(0xFFF4F4F4) : const Color(0xFF1B1C17);
     surfaceContainer =
-        light ? const Color(0xFFF7F8F0) : const Color(0xFF1F201B);
+        light ? const Color(0xFFF7F7F7) : const Color(0xFF1F201B);
     surfaceContainerHigh =
-        light ? const Color(0xFFFBFCF4) : const Color(0xFF252620);
+        light ? const Color(0xFFFAFAFA) : const Color(0xFF252620);
     surfaceContainerHighest =
-        light ? const Color(0xFFEFF1E3) : const Color(0xFF2B2C26);
+        light ? const Color(0xFFF1F1F1) : const Color(0xFF2B2C26);
     surfaceBright = light ? const Color(0xFFFFFFFF) : const Color(0xFF31322C);
 
+    // ── Home Accent (progress rings & active states) ──
+    // The spec's accent pair: Electric Volt on dark, darkened volt on light
+    // (the neon #D1FC00 is illegible on white). GRAPHIC use only — rings,
+    // active icons, borders. Accent-colored TEXT goes through
+    // [onPrimaryContainer], which stays AA on both canvases.
+    accent = light ? const Color(0xFF8FB800) : const Color(0xFFD1FC00);
+
     // ── Primary — Soft Volt (muted lime) ──
-    // Accent vs fill split (see class doc).
+    // Accent vs fill split (see class doc). `primary` remains the app-wide
+    // chrome accent; the Home redesign's brighter ring/active accent is
+    // [accent] above.
     primary = light ? const Color(0xFF506B1A) : const Color(0xFFB2D742);
     primaryGreen = const Color(0xFFB2D742); // legacy fill alias → soft volt
     secondaryGreen = const Color(0xFF9CC338); // legacy fill alias → lime dim
@@ -101,23 +118,29 @@ class AppColors {
         : const Color(0xFFF59E0B).withValues(alpha: 0.45);
 
     // ── Text & Content Hierarchy ──
-    textPrimary = light ? const Color(0xFF1B1D12) : const Color(0xFFECEEE2);
-    textSecondary = light ? const Color(0xFF555947) : const Color(0xFFA9ADA0);
-    textMuted = light ? const Color(0xFF83877A) : const Color(0xFF70746A);
-    onSurface = light ? const Color(0xFF14160C) : const Color(0xFFF1F3E9);
+    // Light pair from the Home redesign spec (#1A1A1A / #6B6B6B); muted is
+    // the darkest gray that still passes AA 4.5:1 on white. Dark textMuted
+    // lifted to #8A8E82 for the same reason (was ~3.3:1 on graphite).
+    textPrimary = light ? const Color(0xFF1A1A1A) : const Color(0xFFECEEE2);
+    textSecondary = light ? const Color(0xFF6B6B6B) : const Color(0xFFA9ADA0);
+    textMuted = light ? const Color(0xFF767676) : const Color(0xFF8A8E82);
+    onSurface = light ? const Color(0xFF1A1A1A) : const Color(0xFFF1F3E9);
     onSurfaceVariant =
-        light ? const Color(0xFF555947) : const Color(0xFFA9ADA0);
-    onBackground = light ? const Color(0xFF1B1D12) : const Color(0xFFECEEE2);
+        light ? const Color(0xFF6B6B6B) : const Color(0xFFA9ADA0);
+    onBackground = light ? const Color(0xFF1A1A1A) : const Color(0xFFECEEE2);
 
     // ── Outlines & Borders ──
-    borderSubtle = light ? const Color(0xFFDBDDCC) : const Color(0xFF2C2D27);
+    borderSubtle = light ? const Color(0xFFE8E8E8) : const Color(0xFF2C2D27);
     borderLight = light
         ? const Color(0x14000000)
         : const Color(0x14FFFFFF);
-    outline = light ? const Color(0xFF83877A) : const Color(0xFF6E7268);
-    outlineVariant = light ? const Color(0xFFC3C6B3) : const Color(0xFF45473E);
+    outline = light ? const Color(0xFF9E9E9E) : const Color(0xFF6E7268);
+    outlineVariant = light ? const Color(0xFFD6D6D6) : const Color(0xFF45473E);
 
-    // ── Glow & Soft Shadow System (halved vs v1 — no neon bloom) ──
+    // ── Glow & Soft Shadow System ──
+    // Light card shadow is the Home spec's soft elevation: 4% black,
+    // blur 12 / offset (0,4) at the call sites — white cards separate from
+    // the #FAFAFA canvas by shadow + hairline border, not heavy tint.
     primaryGlow = const Color(0xFFB2D742)
         .withValues(alpha: light ? 0.25 : 0.08);
     secondaryGlow = const Color(0xFF4FD1C5)
@@ -125,11 +148,11 @@ class AppColors {
     errorGlow = const Color(0xFFEE7F60)
         .withValues(alpha: light ? 0.12 : 0.08);
     cardShadow = const Color(0xFF000000)
-        .withValues(alpha: light ? 0.10 : 0.30);
+        .withValues(alpha: light ? 0.04 : 0.30);
     glowOrbPrimary = const Color(0xFFB2D742)
-        .withValues(alpha: light ? 0.08 : 0.04);
+        .withValues(alpha: light ? 0.05 : 0.04);
     glowOrbSecondary = const Color(0xFF4FD1C5)
-        .withValues(alpha: light ? 0.05 : 0.03);
+        .withValues(alpha: light ? 0.03 : 0.03);
 
     // ── Glass Compatibility Tokens ──
     // White-alpha sheen on graphite flips to black-alpha depth on light.
@@ -151,6 +174,9 @@ class AppColors {
   }
 
   // ── Mode-aware token fields (set by [apply]; dark defaults below) ──
+
+  // Home Accent — rings/active-state graphics; volt on dark, darkened on light
+  static Color accent = const Color(0xFFD1FC00);
 
   // Surface Hierarchy
   static Color background = const Color(0xFF121310);
@@ -197,7 +223,7 @@ class AppColors {
   // Text & Content Hierarchy
   static Color textPrimary = const Color(0xFFECEEE2);
   static Color textSecondary = const Color(0xFFA9ADA0);
-  static Color textMuted = const Color(0xFF70746A);
+  static Color textMuted = const Color(0xFF8A8E82);
   static Color onSurface = const Color(0xFFF1F3E9);
   static Color onSurfaceVariant = const Color(0xFFA9ADA0);
   static Color onBackground = const Color(0xFFECEEE2);
@@ -208,13 +234,18 @@ class AppColors {
   static Color outline = const Color(0xFF6E7268);
   static Color outlineVariant = const Color(0xFF45473E);
 
-  // ── Nutrition & Fitness Data Accents (calm data-viz, mode-safe) ──
+  // ── Nutrition & Fitness Data Accents (one coherent data-viz family) ──
+  // Home redesign spec: semantic metrics use distinct but RELATED hues at a
+  // shared mid-saturation/lightness band — coral → gold → green → teal →
+  // orange — instead of unrelated pastels. Carbs moved off blue (it collided
+  // with water/teal) to the gold shared with the tertiary token; steps moved
+  // off violet to the same gold.
   static const Color accentCalories = Color(0xFFF5A623); // Calories (Pixel Fire)
   static const Color accentProtein = Color(0xFFEA7A72);  // Protein (Pixel Meat)
-  static const Color accentCarbs = Color(0xFF60A5FA);    // Carbs (Pixel Grain)
+  static const Color accentCarbs = Color(0xFFE8C468);    // Carbs (Pixel Grain)
   static const Color accentFat = Color(0xFF36B37E);      // Fat (Pixel Avocado)
   static const Color accentWater = Color(0xFF4FD1C5);    // Water → calm teal
-  static const Color accentSteps = Color(0xFF9B8AFB);    // Steps → soft violet
+  static const Color accentSteps = Color(0xFFE8C468);    // Steps → gold
   static const Color accentWorkout = Color(0xFFF5A623);  // Workout (Pixel Dumbbell)
 
   // ── Semantic Aliases & Backward Compatibility (data-viz, mode-safe) ──

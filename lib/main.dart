@@ -126,6 +126,11 @@ class MyApp extends StatelessWidget {
   }
 
   ThemeData _buildTheme(Brightness brightness, bool isArabic) {
+    // Re-resolve the AppColors statics for THIS brightness first — the
+    // statics hold whatever the last painted frame used, and both themes
+    // are built back-to-back here. Without this, the light ThemeData was
+    // assembled from dark tokens (or vice versa) until the next rebuild.
+    AppColors.apply(brightness);
     final base = brightness == Brightness.light
         ? ThemeData.light()
         : ThemeData.dark();

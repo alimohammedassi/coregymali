@@ -143,8 +143,10 @@ class _ModernPlayfulCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
+            // Home card spec: soft 4%-black elevation on light (blur 12,
+            // offset (0,4)); the same token stays deep on graphite.
             color: AppColors.cardShadow,
-            blurRadius: 14,
+            blurRadius: 12,
             spreadRadius: 0,
             offset: const Offset(0, 4),
           ),
@@ -442,7 +444,11 @@ class _PlayfulNavBar extends StatelessWidget {
             children: List.generate(tabs.length, (i) {
               final tab = tabs[i];
               final isActive = currentIndex == i;
-              final accentColor = AppColors.primaryGreen;
+              // Active-state accent: volt on dark, darkened volt on light.
+              final accentColor = AppColors.accent;
+              // 10px text can't carry the accent on white (fails AA), so the
+              // label uses the AA-safe accent-ink token instead.
+              final activeLabelColor = AppColors.onPrimaryContainer;
 
               return Expanded(
                 child: _InteractiveScaleDetector(
@@ -504,7 +510,7 @@ class _PlayfulNavBar extends StatelessWidget {
                                   ? FontWeight.w800
                                   : FontWeight.w600,
                               color: isActive
-                                  ? accentColor
+                                  ? activeLabelColor
                                   : AppColors.textSecondary,
                             ),
                           ),
@@ -664,7 +670,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 child: TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
+                    // Ink on the lime fill — white fails contrast on it.
+                    foregroundColor: AppColors.onPrimary,
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1111,7 +1118,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1217,7 +1224,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               label: Text(isArabic ? 'إعادة المحاولة' : 'Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onPrimary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 12,
@@ -1266,7 +1273,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
           await _loadAll();
         },
         color: AppColors.primaryGreen,
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.surface,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(
             parent: BouncingScrollPhysics(),
@@ -1357,7 +1364,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+            // 24px between major sections (hero → vitals → hub …), 12px
+            // within a section — the eye gets one obvious reading order:
+            // calories → macros → vitals → logging actions.
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
             // ── 4. Vitals Bar (Water · Steps · Burned) ──
             SliverToBoxAdapter(
@@ -1378,7 +1388,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               ),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
             // ── 5. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
             SliverToBoxAdapter(
@@ -1503,7 +1513,7 @@ class _KaleeHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: isCompactHeader ? 12 : 20),
       child: Row(
         children: [
-          // Avatar with green border ring
+          // Avatar with accent border ring
           _InteractiveScaleDetector(
             onTap: onOpenProfile,
             child: Container(
@@ -1511,10 +1521,10 @@ class _KaleeHeader extends StatelessWidget {
               height: isCompactHeader ? 40 : 46,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primaryGreen, width: 2.2),
+                border: Border.all(color: AppColors.accent, width: 2.2),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryGreen.withValues(alpha: 0.18),
+                    color: AppColors.accent.withValues(alpha: 0.18),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -1551,7 +1561,7 @@ class _KaleeHeader extends StatelessWidget {
                                     ? firstName[0].toUpperCase()
                                     : 'A',
                                 style: TextStyle(
-                                  color: AppColors.primaryGreen,
+                                  color: AppColors.onPrimaryContainer,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
                                   fontFamily: AppText.fontFamily(
@@ -1571,7 +1581,7 @@ class _KaleeHeader extends StatelessWidget {
                                 ? firstName[0].toUpperCase()
                                 : 'A',
                             style: TextStyle(
-                              color: AppColors.primaryGreen,
+                              color: AppColors.onPrimaryContainer,
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                               fontFamily: AppText.fontFamily(
@@ -1653,7 +1663,7 @@ class _KaleeHeader extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: streakLoggedToday
-                              ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                              ? AppColors.accent.withValues(alpha: 0.4)
                               : AppColors.borderSubtle,
                           width: 1,
                         ),
@@ -1680,7 +1690,7 @@ class _KaleeHeader extends StatelessWidget {
                               color: streakCount == 0
                                   ? AppColors.textMuted
                                   : (streakLoggedToday
-                                        ? AppColors.primaryGreen
+                                        ? AppColors.onPrimaryContainer
                                         : AppColors.textSecondary),
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -2022,15 +2032,15 @@ class _HeroFuelCard extends StatelessWidget {
           border: Border.all(
             color: _isOver
                 ? AppColors.overGoalWarning.withValues(alpha: 0.5)
-                : AppColors.primaryGreen.withValues(alpha: 0.18),
+                : AppColors.accent.withValues(alpha: 0.20),
             width: 1.4,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primaryGreen.withValues(alpha: 0.08),
-              blurRadius: 22,
+              color: AppColors.cardShadow,
+              blurRadius: 12,
               spreadRadius: 0,
-              offset: const Offset(0, 10),
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -2075,24 +2085,24 @@ class _HeroFuelCard extends StatelessWidget {
               ],
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
             // Gauge & Main Counter — the single largest, most prominent
             // number on the whole home screen.
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Circular Progress Gauge
+                // Circular Progress Gauge — heavier stroke, accent arc
                 SizedBox(
-                  width: 116,
-                  height: 116,
+                  width: 124,
+                  height: 124,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
                       AnimatedBuilder(
                         animation: ringAnim,
                         builder: (_, __) => CustomPaint(
-                          size: const Size(116, 116),
+                          size: const Size(124, 124),
                           painter: _CalorieGaugePainter(
                             progress: (calorieProgress * ringAnim.value).clamp(
                               0.0,
@@ -2116,8 +2126,8 @@ class _HeroFuelCard extends StatelessWidget {
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
                               color: _isOver
-                                  ? AppColors.accentProtein
-                                  : AppColors.accentCalories,
+                                  ? AppColors.overGoalWarning
+                                  : AppColors.onPrimaryContainer,
                               fontFamily: AppText.fontFamily(
                                 isArabic: isArabic,
                               ),
@@ -2145,12 +2155,14 @@ class _HeroFuelCard extends StatelessWidget {
                             Text(
                               '${(totalCalories * ringAnim.value).toInt()}',
                               style: TextStyle(
-                                fontSize: 34,
+                                // Tier 1 of the hierarchy: the dominant
+                                // number on Home — largest and boldest.
+                                fontSize: 44,
                                 fontWeight: FontWeight.w900,
                                 height: 1.0,
-                                letterSpacing: -0.5,
+                                letterSpacing: -1.0,
                                 color: _isOver
-                                    ? AppColors.accentProtein
+                                    ? AppColors.overGoalWarning
                                     : AppColors.textPrimary,
                                 fontFamily: AppText.fontFamily(
                                   isArabic: isArabic,
@@ -2417,16 +2429,16 @@ class _HeroStepButton extends StatelessWidget {
       child: GestureDetector(
         onTap: enabled ? onTap : null,
         behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(
-            icon,
-            size: 17,
-            color: enabled
-                ? AppColors.primaryGreen
-                : AppColors.textMuted.withValues(alpha: 0.45),
+          child: Padding(
+            padding: const EdgeInsets.all(4),
+            child: Icon(
+              icon,
+              size: 17,
+              color: enabled
+                  ? AppColors.accent
+                  : AppColors.textMuted.withValues(alpha: 0.45),
+            ),
           ),
-        ),
       ),
     );
   }
@@ -2491,10 +2503,12 @@ class _MacroRow extends StatelessWidget {
                       children: [
                         TextSpan(
                           text: '$current g',
+                          // Numbers stay in ink (AA on white); the bar below
+                          // carries the macro's semantic hue.
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: accentColor,
+                            color: AppColors.textPrimary,
                             fontFamily: AppText.fontFamily(isArabic: isArabic),
                           ),
                         ),
@@ -2512,13 +2526,15 @@ class _MacroRow extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               ClipRRect(
                 borderRadius: BorderRadius.circular(3),
                 child: LinearProgressIndicator(
                   value: pct,
-                  minHeight: 5,
-                  backgroundColor: AppColors.surfaceContainerHigh,
+                  minHeight: 6,
+                  // Home spec: the track is the macro's own semantic color
+                  // at ~60% opacity; the fill runs at full opacity.
+                  backgroundColor: accentColor.withValues(alpha: 0.60),
                   valueColor: AlwaysStoppedAnimation<Color>(accentColor),
                 ),
               ),
@@ -2539,8 +2555,10 @@ class _CalorieGaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 7;
-    const strokeWidth = 10.0;
+    final radius = size.width / 2 - 8;
+    // Thicker arc — the ring is the primary progress visual on Home and must
+    // carry real weight against the 44px calorie number beside it.
+    const strokeWidth = 13.0;
 
     // Track Background
     final bgPaint = Paint()
@@ -2551,12 +2569,12 @@ class _CalorieGaugePainter extends CustomPainter {
 
     if (progress <= 0) return;
 
-    // Active Track with Rounded Cap
+    // Active Track with Rounded Cap — volt-family accent per Home spec.
     final activePaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round
-      ..color = isOver ? AppColors.overGoalWarning : AppColors.accentCalories;
+      ..color = isOver ? AppColors.overGoalWarning : AppColors.accent;
 
     final sweep = 2 * pi * progress.clamp(0.0, 1.0);
     final rect = Rect.fromCircle(center: center, radius: radius);
@@ -2611,226 +2629,162 @@ class _VitalsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
+    // Home spec: three individual card containers with consistent padding
+    // replace the old single card with thin divider lines. The ring/icon
+    // colors come from the shared data-viz family (water teal, steps gold,
+    // burned orange) — one system, distinct but related hues.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: _ModernPlayfulCard(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        child: IntrinsicHeight(
-          child: Row(
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _vitalTile(
+              isArabic: isArabic,
+              onTap: canEditDaily ? onAddWater : null,
+              ring: _vitalsRing(
+                progress: _waterProgress,
+                color: AppColors.accentWater,
+                iconType: PixelIconType.waterDrop,
+              ),
+              label: l10n.water,
+              value: '$waterGlasses / 8',
+              footer: canEditDaily
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.lightGreen,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '+250ml',
+                        style: AppText.styledScaleCaption(
+                          isArabic: isArabic,
+                          color: AppColors.onPrimaryContainer,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 10),
+            _vitalTile(
+              isArabic: isArabic,
+              onTap: canEditDaily ? onStepsTap : null,
+              ring: _vitalsRing(
+                progress: _stepsProgress,
+                color: AppColors.accentSteps,
+                iconType: PixelIconType.sneaker,
+              ),
+              label: l10n.steps,
+              value: _formatSteps(steps),
+              footer: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (canEditDaily)
+                    Icon(
+                      Icons.edit_outlined,
+                      size: 12,
+                      color: AppColors.textMuted,
+                    ),
+                  if (canEditDaily) const SizedBox(width: 4),
+                  Tooltip(
+                    message:
+                        AppLocalizations.of(context)!.smartwatchSync,
+                    child: GestureDetector(
+                      onTap: canEditDaily ? onOpenWatchSheet : null,
+                      behavior: HitTestBehavior.opaque,
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Icon(
+                          Icons.watch,
+                          size: 13,
+                          color: AppColors.textSecondary.withValues(
+                            alpha: canEditDaily ? 1.0 : 0.4,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            _vitalTile(
+              isArabic: isArabic,
+              onTap: onWorkoutTap,
+              ring: _vitalsRing(
+                progress: _burnedProgress,
+                color: AppColors.accentWorkout,
+                iconType: PixelIconType.dumbbell,
+              ),
+              label: l10n.burned,
+              value: '$caloriesBurned ${l10n.kcal}',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// One stat card: soft-shadow surface container (Home spec shadow —
+  /// blur 12 / offset (0,4) via [AppColors.cardShadow]) with the ring,
+  /// label, value and optional footer affordance centered inside.
+  Widget _vitalTile({
+    required bool isArabic,
+    required Widget ring,
+    required String label,
+    required String value,
+    required VoidCallback? onTap,
+    Widget? footer,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.borderSubtle),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.cardShadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: _InteractiveScaleDetector(
+          onTap: onTap,
+          scaleFactor: 0.94,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Water — circular chart, tap anywhere to add a glass
-              Expanded(
-                child: _InteractiveScaleDetector(
-                  onTap: canEditDaily ? onAddWater : null,
-                  scaleFactor: 0.94,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CustomPaint(
-                                size: const Size(56, 56),
-                                painter: _VitalsRingPainter(
-                                  progress: _waterProgress,
-                                  color: AppColors.accentWater,
-                                  trackColor: AppColors.surfaceContainerHighest,
-                                ),
-                              ),
-                              const PixelArtIcon(
-                                type: PixelIconType.waterDrop,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.water,
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$waterGlasses / 8',
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        if (canEditDaily) ...[
-                          const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.lightGreen,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '+250ml',
-                              style: AppText.styledScaleCaption(
-                                isArabic: isArabic,
-                                color: AppColors.onPrimaryContainer,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+              ring,
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: AppText.styledScaleBodySm(
+                  isArabic: isArabic,
+                  color: AppColors.textSecondary,
                 ),
               ),
-
-              _barDivider(),
-
-              // Steps — circular chart, pencil + watch affordances below value
-              Expanded(
-                child: _InteractiveScaleDetector(
-                  onTap: canEditDaily ? onStepsTap : null,
-                  scaleFactor: 0.94,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CustomPaint(
-                                size: const Size(56, 56),
-                                painter: _VitalsRingPainter(
-                                  progress: _stepsProgress,
-                                  color: AppColors.accentSteps,
-                                  trackColor: AppColors.surfaceContainerHighest,
-                                ),
-                              ),
-                              const PixelArtIcon(
-                                type: PixelIconType.sneaker,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.steps,
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatSteps(steps),
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (canEditDaily)
-                              Icon(
-                                Icons.edit_outlined,
-                                size: 12,
-                                color: AppColors.textMuted,
-                              ),
-                            if (canEditDaily) const SizedBox(width: 4),
-                            Tooltip(
-                              message: AppLocalizations.of(
-                                context,
-                              )!.smartwatchSync,
-                              child: GestureDetector(
-                                onTap: canEditDaily ? onOpenWatchSheet : null,
-                                behavior: HitTestBehavior.opaque,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(2),
-                                  child: Icon(
-                                    Icons.watch,
-                                    size: 13,
-                                    color: AppColors.textSecondary.withValues(
-                                      alpha: canEditDaily ? 1.0 : 0.4,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: isArabic),
                 ),
               ),
-              _barDivider(),
-              // Burned — circular chart, jumps to workout tab
-              Expanded(
-                child: _InteractiveScaleDetector(
-                  onTap: onWorkoutTap,
-                  scaleFactor: 0.94,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          width: 56,
-                          height: 56,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              CustomPaint(
-                                size: const Size(56, 56),
-                                painter: _VitalsRingPainter(
-                                  progress: _burnedProgress,
-                                  color: AppColors.accentWorkout,
-                                  trackColor: AppColors.surfaceContainerHighest,
-                                ),
-                              ),
-                              const PixelArtIcon(
-                                type: PixelIconType.dumbbell,
-                                size: 18,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.burned,
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$caloriesBurned ${l10n.kcal}',
-                          style: AppText.styledScaleBodySm(
-                            isArabic: isArabic,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              if (footer != null) ...[
+                const SizedBox(height: 4),
+                footer,
+              ],
             ],
           ),
         ),
@@ -2838,11 +2792,30 @@ class _VitalsBar extends StatelessWidget {
     );
   }
 
-  Widget _barDivider() => Container(
-    width: 1,
-    margin: const EdgeInsets.symmetric(vertical: 6),
-    color: AppColors.borderSubtle,
-  );
+  Widget _vitalsRing({
+    required double progress,
+    required Color color,
+    required PixelIconType iconType,
+  }) {
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size(56, 56),
+            painter: _VitalsRingPainter(
+              progress: progress,
+              color: color,
+              trackColor: AppColors.surfaceContainerHighest,
+            ),
+          ),
+          PixelArtIcon(type: iconType, size: 18),
+        ],
+      ),
+    );
+  }
 }
 
 class _VitalsRingPainter extends CustomPainter {
@@ -2918,39 +2891,36 @@ class _QuickFoodLogHub extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
-          // ── AI Scan — the hero action. AI logging is the app's core
-          // differentiator, so it gets a full-width gradient banner with a
-          // visible subtitle instead of a small circle chip.
+          // ── AI Scan — secondary action, not the page's focal point.
+          // Home spec: outlined/subtle card instead of the full lime
+          // gradient fill — ~30% shorter, tinted border, no glow — so it
+          // can never outweigh the data cards above it.
           _InteractiveScaleDetector(
             onTap: onAiScan,
             scaleFactor: 0.97,
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
               decoration: BoxDecoration(
-                gradient: AppColors.primaryActionGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryGlow,
-                    blurRadius: 18,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+                color: AppColors.accent.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: AppColors.accent.withValues(alpha: 0.35),
+                ),
               ),
               child: Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.onPrimary.withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     alignment: Alignment.center,
                     child: const PixelArtIcon(
                       type: PixelIconType.robot,
-                      size: 24,
+                      size: 20,
                       animate: true,
                     ),
                   ),
@@ -2965,9 +2935,9 @@ class _QuickFoodLogHub extends StatelessWidget {
                               child: Text(
                                 l10n.scanAi,
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 15,
                                   fontWeight: FontWeight.w900,
-                                  color: AppColors.onPrimary,
+                                  color: AppColors.onSurface,
                                   fontFamily: AppText.fontFamily(
                                     isArabic: isArabic,
                                   ),
@@ -2983,8 +2953,8 @@ class _QuickFoodLogHub extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.onPrimary.withValues(
-                                  alpha: 0.14,
+                                color: AppColors.accent.withValues(
+                                  alpha: 0.16,
                                 ),
                                 borderRadius: BorderRadius.circular(6),
                               ),
@@ -2994,7 +2964,7 @@ class _QuickFoodLogHub extends StatelessWidget {
                                   fontSize: 10,
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1,
-                                  color: AppColors.onPrimary,
+                                  color: AppColors.onPrimaryContainer,
                                   fontFamily: AppText.fontFamily(
                                     isArabic: isArabic,
                                   ),
@@ -3003,13 +2973,13 @@ class _QuickFoodLogHub extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Text(
                           l10n.aiScanSubtitle,
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.onPrimary.withValues(alpha: 0.75),
+                            color: AppColors.textSecondary,
                             fontFamily: AppText.fontFamily(isArabic: isArabic),
                           ),
                           maxLines: 1,
@@ -3022,7 +2992,7 @@ class _QuickFoodLogHub extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 15,
-                    color: AppColors.onPrimary.withValues(alpha: 0.8),
+                    color: AppColors.accent.withValues(alpha: 0.8),
                   ),
                 ],
               ),
@@ -3066,7 +3036,7 @@ class _QuickFoodLogHub extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
               decoration: BoxDecoration(
-                color: AppColors.surfaceContainerHigh,
+                color: AppColors.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.borderSubtle),
               ),
@@ -3076,7 +3046,7 @@ class _QuickFoodLogHub extends StatelessWidget {
                   Icon(
                     Icons.restaurant_rounded,
                     size: 18,
-                    color: AppColors.primary,
+                    color: AppColors.accent,
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -3127,7 +3097,7 @@ class _QuickFoodLogHub extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 21, color: AppColors.primary),
+                Icon(icon, size: 21, color: AppColors.accent),
                 const SizedBox(height: 4),
                 Text(
                   label,
@@ -3171,7 +3141,7 @@ class _FeatureHighlightsStrip extends StatelessWidget {
     final items = [
       _FeatureCardData(
         icon: Icons.fitness_center_rounded,
-        color: AppColors.primaryGreen,
+        color: AppColors.accent,
         title: isArabic ? 'التمارين' : 'Workouts',
         subtitle: isArabic ? 'خطتك اليومية' : 'Your daily plan',
         onTap: onOpenWorkout,
@@ -3224,21 +3194,21 @@ class _FeatureHighlightsStrip extends StatelessWidget {
               final item = items[i];
               return _InteractiveScaleDetector(
                 onTap: item.onTap,
-                child: Container(
-                  width: 132,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.borderSubtle),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.cardShadow,
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
+                  child: Container(
+                    width: 132,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.borderSubtle),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.cardShadow,
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -3349,7 +3319,7 @@ class _MealsFeed extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               borderRadius: 18,
               borderColor: hasLogs
-                  ? AppColors.primaryGreen.withValues(alpha: 0.4)
+                  ? AppColors.accent.withValues(alpha: 0.45)
                   : AppColors.borderSubtle,
               child: SizedBox(
                 width: 90,
@@ -3365,7 +3335,7 @@ class _MealsFeed extends StatelessWidget {
                           height: 18,
                           decoration: BoxDecoration(
                             color: hasLogs
-                                ? AppColors.primaryGreen
+                                ? AppColors.accent
                                 : AppColors.surfaceContainerHighest,
                             shape: BoxShape.circle,
                           ),
@@ -3373,7 +3343,7 @@ class _MealsFeed extends StatelessWidget {
                             hasLogs ? Icons.check_rounded : Icons.add_rounded,
                             size: 11,
                             color: hasLogs
-                                ? Colors.white
+                                ? AppColors.onPrimary
                                 : AppColors.textSecondary,
                           ),
                         ),
@@ -3398,7 +3368,7 @@ class _MealsFeed extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: hasLogs
-                            ? AppColors.primaryGreen
+                            ? AppColors.onPrimaryContainer
                             : AppColors.textMuted,
                       ),
                     ),
@@ -3452,7 +3422,9 @@ class _SectionHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryGreen,
+                  // Accent-ink token — AA-safe on the light canvas, unlike
+                  // raw accent hues at this size.
+                  color: AppColors.onPrimaryContainer,
                   fontFamily: AppText.fontFamily(isArabic: isArabic),
                 ),
               ),

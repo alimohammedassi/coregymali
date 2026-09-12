@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:liquid_tab_bar/liquid_tab_bar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase/supabase_config.dart';
 import 'theme/app_animations.dart';
@@ -33,6 +34,13 @@ void main() async {
     url: SupabaseConfig.supabaseUrl,
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
+
+  // Liquid tab bar (bottom nav): preload the glass shader once — until it
+  // lands the bar falls back to blur, so this is fire-and-forget to keep
+  // cold start fast — and arm the shared controller that folds the bar
+  // into a pill while scrolling.
+  unawaited(LiquidGlass.load());
+  LiquidTabBarController.shared.armGovernor();
 
   runApp(
     ProviderScope(

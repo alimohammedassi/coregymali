@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:liquid_tab_bar/liquid_tab_bar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -367,15 +368,19 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.background,
         body: AppBackground(
-          child: IndexedStack(index: _currentIndex, children: children),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: LiquidTabBarController.shared.handleScroll,
+            child: IndexedStack(index: _currentIndex, children: children),
+          ),
         ),
-        bottomNavigationBar: _PlayfulNavBar(
+        bottomNavigationBar: _LiquidNavBar(
           currentIndex: currentIndex(visibleTabs, activeId),
           onTap: (i) {
             final id = visibleTabs[i].id;
             _onNavigate(_indexOf(tabs, id));
           },
           tabs: visibleTabs,
+          isArabic: l10n.localeName.startsWith('ar'),
         ),
       ),
     );
@@ -408,121 +413,64 @@ class _TabInfo {
 // Playful Bottom Navigation Bar
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _PlayfulNavBar extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────────
+// Bottom Navigation Bar — liquid_tab_bar package
+//
+// Floating liquid-glass pill replacing the old custom nav bar.
+// Theme maps onto the app tokens: volt accent (dark) / darkened volt (light),
+// graphite-tinted glass on dark, white card glass on light, and the shared
+// card shadow. Scrolling folds it into a pill via the shared controller
+// (wired through the NotificationListener around the tab body).
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _LiquidNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
   final List<_TabInfo> tabs;
+  final bool isArabic;
 
-  const _PlayfulNavBar({
+  const _LiquidNavBar({
     required this.currentIndex,
     required this.onTap,
     required this.tabs,
+    required this.isArabic,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-        child: Container(
-          height: 68,
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: AppColors.borderSubtle, width: 1.2),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF000000).withValues(alpha: 0.06),
-                blurRadius: 20,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    final bool light = AppColors.isLight;
+    return LiquidTabBar(
+      items: [
+        for (final tab in tabs)
+          LiquidTabItem.icon(
+            label: tab.label,
+            icon: tab.icon,
+            activeIcon: tab.activeIcon,
           ),
-          child: Row(
-            children: List.generate(tabs.length, (i) {
-              final tab = tabs[i];
-              final isActive = currentIndex == i;
-              // Active-state accent: volt on dark, darkened volt on light.
-              final accentColor = AppColors.accent;
-              // 10px text can't carry the accent on white (fails AA), so the
-              // label uses the AA-safe accent-ink token instead.
-              final activeLabelColor = AppColors.onPrimaryContainer;
-
-              return Expanded(
-                child: _InteractiveScaleDetector(
-                  scaleFactor: 0.88,
-                  onTap: () => onTap(i),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutCubic,
-                    margin: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isActive
-                          ? accentColor.withValues(alpha: 0.12)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                      border: isActive
-                          ? Border.all(
-                              color: accentColor.withValues(alpha: 0.35),
-                              width: 1.2,
-                            )
-                          : null,
-                      boxShadow: isActive
-                          ? [
-                              // Volt glow — the active destination should read
-                              // as "lit up", the signature of the bar.
-                              BoxShadow(
-                                color: accentColor.withValues(alpha: 0.22),
-                                blurRadius: 14,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedScale(
-                          scale: isActive ? 1.15 : 1.0,
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutBack,
-                          child: Icon(
-                            isActive ? tab.activeIcon : tab.icon,
-                            size: 21,
-                            color: isActive
-                                ? accentColor
-                                : AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            tab.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isActive
-                                  ? FontWeight.w800
-                                  : FontWeight.w600,
-                              color: isActive
-                                  ? activeLabelColor
-                                  : AppColors.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
+      ],
+      selectedIndex: currentIndex,
+      onSelected: onTap,
+      theme: LiquidTabBarTheme(
+        activeColor: AppColors.accent,
+        inactiveColor: AppColors.textSecondary,
+        labelStyle: TextStyle(
+          fontFamily: AppText.fontFamily(isArabic: isArabic),
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
         ),
+        glassTint: light ? const Color(0xF2FFFFFF) : const Color(0xB3171814),
+        glassEdge: light ? const Color(0x1F000000) : const Color(0x2EFFFFFF),
+        opaqueSurface: AppColors.surface,
+        opaqueEdge: AppColors.borderSubtle,
+        lensTint: light ? const Color(0x1A8FB800) : const Color(0x1AD1FC00),
+        badgeColor: AppColors.error,
+        shadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            offset: const Offset(0, 4),
+            blurRadius: 14,
+          ),
+        ],
       ),
     );
   }
@@ -1244,7 +1192,6 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final bottomInset = MediaQuery.of(context).padding.bottom;
 
     if (_hasError && _profile.isEmpty) {
       return Scaffold(
@@ -1465,7 +1412,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             ),
 
             // Bottom buffer to prevent navbar overlap
-            SliverToBoxAdapter(child: SizedBox(height: 90 + bottomInset)),
+            SliverToBoxAdapter(
+              child: SizedBox(height: LiquidTabBar.reservedHeight(context) + 8),
+            ),
           ],
         ),
       ),

@@ -546,5 +546,81 @@
         "type": "int"
       }
     }
-  }
+  },
+  "assignedWorkoutTitle": "تدريب اليوم",
+  "assignedCardMeta": "{ex} تمارين · حوالي {min} دقيقة",
+  "@assignedCardMeta": {
+    "placeholders": {
+      "ex": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedSetProgress": "تم إنجاز {done} من {total} مجموعة",
+  "@assignedSetProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedRestSecs": "راحة {sec} ثانية",
+  "@assignedRestSecs": {
+    "placeholders": {
+      "sec": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedLogSet": "سجّل المجموعة",
+  "assignedContinue": "متابعة التدريب",
+  "assignedFinish": "إنهاء التدريب",
+  "assignedDoneTitle": "تم إكمال التدريب",
+  "assignedDoneBody": "أحسنت — مدربك هيشوف هذا التدريب الآن.",
+  "assignedNone": "لا يوجد تدريب معيّن اليوم",
+  "assignedNotes": "ملاحظات",
+  "assignedTarget": "{sets} مجموعات × {reps} عدات",
+  "@assignedTarget": {
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "assignedTargetWeight": "{sets} مجموعات × {reps} عدات @ {weight} كجم",
+  "@assignedTargetWeight": {
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      },
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "assignedErrorStart": "تعذّر بدء التدريب — حاول مجددًا",
+  "assignedErrorSet": "تعذّر تسجيل المجموعة — تحقّق من الاتصال",
+  "assignedErrorFinish": "تعذّر إنهاء التدريب — حاول مجددًا",
+  "assignedEnterReps": "اكتب عدد العدات الأول",
+  "assignedSetsLogged": "تم تسجيل {count} مجموعة",
+  "@assignedSetsLogged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedDone": "تم"
 }

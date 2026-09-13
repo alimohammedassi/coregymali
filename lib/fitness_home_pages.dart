@@ -1,9 +1,9 @@
 import 'dart:math';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_tab_bar/liquid_tab_bar.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart';
@@ -17,6 +17,7 @@ import 'features/coach/presentation/providers/subscription_providers.dart';
 import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
 import 'l10n/app_localizations.dart';
 import 'profile.dart';
+import 'screens/assigned_workout_screen.dart';
 import 'screens/food_scan_screen.dart';
 import 'screens/barcode_scan_screen.dart';
 import 'screens/nutrition_screen.dart';
@@ -24,6 +25,7 @@ import 'screens/text_food_log_screen.dart';
 import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/stats_service.dart';
+import 'services/assigned_workout_service.dart';
 import 'screens/notifications_inbox_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -32,6 +34,7 @@ import 'services/notification_service.dart';
 import 'services/streak_service.dart';
 import 'services/supabase_client.dart';
 import 'theme/app_colors.dart';
+import 'theme/app_semantic_colors.dart';
 import 'theme/app_text.dart';
 import 'widgets/add_food_sheet.dart';
 import 'widgets/app_background.dart';
@@ -522,6 +525,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   Map<String, dynamic>? _goals;
   List<dynamic> _nutritionLogs = [];
 
+  /// Today's coach-assigned workout. Null = nothing assigned (or the
+  /// dashboard's assignment tables aren't deployed yet) — the card simply
+  /// stays hidden, it is never an error state.
+  AssignedWorkout? _assignedWorkout;
+
   double _totalCalories = 0, _goalCalories = NutritionDefaults.calories;
   double _totalProtein = 0, _goalProtein = NutritionDefaults.protein;
   double _totalCarbs = 0, _goalCarbs = NutritionDefaults.carbs;
@@ -638,6 +646,15 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Midnight rollover: if we were viewing "today" and the calendar day
+      // changed while the app was backgrounded, snap the selection forward
+      // to the new today. Without this the user stays on yesterday's
+      // summary, water/steps edits are disabled (canEditDaily is false) and
+      // every tap silently does nothing — reads as "it doesn't count".
+      final now = DateTime.now();
+      if (_selectedDate.isBefore(now) && !_isSameDay(_selectedDate, now)) {
+        setState(() => _selectedDate = now);
+      }
       _loadAll();
     }
   }
@@ -676,8 +693,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             borderRadius: BorderRadius.circular(20),
           ),
           title: Text(
-            l10n?.pushDialogTitle ??
-                'Enable notifications',
+            l10n?.pushDialogTitle ?? 'Enable notifications',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w800,
@@ -867,6 +883,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         _stepsInt = 0;
         _caloriesBurned = 0;
       }
+
+      await _loadAssignedWorkout();
     } catch (e) {
       debugPrint('Home load error: $e');
       if (mounted) setState(() => _hasError = true);
@@ -880,6 +898,30 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         _staggerCtrl.forward(from: 0.0);
       }
     }
+  }
+
+  /// Isolated loader for the assigned-workout card: every failure mode —
+  /// including the assignment tables not existing yet (PostgREST 205) —
+  /// resolves to null and hides the card; it must never trip home's
+  /// error state.
+  Future<void> _loadAssignedWorkout() async {
+    final assignment = await AssignedWorkoutService().fetchTodayAssignment();
+    if (!mounted) return;
+    setState(() => _assignedWorkout = assignment);
+  }
+
+  Future<void> _openAssignedWorkout() async {
+    HapticFeedback.lightImpact();
+    final assignment = _assignedWorkout;
+    if (assignment == null) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AssignedWorkoutScreen(assignment: assignment),
+      ),
+    );
+    // The workout may have been started/completed inside the screen —
+    // refetch so the card reflects the new state.
+    _loadAssignedWorkout();
   }
 
   Future<void> _openFoodLogger({
@@ -1337,6 +1379,23 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
             const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
+            // ── 4b. Today's coach-assigned workout — hidden entirely when
+            // nothing is assigned so users without a coach see no friction.
+            if (_assignedWorkout != null) ...[
+              SliverToBoxAdapter(
+                child: _Stagger(
+                  ctrl: _staggerCtrl,
+                  index: 4,
+                  child: _AssignedWorkoutCard(
+                    workout: _assignedWorkout!,
+                    isArabic: isArabic,
+                    onTap: _openAssignedWorkout,
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+
             // ── 5. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
             SliverToBoxAdapter(
               child: _Stagger(
@@ -1377,7 +1436,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                   onOpenRankings: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                        builder: (_) => const LeaderboardScreen()),
+                      builder: (_) => const LeaderboardScreen(),
+                    ),
                   ),
                 ),
               ),
@@ -1672,9 +1732,7 @@ class _KaleeHeader extends StatelessWidget {
               height: isCompactHeader ? 34 : 38,
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(
-                  isCompactHeader ? 12 : 14,
-                ),
+                borderRadius: BorderRadius.circular(isCompactHeader ? 12 : 14),
                 border: Border.all(color: AppColors.borderSubtle),
                 boxShadow: [
                   BoxShadow(
@@ -2378,16 +2436,16 @@ class _HeroStepButton extends StatelessWidget {
       child: GestureDetector(
         onTap: enabled ? onTap : null,
         behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.all(4),
-            child: Icon(
-              icon,
-              size: 17,
-              color: enabled
-                  ? AppColors.accent
-                  : AppColors.textMuted.withValues(alpha: 0.45),
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(
+            icon,
+            size: 17,
+            color: enabled
+                ? AppColors.accent
+                : AppColors.textMuted.withValues(alpha: 0.45),
           ),
+        ),
       ),
     );
   }
@@ -2578,124 +2636,17 @@ class _VitalsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
-    // Home spec: three individual card containers with consistent padding
-    // replace the old single card with thin divider lines. The ring/icon
-    // colors come from the shared data-viz family (water teal, steps gold,
-    // burned orange) — one system, distinct but related hues.
+    // One unified card that mirrors the hero card above it — same surface,
+    // same 26px radius, same hairline border and soft shadow — so the two
+    // read as one design language. Thin dividers inside echo the hero's
+    // macro divider. Ring colors stay in the data-viz family.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _vitalTile(
-              isArabic: isArabic,
-              onTap: canEditDaily ? onAddWater : null,
-              ring: _vitalsRing(
-                progress: _waterProgress,
-                color: AppColors.accentWater,
-                iconType: PixelIconType.waterDrop,
-              ),
-              label: l10n.water,
-              value: '$waterGlasses / 8',
-              footer: canEditDaily
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightGreen,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '+250ml',
-                        style: AppText.styledScaleCaption(
-                          isArabic: isArabic,
-                          color: AppColors.onPrimaryContainer,
-                        ),
-                      ),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 10),
-            _vitalTile(
-              isArabic: isArabic,
-              onTap: canEditDaily ? onStepsTap : null,
-              ring: _vitalsRing(
-                progress: _stepsProgress,
-                color: AppColors.accentSteps,
-                iconType: PixelIconType.sneaker,
-              ),
-              label: l10n.steps,
-              value: _formatSteps(steps),
-              footer: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (canEditDaily)
-                    Icon(
-                      Icons.edit_outlined,
-                      size: 12,
-                      color: AppColors.textMuted,
-                    ),
-                  if (canEditDaily) const SizedBox(width: 4),
-                  Tooltip(
-                    message:
-                        AppLocalizations.of(context)!.smartwatchSync,
-                    child: GestureDetector(
-                      onTap: canEditDaily ? onOpenWatchSheet : null,
-                      behavior: HitTestBehavior.opaque,
-                      child: Padding(
-                        padding: const EdgeInsets.all(2),
-                        child: Icon(
-                          Icons.watch,
-                          size: 13,
-                          color: AppColors.textSecondary.withValues(
-                            alpha: canEditDaily ? 1.0 : 0.4,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            _vitalTile(
-              isArabic: isArabic,
-              onTap: onWorkoutTap,
-              ring: _vitalsRing(
-                progress: _burnedProgress,
-                color: AppColors.accentWorkout,
-                iconType: PixelIconType.dumbbell,
-              ),
-              label: l10n.burned,
-              value: '$caloriesBurned ${l10n.kcal}',
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// One stat card: soft-shadow surface container (Home spec shadow —
-  /// blur 12 / offset (0,4) via [AppColors.cardShadow]) with the ring,
-  /// label, value and optional footer affordance centered inside.
-  Widget _vitalTile({
-    required bool isArabic,
-    required Widget ring,
-    required String label,
-    required String value,
-    required VoidCallback? onTap,
-    Widget? footer,
-  }) {
-    return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 6),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(26),
           border: Border.all(color: AppColors.borderSubtle),
           boxShadow: [
             BoxShadow(
@@ -2705,41 +2656,152 @@ class _VitalsBar extends StatelessWidget {
             ),
           ],
         ),
-        child: _InteractiveScaleDetector(
-          onTap: onTap,
-          scaleFactor: 0.94,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        child: IntrinsicHeight(
+          child: Row(
             children: [
-              ring,
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: AppText.styledScaleBodySm(
-                  isArabic: isArabic,
-                  color: AppColors.textSecondary,
+              _vitalTile(
+                isArabic: isArabic,
+                onTap: canEditDaily ? onAddWater : null,
+                ring: _vitalsRing(
+                  progress: _waterProgress,
+                  color: AppColors.accentWater,
+                  iconType: PixelIconType.waterDrop,
+                ),
+                label: l10n.water,
+                value: '$waterGlasses / 8',
+                footer: canEditDaily
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.lightGreen,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '+250ml',
+                          style: AppText.styledScaleCaption(
+                            isArabic: isArabic,
+                            color: AppColors.onPrimaryContainer,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              _barDivider(),
+              _vitalTile(
+                isArabic: isArabic,
+                onTap: canEditDaily ? onStepsTap : null,
+                ring: _vitalsRing(
+                  progress: _stepsProgress,
+                  color: AppColors.accentSteps,
+                  iconType: PixelIconType.sneaker,
+                ),
+                label: l10n.steps,
+                value: _formatSteps(steps),
+                footer: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (canEditDaily)
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 12,
+                        color: AppColors.textMuted,
+                      ),
+                    if (canEditDaily) const SizedBox(width: 4),
+                    Tooltip(
+                      message: AppLocalizations.of(context)!.smartwatchSync,
+                      child: GestureDetector(
+                        onTap: canEditDaily ? onOpenWatchSheet : null,
+                        behavior: HitTestBehavior.opaque,
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Icon(
+                            Icons.watch,
+                            size: 13,
+                            color: AppColors.textSecondary.withValues(
+                              alpha: canEditDaily ? 1.0 : 0.4,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                  fontFamily: AppText.fontFamily(isArabic: isArabic),
+              _barDivider(),
+              _vitalTile(
+                isArabic: isArabic,
+                onTap: onWorkoutTap,
+                ring: _vitalsRing(
+                  progress: _burnedProgress,
+                  color: AppColors.accentWorkout,
+                  iconType: PixelIconType.dumbbell,
                 ),
+                label: l10n.burned,
+                value: '$caloriesBurned ${l10n.kcal}',
               ),
-              if (footer != null) ...[
-                const SizedBox(height: 4),
-                footer,
-              ],
             ],
           ),
         ),
       ),
     );
   }
+
+  /// One stat column inside the unified vitals card: ring, label, value and
+  /// an optional footer affordance, centered. The card chrome (surface,
+  /// border, shadow) lives on the parent container so all three stats share
+  /// the hero card's design language.
+  Widget _vitalTile({
+    required bool isArabic,
+    required Widget ring,
+    required String label,
+    required String value,
+    required VoidCallback? onTap,
+    Widget? footer,
+  }) {
+    return Expanded(
+      child: _InteractiveScaleDetector(
+        onTap: onTap,
+        scaleFactor: 0.94,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ring,
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: AppText.styledScaleBodySm(
+                isArabic: isArabic,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                fontFamily: AppText.fontFamily(isArabic: isArabic),
+              ),
+            ),
+            if (footer != null) ...[const SizedBox(height: 4), footer],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Thin vertical separator between stat columns — echoes the hero card's
+  /// internal divider.
+  Widget _barDivider() => Container(
+    width: 1,
+    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+    color: AppColors.borderSubtle,
+  );
 
   Widget _vitalsRing({
     required double progress,
@@ -2814,6 +2876,139 @@ class _VitalsRingPainter extends CustomPainter {
 // ─────────────────────────────────────────────────────────────────────────────
 // 7. Quick Food Logging Hub (+ Add Meal & AI Scan)
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4b. Today's assigned-workout card — the client entry point of the coach
+// workflow. Same card language as the vitals bar (surface, hairline border,
+// soft shadow); the volt dot marks it as today's active commitment.
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AssignedWorkoutCard extends StatelessWidget {
+  final AssignedWorkout workout;
+  final bool isArabic;
+  final VoidCallback onTap;
+
+  const _AssignedWorkoutCard({
+    required this.workout,
+    required this.isArabic,
+    required this.onTap,
+  });
+
+  /// 'full_body' / 'Full Body' / 'CHEST' → 'Full Body' / 'Chest' for the
+  /// semantic muscle-color lookup (same normalization as the detail screen).
+  String _muscleLabel(String raw) {
+    final cleaned = raw.trim().replaceAll('_', ' ');
+    if (cleaned.isEmpty) return cleaned;
+    return cleaned
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final muscles = workout.targetMuscles.map(_muscleLabel).toList();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.borderSubtle),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cardShadow,
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: AppColors.lightGreen,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  Icons.fitness_center_rounded,
+                  color: AppColors.onPrimaryContainer,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          l10n.assignedWorkoutTitle,
+                          style: AppText.styledScaleCaption(
+                            isArabic: isArabic,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      workout.templateName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.titleSm.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.assignedCardMeta(
+                        workout.exercises.length,
+                        workout.estimatedMinutes,
+                      ),
+                      style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+                    ),
+                    if (muscles.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        muscles.join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppText.bodySm.copyWith(
+                          color: AppSemanticColors.forMuscle(muscles.first),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _QuickFoodLogHub extends StatelessWidget {
   final bool isArabic;
@@ -2902,9 +3097,7 @@ class _QuickFoodLogHub extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(
-                                  alpha: 0.16,
-                                ),
+                                color: AppColors.accent.withValues(alpha: 0.16),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
@@ -3143,21 +3336,21 @@ class _FeatureHighlightsStrip extends StatelessWidget {
               final item = items[i];
               return _InteractiveScaleDetector(
                 onTap: item.onTap,
-                  child: Container(
-                    width: 132,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.borderSubtle),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.cardShadow,
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                child: Container(
+                  width: 132,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderSubtle),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.cardShadow,
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -3263,7 +3456,6 @@ class _MealsFeed extends StatelessWidget {
           final hasLogs = mLogs.isNotEmpty;
 
           return _InteractiveScaleDetector(
-            onTap: () => onTapMeal(type),
             child: _ModernPlayfulCard(
               padding: const EdgeInsets.all(12),
               borderRadius: 18,

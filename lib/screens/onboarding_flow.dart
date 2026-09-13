@@ -29,7 +29,10 @@ class _OnboardingFlowState extends State<OnboardingFlow>
   bool _isLoading = false;
 
   // ── Data (untouched) ──
-  String _name = '';
+  // No name field: the name is already captured at sign-up (typed in the
+  // auth form or taken from the Google/Apple account) — asking again here
+  // collected it twice, and an empty field used to NULL the profile name.
+  // (No name field: the name is captured once at sign-up — auth form or Google/Apple account.)
   int _age = 25;
   String _gender = 'male';
   double _heightCm = 175.0;
@@ -69,7 +72,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     setState(() => _isLoading = true);
     try {
       await OnboardingService().saveOnboarding(
-        name: _name,
+        
         age: _age,
         gender: _gender,
         heightCm: _heightCm,
@@ -82,7 +85,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       if (mounted) {
         final profileProv = context.read<ProfileProvider>();
         await profileProv.fetchProfile();
-        
+
         if (!mounted) return;
         if (profileProv.isCoach && profileProv.needsCoachSetup) {
           Navigator.pushReplacement(
@@ -164,7 +167,9 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                             duration: const Duration(milliseconds: 350),
                             curve: Curves.easeInOut,
                             height: 4,
-                            margin: EdgeInsets.only(right: i < _totalSteps - 1 ? 4 : 0),
+                            margin: EdgeInsets.only(
+                              right: i < _totalSteps - 1 ? 4 : 0,
+                            ),
                             decoration: BoxDecoration(
                               color: isActive
                                   ? AppColors.primaryFixed
@@ -173,9 +178,10 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                               boxShadow: isCurrent
                                   ? [
                                       BoxShadow(
-                                        color: AppColors.primaryFixed.withValues(alpha: 0.4),
+                                        color: AppColors.primaryFixed
+                                            .withValues(alpha: 0.4),
                                         blurRadius: 6,
-                                      )
+                                      ),
                                     ]
                                   : null,
                             ),
@@ -259,7 +265,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
             style: const TextStyle(
               fontSize: 30,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: Color.fromARGB(255, 0, 0, 0),
               height: 1.15,
               letterSpacing: -0.5,
             ),
@@ -287,59 +293,6 @@ class _OnboardingFlowState extends State<OnboardingFlow>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader("Let's get to\nknow you", "Enter your basic info"),
-          const SizedBox(height: 28),
-
-          // Name input
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.fullNameHint,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.onSurfaceVariant,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: AppColors.surfaceContainerHigh,
-                    hintText: 'John Doe',
-                    hintStyle: TextStyle(color: AppColors.onSurfaceVariant),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.07),
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(
-                        color: AppColors.primaryFixed.withValues(alpha: 0.6),
-                        width: 1.5,
-                      ),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 16,
-                    ),
-                  ),
-                  onChanged: (val) => _name = val,
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 28),
 
           // Age drum picker
@@ -387,7 +340,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                 Expanded(
                   child: _GenderCard(
                     icon: Icons.male_rounded,
-                    label: 'Male',
+                    label: l10n.onbMale,
                     isSelected: _gender == 'male',
                     onTap: () => setState(() => _gender = 'male'),
                   ),
@@ -396,7 +349,7 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                 Expanded(
                   child: _GenderCard(
                     icon: Icons.female_rounded,
-                    label: 'Female',
+                    label: l10n.onbFemale,
                     isSelected: _gender == 'female',
                     onTap: () => setState(() => _gender = 'female'),
                   ),
@@ -418,17 +371,17 @@ class _OnboardingFlowState extends State<OnboardingFlow>
     final bmiLabel = bmi < 18.5
         ? 'Underweight'
         : bmi < 25
-            ? 'Normal'
-            : bmi < 30
-                ? 'Overweight'
-                : 'Obese';
+        ? 'Normal'
+        : bmi < 30
+        ? 'Overweight'
+        : 'Obese';
     final bmiColor = bmi < 18.5
         ? AppColors.secondary
         : bmi < 25
-            ? AppColors.primaryFixed
-            : bmi < 30
-                ? AppColors.tertiaryFixed
-                : AppColors.error;
+        ? AppColors.primaryFixed
+        : bmi < 30
+        ? AppColors.tertiaryFixed
+        : AppColors.error;
 
     return SingleChildScrollView(
       child: Column(
@@ -655,7 +608,10 @@ class _OnboardingFlowState extends State<OnboardingFlow>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildHeader("How active\nare you?", "Helps calculate your nutrition"),
+          _buildHeader(
+            "How active\nare you?",
+            "Helps calculate your nutrition",
+          ),
           const SizedBox(height: 16),
 
           // TDEE live preview
@@ -761,22 +717,24 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                       .withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: (isGain
-                            ? AppColors.primaryFixed
-                            : AppColors.secondary)
-                        .withValues(alpha: 0.2),
+                    color:
+                        (isGain ? AppColors.primaryFixed : AppColors.secondary)
+                            .withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
                   children: [
-                    Text(isGain ? '💪' : '🔥', style: const TextStyle(fontSize: 22)),
+                    Text(
+                      isGain ? '💪' : '🔥',
+                      style: const TextStyle(fontSize: 22),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         '${isGain ? 'Gain' : 'Lose'} ${diff.toStringAsFixed(1)} kg from current weight',
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.white,
+                          color: Color.fromARGB(255, 0, 0, 0),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -832,9 +790,11 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                       boxShadow: selected
                           ? [
                               BoxShadow(
-                                color: AppColors.primaryFixed.withValues(alpha: 0.3),
+                                color: AppColors.primaryFixed.withValues(
+                                  alpha: 0.3,
+                                ),
                                 blurRadius: 10,
-                              )
+                              ),
                             ]
                           : null,
                     ),
@@ -844,7 +804,9 @@ class _OnboardingFlowState extends State<OnboardingFlow>
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: selected ? Colors.black : Colors.white,
+                          color: selected
+                              ? Colors.black
+                              : const Color.fromARGB(255, 0, 0, 0),
                         ),
                       ),
                     ),
@@ -870,12 +832,12 @@ class _OnboardingFlowState extends State<OnboardingFlow>
               ),
               child: Column(
                 children: [
-                   Icon(
+                  Icon(
                     Icons.check_circle_outline_rounded,
                     color: AppColors.primaryFixed,
                     size: 40,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 7),
                   const Text(
                     "You're all set!",
                     style: TextStyle(
@@ -935,9 +897,7 @@ class _DrumPickerState extends State<_DrumPicker> {
   @override
   void initState() {
     super.initState();
-    _ctrl = FixedExtentScrollController(
-      initialItem: widget.value - widget.min,
-    );
+    _ctrl = FixedExtentScrollController(initialItem: widget.value - widget.min);
   }
 
   @override
@@ -1047,7 +1007,11 @@ class _DrumPickerState extends State<_DrumPicker> {
                         style: TextStyle(
                           fontSize: isSel ? 32 : 22,
                           fontWeight: FontWeight.w800,
-                          color: isSel ? Colors.white : AppColors.onSurfaceVariant.withValues(alpha: 0.4),
+                          color: isSel
+                              ? const Color.fromARGB(255, 221, 221, 221)
+                              : AppColors.onSurfaceVariant.withValues(
+                                  alpha: 0.4,
+                                ),
                           height: 1,
                         ),
                       ),
@@ -1058,7 +1022,9 @@ class _DrumPickerState extends State<_DrumPicker> {
                           fontSize: isSel ? 14 : 11,
                           color: isSel
                               ? AppColors.primaryFixed
-                              : AppColors.onSurfaceVariant.withValues(alpha: 0.3),
+                              : AppColors.onSurfaceVariant.withValues(
+                                  alpha: 0.3,
+                                ),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1117,7 +1083,7 @@ class _RadioOptionCard extends StatelessWidget {
                   BoxShadow(
                     color: AppColors.primaryFixed.withValues(alpha: 0.08),
                     blurRadius: 12,
-                  )
+                  ),
                 ]
               : null,
         ),
@@ -1148,7 +1114,9 @@ class _RadioOptionCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: isSelected ? Colors.white : AppColors.onSurfaceVariant,
+                      color: isSelected
+                          ? const Color.fromARGB(255, 0, 0, 0)
+                          : AppColors.onSurfaceVariant,
                     ),
                   ),
                   if (desc.isNotEmpty) ...[
@@ -1157,7 +1125,9 @@ class _RadioOptionCard extends StatelessWidget {
                       desc,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.onSurfaceVariant.withValues(alpha: 0.7),
+                        color: AppColors.onSurfaceVariant.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                   ],
@@ -1172,9 +1142,7 @@ class _RadioOptionCard extends StatelessWidget {
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: isSelected
-                    ? AppColors.primaryFixed
-                    : Colors.transparent,
+                color: isSelected ? AppColors.primaryFixed : Colors.transparent,
                 border: Border.all(
                   color: isSelected
                       ? AppColors.primaryFixed
@@ -1241,7 +1209,9 @@ class _GenderCard extends StatelessWidget {
             Icon(
               icon,
               size: 32,
-              color: isSelected ? AppColors.primaryFixed : AppColors.onSurfaceVariant,
+              color: isSelected
+                  ? AppColors.primaryFixed
+                  : AppColors.onSurfaceVariant,
             ),
             const SizedBox(height: 8),
             Text(

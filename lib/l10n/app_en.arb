@@ -546,5 +546,81 @@
         "type": "int"
       }
     }
-  }
+  },
+  "assignedWorkoutTitle": "Today's Workout",
+  "assignedCardMeta": "{ex} exercises · ~{min} min",
+  "@assignedCardMeta": {
+    "placeholders": {
+      "ex": {
+        "type": "int"
+      },
+      "min": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedSetProgress": "{done} of {total} sets done",
+  "@assignedSetProgress": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedRestSecs": "Rest {sec}s",
+  "@assignedRestSecs": {
+    "placeholders": {
+      "sec": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedLogSet": "Log Set",
+  "assignedContinue": "Continue Workout",
+  "assignedFinish": "Finish Workout",
+  "assignedDoneTitle": "Workout completed",
+  "assignedDoneBody": "Nice work — your coach can see this session now.",
+  "assignedNone": "No workout assigned today",
+  "assignedNotes": "Notes",
+  "assignedTarget": "{sets} sets × {reps} reps",
+  "@assignedTarget": {
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      }
+    }
+  },
+  "assignedTargetWeight": "{sets} sets × {reps} reps @ {weight} kg",
+  "@assignedTargetWeight": {
+    "placeholders": {
+      "sets": {
+        "type": "String"
+      },
+      "reps": {
+        "type": "String"
+      },
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "assignedErrorStart": "Couldn't start the workout — try again",
+  "assignedErrorSet": "Couldn't log the set — check your connection",
+  "assignedErrorFinish": "Couldn't finish the workout — try again",
+  "assignedEnterReps": "Enter the reps first",
+  "assignedSetsLogged": "{count} sets logged",
+  "@assignedSetsLogged": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "assignedDone": "Done"
 }

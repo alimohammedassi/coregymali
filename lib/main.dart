@@ -35,12 +35,12 @@ void main() async {
     anonKey: SupabaseConfig.supabaseAnonKey,
   );
 
-  // Liquid tab bar (bottom nav): preload the glass shader once — until it
-  // lands the bar falls back to blur, so this is fire-and-forget to keep
-  // cold start fast — and arm the shared controller that folds the bar
-  // into a pill while scrolling.
-  unawaited(LiquidGlass.load());
+  // Liquid tab bar (bottom nav): pin the OPAQUE material tier — the glass
+  // tier's backdrop blur + fragment shader cost real frames on mid-range
+  // devices (owner measured a regression) and opaque reads cleaner on the
+  // dark theme. Opaque needs no shader, so no LiquidGlass.load() either.
   LiquidTabBarController.shared.armGovernor();
+  LiquidTabBarController.shared.material = LiquidTabBarMaterial.opaque;
 
   runApp(
     ProviderScope(

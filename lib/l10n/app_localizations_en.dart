@@ -1287,4 +1287,75 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rankCardSub => 'Weekly leaderboard';
+
+  @override
+  String get assignedWorkoutTitle => 'Today\'s Workout';
+
+  @override
+  String assignedCardMeta(int ex, int min) {
+    return '$ex exercises · ~$min min';
+  }
+
+  @override
+  String assignedSetProgress(int done, int total) {
+    return '$done of $total sets done';
+  }
+
+  @override
+  String assignedRestSecs(int sec) {
+    return 'Rest ${sec}s';
+  }
+
+  @override
+  String get assignedLogSet => 'Log Set';
+
+  @override
+  String get assignedContinue => 'Continue Workout';
+
+  @override
+  String get assignedFinish => 'Finish Workout';
+
+  @override
+  String get assignedDoneTitle => 'Workout completed';
+
+  @override
+  String get assignedDoneBody =>
+      'Nice work — your coach can see this session now.';
+
+  @override
+  String get assignedNone => 'No workout assigned today';
+
+  @override
+  String get assignedNotes => 'Notes';
+
+  @override
+  String assignedTarget(String sets, String reps) {
+    return '$sets sets × $reps reps';
+  }
+
+  @override
+  String assignedTargetWeight(String sets, String reps, String weight) {
+    return '$sets sets × $reps reps @ $weight kg';
+  }
+
+  @override
+  String get assignedErrorStart => 'Couldn\'t start the workout — try again';
+
+  @override
+  String get assignedErrorSet =>
+      'Couldn\'t log the set — check your connection';
+
+  @override
+  String get assignedErrorFinish => 'Couldn\'t finish the workout — try again';
+
+  @override
+  String get assignedEnterReps => 'Enter the reps first';
+
+  @override
+  String assignedSetsLogged(int count) {
+    return '$count sets logged';
+  }
+
+  @override
+  String get assignedDone => 'Done';
 }

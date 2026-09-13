@@ -229,15 +229,6 @@ class _LoginScreenState extends State<LoginScreen>
       final res = await AuthService().signInWithGoogle();
       debugPrint("Google Sign-In successful. User ID: ${res.user?.id}");
       await profileProv.fetchProfile();
-      if (profileProv.needsRoleSelection) {
-        if (!mounted) return;
-        final role = await showDialog<String>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const _RoleSelectionDialog(),
-        );
-        if (role != null) await profileProv.setRole(role);
-      }
       if (!mounted) return;
       context._showSnack(
         isArabic ? 'تم تسجيل الدخول بواسطة Google!' : 'Signed in with Google!',
@@ -433,7 +424,6 @@ class _SignupScreenState extends State<SignupScreen>
   bool _confVisible = false;
   bool _agreed = false;
   bool _isLoading = false;
-  String _selectedRole = 'client';
 
   late AnimationController _entryController;
   late List<Animation<double>> _fades;
@@ -500,7 +490,9 @@ class _SignupScreenState extends State<SignupScreen>
         _emailCtrl.text.trim(),
         _passCtrl.text,
         _nameCtrl.text.trim(),
-        role: _selectedRole,
+        // Accounts created in the app are always customers. Coach accounts
+        // come from the Core Dashboard website only.
+        role: 'client',
       );
       if (res.user != null) {
         if (!mounted) return;
@@ -509,7 +501,7 @@ class _SignupScreenState extends State<SignupScreen>
             'id': res.user!.id,
             'name': _nameCtrl.text.trim(),
             'email': _emailCtrl.text.trim(),
-            'role': _selectedRole,
+            'role': 'client',
           }, onConflict: 'id');
         } catch (_) {}
         context._showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
@@ -535,15 +527,6 @@ class _SignupScreenState extends State<SignupScreen>
       await AuthService().signInWithGoogle();
       final profileProv = context.read<ProfileProvider>();
       await profileProv.fetchProfile();
-      if (profileProv.needsRoleSelection) {
-        if (!mounted) return;
-        final role = await showDialog<String>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => const _RoleSelectionDialog(),
-        );
-        if (role != null) await profileProv.setRole(role);
-      }
       if (!mounted) return;
       _navigateAfterAuth(context, profileProv);
     } catch (e) {
@@ -678,42 +661,6 @@ class _SignupScreenState extends State<SignupScreen>
                           size: 18,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _a(
-              3,
-              _ElevatedCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FieldLabel(l10n.joiningAs),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _RolePill(
-                            icon: Icons.fitness_center_rounded,
-                            label: l10n.athleteRole,
-                            selected: _selectedRole == 'client',
-                            onTap: () =>
-                                setState(() => _selectedRole = 'client'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _RolePill(
-                            icon: Icons.sports_rounded,
-                            label: l10n.coachRole,
-                            selected: _selectedRole == 'coach',
-                            onTap: () =>
-                                setState(() => _selectedRole = 'coach'),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -882,11 +829,6 @@ class _BrandMark extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
 
 class _AuthModeSwitch extends StatelessWidget {
   final bool isLogin;
@@ -1372,62 +1314,9 @@ class SocialButton extends StatelessWidget {
   }
 }
 
-class _RolePill extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _RolePill({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primaryFixed.withValues(alpha: 0.16)
-              : AppColors.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected
-                ? AppColors.primaryFixed
-                : AppColors.outline.withValues(alpha: 0.18),
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: selected
-                  ? AppColors.primaryFixed
-                  : AppColors.onSurfaceVariant,
-              size: 22,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: AuthAppText.labelMd.copyWith(
-                color: selected
-                    ? AppColors.primaryFixed
-                    : AppColors.onSurfaceVariant,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// Role-selection UI was removed: accounts created in the app are always
+// customers. Coaches sign up on the Core Dashboard website (SupabaseConfig
+// .dashboardUrl, linked from the home-screen banner).
 
 class _TermsRow extends StatelessWidget {
   final bool value;
@@ -1460,7 +1349,7 @@ class _TermsRow extends StatelessWidget {
           child: RichText(
             text: TextSpan(
               style: AuthAppText.bodySm.copyWith(
-                color: AppColors.onSurfaceVariant,
+                color: AppColors.darkTextPrimary,
                 fontSize: 12,
               ),
               children: [
@@ -1551,122 +1440,3 @@ extension on BuildContext {
   }
 }
 
-class _RoleSelectionDialog extends StatelessWidget {
-  const _RoleSelectionDialog();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppColors.glass2,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.glassBorder),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryActionGradient,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.person_add_rounded,
-                  color: AppColors.onPrimary,
-                  size: 28,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'CoreGym',
-                style: AuthAppText.headlineSm.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                l10n.joiningAs,
-                textAlign: TextAlign.center,
-                style: AuthAppText.labelMd.copyWith(
-                  color: AppColors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 28),
-              _RoleOption(
-                icon: Icons.fitness_center_rounded,
-                title: l10n.athleteRole,
-                onTap: () => Navigator.pop(context, 'client'),
-              ),
-              const SizedBox(height: 14),
-              _RoleOption(
-                icon: Icons.sports_rounded,
-                title: l10n.coachRole,
-                onTap: () => Navigator.pop(context, 'coach'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _RoleOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-  const _RoleOption({
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.glass1,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.glassBorder),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.primaryFixed),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                title,
-                style: AuthAppText.labelLg.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: AppColors.outline,
-              size: 14,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

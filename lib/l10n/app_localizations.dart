@@ -2503,6 +2503,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Weekly leaderboard'**
   String get rankCardSub;
+
+  /// No description provided for @assignedWorkoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Workout'**
+  String get assignedWorkoutTitle;
+
+  /// No description provided for @assignedCardMeta.
+  ///
+  /// In en, this message translates to:
+  /// **'{ex} exercises · ~{min} min'**
+  String assignedCardMeta(int ex, int min);
+
+  /// No description provided for @assignedSetProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} sets done'**
+  String assignedSetProgress(int done, int total);
+
+  /// No description provided for @assignedRestSecs.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest {sec}s'**
+  String assignedRestSecs(int sec);
+
+  /// No description provided for @assignedLogSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Set'**
+  String get assignedLogSet;
+
+  /// No description provided for @assignedContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Workout'**
+  String get assignedContinue;
+
+  /// No description provided for @assignedFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Workout'**
+  String get assignedFinish;
+
+  /// No description provided for @assignedDoneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout completed'**
+  String get assignedDoneTitle;
+
+  /// No description provided for @assignedDoneBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Nice work — your coach can see this session now.'**
+  String get assignedDoneBody;
+
+  /// No description provided for @assignedNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No workout assigned today'**
+  String get assignedNone;
+
+  /// No description provided for @assignedNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get assignedNotes;
+
+  /// No description provided for @assignedTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} sets × {reps} reps'**
+  String assignedTarget(String sets, String reps);
+
+  /// No description provided for @assignedTargetWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'{sets} sets × {reps} reps @ {weight} kg'**
+  String assignedTargetWeight(String sets, String reps, String weight);
+
+  /// No description provided for @assignedErrorStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t start the workout — try again'**
+  String get assignedErrorStart;
+
+  /// No description provided for @assignedErrorSet.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t log the set — check your connection'**
+  String get assignedErrorSet;
+
+  /// No description provided for @assignedErrorFinish.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t finish the workout — try again'**
+  String get assignedErrorFinish;
+
+  /// No description provided for @assignedEnterReps.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the reps first'**
+  String get assignedEnterReps;
+
+  /// No description provided for @assignedSetsLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sets logged'**
+  String assignedSetsLogged(int count);
+
+  /// No description provided for @assignedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get assignedDone;
 }
 
 class _AppLocalizationsDelegate

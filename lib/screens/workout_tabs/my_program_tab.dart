@@ -20,6 +20,11 @@ class _MyProgramTabState extends State<MyProgramTab>
   bool _isLoading = true;
   Map<String, dynamic>? _activeProgram;
 
+  /// Weekday indices (Mon=0..Sun=6) the user chose for this program's
+  /// sessions. Persisted on `user_active_program.training_days`
+  /// ("0,2,4"); empty falls back to the legacy even distribution.
+  Set<int> _trainingDays = {};
+
   late AnimationController _heroController;
   late Animation<double> _heroFade;
   late Animation<Offset> _heroSlide;
@@ -62,6 +67,7 @@ class _MyProgramTabState extends State<MyProgramTab>
       if (mounted) {
         setState(() {
           _activeProgram = data;
+          _initTrainingDays();
           _isLoading = false;
         });
         if (data != null) _heroController.forward();
@@ -72,6 +78,28 @@ class _MyProgramTabState extends State<MyProgramTab>
     } catch (e) {
       debugPrint('Error loading active program: $e');
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  /// Seed the chosen training days: saved selection first, otherwise the
+  /// legacy even distribution of the program's days_per_week.
+  void _initTrainingDays() {
+    final progData = _activeProgram?['training_programs'] ?? const {};
+    final int perWeek = ((progData['days_per_week'] ?? 4) as num).toInt();
+    final saved = _activeProgram?['training_days'] as String?;
+    if (saved != null && saved.trim().isNotEmpty) {
+      _trainingDays = saved
+          .split(',')
+          .map((e) => int.tryParse(e.trim()))
+          .whereType<int>()
+          .where((v) => v >= 0 && v <= 6)
+          .toSet();
+    }
+    if (_trainingDays.isEmpty) {
+      _trainingDays = {
+        for (var i = 0; i < perWeek.clamp(1, 7); i++)
+          (i * 7 / perWeek).floor()
+      };
     }
   }
 
@@ -513,77 +541,134 @@ class _MyProgramTabState extends State<MyProgramTab>
   Widget _buildWeekRow({required int currentDay, required int daysPerWeek}) {
     final days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-    // Derive the training days from the program's days_per_week instead of
-    // hardcoding Mon/Wed/Fri: distribute the sessions evenly across the week.
-    final workoutDays = <int>{
-      for (var i = 0; i < daysPerWeek.clamp(1, 7); i++)
-        (i * 7 / daysPerWeek).floor()
-    };
+    // The USER's chosen days (persisted on user_active_program.training_days).
+    final workoutDays = _trainingDays;
 
-    return Row(
-      children: List.generate(7, (i) {
-        final isWorkout = workoutDays.contains(i);
-        // Monday-first index of today (DateTime.weekday: Mon=1..Sun=7)
-        final isToday = i == DateTime.now().weekday - 1;
-        final isDone = i < currentDay - 1 && !isToday;
+    return Column(
+      children: [
+        Row(
+          children: List.generate(7, (i) {
+            final isWorkout = workoutDays.contains(i);
+            // Monday-first index of today (DateTime.weekday: Mon=1..Sun=7)
+            final isToday = i == DateTime.now().weekday - 1;
+            final isDone = i < currentDay - 1 && !isToday;
 
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: Column(
-              children: [
-                Container(
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: isToday
-                        ? AppColors.primary
-                        : isDone
-                            ? AppColors.primary.withValues(alpha: .12)
-                            : isWorkout
-                                ? AppColors.surfaceContainerHigh
-                                : AppColors.background,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isWorkout && !isToday && !isDone
-                          ? AppColors.borderSubtle
-                          : Colors.transparent,
-                    ),
-                  ),
-                  child: Center(
-                    child: isDone
-                        ? const Icon(Icons.check_rounded,
-                            color: AppColors.greenAccent, size: 16)
-                        : isWorkout
-                            ? Icon(
-                                Icons.fitness_center_rounded,
-                                size: 14,
-                                color: isToday
-                                    ? Colors.white
-                                    : AppColors.textSecondary,
-                              )
-                            : Text('—',
-                                style: TextStyle(
-                                    color: AppColors.outlineVariant,
-                                    fontSize: 12)),
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: GestureDetector(
+                  // Owner request: days are no longer forced — tap to move a
+                  // session to another weekday; saved automatically.
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _toggleTrainingDay(i, daysPerWeek),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: isToday
+                              ? AppColors.primary
+                              : isDone
+                                  ? AppColors.primary.withValues(alpha: .12)
+                                  : isWorkout
+                                      ? AppColors.surfaceContainerHigh
+                                      : AppColors.background,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isWorkout && !isToday && !isDone
+                                ? AppColors.borderSubtle
+                                : Colors.transparent,
+                          ),
+                        ),
+                        child: Center(
+                          child: isDone
+                              ? const Icon(Icons.check_rounded,
+                                  color: AppColors.greenAccent, size: 16)
+                              : isWorkout
+                                  ? Icon(
+                                      Icons.fitness_center_rounded,
+                                      size: 14,
+                                      color: isToday
+                                          ? Colors.white
+                                          : AppColors.textSecondary,
+                                    )
+                                  : Text('—',
+                                      style: TextStyle(
+                                          color: AppColors.outlineVariant,
+                                          fontSize: 12)),
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        days[i],
+                        style: TextStyle(
+                          color: isToday
+                              ? AppColors.primary
+                              : AppColors.textMuted,
+                          fontSize: 11,
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  days[i],
-                  style: TextStyle(
-                    color: isToday
-                        ? AppColors.primary
-                        : AppColors.textMuted,
-                    fontSize: 11,
-                    fontWeight:
-                        isToday ? FontWeight.w700 : FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Tap a day to move your session — saved automatically',
+          style: TextStyle(color: AppColors.textMuted, fontSize: 10.5),
+        ),
+      ],
+    );
+  }
+
+  /// Toggle one weekday on/off, respecting the program's sessions/week cap
+  /// (can't train more days than the program prescribes) and keeping at
+  /// least one day. Persists immediately.
+  Future<void> _toggleTrainingDay(int index, int daysPerWeek) async {
+    HapticFeedback.selectionClick();
+    final cap = daysPerWeek.clamp(1, 7);
+    if (_trainingDays.contains(index)) {
+      if (_trainingDays.length <= 1) {
+        _snack('Keep at least one training day');
+        return;
+      }
+      setState(() => _trainingDays.remove(index));
+    } else {
+      if (_trainingDays.length >= cap) {
+        _snack('This program trains $cap days a week — unselect one first');
+        return;
+      }
+      setState(() => _trainingDays.add(index));
+    }
+    await _saveTrainingDays();
+  }
+
+  Future<void> _saveTrainingDays() async {
+    if (currentUserId == null) return;
+    final ids = (_trainingDays.toList()..sort()).join(',');
+    try {
+      await supabase.from('user_active_program').update({
+        'training_days': ids,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('user_id', currentUserId!);
+    } on PostgrestException catch (e) {
+      debugPrint('DB Error saving training days [${e.code}]: ${e.message}');
+      if (mounted) {
+        _snack('Couldn\'t save your days — check your connection');
+      }
+    } catch (e) {
+      debugPrint('Error saving training days: $e');
+    }
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 

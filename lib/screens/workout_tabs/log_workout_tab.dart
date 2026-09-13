@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_semantic_colors.dart';
 import '../../services/supabase_client.dart';
+import '../../services/workout_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -612,7 +613,12 @@ class _ExerciseDetailScreenState extends State<_ExerciseDetailScreen>
           .from('workout_sessions')
           .insert({
             'user_id': currentUserId,
-            'muscle_group': widget.defaultMuscleGroup,
+            // DB CHECK only accepts lowercase snake_case ('chest',
+            // 'full_body', …) — the filter chips carry display labels
+            // ('Chest', 'Full Body', …).
+            'muscle_group': WorkoutService.normalizeMuscleGroup(
+              widget.defaultMuscleGroup,
+            ),
             'session_name': '${widget.defaultMuscleGroup} Workout',
             'session_date': today,
             'started_at': startTime,

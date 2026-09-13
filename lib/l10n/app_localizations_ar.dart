@@ -1273,4 +1273,73 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rankCardSub => 'المتصدرون الأسبوعي';
+
+  @override
+  String get assignedWorkoutTitle => 'تدريب اليوم';
+
+  @override
+  String assignedCardMeta(int ex, int min) {
+    return '$ex تمارين · حوالي $min دقيقة';
+  }
+
+  @override
+  String assignedSetProgress(int done, int total) {
+    return 'تم إنجاز $done من $total مجموعة';
+  }
+
+  @override
+  String assignedRestSecs(int sec) {
+    return 'راحة $sec ثانية';
+  }
+
+  @override
+  String get assignedLogSet => 'سجّل المجموعة';
+
+  @override
+  String get assignedContinue => 'متابعة التدريب';
+
+  @override
+  String get assignedFinish => 'إنهاء التدريب';
+
+  @override
+  String get assignedDoneTitle => 'تم إكمال التدريب';
+
+  @override
+  String get assignedDoneBody => 'أحسنت — مدربك هيشوف هذا التدريب الآن.';
+
+  @override
+  String get assignedNone => 'لا يوجد تدريب معيّن اليوم';
+
+  @override
+  String get assignedNotes => 'ملاحظات';
+
+  @override
+  String assignedTarget(String sets, String reps) {
+    return '$sets مجموعات × $reps عدات';
+  }
+
+  @override
+  String assignedTargetWeight(String sets, String reps, String weight) {
+    return '$sets مجموعات × $reps عدات @ $weight كجم';
+  }
+
+  @override
+  String get assignedErrorStart => 'تعذّر بدء التدريب — حاول مجددًا';
+
+  @override
+  String get assignedErrorSet => 'تعذّر تسجيل المجموعة — تحقّق من الاتصال';
+
+  @override
+  String get assignedErrorFinish => 'تعذّر إنهاء التدريب — حاول مجددًا';
+
+  @override
+  String get assignedEnterReps => 'اكتب عدد العدات الأول';
+
+  @override
+  String assignedSetsLogged(int count) {
+    return 'تم تسجيل $count مجموعة';
+  }
+
+  @override
+  String get assignedDone => 'تم';
 }

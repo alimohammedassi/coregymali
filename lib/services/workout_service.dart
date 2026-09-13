@@ -4,6 +4,15 @@ import 'supabase_client.dart';
 
 class WorkoutService {
   final StreakService _streakService = StreakService();
+
+  /// The DB guards `workout_sessions.muscle_group` with a CHECK constraint
+  /// that only accepts lowercase snake_case values ('chest', 'arms', …,
+  /// 'full_body'), while the UI muscle lists display capitalized labels
+  /// ('Chest', 'Full Body', …). Normalize at every write or the insert
+  /// fails with `workout_sessions_muscle_group_check`.
+  static String normalizeMuscleGroup(String raw) =>
+      raw.trim().toLowerCase().replaceAll(' ', '_');
+
   // Start a new session
   Future<String?> startSession({
     required String muscleGroup,
@@ -13,7 +22,7 @@ class WorkoutService {
     try {
       final row = await supabase.from('workout_sessions').insert({
         'user_id': currentUserId,
-        'muscle_group': muscleGroup,
+        'muscle_group': normalizeMuscleGroup(muscleGroup),
         'session_name': sessionName ?? '$muscleGroup workout',
         'session_date': DateTime.now().toIso8601String().substring(0, 10),
       }).select().single();

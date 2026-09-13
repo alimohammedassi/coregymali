@@ -2,7 +2,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'gender.dart';
+import 'login_sign_up.dart';
 import 'l10n/app_localizations.dart';
 import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
@@ -224,7 +224,7 @@ class _SplashScreenState extends State<SplashScreen>
                 right: isRtl ? w - markCx + markR + gap : null,
                 child: Center(
                   child: Semantics(
-                    label: isArabic ? 'جارٍ تحميل كور جيم' : 'Loading CoreGym',
+                    label: isArabic ? 'جارٍ تحميل كور ' : 'Loading Core',
                     liveRegion: true,
                     textDirection: isArabic
                         ? TextDirection.rtl
@@ -717,7 +717,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
-            const GenderSelectionScreen(),
+            const AuthWrapper(),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           if (MediaQuery.disableAnimationsOf(context)) return child;
           return SlideTransition(

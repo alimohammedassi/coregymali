@@ -12,5 +12,10 @@ class SupabaseConfig {
   static const String oneSignalAppId =
       'fdc71b2a-afae-4c45-ac44-238d2aeed089';
 
+  /// Core Dashboard website — the ONLY path to a coach account.
+  /// Customers are created in-app; coaches sign up on the website.
+  /// TODO: replace with the production URL before release.
+  static const String dashboardUrl = 'http://localhost:3000/signup';
+
   static SupabaseClient get client => Supabase.instance.client;
 }

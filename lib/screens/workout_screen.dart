@@ -5,7 +5,6 @@ import '../theme/app_text.dart';
 import 'workout_tabs/my_program_tab.dart';
 import 'workout_tabs/programs_library_tab.dart';
 import 'workout_tabs/log_workout_tab.dart';
-import 'fitness_coach_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   const WorkoutScreen({super.key});
@@ -20,7 +19,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    // Three tabs — the old "Coach AI / Smart Trainer" tab was removed
+    // (owner call: redundant, no real use).
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -55,7 +56,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
             Tab(text: 'My Program\n(برنامجي)'),
             Tab(text: 'Library\n(مكتبة)'),
             Tab(text: 'Log Workout\n(سجّل)'),
-            Tab(text: 'Coach AI\n(مدرب)'),
           ],
         ),
       ),
@@ -68,7 +68,6 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
                 MyProgramTab(),
                 ProgramsLibraryTab(),
                 LogWorkoutTab(),
-                FitnessCoachScreen(),
               ],
             ),
           ),

@@ -1424,7 +1424,8 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  // ── Coach CTA — premium in-brand moment using the shared action gradient ──
+  // ── Coach CTA — quiet, theme-aware card. No gradient, no emoji: surface
+  // card in both modes, volt-family icon badge, AA-safe text. ──
   Widget _buildCoachCta() => Semantics(
     button: true,
     label: 'Become a Coach',
@@ -1439,55 +1440,66 @@ class _ProfilePageState extends State<ProfilePage>
       child: Container(
         constraints: const BoxConstraints(minHeight: 44),
         decoration: BoxDecoration(
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          gradient: AppColors.primaryActionGradient,
+          border: Border.all(color: AppColors.borderSubtle),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withValues(alpha: .30),
-              blurRadius: 14,
-              offset: const Offset(0, 5),
+              color: AppColors.cardShadow,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 20,
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
         child: Row(
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .18),
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primaryFixed.withValues(alpha: .14),
+                borderRadius: BorderRadius.circular(13),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.workspace_premium_rounded,
-                color: Colors.white,
+                color: AppColors.onPrimaryContainer,
                 size: 24,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'BECOME A COACH',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2.0,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'BECOME A COACH',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.4,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: AppColors.accent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 3),
                   Text(
                     'Unlock coaching tools & clients',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withValues(alpha: .85),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -1495,8 +1507,8 @@ class _ProfilePageState extends State<ProfilePage>
             ),
             Icon(
               Icons.arrow_forward_ios_rounded,
-              color: Colors.white.withValues(alpha: .9),
               size: 14,
+              color: AppColors.textMuted,
             ),
           ],
         ),

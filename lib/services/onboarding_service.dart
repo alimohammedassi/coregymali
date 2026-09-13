@@ -21,7 +21,11 @@ class OnboardingService {
   }
 
   Future<void> saveOnboarding({
-    required String name,
+    // Optional: the profile name is captured once at sign-up (auth form or
+    // the Google/Apple account). Only overwrite it when onboarding actually
+    // collected one — the old `name.isEmpty ? null : name` write used to
+    // NULL the profile name for everyone who skipped that field.
+    String? name,
     required int age,
     required String gender,
     required double heightCm,
@@ -48,14 +52,19 @@ class OnboardingService {
       }, onConflict: 'user_id');
 
       // Also update profiles + create user_goals
-      await supabase.from('profiles').update({
-        'name': name.isEmpty ? null : name,
+      final profileUpdate = <String, dynamic>{
         'age': age,
         'gender': gender,
         'height_cm': heightCm,
         'weight_kg': weightKg,
         'fitness_goal': goal,
-      }).eq('id', currentUserId!);
+      };
+      final trimmedName = name?.trim() ?? '';
+      if (trimmedName.isNotEmpty) profileUpdate['name'] = trimmedName;
+      await supabase
+          .from('profiles')
+          .update(profileUpdate)
+          .eq('id', currentUserId!);
 
       // Calculate TDEE-based calorie goal
       // Using Mifflin-St Jeor equation (more accurate modern standard)

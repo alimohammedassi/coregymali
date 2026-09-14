@@ -1,0 +1,3 @@
+# Minimal Supabase CLI config — added for Edge Function deploys
+# (functions deploy needs a config root; there was none in the repo).
+project_id = "mkrjvrnysuvtokqkyoll"

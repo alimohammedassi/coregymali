@@ -583,16 +583,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingData(
       title: l10n.onb2Title,
       description: l10n.onb2Desc,
-      imagePath: 'assets/images/unsplash_sHfo3WOgGTU.png',
-      placeholderText: 'Pull-up Exercise',
-      icon: Icons.person,
+      imagePath: 'assets/images/onboarding_meal_bowls.jpg',
+      placeholderText: 'AI meal tracking',
+      icon: Icons.restaurant_rounded,
     ),
     OnboardingData(
       title: l10n.onb3Title,
       description: l10n.onb3Desc,
-      imagePath: 'assets/images/unsplash_Yuv-iwByVRQ.png',
-      placeholderText: 'Weight Training',
-      icon: Icons.trending_up,
+      imagePath: 'assets/images/onboarding_fresh_salad.jpg',
+      placeholderText: 'Personalized nutrition goals',
+      icon: Icons.auto_awesome_rounded,
     ),
   ];
 

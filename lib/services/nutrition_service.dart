@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/additional_nutrients.dart';
+import '../models/food_filter.dart';
 import '../models/food_scan_result.dart';
 import '../models/voice_food_log_result.dart';
 import 'streak_service.dart';
@@ -117,7 +118,14 @@ class NutritionService {
   }
 
   // Search foods
-  Future<List<Map<String, dynamic>>> searchFoods(String query, {String category = 'all'}) async {
+  //
+  // [filter] combines with the search term using AND logic server-side:
+  // category (.eq), calorie range (.gte/.lte) and protein range (.gte/.lte)
+  // all constrain the same query.
+  Future<List<Map<String, dynamic>>> searchFoods(
+    String query, {
+    FoodFilter filter = const FoodFilter(),
+  }) async {
     List<Map<String, dynamic>> results = [];
     try {
       // Try searching both name and name_ar columns
@@ -125,12 +133,9 @@ class NutritionService {
           .from('foods')
           .select()
           .or('name.ilike.%$query%,name_ar.ilike.%$query%');
+      dbQuery = _applyFilter(dbQuery, filter);
 
-      if (category.toLowerCase() != 'all') {
-        dbQuery = dbQuery.eq('category', category);
-      }
-
-      final dbResults = await dbQuery.order('name').limit(40);
+      final dbResults = await dbQuery.order('name').limit(100);
       results = rankFoods(List<Map<String, dynamic>>.from(dbResults), query);
       return results;
     } on PostgrestException catch (e) {
@@ -141,10 +146,8 @@ class NutritionService {
             .from('foods')
             .select()
             .ilike('name', '%$query%');
-        if (category.toLowerCase() != 'all') {
-          dbQuery = dbQuery.eq('category', category);
-        }
-        final dbResults = await dbQuery.order('name').limit(40);
+        dbQuery = _applyFilter(dbQuery, filter);
+        final dbResults = await dbQuery.order('name').limit(100);
         results = rankFoods(List<Map<String, dynamic>>.from(dbResults), query);
         return results;
       } catch (fallbackError) {
@@ -157,19 +160,63 @@ class NutritionService {
     }
   }
 
+  /// Adds [filter]'s category + macro-range constraints to an already-started
+  /// `foods` query. Category and both macro dimensions AND together; a null
+  /// bound is open-ended (no constraint emitted).
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> _applyFilter(
+    PostgrestFilterBuilder<List<Map<String, dynamic>>> dbQuery,
+    FoodFilter filter,
+  ) {
+    if (filter.category.toLowerCase() != 'all') {
+      dbQuery = dbQuery.eq('category', filter.category);
+    }
+    if (filter.minCalories != null) {
+      dbQuery = dbQuery.gte('calories', filter.minCalories!);
+    }
+    if (filter.maxCalories != null) {
+      dbQuery = dbQuery.lte('calories', filter.maxCalories!);
+    }
+    if (filter.minProtein != null) {
+      dbQuery = dbQuery.gte('protein_g', filter.minProtein!);
+    }
+    if (filter.maxProtein != null) {
+      dbQuery = dbQuery.lte('protein_g', filter.maxProtein!);
+    }
+    return dbQuery;
+  }
+
   /// Browse the seeded `foods` table without a search term (the "popular /
   /// browse" list shown by food pickers before the user types anything).
   /// Single source of truth for both FoodLoggingModal and AddFoodSheet.
-  Future<List<Map<String, dynamic>>> getFoods({String category = 'all'}) async {
+  Future<List<Map<String, dynamic>>> getFoods({
+    FoodFilter filter = const FoodFilter(),
+  }) async {
     try {
       var dbQuery = supabase.from('foods').select();
-      if (category.toLowerCase() != 'all') {
-        dbQuery = dbQuery.eq('category', category);
-      }
-      final dbResults = await dbQuery.order('name').limit(40);
+      dbQuery = _applyFilter(dbQuery, filter);
+      final dbResults = await dbQuery.order('name').limit(200);
       return List<Map<String, dynamic>>.from(dbResults);
     } catch (e) {
       debugPrint('Error loading foods: $e');
+      return [];
+    }
+  }
+
+  /// Distinct category values present in the catalog, so the filter chips
+  /// always match what can actually be returned (new seed categories show up
+  /// without a UI change). Empty list on failure — callers fall back to the
+  /// static vocabulary.
+  Future<List<String>> getFoodCategories() async {
+    try {
+      final rows = await supabase.from('foods').select('category').limit(2000);
+      final categories = <String>{};
+      for (final row in rows) {
+        final c = (row['category'] ?? '').toString().trim();
+        if (c.isNotEmpty) categories.add(c);
+      }
+      return categories.toList()..sort();
+    } catch (e) {
+      debugPrint('Error loading food categories: $e');
       return [];
     }
   }

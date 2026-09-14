@@ -1168,18 +1168,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.';
 
   @override
-  String get onb2Title => 'Professional\ntraining guidance';
+  String get onb2Title => 'Snap your meal\nAI tracks it';
 
   @override
   String get onb2Desc =>
-      'Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.';
+      'Point your camera at any plate — AI reads it and logs calories, protein, carbs and fat in seconds. You can also log by voice or text.';
 
   @override
-  String get onb3Title => 'Achieve your\nfitness goals';
+  String get onb3Title => 'Nutrition built\naround you';
 
   @override
   String get onb3Desc =>
-      'Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.';
+      'Daily calorie and macro targets calculated for your body, hydration reminders on schedule, and coaches who adapt your plan as you progress.';
 
   @override
   String get onbSelectYour => 'SELECT YOUR';
@@ -1358,4 +1358,145 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assignedDone => 'Done';
+
+  @override
+  String foodTargetingMeal(String meal) {
+    return 'Targeting: $meal';
+  }
+
+  @override
+  String get foodPopularFoods => 'POPULAR FOODS';
+
+  @override
+  String foodResultsFound(int count) {
+    return '$count results found';
+  }
+
+  @override
+  String get foodFilters => 'Filters';
+
+  @override
+  String get foodFilterCalories => 'Calories (kcal)';
+
+  @override
+  String get foodFilterProtein => 'Protein (g)';
+
+  @override
+  String get foodFilterAny => 'Any';
+
+  @override
+  String get foodFilterKcal => 'kcal';
+
+  @override
+  String get foodFilterGrams => 'g';
+
+  @override
+  String get foodApplyFilters => 'Apply';
+
+  @override
+  String get foodResetFilters => 'Reset filters';
+
+  @override
+  String get foodNoResultsTitle => 'No foods match your filters';
+
+  @override
+  String get foodNoResultsSubtitle =>
+      'Try widening the ranges or reset the filters';
+
+  @override
+  String get foodNoFoodsTitle => 'No foods found';
+
+  @override
+  String get foodNoFoodsSubtitle => 'Try another spelling or search keyword';
+
+  @override
+  String get catArabic => 'Arabic';
+
+  @override
+  String get catProtein => 'Protein';
+
+  @override
+  String get catCarbs => 'Carbs';
+
+  @override
+  String get catVegetables => 'Veggies';
+
+  @override
+  String get catFruits => 'Fruits';
+
+  @override
+  String get catDairy => 'Dairy';
+
+  @override
+  String get catFats => 'Fats';
+
+  @override
+  String get catFastfood => 'Fast Food';
+
+  @override
+  String get catDrinks => 'Drinks';
+
+  @override
+  String get catSnacks => 'Snacks';
+
+  @override
+  String get catDesserts => 'Desserts';
+
+  @override
+  String get catStreetFood => 'Street Food';
+
+  @override
+  String get catBurgers => 'Burgers';
+
+  @override
+  String get catPizza => 'Pizza';
+
+  @override
+  String get catPasta => 'Pasta';
+
+  @override
+  String get catSandwiches => 'Sandwiches';
+
+  @override
+  String get catSushi => 'Sushi';
+
+  @override
+  String get catFriedChicken => 'Fried Chicken';
+
+  @override
+  String get catBreakfast => 'Breakfast';
+
+  @override
+  String get catOther => 'Other';
+
+  @override
+  String get foodLogSaveError =>
+      '❌ An error occurred while saving — check your internet connection';
+
+  @override
+  String get foodLogPer100g => 'per 100g';
+
+  @override
+  String get foodLogCalories => 'Calories';
+
+  @override
+  String get foodLogProtein => 'Protein';
+
+  @override
+  String get foodLogCarbs => 'Carbs';
+
+  @override
+  String get foodLogFat => 'Fat';
+
+  @override
+  String get foodLogQuantity => 'Quantity';
+
+  @override
+  String get foodLogAssignMeal => 'Assign to meal';
+
+  @override
+  String get foodLogLogged => 'Logged!';
+
+  @override
+  String get foodLogConfirm => 'Log Food';
 }

@@ -2285,25 +2285,25 @@ abstract class AppLocalizations {
   /// No description provided for @onb2Title.
   ///
   /// In en, this message translates to:
-  /// **'Professional\ntraining guidance'**
+  /// **'Snap your meal\nAI tracks it'**
   String get onb2Title;
 
   /// No description provided for @onb2Desc.
   ///
   /// In en, this message translates to:
-  /// **'Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.'**
+  /// **'Point your camera at any plate — AI reads it and logs calories, protein, carbs and fat in seconds. You can also log by voice or text.'**
   String get onb2Desc;
 
   /// No description provided for @onb3Title.
   ///
   /// In en, this message translates to:
-  /// **'Achieve your\nfitness goals'**
+  /// **'Nutrition built\naround you'**
   String get onb3Title;
 
   /// No description provided for @onb3Desc.
   ///
   /// In en, this message translates to:
-  /// **'Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.'**
+  /// **'Daily calorie and macro targets calculated for your body, hydration reminders on schedule, and coaches who adapt your plan as you progress.'**
   String get onb3Desc;
 
   /// No description provided for @onbSelectYour.
@@ -2617,6 +2617,276 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get assignedDone;
+
+  /// No description provided for @foodTargetingMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Targeting: {meal}'**
+  String foodTargetingMeal(String meal);
+
+  /// No description provided for @foodPopularFoods.
+  ///
+  /// In en, this message translates to:
+  /// **'POPULAR FOODS'**
+  String get foodPopularFoods;
+
+  /// No description provided for @foodResultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results found'**
+  String foodResultsFound(int count);
+
+  /// No description provided for @foodFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get foodFilters;
+
+  /// No description provided for @foodFilterCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories (kcal)'**
+  String get foodFilterCalories;
+
+  /// No description provided for @foodFilterProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein (g)'**
+  String get foodFilterProtein;
+
+  /// No description provided for @foodFilterAny.
+  ///
+  /// In en, this message translates to:
+  /// **'Any'**
+  String get foodFilterAny;
+
+  /// No description provided for @foodFilterKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal'**
+  String get foodFilterKcal;
+
+  /// No description provided for @foodFilterGrams.
+  ///
+  /// In en, this message translates to:
+  /// **'g'**
+  String get foodFilterGrams;
+
+  /// No description provided for @foodApplyFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get foodApplyFilters;
+
+  /// No description provided for @foodResetFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset filters'**
+  String get foodResetFilters;
+
+  /// No description provided for @foodNoResultsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No foods match your filters'**
+  String get foodNoResultsTitle;
+
+  /// No description provided for @foodNoResultsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try widening the ranges or reset the filters'**
+  String get foodNoResultsSubtitle;
+
+  /// No description provided for @foodNoFoodsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No foods found'**
+  String get foodNoFoodsTitle;
+
+  /// No description provided for @foodNoFoodsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Try another spelling or search keyword'**
+  String get foodNoFoodsSubtitle;
+
+  /// No description provided for @catArabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get catArabic;
+
+  /// No description provided for @catProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein'**
+  String get catProtein;
+
+  /// No description provided for @catCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbs'**
+  String get catCarbs;
+
+  /// No description provided for @catVegetables.
+  ///
+  /// In en, this message translates to:
+  /// **'Veggies'**
+  String get catVegetables;
+
+  /// No description provided for @catFruits.
+  ///
+  /// In en, this message translates to:
+  /// **'Fruits'**
+  String get catFruits;
+
+  /// No description provided for @catDairy.
+  ///
+  /// In en, this message translates to:
+  /// **'Dairy'**
+  String get catDairy;
+
+  /// No description provided for @catFats.
+  ///
+  /// In en, this message translates to:
+  /// **'Fats'**
+  String get catFats;
+
+  /// No description provided for @catFastfood.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast Food'**
+  String get catFastfood;
+
+  /// No description provided for @catDrinks.
+  ///
+  /// In en, this message translates to:
+  /// **'Drinks'**
+  String get catDrinks;
+
+  /// No description provided for @catSnacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Snacks'**
+  String get catSnacks;
+
+  /// No description provided for @catDesserts.
+  ///
+  /// In en, this message translates to:
+  /// **'Desserts'**
+  String get catDesserts;
+
+  /// No description provided for @catStreetFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Street Food'**
+  String get catStreetFood;
+
+  /// No description provided for @catBurgers.
+  ///
+  /// In en, this message translates to:
+  /// **'Burgers'**
+  String get catBurgers;
+
+  /// No description provided for @catPizza.
+  ///
+  /// In en, this message translates to:
+  /// **'Pizza'**
+  String get catPizza;
+
+  /// No description provided for @catPasta.
+  ///
+  /// In en, this message translates to:
+  /// **'Pasta'**
+  String get catPasta;
+
+  /// No description provided for @catSandwiches.
+  ///
+  /// In en, this message translates to:
+  /// **'Sandwiches'**
+  String get catSandwiches;
+
+  /// No description provided for @catSushi.
+  ///
+  /// In en, this message translates to:
+  /// **'Sushi'**
+  String get catSushi;
+
+  /// No description provided for @catFriedChicken.
+  ///
+  /// In en, this message translates to:
+  /// **'Fried Chicken'**
+  String get catFriedChicken;
+
+  /// No description provided for @catBreakfast.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakfast'**
+  String get catBreakfast;
+
+  /// No description provided for @catOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get catOther;
+
+  /// No description provided for @foodLogSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'❌ An error occurred while saving — check your internet connection'**
+  String get foodLogSaveError;
+
+  /// No description provided for @foodLogPer100g.
+  ///
+  /// In en, this message translates to:
+  /// **'per 100g'**
+  String get foodLogPer100g;
+
+  /// No description provided for @foodLogCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get foodLogCalories;
+
+  /// No description provided for @foodLogProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein'**
+  String get foodLogProtein;
+
+  /// No description provided for @foodLogCarbs.
+  ///
+  /// In en, this message translates to:
+  /// **'Carbs'**
+  String get foodLogCarbs;
+
+  /// No description provided for @foodLogFat.
+  ///
+  /// In en, this message translates to:
+  /// **'Fat'**
+  String get foodLogFat;
+
+  /// No description provided for @foodLogQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get foodLogQuantity;
+
+  /// No description provided for @foodLogAssignMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Assign to meal'**
+  String get foodLogAssignMeal;
+
+  /// No description provided for @foodLogLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged!'**
+  String get foodLogLogged;
+
+  /// No description provided for @foodLogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Food'**
+  String get foodLogConfirm;
 }
 
 class _AppLocalizationsDelegate

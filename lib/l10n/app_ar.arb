@@ -496,10 +496,10 @@
   "onbStepLabel": "الخطوة",
   "onb1Title": "حوّل جسمك\nوعقلك",
   "onb1Desc": "اكتشف القوة اللي جواك. برامجنا الرياضية الشاملة مصممة تساعدك تحقق أهدافك وتوصل لأقصى إمكانياتك.",
-  "onb2Title": "تدريب احترافي\nبإرشاد الخبراء",
-  "onb2Desc": "احصل على إرشاد من مدربين معتمدين يساعدوك تتقن الأداء الصحيح والأسلوب الأمثل لأفضل النتائج بأمان.",
-  "onb3Title": "حقق أهدافك\nالرياضية",
-  "onb3Desc": "سواء عايز تخسّر وزن أو تبني عضلات أو تحسّن قدرتك على التحمل، أسلوبنا المخصص هيوصلك أسرع.",
+  "onb2Title": "صوّر أكلك\nوالذكاء يحسب",
+  "onb2Desc": "صوّر الطبق والذكاء الاصطناعي يقراه ويسجّل السعرات والبروتين والكارب والدهون في ثواني. وتقدر كمان تسجّل أكلك بالصوت أو الكتابة.",
+  "onb3Title": "تغذية مصممة\nلجسمك وهدفك",
+  "onb3Desc": "أهداف يومية للسعرات والماكروز محسوبة على جسمك، تنبيهات المية في وقتها، ومدرّبين بيظبطوا خطتك مع تقدمك.",
   "onbSelectYour": "اختر",
   "onbIdentity": "هويتك",
   "onbPersonalize": "ساعدنا نخصص تجربتك\nبمحتوى يهمك أنت",
@@ -622,5 +622,64 @@
       }
     }
   },
-  "assignedDone": "تم"
+  "assignedDone": "تم",
+  "foodTargetingMeal": "الهدف: {meal}",
+  "@foodTargetingMeal": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "foodPopularFoods": "أكلات شائعة",
+  "foodResultsFound": "اتلقت {count} نتيجة",
+  "@foodResultsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foodFilters": "فلاتر",
+  "foodFilterCalories": "السعرات (كالوري)",
+  "foodFilterProtein": "البروتين (جرام)",
+  "foodFilterAny": "أي قيمة",
+  "foodFilterKcal": "كالوري",
+  "foodFilterGrams": "جرام",
+  "foodApplyFilters": "تطبيق",
+  "foodResetFilters": "مسح الفلاتر",
+  "foodNoResultsTitle": "مفيش أكل مطابق للفلاتر",
+  "foodNoResultsSubtitle": "جرب توسيع النطاقات أو امسح الفلاتر",
+  "foodNoFoodsTitle": "مفيش نتايج",
+  "foodNoFoodsSubtitle": "جرب تهجئة أو كلمة بحث تانية",
+  "catArabic": "مصري",
+  "catProtein": "بروتين",
+  "catCarbs": "نشويات",
+  "catVegetables": "خضار",
+  "catFruits": "فواكه",
+  "catDairy": "ألبان",
+  "catFats": "دهون",
+  "catFastfood": "وجبات سريعة",
+  "catDrinks": "مشروبات",
+  "catSnacks": "سناكس",
+  "catDesserts": "حلويات",
+  "catStreetFood": "أكل شوارع",
+  "catBurgers": "برجر",
+  "catPizza": "بيتزا",
+  "catPasta": "باستا",
+  "catSandwiches": "ساندويتشات",
+  "catSushi": "سوشي",
+  "catFriedChicken": "دجاج مقلي",
+  "catBreakfast": "فطار",
+  "catOther": "أخرى",
+  "foodLogSaveError": "❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت",
+  "foodLogPer100g": "لكل 100غ",
+  "foodLogCalories": "سعرات",
+  "foodLogProtein": "بروتين",
+  "foodLogCarbs": "كارب",
+  "foodLogFat": "دهون",
+  "foodLogQuantity": "الكمية",
+  "foodLogAssignMeal": "اختر الوجبة",
+  "foodLogLogged": "تم التسجيل!",
+  "foodLogConfirm": "سجّل الطعام"
 }

@@ -2913,96 +2913,141 @@ class _AssignedWorkoutCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: GestureDetector(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.borderSubtle),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.cardShadow,
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+            onTap: onTap,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.borderSubtle),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  color: AppColors.lightGreen,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.fitness_center_rounded,
-                  color: AppColors.onPrimaryContainer,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // الأيقونة: حجم أكبر شوية وخلفية بتدرّج بسيط لإبراز الحالة
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppColors.lightGreen,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center_rounded,
+                      color: AppColors.onPrimaryContainer,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // شارة الحالة (Badge) بدل نقطة صغيرة + نص باهت
+                        // بتدي وضوح أعلى إن الووركاوت "مُسند" (assigned)
                         Container(
-                          width: 6,
-                          height: 6,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            shape: BoxShape.circle,
+                            color: AppColors.accent.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            l10n.assignedWorkoutTitle,
+                            style: AppText.styledScaleCaption(
+                              isArabic: isArabic,
+                              color: AppColors.accent,
+                            ).copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 6),
                         Text(
-                          l10n.assignedWorkoutTitle,
-                          style: AppText.styledScaleCaption(
-                            isArabic: isArabic,
-                            color: AppColors.textMuted,
+                          workout.templateName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppText.titleSm.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.textPrimary,
                           ),
                         ),
+                        const SizedBox(height: 6),
+                        // الميتاداتا بأيقونات صغيرة بدل نص خام فقط — بتزود الوضوح
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.list_alt_rounded,
+                              size: 14,
+                              color: AppColors.textMuted,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.assignedCardMeta(
+                                workout.exercises.length,
+                                workout.estimatedMinutes,
+                              ),
+                              style: AppText.bodySm.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (muscles.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          // العضلات كـ chips بدل نص متسلسل بفاصل "·" — أسهل مسح بصري
+                          Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: muscles.take(3).map((m) {
+                              final color = AppSemanticColors.forMuscle(m);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  m,
+                                  style: AppText.bodySm.copyWith(
+                                    color: color,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      workout.templateName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.titleSm.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textMuted,
+                      size: 22,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      l10n.assignedCardMeta(
-                        workout.exercises.length,
-                        workout.estimatedMinutes,
-                      ),
-                      style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
-                    ),
-                    if (muscles.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        muscles.join(' · '),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppText.bodySm.copyWith(
-                          color: AppSemanticColors.forMuscle(muscles.first),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
-            ],
+            ),
           ),
         ),
       ),

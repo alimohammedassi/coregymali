@@ -1155,18 +1155,18 @@ class AppLocalizationsAr extends AppLocalizations {
       'اكتشف القوة اللي جواك. برامجنا الرياضية الشاملة مصممة تساعدك تحقق أهدافك وتوصل لأقصى إمكانياتك.';
 
   @override
-  String get onb2Title => 'تدريب احترافي\nبإرشاد الخبراء';
+  String get onb2Title => 'صوّر أكلك\nوالذكاء يحسب';
 
   @override
   String get onb2Desc =>
-      'احصل على إرشاد من مدربين معتمدين يساعدوك تتقن الأداء الصحيح والأسلوب الأمثل لأفضل النتائج بأمان.';
+      'صوّر الطبق والذكاء الاصطناعي يقراه ويسجّل السعرات والبروتين والكارب والدهون في ثواني. وتقدر كمان تسجّل أكلك بالصوت أو الكتابة.';
 
   @override
-  String get onb3Title => 'حقق أهدافك\nالرياضية';
+  String get onb3Title => 'تغذية مصممة\nلجسمك وهدفك';
 
   @override
   String get onb3Desc =>
-      'سواء عايز تخسّر وزن أو تبني عضلات أو تحسّن قدرتك على التحمل، أسلوبنا المخصص هيوصلك أسرع.';
+      'أهداف يومية للسعرات والماكروز محسوبة على جسمك، تنبيهات المية في وقتها، ومدرّبين بيظبطوا خطتك مع تقدمك.';
 
   @override
   String get onbSelectYour => 'اختر';
@@ -1342,4 +1342,144 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get assignedDone => 'تم';
+
+  @override
+  String foodTargetingMeal(String meal) {
+    return 'الهدف: $meal';
+  }
+
+  @override
+  String get foodPopularFoods => 'أكلات شائعة';
+
+  @override
+  String foodResultsFound(int count) {
+    return 'اتلقت $count نتيجة';
+  }
+
+  @override
+  String get foodFilters => 'فلاتر';
+
+  @override
+  String get foodFilterCalories => 'السعرات (كالوري)';
+
+  @override
+  String get foodFilterProtein => 'البروتين (جرام)';
+
+  @override
+  String get foodFilterAny => 'أي قيمة';
+
+  @override
+  String get foodFilterKcal => 'كالوري';
+
+  @override
+  String get foodFilterGrams => 'جرام';
+
+  @override
+  String get foodApplyFilters => 'تطبيق';
+
+  @override
+  String get foodResetFilters => 'مسح الفلاتر';
+
+  @override
+  String get foodNoResultsTitle => 'مفيش أكل مطابق للفلاتر';
+
+  @override
+  String get foodNoResultsSubtitle => 'جرب توسيع النطاقات أو امسح الفلاتر';
+
+  @override
+  String get foodNoFoodsTitle => 'مفيش نتايج';
+
+  @override
+  String get foodNoFoodsSubtitle => 'جرب تهجئة أو كلمة بحث تانية';
+
+  @override
+  String get catArabic => 'مصري';
+
+  @override
+  String get catProtein => 'بروتين';
+
+  @override
+  String get catCarbs => 'نشويات';
+
+  @override
+  String get catVegetables => 'خضار';
+
+  @override
+  String get catFruits => 'فواكه';
+
+  @override
+  String get catDairy => 'ألبان';
+
+  @override
+  String get catFats => 'دهون';
+
+  @override
+  String get catFastfood => 'وجبات سريعة';
+
+  @override
+  String get catDrinks => 'مشروبات';
+
+  @override
+  String get catSnacks => 'سناكس';
+
+  @override
+  String get catDesserts => 'حلويات';
+
+  @override
+  String get catStreetFood => 'أكل شوارع';
+
+  @override
+  String get catBurgers => 'برجر';
+
+  @override
+  String get catPizza => 'بيتزا';
+
+  @override
+  String get catPasta => 'باستا';
+
+  @override
+  String get catSandwiches => 'ساندويتشات';
+
+  @override
+  String get catSushi => 'سوشي';
+
+  @override
+  String get catFriedChicken => 'دجاج مقلي';
+
+  @override
+  String get catBreakfast => 'فطار';
+
+  @override
+  String get catOther => 'أخرى';
+
+  @override
+  String get foodLogSaveError =>
+      '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت';
+
+  @override
+  String get foodLogPer100g => 'لكل 100غ';
+
+  @override
+  String get foodLogCalories => 'سعرات';
+
+  @override
+  String get foodLogProtein => 'بروتين';
+
+  @override
+  String get foodLogCarbs => 'كارب';
+
+  @override
+  String get foodLogFat => 'دهون';
+
+  @override
+  String get foodLogQuantity => 'الكمية';
+
+  @override
+  String get foodLogAssignMeal => 'اختر الوجبة';
+
+  @override
+  String get foodLogLogged => 'تم التسجيل!';
+
+  @override
+  String get foodLogConfirm => 'سجّل الطعام';
 }

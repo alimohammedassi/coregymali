@@ -496,10 +496,10 @@
   "onbStepLabel": "STEP",
   "onb1Title": "Transform your\nbody and mind",
   "onb1Desc": "Discover the power within you. Our comprehensive fitness programs are designed to help you achieve your goals and unlock your full potential.",
-  "onb2Title": "Professional\ntraining guidance",
-  "onb2Desc": "Get expert guidance from certified trainers who will help you master proper form and technique for maximum results and safety.",
-  "onb3Title": "Achieve your\nfitness goals",
-  "onb3Desc": "Whether you want to lose weight, build muscle, or improve endurance, our personalized approach will get you there faster.",
+  "onb2Title": "Snap your meal\nAI tracks it",
+  "onb2Desc": "Point your camera at any plate — AI reads it and logs calories, protein, carbs and fat in seconds. You can also log by voice or text.",
+  "onb3Title": "Nutrition built\naround you",
+  "onb3Desc": "Daily calorie and macro targets calculated for your body, hydration reminders on schedule, and coaches who adapt your plan as you progress.",
   "onbSelectYour": "SELECT YOUR",
   "onbIdentity": "IDENTITY",
   "onbPersonalize": "HELP US PERSONALIZE YOUR EXPERIENCE\nWITH CONTENT THAT MATTERS TO YOU",
@@ -622,5 +622,64 @@
       }
     }
   },
-  "assignedDone": "Done"
+  "assignedDone": "Done",
+  "foodTargetingMeal": "Targeting: {meal}",
+  "@foodTargetingMeal": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "foodPopularFoods": "POPULAR FOODS",
+  "foodResultsFound": "{count} results found",
+  "@foodResultsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "foodFilters": "Filters",
+  "foodFilterCalories": "Calories (kcal)",
+  "foodFilterProtein": "Protein (g)",
+  "foodFilterAny": "Any",
+  "foodFilterKcal": "kcal",
+  "foodFilterGrams": "g",
+  "foodApplyFilters": "Apply",
+  "foodResetFilters": "Reset filters",
+  "foodNoResultsTitle": "No foods match your filters",
+  "foodNoResultsSubtitle": "Try widening the ranges or reset the filters",
+  "foodNoFoodsTitle": "No foods found",
+  "foodNoFoodsSubtitle": "Try another spelling or search keyword",
+  "catArabic": "Arabic",
+  "catProtein": "Protein",
+  "catCarbs": "Carbs",
+  "catVegetables": "Veggies",
+  "catFruits": "Fruits",
+  "catDairy": "Dairy",
+  "catFats": "Fats",
+  "catFastfood": "Fast Food",
+  "catDrinks": "Drinks",
+  "catSnacks": "Snacks",
+  "catDesserts": "Desserts",
+  "catStreetFood": "Street Food",
+  "catBurgers": "Burgers",
+  "catPizza": "Pizza",
+  "catPasta": "Pasta",
+  "catSandwiches": "Sandwiches",
+  "catSushi": "Sushi",
+  "catFriedChicken": "Fried Chicken",
+  "catBreakfast": "Breakfast",
+  "catOther": "Other",
+  "foodLogSaveError": "❌ An error occurred while saving — check your internet connection",
+  "foodLogPer100g": "per 100g",
+  "foodLogCalories": "Calories",
+  "foodLogProtein": "Protein",
+  "foodLogCarbs": "Carbs",
+  "foodLogFat": "Fat",
+  "foodLogQuantity": "Quantity",
+  "foodLogAssignMeal": "Assign to meal",
+  "foodLogLogged": "Logged!",
+  "foodLogConfirm": "Log Food"
 }

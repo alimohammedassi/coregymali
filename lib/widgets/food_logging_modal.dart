@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../models/additional_nutrients.dart';
 import '../services/nutrition_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import 'food/food_thumbnail.dart';
 import 'pixel_art_icons.dart';
 
 /// Interactive Food & Meal Logging Modal for CoreGym
@@ -585,7 +585,7 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 4),
-      leading: _FoodThumbnail(
+      leading: FoodThumbnail(
         imageUrl: imageUrl,
         category: category,
         size: 48,
@@ -797,88 +797,3 @@ class _FoodLoggingModalState extends State<FoodLoggingModal>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// _FoodThumbnail — shows a food photo (CachedNetworkImage) with graceful
-// fallback when image_url is null or fails to load.
-// ─────────────────────────────────────────────────────────────────────────────
-class _FoodThumbnail extends StatelessWidget {
-  final String? imageUrl;
-  final String? category;
-  final double size;
-
-  const _FoodThumbnail({
-    required this.imageUrl,
-    required this.category,
-    this.size = 48,
-  });
-
-  /// Returns a colour accent based on food category for the placeholder.
-  /// Category accents are data-viz colours (like the chart/pixel-art
-  /// palettes) — intentionally not mode-flipped; they read on both themes.
-  Color _categoryColor() {
-    switch ((category ?? '').toLowerCase()) {
-      case 'meat':
-      case 'poultry':
-        return const Color(0xFFEF8354);
-      case 'dairy':
-        return const Color(0xFF4A90D9);
-      case 'grain':
-      case 'carbs':
-        return const Color(0xFFEDC047);
-      case 'vegetables':
-      case 'salad':
-        return const Color(0xFF56B870);
-      case 'fruit':
-        return const Color(0xFFE84393);
-      case 'legumes':
-        return const Color(0xFF9B6B3A);
-      case 'seafood':
-        return const Color(0xFF2BBCD4);
-      case 'drinks':
-        return const Color(0xFF6C5CE7);
-      default:
-        return AppColors.primaryGreen;
-    }
-  }
-
-  Widget _fallback() {
-    final color = _categoryColor();
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-      ),
-      child: Center(
-        child: Icon(Icons.restaurant_rounded, color: color, size: size * 0.42),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (imageUrl == null || imageUrl!.isEmpty) return _fallback();
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: CachedNetworkImage(
-        imageUrl: imageUrl!,
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        fadeInDuration: const Duration(milliseconds: 200),
-        placeholder: (_, __) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: AppColors.borderSubtle,
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        errorWidget: (_, __, ___) => _fallback(),
-      ),
-    );
-  }
-}

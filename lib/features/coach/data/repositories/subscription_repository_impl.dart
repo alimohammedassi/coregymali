@@ -26,9 +26,15 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
         throw SubscriptionRepositoryException('User not authenticated');
       }
 
+      // One active subscription per client (DB enforces it with the
+      // partial unique index on active rows): close the current one
+      // before opening the new one.
       await _client
           .from('subscriptions')
-          .update({'status': 'cancelled'})
+          .update({
+            'status': 'cancelled',
+            'updated_at': DateTime.now().toIso8601String(),
+          })
           .eq('client_id', userId)
           .eq('status', 'active');
 
@@ -42,13 +48,30 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
         'end_date': now.add(const Duration(days: 30)).toIso8601String(),
       };
 
-      final response = await _client
-          .from('subscriptions')
-          .insert(data)
-          .select()
-          .single();
-
-      return response.toEntity();
+      try {
+        final response = await _client
+            .from('subscriptions')
+            .insert(data)
+            .select()
+            .single();
+        return response.toEntity();
+      } on PostgrestException catch (e) {
+        // Lost a double-submit race for the client's single active slot —
+        // the winner's row is this coach's active subscription; returning
+        // it makes a second confirm tap a no-op instead of an error.
+        if (e.code == '23505') {
+          final existing = await _client
+              .from('subscriptions')
+              .select()
+              .eq('client_id', userId)
+              .eq('coach_id', coachId)
+              .eq('status', 'active')
+              .limit(1)
+              .maybeSingle();
+          if (existing != null) return existing.toEntity();
+        }
+        rethrow;
+      }
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {

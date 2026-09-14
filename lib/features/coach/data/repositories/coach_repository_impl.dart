@@ -31,10 +31,6 @@ class CoachRepositoryImpl implements ICoachRepository {
           .select('*, profiles(name, avatar_url)')
           .eq('is_active', true);
 
-      if (specialization != null && specialization.isNotEmpty) {
-        query = query.contains('specialization', [specialization]);
-      }
-
       if (maxPrice != null) {
         query = query.lte('price_monthly', maxPrice);
       }
@@ -45,7 +41,20 @@ class CoachRepositoryImpl implements ICoachRepository {
 
       final response = await query.order('rating', ascending: false);
 
-      return response.map((json) => CoachModel.fromJson(json).toEntity()).toList();
+      final coaches =
+          response.map((json) => CoachModel.fromJson(json).toEntity()).toList();
+
+      // The coaches table stores free-form labels ('Weight Loss') while the
+      // UI filter chips send lowercase keys ('weight loss'), and PostgREST
+      // contains is exact — so the specialization match happens here,
+      // case-insensitively, on the fetched list.
+      final wanted = specialization?.trim().toLowerCase() ?? '';
+      if (wanted.isEmpty) return coaches;
+
+      return coaches
+          .where((c) => c.specialization
+              .any((s) => s.trim().toLowerCase() == wanted))
+          .toList();
     } on PostgrestException catch (e) {
       throw CoachRepositoryException('Database error: ${e.message}');
     } catch (e) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_tab_bar/liquid_tab_bar.dart';
+
 import '../l10n/app_localizations.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
@@ -13,7 +15,8 @@ class WorkoutScreen extends StatefulWidget {
   State<WorkoutScreen> createState() => _WorkoutScreenState();
 }
 
-class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProviderStateMixin {
+class _WorkoutScreenState extends State<WorkoutScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -32,11 +35,18 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       extendBody: true,
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.workoutTitle, style: AppText.headlineSm),
+        title: Text(
+          l10n.workoutTitle,
+          style: AppText.styledHeadlineSm(
+            isArabic: Localizations.localeOf(context).languageCode == 'ar',
+            color: AppColors.textPrimary,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
@@ -44,18 +54,20 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
           indicatorColor: AppColors.primaryFixed,
           labelColor: AppColors.primaryFixed,
           unselectedLabelColor: AppColors.onSurfaceVariant,
-          // Smaller, tighter labels so "My Program" / "Log Workout" fit
-          // their tab without truncating to "My Progr…".
+          // Smaller, tighter labels so the three tabs sit comfortably in
+          // one row on narrow screens.
           labelStyle: const TextStyle(
             fontSize: 12.5,
             fontWeight: FontWeight.w700,
             height: 1.25,
           ),
           labelPadding: const EdgeInsets.symmetric(horizontal: 4),
-          tabs: const [
-            Tab(text: 'My Program\n(برنامجي)'),
-            Tab(text: 'Library\n(مكتبة)'),
-            Tab(text: 'Log Workout\n(سجّل)'),
+          // Localized single-line labels — the old hardcoded
+          // "English\n(Arabic)" stack showed both languages in every locale.
+          tabs: [
+            Tab(text: l10n.myProgram),
+            Tab(text: l10n.workoutLibrary),
+            Tab(text: l10n.logWorkout),
           ],
         ),
       ),
@@ -71,7 +83,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> with SingleTickerProvider
               ],
             ),
           ),
-          const SizedBox(height: 150),
+          // Reserve exactly the floating bar's footprint (same rule as
+          // Home) so tab content can scroll clear of it.
+          SizedBox(height: LiquidTabBar.reservedHeight(context) + 8),
         ],
       ),
     );

@@ -184,6 +184,32 @@
       }
     }
   },
+  "activity": "Activity",
+  "ofGlassesCount": "of {count} glasses",
+  "@ofGlassesCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "ofStepsTotal": "of {total}",
+  "@ofStepsTotal": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "addWaterPortion": "+ Add 250 ml",
+  "connectHealthToSync": "Connect {source} to sync",
+  "@connectHealthToSync": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
   "kcalBurned": "kcal burned",
   "burnedToday": "burned today",
   "updateSteps": "Update Steps",
@@ -214,8 +240,12 @@
   "startLogging": "Start logging meals to see your progress",
   "workoutTitle": "WORKOUT",
   "myProgram": "My Program",
+  "workoutLibrary": "Library",
   "programs": "Programs",
   "logWorkout": "Log Workout",
+  "sectionTodaysWorkout": "TODAY'S WORKOUT",
+  "sectionThisWeek": "THIS WEEK",
+  "noActiveProgramHint": "Head to the Library tab to pick a program and start your journey.",
   "chooseMuscleGroup": "Choose Muscle Group",
   "sessionName": "Session Name",
   "startWorkout": "Start Workout",
@@ -581,6 +611,11 @@
   "assignedLogSet": "Log Set",
   "assignedContinue": "Continue Workout",
   "assignedFinish": "Finish Workout",
+  "assignedResume": "Resume workout",
+  "assignedReadyHint": "Ready to go — tap to start",
+  "assignedStatExercises": "Exercises",
+  "assignedStatSets": "Sets",
+  "assignedStatTime": "Est. time",
   "assignedDoneTitle": "Workout completed",
   "assignedDoneBody": "Nice work — your coach can see this session now.",
   "assignedNone": "No workout assigned today",

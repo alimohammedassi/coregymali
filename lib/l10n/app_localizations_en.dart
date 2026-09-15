@@ -346,6 +346,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get activity => 'Activity';
+
+  @override
+  String ofGlassesCount(String count) {
+    return 'of $count glasses';
+  }
+
+  @override
+  String ofStepsTotal(String total) {
+    return 'of $total';
+  }
+
+  @override
+  String get addWaterPortion => '+ Add 250 ml';
+
+  @override
+  String connectHealthToSync(String source) {
+    return 'Connect $source to sync';
+  }
+
+  @override
   String get kcalBurned => 'kcal burned';
 
   @override
@@ -438,10 +459,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myProgram => 'My Program';
 
   @override
+  String get workoutLibrary => 'Library';
+
+  @override
   String get programs => 'Programs';
 
   @override
   String get logWorkout => 'Log Workout';
+
+  @override
+  String get sectionTodaysWorkout => 'TODAY\'S WORKOUT';
+
+  @override
+  String get sectionThisWeek => 'THIS WEEK';
+
+  @override
+  String get noActiveProgramHint =>
+      'Head to the Library tab to pick a program and start your journey.';
 
   @override
   String get chooseMuscleGroup => 'Choose Muscle Group';
@@ -1314,6 +1348,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get assignedFinish => 'Finish Workout';
+
+  @override
+  String get assignedResume => 'Resume workout';
+
+  @override
+  String get assignedReadyHint => 'Ready to go — tap to start';
+
+  @override
+  String get assignedStatExercises => 'Exercises';
+
+  @override
+  String get assignedStatSets => 'Sets';
+
+  @override
+  String get assignedStatTime => 'Est. time';
 
   @override
   String get assignedDoneTitle => 'Workout completed';

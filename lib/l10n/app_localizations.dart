@@ -722,6 +722,36 @@ abstract class AppLocalizations {
   /// **'{pct}% of 10k'**
   String ofStepsGoal(int pct);
 
+  /// No description provided for @activity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get activity;
+
+  /// No description provided for @ofGlassesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'of {count} glasses'**
+  String ofGlassesCount(String count);
+
+  /// No description provided for @ofStepsTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {total}'**
+  String ofStepsTotal(String total);
+
+  /// No description provided for @addWaterPortion.
+  ///
+  /// In en, this message translates to:
+  /// **'+ Add 250 ml'**
+  String get addWaterPortion;
+
+  /// No description provided for @connectHealthToSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect {source} to sync'**
+  String connectHealthToSync(String source);
+
   /// No description provided for @kcalBurned.
   ///
   /// In en, this message translates to:
@@ -902,6 +932,12 @@ abstract class AppLocalizations {
   /// **'My Program'**
   String get myProgram;
 
+  /// No description provided for @workoutLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get workoutLibrary;
+
   /// No description provided for @programs.
   ///
   /// In en, this message translates to:
@@ -913,6 +949,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log Workout'**
   String get logWorkout;
+
+  /// No description provided for @sectionTodaysWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY\'S WORKOUT'**
+  String get sectionTodaysWorkout;
+
+  /// No description provided for @sectionThisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'THIS WEEK'**
+  String get sectionThisWeek;
+
+  /// No description provided for @noActiveProgramHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Head to the Library tab to pick a program and start your journey.'**
+  String get noActiveProgramHint;
 
   /// No description provided for @chooseMuscleGroup.
   ///
@@ -2545,6 +2599,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Finish Workout'**
   String get assignedFinish;
+
+  /// No description provided for @assignedResume.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume workout'**
+  String get assignedResume;
+
+  /// No description provided for @assignedReadyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to go — tap to start'**
+  String get assignedReadyHint;
+
+  /// No description provided for @assignedStatExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises'**
+  String get assignedStatExercises;
+
+  /// No description provided for @assignedStatSets.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets'**
+  String get assignedStatSets;
+
+  /// No description provided for @assignedStatTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. time'**
+  String get assignedStatTime;
 
   /// No description provided for @assignedDoneTitle.
   ///

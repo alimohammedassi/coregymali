@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_animations.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_semantic_colors.dart';
 import '../../theme/app_text.dart';
+import '../../services/assigned_workout_service.dart';
 import '../../services/supabase_client.dart';
+import '../../widgets/assigned_workout_card.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../assigned_workout_screen.dart';
 import '../../progrems.dart';
 
 class MyProgramTab extends StatefulWidget {
@@ -19,6 +23,10 @@ class _MyProgramTabState extends State<MyProgramTab>
     with TickerProviderStateMixin {
   bool _isLoading = true;
   Map<String, dynamic>? _activeProgram;
+
+  /// Today's coach-assigned workout (same source as Home's card). Null =
+  /// nothing assigned — the card simply stays hidden, never an error.
+  AssignedWorkout? _assignedWorkout;
 
   /// Weekday indices (Mon=0..Sun=6) the user chose for this program's
   /// sessions. Persisted on `user_active_program.training_days`
@@ -47,6 +55,7 @@ class _MyProgramTabState extends State<MyProgramTab>
     ).animate(CurvedAnimation(parent: _heroController, curve: AppCurves.standard));
 
     _loadActiveProgram();
+    _loadAssignedWorkout();
   }
 
   @override
@@ -115,7 +124,7 @@ class _MyProgramTabState extends State<MyProgramTab>
     }
 
     if (_activeProgram == null) {
-      return _buildEmptyState();
+      return _buildWithAssignedCard(_buildEmptyState());
     }
 
     final progData = _activeProgram!['training_programs'] ?? {};
@@ -128,11 +137,12 @@ class _MyProgramTabState extends State<MyProgramTab>
 
     final levelColor = _levelColors[level] ?? AppColors.primary;
 
-    return FadeTransition(
-      opacity: _heroFade,
-      child: SlideTransition(
-        position: _heroSlide,
-        child: SingleChildScrollView(
+    return _buildWithAssignedCard(
+      FadeTransition(
+        opacity: _heroFade,
+        child: SlideTransition(
+          position: _heroSlide,
+          child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
           child: Column(
@@ -169,7 +179,9 @@ class _MyProgramTabState extends State<MyProgramTab>
               const SizedBox(height: 28),
 
               // ── Today's Workout ────────────────────────────
-              _sectionLabel('TODAY\'S WORKOUT'),
+              _sectionLabel(
+                AppLocalizations.of(context)!.sectionTodaysWorkout,
+              ),
               const SizedBox(height: 12),
               _buildWorkoutCard(
                 progName: progName,
@@ -182,7 +194,7 @@ class _MyProgramTabState extends State<MyProgramTab>
               const SizedBox(height: 28),
 
               // ── Weekly Schedule ────────────────────────────
-              _sectionLabel('THIS WEEK'),
+              _sectionLabel(AppLocalizations.of(context)!.sectionThisWeek),
               const SizedBox(height: 12),
               _buildWeekRow(
                 currentDay: (_activeProgram!['current_day'] ?? 1) as int,
@@ -234,7 +246,51 @@ class _MyProgramTabState extends State<MyProgramTab>
           ),
         ),
       ),
+      ),
     );
+  }
+
+  /// Wraps the tab content with today's coach-assigned workout card on top —
+  /// the same card Home shows, driven by the same fetch. Hidden entirely
+  /// when the coach hasn't sent a workout for today.
+  Widget _buildWithAssignedCard(Widget content) {
+    final workout = _assignedWorkout;
+    if (workout == null) return content;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        AssignedWorkoutCard(
+          workout: workout,
+          isArabic: isArabic,
+          onTap: _openAssignedWorkout,
+        ),
+        const SizedBox(height: 16),
+        Expanded(child: content),
+      ],
+    );
+  }
+
+  /// Same degrade-to-hidden contract as Home: any failure (assignment
+  /// tables not deployed yet, etc.) resolves to null and hides the card.
+  Future<void> _loadAssignedWorkout() async {
+    final assignment = await AssignedWorkoutService().fetchTodayAssignment();
+    if (!mounted) return;
+    setState(() => _assignedWorkout = assignment);
+  }
+
+  Future<void> _openAssignedWorkout() async {
+    final assignment = _assignedWorkout;
+    if (assignment == null) return;
+    HapticFeedback.lightImpact();
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AssignedWorkoutScreen(assignment: assignment),
+      ),
+    );
+    // The workout may have been started/completed inside the screen —
+    // refetch so the card reflects the new state.
+    _loadAssignedWorkout();
   }
 
   Widget _sectionLabel(String text) => Text(
@@ -673,6 +729,8 @@ class _MyProgramTabState extends State<MyProgramTab>
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
@@ -695,21 +753,20 @@ class _MyProgramTabState extends State<MyProgramTab>
             ),
             const SizedBox(height: 24),
             Text(
-              'No Active Program',
-              style: AppText.headlineMd.copyWith(
+              l10n.noActiveProgram,
+              style: AppText.styledHeadlineMd(
+                isArabic: isArabic,
                 color: AppColors.textPrimary,
-                fontWeight: FontWeight.w800,
-              ),
+              ).copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
-              'Head to the Library tab to pick a program and start your journey.',
+              l10n.noActiveProgramHint,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: AppText.styledScaleBodyMd(
+                isArabic: isArabic,
                 color: AppColors.textSecondary,
-                fontSize: 15,
-                height: 1.5,
-              ),
+              ).copyWith(height: 1.5),
             ),
           ],
         ),

@@ -39,6 +39,11 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   /// exercise name — never tracked locally between refreshes.
   Map<String, List<Map<String, dynamic>>> _setsByExercise = {};
 
+  /// Progressive disclosure: which exercise cards are collapsed. Empty by
+  /// default so nothing is hidden that used to be visible — the user opts
+  /// into a tidier view by collapsing cards themselves (e.g. once done).
+  final Set<String> _collapsedIds = {};
+
   Timer? _restTimer;
   int _restRemaining = 0;
   int _restTotal = 60;
@@ -115,6 +120,14 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       );
     }
     setState(() => _setsByExercise = map);
+  }
+
+  /// Pull-to-refresh only has meaningful work to do once a session exists;
+  /// otherwise it resolves immediately so the indicator doesn't hang.
+  Future<void> _handleRefresh() async {
+    if (_sessionId != null) {
+      await _refreshSets();
+    }
   }
 
   int _doneFor(AssignedExercise e) =>
@@ -200,6 +213,9 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       if (_restRemaining <= 1) {
         timer.cancel();
         setState(() => _restRemaining = 0);
+        // A short haptic marks "rest over" without requiring the user to
+        // keep watching the countdown.
+        HapticFeedback.mediumImpact();
       } else {
         setState(() => _restRemaining--);
       }
@@ -229,11 +245,30 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     setState(() => _phase = _AssignedPhase.done);
   }
 
+  void _toggleExpanded(String exerciseId) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_collapsedIds.contains(exerciseId)) {
+        _collapsedIds.remove(exerciseId);
+      } else {
+        _collapsedIds.add(exerciseId);
+      }
+    });
+  }
+
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(message)));
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      );
   }
 
   String _formatWeight(double weight) =>
@@ -285,6 +320,11 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     return mins < 1 ? '<1m' : '${mins}m';
   }
 
+  /// Reduced-motion aware duration — respects the system accessibility
+  /// setting instead of always animating (`reduced-motion` UX guideline).
+  Duration _motionDuration(Duration normal) =>
+      MediaQuery.of(context).disableAnimations ? Duration.zero : normal;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -307,22 +347,35 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
         _AssignedPhase.loading || _AssignedPhase.none => Center(
           child: _phase == _AssignedPhase.loading
               ? CircularProgressIndicator(color: AppColors.primaryFixed)
-              : Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.event_busy_outlined,
-                      size: 40,
-                      color: AppColors.textMuted,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      l10n.assignedNone,
-                      style: AppText.bodyLg.copyWith(
-                        color: AppColors.textSecondary,
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 72,
+                        height: 72,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerHigh,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.event_busy_outlined,
+                          size: 34,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Text(
+                        l10n.assignedNone,
+                        textAlign: TextAlign.center,
+                        style: AppText.bodyLg.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
         ),
         _AssignedPhase.done => _buildDoneView(l10n),
@@ -337,40 +390,47 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   /// visible while the user scrolls through exercises — avoids forcing a
   /// scroll back up just to check "how much is left".
   Widget _buildProgressChip() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.fitness_center_rounded,
-            size: 13,
-            color: AppColors.primaryFixed,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            '$_totalDoneSets/$_totalTargetSets',
-            style: AppText.labelLg.copyWith(
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w800,
+    return Semantics(
+      label: '$_totalDoneSets / $_totalTargetSets · ${_elapsedLabel()}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.fitness_center_rounded,
+              size: 13,
+              color: AppColors.primaryFixed,
             ),
-          ),
-          if (_startedAt != null) ...[
-            const SizedBox(width: 8),
-            Container(width: 1, height: 12, color: AppColors.borderSubtle),
-            const SizedBox(width: 8),
-            Icon(Icons.schedule_rounded, size: 12, color: AppColors.textMuted),
-            const SizedBox(width: 3),
+            const SizedBox(width: 5),
             Text(
-              _elapsedLabel(),
-              style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+              '$_totalDoneSets/$_totalTargetSets',
+              style: AppText.labelLg.copyWith(
+                color: AppColors.onSurfaceVariant,
+                fontWeight: FontWeight.w800,
+              ),
             ),
+            if (_startedAt != null) ...[
+              const SizedBox(width: 8),
+              Container(width: 1, height: 12, color: AppColors.borderSubtle),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.schedule_rounded,
+                size: 12,
+                color: AppColors.textMuted,
+              ),
+              const SizedBox(width: 3),
+              Text(
+                _elapsedLabel(),
+                style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -380,28 +440,42 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   Widget _buildWorkoutView(AppLocalizations l10n) {
     return Column(
       children: [
-        if (_restRemaining > 0)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
-            child: _buildRestChip(),
-          ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-            children: [
-              _buildHeaderCard(l10n),
-              const SizedBox(height: 16),
-              if (_workout.exercises.isEmpty)
-                Text(
-                  l10n.assignedNone,
-                  style: AppText.bodySm.copyWith(color: AppColors.textMuted),
+        // Rest timer lives above the list, outside the RefreshIndicator, so
+        // it stays put and never gets tugged by a pull-to-refresh gesture.
+        AnimatedSize(
+          duration: _motionDuration(const Duration(milliseconds: 220)),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _restRemaining > 0
+              ? Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  child: _buildRestBanner(l10n),
                 )
-              else
-                for (final (index, e) in _workout.exercises.indexed) ...[
-                  _buildExerciseCard(index, e, l10n),
-                  const SizedBox(height: 14),
-                ],
-            ],
+              : const SizedBox(width: double.infinity),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _handleRefresh,
+            color: AppColors.primaryFixed,
+            backgroundColor: AppColors.surface,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              children: [
+                _buildHeaderCard(l10n),
+                const SizedBox(height: 16),
+                if (_workout.exercises.isEmpty)
+                  Text(
+                    l10n.assignedNone,
+                    style: AppText.bodySm.copyWith(color: AppColors.textMuted),
+                  )
+                else
+                  for (final (index, e) in _workout.exercises.indexed) ...[
+                    _buildExerciseCard(index, e, l10n),
+                    const SizedBox(height: 14),
+                  ],
+              ],
+            ),
           ),
         ),
       ],
@@ -413,22 +487,107 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     final overallProgress = _totalTargetSets > 0
         ? (_totalDoneSets / _totalTargetSets).clamp(0.0, 1.0)
         : 0.0;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final font = AppText.fontFamily(isArabic: isArabic);
 
+    // Same hero language as the entry card on the tab: volt-tinted border,
+    // lime glow, gradient tile, biggest name on the page, divided stats —
+    // the session screen must feel like the card opened, not a downgrade.
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderSubtle),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.glassBorderActive, width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: AppColors.primaryGlow,
+            blurRadius: 22,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryActionGradient,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.fitness_center_rounded,
+                  color: AppColors.onPrimary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          l10n.assignedWorkoutTitle,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.3,
+                            color: AppColors.onPrimaryContainer,
+                            fontFamily: font,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isActive) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.assignedSetProgress(
+                          _totalDoneSets,
+                          _totalTargetSets,
+                        ),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                          fontFamily: font,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 13),
           Text(
             _workout.templateName,
-            style: AppText.titleLg.copyWith(
-              fontWeight: FontWeight.w800,
+            style: TextStyle(
+              fontSize: 24,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
               color: AppColors.textPrimary,
+              fontFamily: font,
             ),
           ),
           if (_workout.targetMuscles.isNotEmpty) ...[
@@ -441,70 +600,104 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
               ],
             ),
           ],
+          const SizedBox(height: 14),
+          Divider(height: 1, color: AppColors.borderSubtle),
           const SizedBox(height: 12),
+          // Stat row — mirrors the entry card: exercises · sets · est. time.
           Row(
             children: [
-              Icon(
+              _headerStat(
                 Icons.list_alt_rounded,
-                size: 14,
-                color: AppColors.textMuted,
+                '${_workout.exercises.length}',
+                l10n.assignedStatExercises,
+                font,
               ),
-              const SizedBox(width: 5),
-              Text(
-                l10n.assignedCardMeta(
-                  _workout.exercises.length,
-                  _workout.estimatedMinutes,
-                ),
-                style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+              _statDivider(),
+              _headerStat(
+                Icons.repeat_rounded,
+                '$_totalTargetSets',
+                l10n.assignedStatSets,
+                font,
+              ),
+              _statDivider(),
+              _headerStat(
+                Icons.schedule_rounded,
+                '~${_workout.estimatedMinutes}${isArabic ? ' د' : ' min'}',
+                l10n.assignedStatTime,
+                font,
               ),
             ],
           ),
           if ((_workout.templateNotes ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.sticky_note_2_outlined,
-                  size: 14,
-                  color: AppColors.textMuted,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _workout.templateNotes!,
-                    style: AppText.bodySm.copyWith(
-                      color: AppColors.textMuted,
-                      fontStyle: FontStyle.italic,
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.sticky_note_2_outlined,
+                    size: 14,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _workout.templateNotes!,
+                      style: AppText.bodySm.copyWith(
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
           // Overall workout progress — only meaningful once the session is
           // running; keeps the header from lying about "0 done" before start.
           if (isActive) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(99),
-                    child: LinearProgressIndicator(
-                      value: overallProgress,
-                      minHeight: 6,
-                      backgroundColor: AppColors.surfaceContainerHighest,
-                      color: AppColors.primaryFixed,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: overallProgress),
+                      duration: _motionDuration(
+                        const Duration(milliseconds: 300),
+                      ),
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) => LinearProgressIndicator(
+                        value: value,
+                        minHeight: 8,
+                        backgroundColor: AppColors.surfaceContainerHighest,
+                        color: AppColors.primaryFixed,
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  '${(overallProgress * 100).round()}%',
-                  style: AppText.labelSm.copyWith(
-                    color: AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryFixed.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${(overallProgress * 100).round()}%',
+                    style: AppText.labelSm.copyWith(
+                      color: AppColors.primaryFixed,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ],
@@ -515,13 +708,64 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     );
   }
 
+  /// One header stat column (icon + bold value over muted label).
+  Widget _headerStat(IconData icon, String value, String label, String? font) {
+    return Expanded(
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: AppColors.textMuted),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textPrimary,
+                    fontFamily: font,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+              fontFamily: font,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _statDivider() => Container(
+    width: 1,
+    height: 30,
+    margin: const EdgeInsets.symmetric(horizontal: 6),
+    color: AppColors.borderSubtle,
+  );
+
   Widget _buildMuscleChip(String raw) {
     final color = _muscleColor(raw);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         _muscleLabel(raw),
@@ -533,57 +777,64 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     );
   }
 
-  Widget _buildRestChip() {
-    final l10n = AppLocalizations.of(context)!;
+  Widget _buildRestBanner(AppLocalizations l10n) {
+    final progress = _restTotal > 0 ? _restRemaining / _restTotal : 0.0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
       decoration: BoxDecoration(
         color: AppColors.primaryFixed.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.primaryFixed),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 24,
-            height: 24,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: _restTotal > 0 ? _restRemaining / _restTotal : 0,
-                  strokeWidth: 2.5,
-                  color: AppColors.primaryFixed,
-                  backgroundColor: AppColors.primaryFixed.withValues(
-                    alpha: 0.15,
+          Row(
+            children: [
+              Icon(
+                Icons.timer_rounded,
+                color: AppColors.primaryFixed,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l10n.assignedRestSecs(_restRemaining),
+                  style: AppText.titleSm.copyWith(
+                    color: AppColors.primaryFixed,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                Icon(Icons.timer, color: AppColors.primaryFixed, size: 13),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              l10n.assignedRestSecs(_restRemaining),
-              style: AppText.titleSm.copyWith(color: AppColors.primaryFixed),
-            ),
-          ),
-          GestureDetector(
-            onTap: _skipRest,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                l10n.skipRest,
-                style: AppText.labelSm.copyWith(
-                  color: AppColors.primaryFixed,
-                  fontWeight: FontWeight.w800,
+              // 44×44 minimum touch target even though the visual chip is
+              // smaller — padding extends the hit area (touch-target-size).
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _skipRest,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.all(11),
+                    child: Text(
+                      l10n.skipRest,
+                      style: AppText.labelSm.copyWith(
+                        color: AppColors.primaryFixed,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
                 ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(99),
+            child: LinearProgressIndicator(
+              value: progress.clamp(0.0, 1.0),
+              minHeight: 5,
+              backgroundColor: AppColors.primaryFixed.withValues(alpha: 0.15),
+              color: AppColors.primaryFixed,
             ),
           ),
         ],
@@ -603,8 +854,10 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     final progress = e.targetSets > 0
         ? (done / e.targetSets).clamp(0.0, 1.0)
         : 0.0;
+    final collapsed = _collapsedIds.contains(e.id);
 
-    return Container(
+    return AnimatedContainer(
+      duration: _motionDuration(const Duration(milliseconds: 200)),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -619,95 +872,143 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: allHit
-                      ? AppColors.accent.withValues(alpha: 0.16)
-                      : AppColors.lightGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: allHit
-                    ? Icon(
-                        Icons.check_rounded,
-                        size: 16,
-                        color: AppColors.accent,
-                      )
-                    : Text(
-                        '${index + 1}',
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => _toggleExpanded(e.id),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: allHit
+                            ? AppColors.accent.withValues(alpha: 0.16)
+                            : AppColors.lightGreen,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: allHit
+                          ? Icon(
+                              Icons.check_rounded,
+                              size: 17,
+                              color: AppColors.accent,
+                            )
+                          : Text(
+                              '${index + 1}',
+                              style: AppText.labelLg.copyWith(
+                                color: AppColors.onPrimaryContainer,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        e.exerciseName,
+                        style: AppText.titleSm.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    // Single source of truth for progress — a fraction badge
+                    // next to the name instead of a duplicate line below.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: allHit
+                            ? AppColors.accent.withValues(alpha: 0.14)
+                            : AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '$done/${e.targetSets}',
                         style: AppText.labelSm.copyWith(
-                          color: AppColors.onPrimaryContainer,
+                          color: allHit
+                              ? AppColors.accent
+                              : AppColors.onSurfaceVariant,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  e.exerciseName,
-                  style: AppText.titleSm.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                    AnimatedRotation(
+                      duration: _motionDuration(
+                        const Duration(milliseconds: 200),
+                      ),
+                      turns: collapsed ? -0.25 : 0,
+                      child: Icon(
+                        Icons.expand_more_rounded,
+                        size: 22,
+                        color: AppColors.textMuted,
+                        semanticLabel: collapsed ? 'Expand' : 'Collapse',
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              // Single source of truth for progress — a fraction badge next
-              // to the name instead of a duplicate line further down.
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: allHit
-                      ? AppColors.accent.withValues(alpha: 0.14)
-                      : AppColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '$done/${e.targetSets}',
-                  style: AppText.labelSm.copyWith(
-                    color: allHit
-                        ? AppColors.accent
-                        : AppColors.onSurfaceVariant,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _targetText(e, l10n),
-            style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
-          ),
-          if ((e.notes ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              '${l10n.assignedNotes}: ${e.notes}',
-              style: AppText.bodySm.copyWith(
-                color: AppColors.textMuted,
-                fontStyle: FontStyle.italic,
               ),
             ),
-          ],
-          const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 5,
-              backgroundColor: AppColors.surfaceContainerHighest,
-              color: allHit ? AppColors.accent : AppColors.primaryFixed,
-            ),
           ),
-          if (sets.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            for (final s in sets) _buildSetRow(e, s, l10n),
-          ],
+          AnimatedSize(
+            duration: _motionDuration(const Duration(milliseconds: 200)),
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: collapsed
+                ? const SizedBox(width: double.infinity)
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      Text(
+                        _targetText(e, l10n),
+                        style: AppText.bodySm.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      if ((e.notes ?? '').trim().isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          '${l10n.assignedNotes}: ${e.notes}',
+                          style: AppText.bodySm.copyWith(
+                            color: AppColors.textMuted,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 10),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(99),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          minHeight: 5,
+                          backgroundColor: AppColors.surfaceContainerHighest,
+                          color: allHit
+                              ? AppColors.accent
+                              : AppColors.primaryFixed,
+                        ),
+                      ),
+                      if (sets.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        for (final s in sets) _buildSetRow(e, s, l10n),
+                      ],
+                    ],
+                  ),
+          ),
+          // Weight/reps inputs + the Log Set button live OUTSIDE the
+          // AnimatedSize on purpose: a focused TextField inside
+          // RenderAnimatedSize can call markNeedsLayout mid-layout (cursor
+          // blink / floating label) and throw "mutated during layout". They
+          // stay visible for the whole active phase — collapse/expand only
+          // governs the descriptive section above.
           if (isActive) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -741,6 +1042,13 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 1.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -772,33 +1080,64 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide.none,
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: AppColors.primaryFixed,
+                          width: 1.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: ElevatedButton.icon(
-                onPressed: _busy ? null : () => _logSet(e),
-                icon: Icon(
-                  Icons.add_rounded,
-                  size: 18,
-                  color: AppColors.onPrimary,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: _busy
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.primaryFixed.withValues(alpha: 0.4),
+                            AppColors.primaryDim.withValues(alpha: 0.4),
+                          ],
+                        )
+                      : AppColors.primaryActionGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryFixed.withValues(alpha: 0.25),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                label: Text(
-                  l10n.assignedLogSet,
-                  style: AppText.buttonPrimary.copyWith(
+                child: ElevatedButton.icon(
+                  onPressed: _busy ? null : () => _logSet(e),
+                  icon: Icon(
+                    Icons.add_rounded,
+                    size: 18,
                     color: AppColors.onPrimary,
                   ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryFixed,
-                  foregroundColor: AppColors.onPrimary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  label: Text(
+                    l10n.assignedLogSet,
+                    style: AppText.buttonPrimary.copyWith(
+                      color: AppColors.onPrimary,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: AppColors.onPrimary,
+                    disabledForegroundColor: AppColors.onPrimary.withValues(
+                      alpha: 0.6,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
@@ -871,6 +1210,13 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 gradient: AppColors.primaryActionGradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primaryFixed.withValues(alpha: 0.28),
+                    blurRadius: 18,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -893,6 +1239,10 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
           ),
         ),
       );
+    }
+
+    if (_phase == _AssignedPhase.none || _phase == _AssignedPhase.loading) {
+      return const SizedBox.shrink();
     }
 
     final label = _phase == _AssignedPhase.active
@@ -925,6 +1275,13 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   gradient: AppColors.primaryActionGradient,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryFixed.withValues(alpha: 0.28),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: ElevatedButton(
                   onPressed: _busy
@@ -974,17 +1331,24 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: AppColors.lightGreen,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.check_rounded,
-                size: 34,
-                color: AppColors.onPrimaryContainer,
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: _motionDuration(const Duration(milliseconds: 320)),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) =>
+                  Transform.scale(scale: value, child: child),
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppColors.lightGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_rounded,
+                  size: 34,
+                  color: AppColors.onPrimaryContainer,
+                ),
               ),
             ),
             const SizedBox(height: 16),

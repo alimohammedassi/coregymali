@@ -344,6 +344,27 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get activity => 'النشاط';
+
+  @override
+  String ofGlassesCount(String count) {
+    return 'من $count أكواب';
+  }
+
+  @override
+  String ofStepsTotal(String total) {
+    return 'من $total';
+  }
+
+  @override
+  String get addWaterPortion => '+ إضافة ٢٥٠ مل';
+
+  @override
+  String connectHealthToSync(String source) {
+    return 'اربط $source للمزامنة';
+  }
+
+  @override
   String get kcalBurned => 'سعرة محروقة';
 
   @override
@@ -434,10 +455,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get myProgram => 'برنامجي';
 
   @override
+  String get workoutLibrary => 'المكتبة';
+
+  @override
   String get programs => 'البرامج';
 
   @override
   String get logWorkout => 'سجّل تمرين';
+
+  @override
+  String get sectionTodaysWorkout => 'تمرين اليوم';
+
+  @override
+  String get sectionThisWeek => 'هذا الأسبوع';
+
+  @override
+  String get noActiveProgramHint =>
+      'روح لتاب المكتبة واختار برنامج وابدأ رحلتك.';
 
   @override
   String get chooseMuscleGroup => 'اختر المجموعة العضلية';
@@ -1300,6 +1334,21 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get assignedFinish => 'إنهاء التدريب';
+
+  @override
+  String get assignedResume => 'كمّل تمرينك';
+
+  @override
+  String get assignedReadyHint => 'جاهز تبدأ؟ دوس هنا';
+
+  @override
+  String get assignedStatExercises => 'تمارين';
+
+  @override
+  String get assignedStatSets => 'مجموعات';
+
+  @override
+  String get assignedStatTime => 'الوقت المتوقع';
 
   @override
   String get assignedDoneTitle => 'تم إكمال التدريب';

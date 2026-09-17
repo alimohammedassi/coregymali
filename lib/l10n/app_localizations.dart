@@ -452,6 +452,42 @@ abstract class AppLocalizations {
   /// **'Text'**
   String get quickText;
 
+  /// No description provided for @foodLogSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your food'**
+  String get foodLogSheetTitle;
+
+  /// No description provided for @foodLogSheetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Every way to log your food, in one place'**
+  String get foodLogSheetSubtitle;
+
+  /// No description provided for @voiceLogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Say it — AI logs the macros'**
+  String get voiceLogSubtitle;
+
+  /// No description provided for @quickTextSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the meal — AI analyzes it'**
+  String get quickTextSubtitle;
+
+  /// No description provided for @barcodeScanSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan the package, log instantly'**
+  String get barcodeScanSubtitle;
+
+  /// No description provided for @addMealSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the food database'**
+  String get addMealSubtitle;
+
   /// No description provided for @dailyQuests.
   ///
   /// In en, this message translates to:

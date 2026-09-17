@@ -19,11 +19,7 @@ import 'features/home/presentation/widgets/activity_section.dart';
 import 'l10n/app_localizations.dart';
 import 'profile.dart';
 import 'screens/assigned_workout_screen.dart';
-import 'screens/food_scan_screen.dart';
-import 'screens/barcode_scan_screen.dart';
 import 'screens/nutrition_screen.dart';
-import 'screens/text_food_log_screen.dart';
-import 'screens/voice_food_log_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/assigned_workout_service.dart';
 import 'screens/notifications_inbox_screen.dart';
@@ -35,10 +31,10 @@ import 'services/streak_service.dart';
 import 'services/supabase_client.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
-import 'widgets/add_food_sheet.dart';
 import 'widgets/app_background.dart';
 import 'widgets/assigned_workout_card.dart';
 import 'widgets/food_logging_modal.dart';
+import 'widgets/food_log_fab.dart';
 import 'widgets/pixel_art_icons.dart';
 import 'features/health/data/health_service.dart';
 import 'features/health/presentation/widgets/today_activity_card.dart';
@@ -56,13 +52,8 @@ abstract final class NutritionDefaults {
 class _InteractiveScaleDetector extends StatefulWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final double scaleFactor;
 
-  const _InteractiveScaleDetector({
-    required this.child,
-    this.onTap,
-    this.scaleFactor = 0.96,
-  });
+  const _InteractiveScaleDetector({required this.child, this.onTap});
 
   @override
   State<_InteractiveScaleDetector> createState() =>
@@ -81,10 +72,9 @@ class _InteractiveScaleDetectorState extends State<_InteractiveScaleDetector>
       vsync: this,
       duration: const Duration(milliseconds: 120),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: widget.scaleFactor)
-        .animate(
-          CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
-        );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic),
+    );
   }
 
   @override
@@ -186,8 +176,19 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   final GlobalKey<NutritionScreenState> _nutritionScreenKey =
       GlobalKey<NutritionScreenState>();
 
+  final GlobalKey<_HomeScreenCoreState> _homeScreenKey =
+      GlobalKey<_HomeScreenCoreState>();
+
   void _onNutritionChanged() {
     _nutritionScreenKey.currentState?.refreshAfterExternalSave();
+  }
+
+  /// Food saved through the floating log button (reachable on every tab) —
+  /// both live surfaces of today's totals refresh: home's hero rings and
+  /// the nutrition tab.
+  void _onFoodLoggedFromFab() {
+    _homeScreenKey.currentState?.refreshAfterExternalSave();
+    _onNutritionChanged();
   }
 
   /// Single source of truth for the destinations that exist in the app.
@@ -265,6 +266,7 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
   Widget _screenFor(_TabInfo tab, List<_TabInfo> tabs) {
     return switch (tab.id) {
       _TabId.home => _HomeScreenCore(
+        key: _homeScreenKey,
         onNavigate: _onNavigate,
         onNutritionChanged: _onNutritionChanged,
         profileTabIndex: _indexOf(tabs, _TabId.profile),
@@ -376,9 +378,14 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
         resizeToAvoidBottomInset: false,
         backgroundColor: AppColors.background,
         body: AppBackground(
-          child: NotificationListener<ScrollNotification>(
-            onNotification: LiquidTabBarController.shared.handleScroll,
-            child: IndexedStack(index: _currentIndex, children: children),
+          child: Stack(
+            children: [
+              NotificationListener<ScrollNotification>(
+                onNotification: LiquidTabBarController.shared.handleScroll,
+                child: IndexedStack(index: _currentIndex, children: children),
+              ),
+              FoodLogFab(onLogged: _onFoodLoggedFromFab),
+            ],
           ),
         ),
         bottomNavigationBar: _LiquidNavBar(
@@ -498,6 +505,7 @@ class _HomeScreenCore extends StatefulWidget {
   final int coachesTabIndex;
   final int nutritionTabIndex;
   const _HomeScreenCore({
+    super.key,
     required this.onNavigate,
     this.onNutritionChanged,
     required this.profileTabIndex,
@@ -935,74 +943,13 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
   }
 
-  // Barcode scanner entry point — same refresh flow as the AI scan.
-  Future<void> _openBarcodeScan() async {
-    HapticFeedback.lightImpact();
-    final saved = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const BarcodeScanScreen()));
-    if (saved == true && mounted) {
-      await _refreshNutritionTotals();
-      widget.onNutritionChanged?.call();
-    }
-  }
-
-  // Add Meal entry point — opens the Supabase `foods` table browser
-  // (search + categories + smart serving). Same refresh flow as AI scan.
-  Future<void> _openFoodDatabase() async {
-    HapticFeedback.lightImpact();
-    final h = DateTime.now().hour;
-    final defaultMeal = h < 11
-        ? 'breakfast'
-        : h < 16
-        ? 'lunch'
-        : h < 22
-        ? 'dinner'
-        : 'snack';
-    await AddFoodSheet.show(
-      context,
-      preselectedMeal: defaultMeal,
-      onFoodLogged: () async {
-        await _refreshNutritionTotals();
-        widget.onNutritionChanged?.call();
-      },
-    );
-  }
-
-  // AI Food Scan entry point. On success, refresh only the daily nutrition
-  // totals (today's logs + summary) instead of re-fetching everything.
-  Future<void> _openFoodScan() async {
-    HapticFeedback.lightImpact();
-    final saved = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const FoodScanScreen()));
-    if (saved == true && mounted) {
-      await _refreshNutritionTotals();
-      widget.onNutritionChanged?.call();
-    }
-  }
-
-  // Voice Food Log entry point — same refresh flow as the AI scan.
-  Future<void> _openVoiceLog() async {
-    HapticFeedback.lightImpact();
-    final saved = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const VoiceFoodLogScreen()));
-    if (saved == true && mounted) {
-      await _refreshNutritionTotals();
-      widget.onNutritionChanged?.call();
-    }
-  }
-
-  // Text Food Log entry point — same refresh flow as the AI scan.
-  Future<void> _openTextLog() async {
-    HapticFeedback.lightImpact();
-    final saved = await Navigator.of(
-      context,
-    ).push<bool>(MaterialPageRoute(builder: (_) => const TextFoodLogScreen()));
-    if (saved == true && mounted) {
-      await _refreshNutritionTotals();
-      widget.onNutritionChanged?.call();
+  /// Food logged from outside home (the floating log button on any tab) —
+  /// refresh the totals for the day being viewed so the hero rings are
+  /// current when the user switches back. No-op while browsing a past day:
+  /// today's log can't change what that day shows.
+  void refreshAfterExternalSave() {
+    if (_isSameDay(_selectedDate, DateTime.now())) {
+      _refreshNutritionTotals();
     }
   }
 
@@ -1331,27 +1278,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
             ],
 
-            // ── 5. Quick Food Logging Hub (+ Add Meal & AI Scanner) ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 4,
-                child: _QuickFoodLogHub(
-                  isArabic: isArabic,
-                  onAddMeal: _openFoodDatabase,
-                  onAiScan: _openFoodScan,
-                  onVoice: _openVoiceLog,
-                  onText: _openTextLog,
-                  onBarcode: _openBarcodeScan,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── 5b. App feature highlights — surfaces the app's other big
+            // ── 5. App feature highlights — surfaces the app's other big
             // pillars (coaches, workouts) right on Home so they
-            // don't get lost behind the bottom nav.
+            // don't get lost behind the bottom nav. Food logging lives in
+            // the floating button now (owner call 2026-09-17), so there is
+            // no inline logging hub here anymore.
             SliverToBoxAdapter(
               child: _Stagger(
                 ctrl: _staggerCtrl,
@@ -2394,259 +2325,8 @@ class _CalorieGaugePainter extends CustomPainter {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// 7. Quick Food Logging Hub (+ Add Meal & AI Scan)
+// 7. App Feature Highlights Strip
 // ─────────────────────────────────────────────────────────────────────────────
-
-class _QuickFoodLogHub extends StatelessWidget {
-  final bool isArabic;
-  final VoidCallback onAddMeal;
-  final VoidCallback onAiScan;
-  final VoidCallback onVoice;
-  final VoidCallback onText;
-  final VoidCallback onBarcode;
-
-  const _QuickFoodLogHub({
-    required this.isArabic,
-    required this.onAddMeal,
-    required this.onAiScan,
-    required this.onVoice,
-    required this.onText,
-    required this.onBarcode,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          // ── AI Scan — secondary action, not the page's focal point.
-          // Home spec: outlined/subtle card instead of the full lime
-          // gradient fill — ~30% shorter, tinted border, no glow — so it
-          // can never outweigh the data cards above it.
-          _InteractiveScaleDetector(
-            onTap: onAiScan,
-            scaleFactor: 0.97,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.35),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.center,
-                    child: const PixelArtIcon(
-                      type: PixelIconType.robot,
-                      size: 20,
-                      animate: true,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
-                              child: Text(
-                                l10n.scanAi,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.onSurface,
-                                  fontFamily: AppText.fontFamily(
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent.withValues(alpha: 0.16),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'AI',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1,
-                                  color: AppColors.onPrimaryContainer,
-                                  fontFamily: AppText.fontFamily(
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          l10n.aiScanSubtitle,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textSecondary,
-                            fontFamily: AppText.fontFamily(isArabic: isArabic),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 15,
-                    color: AppColors.accent.withValues(alpha: 0.8),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Voice / Text / Barcode — surfaced tiles with visible labels
-          // (used to be icon-only 44px circles; AI alternatives deserve
-          // scannable, tappable targets).
-          Row(
-            children: [
-              _buildLogModeTile(
-                icon: Icons.mic_rounded,
-                label: l10n.voiceLog,
-                onTap: onVoice,
-              ),
-              const SizedBox(width: 8),
-              _buildLogModeTile(
-                icon: Icons.edit_note_rounded,
-                label: l10n.quickText,
-                onTap: onText,
-              ),
-              const SizedBox(width: 8),
-              _buildLogModeTile(
-                icon: Icons.qr_code_scanner_rounded,
-                label: l10n.barcodeScan,
-                onTap: onBarcode,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // ── Add Meal — quiet secondary path into the food database.
-          _InteractiveScaleDetector(
-            onTap: onAddMeal,
-            scaleFactor: 0.97,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.borderSubtle),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.restaurant_rounded,
-                    size: 18,
-                    color: AppColors.accent,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.addMeal,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.onSurface,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogModeTile({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: Semantics(
-        label: label,
-        button: true,
-        child: _InteractiveScaleDetector(
-          onTap: onTap,
-          scaleFactor: 0.93,
-          child: Container(
-            height: 64,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderSubtle),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.cardShadow,
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 21, color: AppColors.accent),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textSecondary,
-                    fontFamily: AppText.fontFamily(isArabic: isArabic),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 class _FeatureHighlightsStrip extends StatelessWidget {
   final bool isArabic;

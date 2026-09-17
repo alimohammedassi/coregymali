@@ -199,6 +199,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickText => 'Text';
 
   @override
+  String get foodLogSheetTitle => 'Log your food';
+
+  @override
+  String get foodLogSheetSubtitle => 'Every way to log your food, in one place';
+
+  @override
+  String get voiceLogSubtitle => 'Say it — AI logs the macros';
+
+  @override
+  String get quickTextSubtitle => 'Describe the meal — AI analyzes it';
+
+  @override
+  String get barcodeScanSubtitle => 'Scan the package, log instantly';
+
+  @override
+  String get addMealSubtitle => 'Browse the food database';
+
+  @override
   String get dailyQuests => 'Daily Quests';
 
   @override

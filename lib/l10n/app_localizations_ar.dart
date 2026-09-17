@@ -197,6 +197,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get quickText => 'نصي';
 
   @override
+  String get foodLogSheetTitle => 'سجّل أكلك';
+
+  @override
+  String get foodLogSheetSubtitle => 'كل طرق تسجيل الأكل في مكان واحد';
+
+  @override
+  String get voiceLogSubtitle => 'قول أكلك والـ AI يحسبه';
+
+  @override
+  String get quickTextSubtitle => 'اكتب وصف الوجبة والـ AI يحللها';
+
+  @override
+  String get barcodeScanSubtitle => 'امسح الباركود وسجّل فوراً';
+
+  @override
+  String get addMealSubtitle => 'من قاعدة بيانات الأطعمة';
+
+  @override
   String get dailyQuests => 'مهام وتحديات اليوم';
 
   @override

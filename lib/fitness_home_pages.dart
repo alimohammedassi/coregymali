@@ -1,8 +1,10 @@
-import 'dart:math';
+
+import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:liquid_tab_bar/liquid_tab_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +24,7 @@ import 'screens/assigned_workout_screen.dart';
 import 'screens/nutrition_screen.dart';
 import 'screens/workout_screen.dart';
 import 'services/assigned_workout_service.dart';
+import 'services/nutrition_service.dart';
 import 'screens/notifications_inbox_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -33,6 +36,7 @@ import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'widgets/app_background.dart';
 import 'widgets/assigned_workout_card.dart';
+import 'widgets/food/glass_calories_card.dart';
 import 'widgets/food_logging_modal.dart';
 import 'widgets/food_log_fab.dart';
 import 'widgets/pixel_art_icons.dart';
@@ -45,6 +49,19 @@ abstract final class NutritionDefaults {
   static const double protein = 140;
   static const double carbs = 250;
   static const double fat = 80;
+
+  // Daily reference values for the micro-nutrient tiles (page 2 of the glass
+  // calories card). Not user-configurable: fiber/sugars/sodium match the
+  // Nutrition tab's micronutrients card; the rest are standard DRI/FDA
+  // daily reference values.
+  static const double fiber = 30; // g
+  static const double sugars = 50; // g
+  static const double sodium = 2300; // mg
+  static const double potassium = 3500; // mg
+  static const double calcium = 1000; // mg
+  static const double iron = 18; // mg
+  static const double cholesterol = 300; // mg
+  static const double caffeine = 400; // mg
 }
 
 // ─── Interactive Micro-Widgets ────────────────────────────────────────────────
@@ -382,7 +399,21 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
             children: [
               NotificationListener<ScrollNotification>(
                 onNotification: LiquidTabBarController.shared.handleScroll,
-                child: IndexedStack(index: _currentIndex, children: children),
+                child: IndexedStack(
+                  index: _currentIndex,
+                  children: [
+                    // Perf pass G6: hidden tabs' tickers (profile's ambient
+                    // background loop, nutrition controllers, …) kept firing
+                    // through the IndexedStack and scheduled ~43-51fps of
+                    // frames app-wide at idle. TickerMode mutes each hidden
+                    // tab's tickers; they resume on return.
+                    for (int i = 0; i < children.length; i++)
+                      TickerMode(
+                        enabled: i == _currentIndex,
+                        child: children[i],
+                      ),
+                  ],
+                ),
               ),
               FoodLogFab(onLogged: _onFoodLoggedFromFab),
             ],
@@ -534,6 +565,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
   Map<String, dynamic> _profile = {};
   Map<String, dynamic>? _goals;
+  Map<String, dynamic>? _summary;
   List<dynamic> _nutritionLogs = [];
 
   /// Today's coach-assigned workout. Null = nothing assigned (or the
@@ -545,17 +577,19 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   double _totalProtein = 0, _goalProtein = NutritionDefaults.protein;
   double _totalCarbs = 0, _goalCarbs = NutritionDefaults.carbs;
   double _totalFat = 0, _goalFat = NutritionDefaults.fat;
-  int _caloriesBurned = 0;
 
   late AnimationController _heroCtrl;
   late AnimationController _staggerCtrl;
-  late Animation<double> _ringAnim;
-  late Animation<double> _macroAnim;
+
+  /// Coalesces bursts of nutrition-data changes (a multi-item AI log writes
+  /// several rows → several bus notifications) into a single refetch.
+  Timer? _nutritionRefreshDebounce;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    NutritionService.addDataListener(_onNutritionDataChanged);
     // OneSignal SDK verification dialog — shown at most once per session
     // right after home paints. Its "Got it" button is the ONLY place the OS
     // notification permission is requested (per OneSignal's integration
@@ -578,14 +612,6 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       vsync: this,
       duration: const Duration(milliseconds: 1000),
       value: 1.0,
-    );
-    _ringAnim = CurvedAnimation(
-      parent: _heroCtrl,
-      curve: const Interval(0.1, 0.85, curve: Curves.easeOutCubic),
-    );
-    _macroAnim = CurvedAnimation(
-      parent: _heroCtrl,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
     );
     _staggerCtrl = AnimationController(
       vsync: this,
@@ -737,6 +763,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     WidgetsBinding.instance.removeObserver(this);
     NotificationService.ready.removeListener(_onNotificationsReady);
     StreakService.milestoneReached.removeListener(_showMilestoneDialog);
+    NutritionService.removeDataListener(_onNutritionDataChanged);
+    _nutritionRefreshDebounce?.cancel();
     _heroCtrl.dispose();
     _staggerCtrl.dispose();
     super.dispose();
@@ -847,6 +875,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       _goals = results[1] as Map<String, dynamic>?;
       _nutritionLogs = (results[2] as List<dynamic>?) ?? [];
       final summary = results[3] as Map<String, dynamic>?;
+      _summary = summary;
 
       _noGoalsSet = _goals == null;
       _totalCalories = _nutritionLogs.fold(
@@ -881,12 +910,6 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             NutritionDefaults.fat;
       }
 
-      if (summary != null) {
-        _caloriesBurned = (summary['calories_burned'] as num?)?.toInt() ?? 0;
-      } else {
-        _caloriesBurned = 0;
-      }
-
       await _loadAssignedWorkout();
     } catch (e) {
       debugPrint('Home load error: $e');
@@ -901,6 +924,101 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         _staggerCtrl.forward(from: 0.0);
       }
     }
+  }
+
+  /// Glass "Calories Today" card — macronutrients on page 1, fiber/sugars/
+  /// sodium on page 2 (owner brief 2026-09-18). Macro totals fold from
+  /// the day's nutrition_logs (existing home behavior); micros read the
+  /// daily_summary row that NutritionService keeps in sync on every log
+  /// change, so the card is fed by the same data the Nutrition tab shows.
+  Widget _buildGlassCaloriesCard() {
+    final l10n = AppLocalizations.of(context)!;
+    final summary = _summary ?? const <String, dynamic>{};
+    double micro(String key) =>
+        (summary[key] as num?)?.toDouble() ?? 0;
+
+    final macros = [
+      NutrientChipMetric(
+        label: l10n.protein,
+        value: _totalProtein,
+        goal: _goalProtein,
+        unit: 'g',
+        color: AppColors.accentProtein,
+        icon: PixelArtIcon(
+          type: PixelIconType.chicken,
+          size: 16,
+          color: AppColors.accentProtein,
+        ),
+      ),
+      NutrientChipMetric(
+        label: l10n.carbs,
+        value: _totalCarbs,
+        goal: _goalCarbs,
+        unit: 'g',
+        color: AppColors.accentCarbs,
+        icon: PixelArtIcon(
+          type: PixelIconType.grain,
+          size: 16,
+          color: AppColors.accentCarbs,
+        ),
+      ),
+      NutrientChipMetric(
+        label: l10n.fat,
+        value: _totalFat,
+        goal: _goalFat,
+        unit: 'g',
+        color: AppColors.accentFat,
+        icon: PixelArtIcon(
+          type: PixelIconType.avocado,
+          size: 16,
+          color: AppColors.accentFat,
+        ),
+      ),
+    ];
+
+    final micros = [
+      NutrientChipMetric(
+        label: l10n.fiber,
+        value: micro('fiber_g'),
+        goal: NutritionDefaults.fiber,
+        unit: 'g',
+        color: AppColors.accentFiber,
+        icon: Icon(Icons.grass_rounded, size: 15, color: AppColors.accentFiber),
+      ),
+      NutrientChipMetric(
+        label: l10n.sugars,
+        value: micro('sugars_g'),
+        goal: NutritionDefaults.sugars,
+        unit: 'g',
+        color: AppColors.accentSugars,
+        icon: Icon(Icons.cake_rounded, size: 15, color: AppColors.accentSugars),
+      ),
+      NutrientChipMetric(
+        label: l10n.sodium,
+        value: micro('sodium_mg'),
+        goal: NutritionDefaults.sodium,
+        unit: 'mg',
+        color: AppColors.accentSodium,
+        icon: Icon(Icons.grain_rounded, size: 15, color: AppColors.accentSodium),
+      ),
+    ];
+
+    return GlassCaloriesCard(
+      caloriesConsumed: _totalCalories,
+      caloriesGoal: _goalCalories,
+      macros: macros,
+      micros: micros,
+      // "TODAY" pill only on today; a past day shows its short date label
+      // (owner brief 2026-09-18: back-navigation through the week strip).
+      pillText: _isSameDay(_selectedDate, DateTime.now())
+          ? null
+          : DateFormat(
+              'E d',
+              Localizations.localeOf(context).languageCode,
+            )
+                .format(_selectedDate)
+                .toUpperCase(),
+    );
   }
 
   /// Isolated loader for the assigned-workout card: every failure mode —
@@ -949,8 +1067,26 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   /// today's log can't change what that day shows.
   void refreshAfterExternalSave() {
     if (_isSameDay(_selectedDate, DateTime.now())) {
-      _refreshNutritionTotals();
+      _scheduleNutritionRefresh();
     }
+  }
+
+  /// Nutrition data changed anywhere in the app (nutrition tab's own logging,
+  /// FAB loggers, barcode, edits/deletes) — the [NutritionService] data bus
+  /// routes every mutation here, so the hero card can't go stale no matter
+  /// which surface the user logged from.
+  void _onNutritionDataChanged() {
+    if (!_isSameDay(_selectedDate, DateTime.now())) return;
+    _scheduleNutritionRefresh();
+  }
+
+  /// One debounced refetch — batched saves (a multi-item AI log) fire the bus
+  /// once per row; only the last notification within the window fetches.
+  void _scheduleNutritionRefresh() {
+    _nutritionRefreshDebounce?.cancel();
+    _nutritionRefreshDebounce = Timer(const Duration(milliseconds: 250), () {
+      if (mounted) _refreshNutritionTotals();
+    });
   }
 
   Future<void> _refreshNutritionTotals() async {
@@ -973,6 +1109,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
       if (!mounted) return;
       _nutritionLogs = (results[0] as List<dynamic>?) ?? [];
+      // The micros page of the calories card reads this row (fiber/sugars/
+      // sodium) — it must refresh together with the macros or that page
+      // freezes on whatever the last full home load fetched.
+      _summary = results[1] as Map<String, dynamic>?;
       _totalCalories = _nutritionLogs.fold(
         0.0,
         (s, l) => s + ((l['calories'] as num?) ?? 0),
@@ -1121,10 +1261,6 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       );
     }
 
-    final double calorieProgress = _goalCalories > 0
-        ? (_totalCalories / _goalCalories).clamp(0.0, 1.0)
-        : 0.0;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: RefreshIndicator(
@@ -1219,22 +1355,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 2,
-                child: _HeroFuelCard(
-                  ringAnim: _ringAnim,
-                  macroAnim: _macroAnim,
-                  calorieProgress: calorieProgress,
-                  totalCalories: _totalCalories,
-                  goalCalories: _goalCalories,
-                  totalProtein: _totalProtein,
-                  goalProtein: _goalProtein,
-                  totalCarbs: _totalCarbs,
-                  goalCarbs: _goalCarbs,
-                  totalFat: _totalFat,
-                  goalFat: _goalFat,
-                  caloriesBurned: _caloriesBurned,
-                  isArabic: isArabic,
-                  onOpenNutrition: () => _openFoodLogger(),
-                ),
+                child: _buildGlassCaloriesCard(),
               ),
             ),
 
@@ -1846,487 +1967,6 @@ class _GoalsOnboardingBanner extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. Hero Fuel Card — calories gauge, macros & date stepper in one card
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _HeroFuelCard extends StatelessWidget {
-  final Animation<double> ringAnim;
-  final Animation<double> macroAnim;
-  final double calorieProgress;
-  final double totalCalories, goalCalories;
-  final double totalProtein, goalProtein;
-  final double totalCarbs, goalCarbs;
-  final double totalFat, goalFat;
-  final int caloriesBurned;
-  final bool isArabic;
-  final VoidCallback onOpenNutrition;
-
-  const _HeroFuelCard({
-    required this.ringAnim,
-    required this.macroAnim,
-    required this.calorieProgress,
-    required this.totalCalories,
-    required this.goalCalories,
-    required this.totalProtein,
-    required this.goalProtein,
-    required this.totalCarbs,
-    required this.goalCarbs,
-    required this.totalFat,
-    required this.goalFat,
-    required this.caloriesBurned,
-    required this.isArabic,
-    required this.onOpenNutrition,
-  });
-
-  bool get _isOver => totalCalories > goalCalories;
-  double get _remaining =>
-      (_isOver ? totalCalories - goalCalories : goalCalories - totalCalories)
-          .abs();
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(26),
-          border: Border.all(
-            color: _isOver
-                ? AppColors.overGoalWarning.withValues(alpha: 0.5)
-                : AppColors.accent.withValues(alpha: 0.20),
-            width: 1.4,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 12,
-              spreadRadius: 0,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Header title + Pixel Fire Badge + compact date stepper
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: AppColors.accentCalories.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(11),
-                  ),
-                  child: const PixelArtIcon(
-                    type: PixelIconType.fire,
-                    size: 17,
-                    animate: true,
-                  ),
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    l10n.todayCalories.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textSecondary,
-                      letterSpacing: 0.9,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Trailing corner: burned calories at a glance (always
-                // visible — the week selector above owns date navigation).
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.local_fire_department_rounded,
-                        size: 13,
-                        color: AppColors.accentCalories,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '$caloriesBurned ${l10n.kcal}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.textSecondary,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Gauge & Main Counter — the single largest, most prominent
-            // number on the whole home screen.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Circular Progress Gauge — heavier stroke, accent arc
-                SizedBox(
-                  width: 124,
-                  height: 124,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedBuilder(
-                        animation: ringAnim,
-                        builder: (_, __) => CustomPaint(
-                          size: const Size(124, 124),
-                          painter: _CalorieGaugePainter(
-                            progress: (calorieProgress * ringAnim.value).clamp(
-                              0.0,
-                              1.0,
-                            ),
-                            isOver: _isOver,
-                          ),
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const PixelArtIcon(
-                            type: PixelIconType.fire,
-                            size: 22,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${((calorieProgress * 100).toInt())}%',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w900,
-                              color: _isOver
-                                  ? AppColors.overGoalWarning
-                                  : AppColors.onPrimaryContainer,
-                              fontFamily: AppText.fontFamily(
-                                isArabic: isArabic,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 20),
-
-                // Numbers & Target Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnimatedBuilder(
-                        animation: ringAnim,
-                        builder: (_, __) => Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              '${(totalCalories * ringAnim.value).toInt()}',
-                              style: TextStyle(
-                                // Tier 1 of the hierarchy: the dominant
-                                // number on Home — largest and boldest.
-                                fontSize: 44,
-                                fontWeight: FontWeight.w900,
-                                height: 1.0,
-                                letterSpacing: -1.0,
-                                color: _isOver
-                                    ? AppColors.overGoalWarning
-                                    : AppColors.textPrimary,
-                                fontFamily: AppText.fontFamily(
-                                  isArabic: isArabic,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${l10n.kcal} · ${isArabic ? 'الهدف' : 'goal'} ${goalCalories.toInt()}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textSecondary,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Remaining Pill Badge — enlarged so the "how much
-                      // is left today" answer is unmissable.
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: _isOver
-                              ? AppColors.overGoalWarning.withValues(
-                                  alpha: 0.15,
-                                )
-                              : AppColors.lightGreen,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _isOver
-                                  ? Icons.trending_up_rounded
-                                  : Icons.check_circle_rounded,
-                              size: 13,
-                              color: _isOver
-                                  ? AppColors.overGoalWarning
-                                  : AppColors.onPrimaryContainer,
-                            ),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                _isOver
-                                    ? l10n.caloriesOverMsg(_remaining.toInt())
-                                    : l10n.caloriesRemainingMsg(
-                                        _remaining.toInt(),
-                                      ),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: _isOver
-                                      ? AppColors.overGoalWarning
-                                      : AppColors.onPrimaryContainer,
-                                  fontFamily: AppText.fontFamily(
-                                    isArabic: isArabic,
-                                  ),
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            // Macro breakdown — slim rows inside the same card
-            Divider(height: 1, thickness: 1, color: AppColors.borderSubtle),
-            const SizedBox(height: 16),
-            // Gram counts derive from the animated values below so they
-            // count up together instead of jumping ahead of the gauge.
-            AnimatedBuilder(
-              animation: macroAnim,
-              builder: (_, __) => Column(
-                children: [
-                  _MacroRow(
-                    label: l10n.protein,
-                    icon: Icons.egg_alt_rounded,
-                    current: (totalProtein * macroAnim.value).toInt(),
-                    goal: goalProtein.toInt(),
-                    accentColor: AppColors.accentProtein,
-                    isArabic: isArabic,
-                  ),
-                  const SizedBox(height: 12),
-                  _MacroRow(
-                    label: l10n.carbs,
-                    icon: Icons.rice_bowl_rounded,
-                    current: (totalCarbs * macroAnim.value).toInt(),
-                    goal: goalCarbs.toInt(),
-                    accentColor: AppColors.accentCarbs,
-                    isArabic: isArabic,
-                  ),
-                  const SizedBox(height: 12),
-                  _MacroRow(
-                    label: l10n.fat,
-                    icon: Icons.opacity_rounded,
-                    current: (totalFat * macroAnim.value).toInt(),
-                    goal: goalFat.toInt(),
-                    accentColor: AppColors.accentFat,
-                    isArabic: isArabic,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// One slim animated macro progress row rendered inside [_HeroFuelCard].
-/// Each macro gets a tinted icon badge so protein/carbs/fat are instantly
-/// scannable by color, not just by label text.
-class _MacroRow extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final int current, goal;
-  final Color accentColor;
-  final bool isArabic;
-
-  const _MacroRow({
-    required this.label,
-    required this.icon,
-    required this.current,
-    required this.goal,
-    required this.accentColor,
-    required this.isArabic,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final double pct = goal > 0 ? (current / goal).clamp(0.0, 1.0) : 0.0;
-
-    return Row(
-      children: [
-        Container(
-          width: 26,
-          height: 26,
-          decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 14, color: accentColor),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                        fontFamily: AppText.fontFamily(isArabic: isArabic),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '$current g',
-                          // Numbers stay in ink (AA on white); the bar below
-                          // carries the macro's semantic hue.
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                            fontFamily: AppText.fontFamily(isArabic: isArabic),
-                          ),
-                        ),
-                        TextSpan(
-                          text: ' / $goal g',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textMuted,
-                            fontFamily: AppText.fontFamily(isArabic: isArabic),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: pct,
-                  minHeight: 6,
-                  // Home spec: the track is the macro's own semantic color
-                  // at ~60% opacity; the fill runs at full opacity.
-                  backgroundColor: accentColor.withValues(alpha: 0.60),
-                  valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _CalorieGaugePainter extends CustomPainter {
-  final double progress;
-  final bool isOver;
-
-  const _CalorieGaugePainter({required this.progress, required this.isOver});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 8;
-    // Thicker arc — the ring is the primary progress visual on Home and must
-    // carry real weight against the 44px calorie number beside it.
-    const strokeWidth = 13.0;
-
-    // Track Background
-    final bgPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..color = AppColors.surfaceContainerHighest;
-    canvas.drawCircle(center, radius, bgPaint);
-
-    if (progress <= 0) return;
-
-    // Active Track with Rounded Cap — volt-family accent per Home spec.
-    final activePaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..color = isOver ? AppColors.overGoalWarning : AppColors.accent;
-
-    final sweep = 2 * pi * progress.clamp(0.0, 1.0);
-    final rect = Rect.fromCircle(center: center, radius: radius);
-    canvas.drawArc(rect, -pi / 2, sweep, false, activePaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CalorieGaugePainter old) =>
-      old.progress != progress || old.isOver != isOver;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 7. App Feature Highlights Strip
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _FeatureHighlightsStrip extends StatelessWidget {
   final bool isArabic;

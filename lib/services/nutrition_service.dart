@@ -12,6 +12,25 @@ import 'supabase_client.dart';
 class NutritionService {
   final StreakService _streakService = StreakService();
 
+  /// Fired after ANY nutrition-log mutation lands (add / edit / delete —
+  /// every path funnels through [_updateDailySummary]). Surfaces that show
+  /// today's totals outside the screen doing the save (home's calories card,
+  /// kept alive across tab switches by the IndexedStack) listen here so they
+  /// can never go stale, however the data was logged.
+  static final List<VoidCallback> _dataListeners = <VoidCallback>[];
+
+  static void addDataListener(VoidCallback listener) =>
+      _dataListeners.add(listener);
+
+  static void removeDataListener(VoidCallback listener) =>
+      _dataListeners.remove(listener);
+
+  void _notifyDataListeners() {
+    for (final listener in List<VoidCallback>.of(_dataListeners)) {
+      listener();
+    }
+  }
+
   /// Whether the DB has the additional-nutrient columns (fiber_g, sodium_mg,
   /// …). Flips to false the first time Postgres says one is missing, so the
   /// app keeps logging macros normally when the migration hasn't been
@@ -548,6 +567,7 @@ class NutritionService {
           .upsert(summaryMap, onConflict: 'user_id,summary_date');
 
       debugPrint('✅ daily_summary upserted for $dateStr');
+      _notifyDataListeners();
     } on PostgrestException catch (e) {
       if (_maybeDisableExtraNutrients(e)) {
         await _updateDailySummary(dateStr);

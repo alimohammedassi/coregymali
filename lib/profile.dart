@@ -18,7 +18,7 @@ import 'theme/app_text.dart';
 import 'login_sign_up.dart';
 import 'widgets/language_toggle.dart';
 import 'widgets/theme_mode_toggle.dart';
-import 'features/coach/presentation/screens/coach_registration_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'screens/workout_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1424,16 +1424,17 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  // ── Coach CTA — quiet, theme-aware card. No gradient, no emoji: surface
-  // card in both modes, volt-family icon badge, AA-safe text. ──
+  // ── Coach CTA — opens the external Coach Dashboard website. Surface card
+  // in both modes, volt-family icon badge, AA-safe text. ──
   Widget _buildCoachCta() => Semantics(
     button: true,
-    label: 'Become a Coach',
+    label: 'Coach Dashboard',
     child: _PressCard(
       onTap: () {
         HapticFeedback.mediumImpact();
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CoachRegistrationScreen()),
+        launchUrl(
+          Uri.parse('https://coregym-coach-dashboard-orpin.vercel.app'),
+          mode: LaunchMode.externalApplication,
         );
       },
       padding: EdgeInsets.zero,
@@ -1462,7 +1463,7 @@ class _ProfilePageState extends State<ProfilePage>
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Icon(
-                Icons.workspace_premium_rounded,
+                Icons.dashboard_rounded,
                 color: AppColors.onPrimaryContainer,
                 size: 24,
               ),
@@ -1475,7 +1476,7 @@ class _ProfilePageState extends State<ProfilePage>
                   Row(
                     children: [
                       Text(
-                        'BECOME A COACH',
+                        'COACH DASHBOARD',
                         style: TextStyle(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
@@ -1496,7 +1497,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    'Unlock coaching tools & clients',
+                    'Manage clients & programs on the web',
                     style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,

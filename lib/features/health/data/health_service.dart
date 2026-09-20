@@ -71,17 +71,22 @@ class HealthService {
         return HealthPermissionStatus.granted;
       }
 
-      // Fallback verification: test read (HealthKit on iOS does not reveal read authorization)
-      try {
-        final now = DateTime.now();
-        final testSteps = await _health.getTotalStepsInInterval(
-          now.subtract(const Duration(hours: 1)),
-          now,
-        );
-        if (testSteps != null) {
-          return HealthPermissionStatus.granted;
-        }
-      } catch (_) {}
+      // Fallback verification — iOS HealthKit does not reveal read
+      // authorization, so probe with a test read. On Android Health Connect's
+      // hasPermissions is authoritative; probing before a grant only made the
+      // plugin log a SecurityException on every home load (run fix 2026-09-19).
+      if (Platform.isIOS) {
+        try {
+          final now = DateTime.now();
+          final testSteps = await _health.getTotalStepsInInterval(
+            now.subtract(const Duration(hours: 1)),
+            now,
+          );
+          if (testSteps != null) {
+            return HealthPermissionStatus.granted;
+          }
+        } catch (_) {}
+      }
 
       return HealthPermissionStatus.denied;
     } catch (e) {

@@ -125,17 +125,13 @@ class _FoodLogFabState extends State<FoodLogFab> {
                     gradient: AppColors.voltGradient,
                     shape: BoxShape.circle,
                     boxShadow: [
-                      // Volt glow — the same accent the bar's lens uses, so
-                      // button and bar read as one system.
-                      BoxShadow(
-                        color: AppColors.accent.withValues(alpha: 0.38),
-                        blurRadius: 18,
-                        offset: const Offset(0, 5),
-                      ),
+                      // Elevation only — the standard card shadow. No volt
+                      // glow: at any strength it reads as a halo/smudge on
+                      // both canvases (owner feedback 2026-09-18).
                       BoxShadow(
                         color: AppColors.cardShadow,
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
+import '../../data/dashboard_activity_repository.dart';
 import '../../domain/day_activity.dart';
 import '../providers/activity_providers.dart';
 import 'steps_card.dart';
@@ -13,6 +14,8 @@ import 'week_day_selector.dart';
 /// The Fri..Thu week strip, fed by [activityWeekProvider]. Lives ABOVE the
 /// hero fuel card on Home and drives the page's selected day — the hero's
 /// date stepper and this strip stay in sync through home's `_selectedDate`.
+/// The end chevrons page across weeks (owner brief 2026-09-18); next-week
+/// is disabled once the current week is on screen.
 class WeekSelectorStrip extends ConsumerWidget {
   final DateTime selectedDate;
   final ValueChanged<DateTime> onSelectDate;
@@ -26,10 +29,20 @@ class WeekSelectorStrip extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final weekAsync = ref.watch(activityWeekProvider);
+    final notifier = ref.read(activityWeekProvider.notifier);
+    final anchor = notifier.weekAnchor;
+    final isCurrentWeek = DashboardActivityRepository.fridayOf(
+      DateTime.now(),
+    ).isAtSameMomentAs(anchor);
     return WeekDaySelector(
       week: weekAsync.value ?? emptyWeekPlaceholder(),
       selectedDate: selectedDate,
       onSelectDate: onSelectDate,
+      onPreviousWeek: () =>
+          notifier.switchWeek(anchor.subtract(const Duration(days: 7))),
+      onNextWeek: () =>
+          notifier.switchWeek(anchor.add(const Duration(days: 7))),
+      canGoNext: !isCurrentWeek,
     );
   }
 }

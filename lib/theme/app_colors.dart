@@ -46,23 +46,23 @@ class AppColors {
 
     // ── Surface Hierarchy ──
     // Dark: olive-graphite ladder (v2 base, kept per Home redesign spec).
-    // Light: neutral paper per Home redesign spec — #FAFAFA canvas, pure
-    // white cards; the old sage cast is gone so white cards read on a
-    // neutral, not tinted, ground.
-    background = light ? const Color(0xFFFAFAFA) : const Color(0xFF121310);
+    // Light: warm cream ladder per owner brief 2026-09-18 — "creamy leaning
+    // white, never pure white". The canvas is the deepest cream step and
+    // cards sit one step lighter; no #FFFFFF anywhere in the ladder.
+    background = light ? const Color(0xFFF6F3EB) : const Color(0xFF121310);
     surfaceLowest =
-        light ? const Color(0xFFFAFAFA) : const Color(0xFF121310);
-    surface = light ? const Color(0xFFFFFFFF) : const Color(0xFF171814);
-    surfaceDim = light ? const Color(0xFFEFEFEF) : const Color(0xFF151612);
+        light ? const Color(0xFFF6F3EB) : const Color(0xFF121310);
+    surface = light ? const Color(0xFFFDFBF5) : const Color(0xFF171814);
+    surfaceDim = light ? const Color(0xFFECE8DE) : const Color(0xFF151612);
     surfaceContainerLow =
-        light ? const Color(0xFFF4F4F4) : const Color(0xFF1B1C17);
+        light ? const Color(0xFFF1EDE3) : const Color(0xFF1B1C17);
     surfaceContainer =
-        light ? const Color(0xFFF7F7F7) : const Color(0xFF1F201B);
+        light ? const Color(0xFFF4F1E7) : const Color(0xFF1F201B);
     surfaceContainerHigh =
-        light ? const Color(0xFFFAFAFA) : const Color(0xFF252620);
+        light ? const Color(0xFFF7F4EC) : const Color(0xFF252620);
     surfaceContainerHighest =
-        light ? const Color(0xFFF1F1F1) : const Color(0xFF2B2C26);
-    surfaceBright = light ? const Color(0xFFFFFFFF) : const Color(0xFF31322C);
+        light ? const Color(0xFFEDE9DF) : const Color(0xFF2B2C26);
+    surfaceBright = light ? const Color(0xFFFDFBF5) : const Color(0xFF31322C);
 
     // ── Home Accent (progress rings & active states) ──
     // The spec's accent pair: Electric Volt on dark, darkened volt on light
@@ -117,6 +117,24 @@ class AppColors {
         ? const Color(0xFFB45309).withValues(alpha: 0.45)
         : const Color(0xFFF59E0B).withValues(alpha: 0.45);
 
+    // ── Ember Hero Gradient (Calories card) ──
+    // Warm champagne→gold sweep for the kcal hero number and its glowing
+    // progress bar — the "calmer, warmer" identity of the glass calories
+    // card. Anchored to the existing gold family (tertiary / tertiaryDim):
+    // dark runs champagne→gold, light deepens both stops so the gold keeps
+    // contrast on white cards.
+    emberGradient = light
+        ? const LinearGradient(
+            colors: [Color(0xFFD4B254), Color(0xFF8A6A1E)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          )
+        : const LinearGradient(
+            colors: [Color(0xFFF6DFA0), Color(0xFFE8C468)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          );
+
     // ── Text & Content Hierarchy ──
     // Light pair from the Home redesign spec (#1A1A1A / #6B6B6B); muted is
     // the darkest gray that still passes AA 4.5:1 on white. Dark textMuted
@@ -130,17 +148,18 @@ class AppColors {
     onBackground = light ? const Color(0xFF1A1A1A) : const Color(0xFFECEEE2);
 
     // ── Outlines & Borders ──
-    borderSubtle = light ? const Color(0xFFE8E8E8) : const Color(0xFF2C2D27);
+    // Warm-tinted so hairlines sit quietly on the cream ladder.
+    borderSubtle = light ? const Color(0xFFE3DFD4) : const Color(0xFF2C2D27);
     borderLight = light
         ? const Color(0x14000000)
         : const Color(0x14FFFFFF);
-    outline = light ? const Color(0xFF9E9E9E) : const Color(0xFF6E7268);
-    outlineVariant = light ? const Color(0xFFD6D6D6) : const Color(0xFF45473E);
+    outline = light ? const Color(0xFF9C988D) : const Color(0xFF6E7268);
+    outlineVariant = light ? const Color(0xFFD4D0C4) : const Color(0xFF45473E);
 
     // ── Glow & Soft Shadow System ──
     // Light card shadow is the Home spec's soft elevation: 4% black,
-    // blur 12 / offset (0,4) at the call sites — white cards separate from
-    // the #FAFAFA canvas by shadow + hairline border, not heavy tint.
+    // blur 12 / offset (0,4) at the call sites — cream cards separate from
+    // the canvas by shadow + hairline border, not heavy tint.
     primaryGlow = const Color(0xFFB2D742)
         .withValues(alpha: light ? 0.25 : 0.08);
     secondaryGlow = const Color(0xFF4FD1C5)
@@ -248,6 +267,21 @@ class AppColors {
   static const Color accentSteps = Color(0xFFE8C468);    // Steps → gold
   static const Color accentWorkout = Color(0xFFF5A623);  // Workout (Pixel Dumbbell)
 
+  // ── Micro-Nutrient Accents (Additional Nutrients page) ──
+  // Same mid-saturation jewel band as the macro family above — no saturated
+  // RGB. Where the palette already covered a nutrient its hue is reused:
+  // fiber=vegetables green, sugars=fruits pink, potassium=purpleAccent,
+  // calcium=dairy blue, iron=clay. Sodium (slate), cholesterol (mauve) and
+  // caffeine (espresso) are new muted additions to complete the set.
+  static const Color accentFiber = Color(0xFF56B870);
+  static const Color accentSugars = Color(0xFFE84393);
+  static const Color accentSodium = Color(0xFF8E9BB5);
+  static const Color accentPotassium = Color(0xFF9B8AFB);
+  static const Color accentCalcium = Color(0xFF4A90D9);
+  static const Color accentIron = Color(0xFFC97B3D);
+  static const Color accentCholesterol = Color(0xFFB87FA8);
+  static const Color accentCaffeine = Color(0xFF8D6E63);
+
   // ── Semantic Aliases & Backward Compatibility (data-viz, mode-safe) ──
   static const Color redAccent = Color(0xFFEA7A72);
   static const Color orangeAccent = Color(0xFFF5A623);
@@ -304,6 +338,13 @@ class AppColors {
   // Use for AI Scan button / active nav icon in light theme for pop (see spec)
   static const LinearGradient voltGradient = LinearGradient(
     colors: [Color(0xFFD1FC00), Color(0xFFB2D742)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  // ── Ember Hero Gradient — mode-aware, resolved by [apply] ──
+  static LinearGradient emberGradient = const LinearGradient(
+    colors: [Color(0xFFF6DFA0), Color(0xFFE8C468)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );

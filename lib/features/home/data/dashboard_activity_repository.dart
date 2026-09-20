@@ -14,47 +14,71 @@ import '../domain/day_activity.dart';
 class DashboardActivityRepository {
   static const int glassMl = 250;
 
-  /// The current Friday-based week (Fri..Thu — the Egyptian week), one
-  /// [DayActivity] per slot. Days after today come back empty; days before
-  /// Friday are outside the visible week.
-  Future<List<DayActivity>> fetchCurrentWeek() async {
+  /// Friday that starts the week containing [d] (Fri..Thu — the Egyptian
+  /// week). Shared by the repository, the week provider and the strip's
+  /// arrow gating.
+  static DateTime fridayOf(DateTime d) {
+    final day = DateTime(d.year, d.month, d.day);
+    return day.subtract(
+      Duration(days: (day.weekday - DateTime.friday + 7) % 7),
+    );
+  }
+
+  /// The Friday-based week containing [anchor], one [DayActivity] per slot.
+  /// Days after today come back empty and weeks entirely in the future come
+  /// back all-empty, so the selector can page backwards through history but
+  /// never forwards past now (owner brief 2026-09-18: "I can't go back and
+  /// see my data").
+  Future<List<DayActivity>> fetchWeek(DateTime anchor) async {
+    final friday = fridayOf(anchor);
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Dart weekday: Mon=1..Sun=7. Friday=5 → 0 days since Friday.
-    final daysSinceFriday = (today.weekday - DateTime.friday + 7) % 7;
-    final friday = today.subtract(Duration(days: daysSinceFriday));
+    // Slots at index > lastLive are in the future relative to TODAY.
+    // -1 = the whole week is in the future → all-empty strip.
+    final daysFromFridayToToday = today.difference(friday).inDays;
+    final lastLive = daysFromFridayToToday > 6
+        ? 6
+        : daysFromFridayToToday;
 
-    if (currentUserId == null) {
-      return _paddedWeek(friday, daysSinceFriday, const {});
+    if (currentUserId == null || lastLive < 0) {
+      return _paddedWeek(friday, lastLive, const {});
     }
 
     try {
-      // p_days counts back from today; we only need Friday..today.
+      // p_days counts back from today, so it must span this week's Friday
+      // through today — 8+ for weeks older than the current one.
       final rows = await supabase.rpc(
         'get_user_activity',
-        params: {'p_target': currentUserId, 'p_days': daysSinceFriday + 1},
+        params: {
+          'p_target': currentUserId,
+          'p_days': daysFromFridayToToday + 1,
+        },
       );
       final byDate = <String, Map<String, dynamic>>{
         for (final row in (rows as List))
           (row as Map<String, dynamic>)['summary_date'].toString().substring(0, 10):
               Map<String, dynamic>.from(row),
       };
-      return _paddedWeek(friday, daysSinceFriday, byDate);
+      return _paddedWeek(friday, lastLive, byDate);
     } catch (e) {
-      debugPrint('DashboardActivityRepository.fetchCurrentWeek error: $e');
+      debugPrint('DashboardActivityRepository.fetchWeek error: $e');
       // Empty week — the selector renders with dim dots, never an error.
-      return _paddedWeek(friday, daysSinceFriday, const {});
+      return _paddedWeek(friday, lastLive, const {});
     }
   }
 
+  /// The current week (convenience wrapper over [fetchWeek]).
+  Future<List<DayActivity>> fetchCurrentWeek() => fetchWeek(DateTime.now());
+
   List<DayActivity> _paddedWeek(
     DateTime friday,
-    int daysSinceFriday,
+    int lastLive,
     Map<String, dynamic> rowsByDate,
   ) {
     return List.generate(7, (i) {
       final date = friday.add(Duration(days: i));
-      if (i > daysSinceFriday) return DayActivity.empty(date); // future day
+      if (i > lastLive) return DayActivity.empty(date); // future day
       final key = date.toIso8601String().substring(0, 10);
       final row = rowsByDate[key];
       return row == null

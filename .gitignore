@@ -48,3 +48,6 @@ app.*.map.json
 scripts/.env
 scripts/node_modules/
 scripts/failed_foods.txt
+
+# Local automation screenshots (never ship test artifacts)
+.screenshots/

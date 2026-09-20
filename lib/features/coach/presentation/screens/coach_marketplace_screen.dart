@@ -60,9 +60,9 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
 
   Future<void> _fetch() async {
     await context.read<CoachListNotifier>().fetchCoaches(
-          specialization: _selectedSpec == 'All' ? null : _selectedSpec,
-          maxPrice: _priceRange.end < 500 ? _priceRange.end : null,
-        );
+      specialization: _selectedSpec == 'All' ? null : _selectedSpec,
+      maxPrice: _priceRange.end < 500 ? _priceRange.end : null,
+    );
     await _prefetchGalleryBanners();
   }
 
@@ -94,11 +94,11 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kCoachBg,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          color: kCoachGold,
-          backgroundColor: kCoachCard,
+          color: AppColors.accent,
+          backgroundColor: AppColors.surface,
           onRefresh: () async => _fetch(),
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -130,16 +130,20 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                     button: true,
                     label: 'Back',
                     child: GestureDetector(
-                      onTap: widget.onBackToHome ?? () => Navigator.pop(context),
+                      onTap:
+                          widget.onBackToHome ?? () => Navigator.pop(context),
                       child: Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: kCoachCard2,
+                          color: AppColors.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: kCoachBorder),
+                          border: Border.all(color: AppColors.borderSubtle),
                         ),
-                        child:  Icon(Icons.arrow_back_rounded,
-                            color: AppColors.textPrimary, size: 20),
+                        child: Icon(
+                          Icons.arrow_back_rounded,
+                          color: AppColors.textPrimary,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ),
@@ -149,31 +153,46 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('FIND A COACH',
-                          style: AppText.headlineSm
-                              .copyWith(color: AppColors.textPrimary)),
-                      Text('اختر مدربك', style: AppText.bodySm),
+                      Text(
+                        'Find a coach',
+                        style: AppText.headlineSm.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'اختر مدربك',
+                        style: AppText.bodySm.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: kCoachGold.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: kCoachGold.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                       Icon(Icons.star_rounded,
-                          color: kCoachGold, size: 14),
-                      const SizedBox(width: 4),
-                      Text('Premium',
-                          style:
-                              AppText.labelMd.copyWith(color: kCoachGold)),
-                    ],
-                  ),
+                // Coach count instead of a static, purposeless "Premium"
+                // badge — a real, live piece of information in the same
+                // slot.
+                Consumer<CoachListNotifier>(
+                  builder: (ctx, notifier, _) {
+                    final count = notifier.coaches?.length;
+                    if (count == null) return const SizedBox.shrink();
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.borderSubtle),
+                      ),
+                      child: Text(
+                        '$count coaches',
+                        style: AppText.labelMd.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -193,9 +212,10 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Text('SPECIALIZATION',
-                style: AppText.labelSm
-                    .copyWith(color: kCoachMuted, letterSpacing: 2)),
+            child: Text(
+              'Specialization',
+              style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+            ),
           ),
           const SizedBox(height: 10),
           SizedBox(
@@ -208,7 +228,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                 final spec = _kSpecializations[i];
                 final active = spec == _selectedSpec;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsetsDirectional.only(end: 8),
                   child: Semantics(
                     button: true,
                     selected: active,
@@ -221,19 +241,26 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
-                          color: active ? kCoachGold : kCoachCard2,
+                          color: active
+                              ? AppColors.accent
+                              : AppColors.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: active ? kCoachGold : kCoachBorder,
+                            color: active
+                                ? AppColors.accent
+                                : AppColors.borderSubtle,
                           ),
                         ),
                         child: Text(
-                          spec.toUpperCase(),
+                          spec[0].toUpperCase() + spec.substring(1),
                           style: AppText.labelMd.copyWith(
-                            color: active ? Colors.black : kCoachMuted,
-                            letterSpacing: 1,
+                            color: active
+                                ? AppColors.onPrimary
+                                : AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -258,9 +285,9 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: kCoachCard,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: kCoachBorder),
+            border: Border.all(color: AppColors.borderSubtle),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,25 +295,27 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('PRICE / MONTH',
-                      style: AppText.labelSm
-                          .copyWith(color: kCoachMuted, letterSpacing: 2)),
+                  Text(
+                    'Price / month',
+                    style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+                  ),
                   Text(
                     _priceRange.end >= 500
                         ? '\$${_priceRange.start.toInt()}+'
                         : '\$${_priceRange.start.toInt()} – \$${_priceRange.end.toInt()}',
-                    style: AppText.titleSm.copyWith(color: kCoachGold),
+                    style: AppText.titleSm.copyWith(color: AppColors.accent),
                   ),
                 ],
               ),
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: kCoachGold,
-                  inactiveTrackColor: kCoachCard2,
-                  thumbColor: kCoachGold,
-                  overlayColor: kCoachGold.withValues(alpha: 0.12),
+                  activeTrackColor: AppColors.accent,
+                  inactiveTrackColor: AppColors.surfaceContainerHigh,
+                  thumbColor: AppColors.accent,
+                  overlayColor: AppColors.accent.withValues(alpha: 0.12),
                   rangeThumbShape: const RoundRangeSliderThumbShape(
-                      enabledThumbRadius: 8),
+                    enabledThumbRadius: 8,
+                  ),
                 ),
                 child: RangeSlider(
                   values: _priceRange,
@@ -310,19 +339,19 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     return Consumer<CoachListNotifier>(
       builder: (ctx, notifier, _) {
         if (notifier.isLoading) {
-          return  SliverFillRemaining(
+          return SliverFillRemaining(
             child: Center(
-                child:
-                    CircularProgressIndicator(color: kCoachGold, strokeWidth: 2)),
+              child: CircularProgressIndicator(
+                color: AppColors.accent,
+                strokeWidth: 2,
+              ),
+            ),
           );
         }
 
         if (notifier.error != null) {
           return SliverFillRemaining(
-            child: CoachErrorState(
-              message: notifier.error!,
-              onRetry: _fetch,
-            ),
+            child: CoachErrorState(message: notifier.error!, onRetry: _fetch),
           );
         }
 
@@ -364,9 +393,9 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
   void _navigateToDetail(CoachEntity coach) {
     // Instantiate concretely — no ProxyProvider needed since this is a
     // self-contained navigation scope and dependencies don't change.
-    final activeSubNotifier =
-        ActiveSubscriptionNotifier(SubscriptionRepositoryImpl())
-          ..fetchActiveSubscription();
+    final activeSubNotifier = ActiveSubscriptionNotifier(
+      SubscriptionRepositoryImpl(),
+    )..fetchActiveSubscription();
 
     Navigator.push(
       context,
@@ -402,7 +431,7 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     final subscriptionNotifier = context.read<SubscriptionNotifier>();
     // Passed through so the sheet can refresh the "active subscription"
     // state after a successful subscribe — otherwise the card still says
-    // SUBSCRIBE until the whole screen is rebuilt.
+    // Subscribe until the whole screen is rebuilt.
     final activeSubNotifier = context.read<ActiveSubscriptionNotifier>();
     showModalBottomSheet(
       context: context,
@@ -439,183 +468,242 @@ class CoachCard extends StatelessWidget {
     required this.onSubscribe,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 14),
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: kCoachCard,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSubscribed ? kCoachGold.withValues(alpha: 0.4) : kCoachBorder,
+  Widget _initialsFallback() {
+    final initials = coach.profile?.name.isNotEmpty == true
+        ? coach.profile!.name.substring(0, 1).toUpperCase()
+        : '?';
+    return Container(
+      height: 120,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.lightGreen, AppColors.surfaceDim],
+        ),
+      ),
+      child: Center(
+        child: Text(
+          initials,
+          style: AppText.headlineLg.copyWith(
+            color: AppColors.accent.withValues(alpha: 0.6),
+            fontSize: 40,
           ),
         ),
-        child: Column(
-          children: [
-            FutureBuilder<dynamic>(
-              // Cache hit → zero queries. Miss → single lookup that fills
-              // the cache for every later rebuild of this card.
-              future: kCoachGalleryCache.containsKey(coach.userId)
-                  ? Future.value(kCoachGalleryCache[coach.userId])
-                  : Supabase.instance.client
-                      .from('coach_onboarding')
-                      .select('gallery_images')
-                      .eq('user_id', coach.userId)
-                      .maybeSingle()
-                      .then((row) {
-                        final images =
-                            (row?['gallery_images'] as List?) ?? const [];
-                        kCoachGalleryCache[coach.userId] = images;
-                        return images;
-                      }),
-              builder: (context, snapshot) {
-                final images = snapshot.data;
-                if (images is List && images.isNotEmpty) {
-                  final bannerUrl = images.first;
-                  return Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(image: CachedNetworkImageProvider(bannerUrl), fit: BoxFit.cover),
-                    ),
-                  );
-                }
-                
-                final initials = coach.profile?.name.isNotEmpty == true
-                  ? coach.profile!.name.substring(0, 1).toUpperCase()
-                  : '?';
+      ),
+    );
+  }
 
-                return Container(
-                  height: 120,
-                  width: double.infinity,
-                  decoration:  BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [AppColors.lightGreen, AppColors.surfaceDim],
-                    ),
-                  ),
-                  child: Center(
-                    child: Text(
-                      initials,
-                      style: AppText.headlineLg.copyWith(color: kCoachGold.withValues(alpha: 0.6), fontSize: 40),
-                    ),
-                  ),
-                );
-              },
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: coach.profile?.name ?? 'Coach',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSubscribed
+                  ? AppColors.accent.withValues(alpha: 0.4)
+                  : AppColors.borderSubtle,
             ),
-            Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      CoachAvatar(url: coach.profile?.avatarUrl, size: 52),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
+          ),
+          child: Column(
+            children: [
+              FutureBuilder<dynamic>(
+                // Cache hit → zero queries. Miss → single lookup that fills
+                // the cache for every later rebuild of this card.
+                future: kCoachGalleryCache.containsKey(coach.userId)
+                    ? Future.value(kCoachGalleryCache[coach.userId])
+                    : Supabase.instance.client
+                          .from('coach_onboarding')
+                          .select('gallery_images')
+                          .eq('user_id', coach.userId)
+                          .maybeSingle()
+                          .then((row) {
+                            final images =
+                                (row?['gallery_images'] as List?) ?? const [];
+                            kCoachGalleryCache[coach.userId] = images;
+                            return images;
+                          }),
+                builder: (context, snapshot) {
+                  final images = snapshot.data;
+                  if (images is List && images.isNotEmpty) {
+                    final bannerUrl = images.first as String;
+                    // A real image widget (with its own loading/error
+                    // states) instead of DecorationImage, which fails
+                    // silently and leaves a blank banner on a bad URL.
+                    return CachedNetworkImage(
+                      imageUrl: bannerUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        height: 120,
+                        width: double.infinity,
+                        color: AppColors.surfaceContainerHigh,
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: AppColors.accent.withValues(alpha: 0.6),
+                            ),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => _initialsFallback(),
+                    );
+                  }
+
+                  return _initialsFallback();
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(18),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header
+                    Row(
+                      children: [
+                        CoachAvatar(url: coach.profile?.avatarUrl, size: 52),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      coach.profile?.name ?? 'Coach',
+                                      style: AppText.titleMd.copyWith(
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isSubscribed)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.accent.withValues(
+                                          alpha: 0.15,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: AppColors.accent.withValues(
+                                            alpha: 0.4,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Active',
+                                        style: AppText.labelMd.copyWith(
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              CoachStarRating(rating: coach.rating),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Bio
+                    Text(
+                      coach.bio,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.bodySm.copyWith(
+                        height: 1.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Spec chips
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: coach.specialization
+                          .take(3)
+                          .map((s) => CoachSpecChip(label: s))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Price + button
+                    Row(
+                      children: [
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    coach.profile?.name ?? 'Coach',
-                                    style: AppText.titleMd
-                                        .copyWith(color: AppColors.textPrimary),
-                                  ),
-                                ),
-                                if (isSubscribed)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: kCoachGold.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                          color:
-                                              kCoachGold.withValues(alpha: 0.4)),
-                                    ),
-                                    child: Text('ACTIVE',
-                                        style: AppText.labelMd
-                                            .copyWith(color: kCoachGold)),
-                                  ),
-                              ],
+                            Text(
+                              'Price / mo',
+                              style: AppText.labelSm.copyWith(
+                                color: AppColors.textMuted,
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            CoachStarRating(rating: coach.rating),
+                            Text(
+                              '\$${coach.priceMonthly.toStringAsFixed(0)}',
+                              style: AppText.titleLg.copyWith(
+                                color: AppColors.accent,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Bio
-                  Text(
-                    coach.bio,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppText.bodySm.copyWith(height: 1.5),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Spec chips
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: coach.specialization
-                        .take(3)
-                        .map((s) => CoachSpecChip(label: s))
-                        .toList(),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Price + button
-                  Row(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('PRICE / MO',
-                              style: AppText.labelSm.copyWith(
-                                  color: kCoachMuted, letterSpacing: 1.5)),
-                          Text(
-                            '\$${coach.priceMonthly.toStringAsFixed(0)}',
-                            style: AppText.titleLg.copyWith(color: kCoachGold),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      GestureDetector(
-                        onTap: isSubscribed ? null : onSubscribe,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isSubscribed ? kCoachCard2 : kCoachGold,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            isSubscribed ? 'SUBSCRIBED' : 'SUBSCRIBE',
-                            style: AppText.buttonPrimary.copyWith(
-                              color: isSubscribed ? kCoachMuted : Colors.black,
+                        const Spacer(),
+                        Semantics(
+                          button: true,
+                          enabled: !isSubscribed,
+                          label: isSubscribed ? 'Subscribed' : 'Subscribe',
+                          child: GestureDetector(
+                            onTap: isSubscribed ? null : onSubscribe,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isSubscribed
+                                    ? AppColors.surfaceContainerHigh
+                                    : AppColors.accent,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isSubscribed ? 'Subscribed' : 'Subscribe',
+                                style: AppText.buttonPrimary.copyWith(
+                                  color: isSubscribed
+                                      ? AppColors.textMuted
+                                      : AppColors.onPrimary,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -631,9 +719,9 @@ class _SubscribeBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration:  BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       padding: EdgeInsets.only(
         left: 24,
@@ -648,55 +736,68 @@ class _SubscribeBottomSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-                color: AppColors.borderSubtle,
-                borderRadius: BorderRadius.circular(2)),
+              color: AppColors.borderSubtle,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
           const SizedBox(height: 24),
           CoachAvatar(url: coach.profile?.avatarUrl, size: 64),
           const SizedBox(height: 16),
-          Text(coach.profile?.name ?? 'Coach',
-              style: AppText.headlineSm.copyWith(color: AppColors.textPrimary)),
+          Text(
+            coach.profile?.name ?? 'Coach',
+            style: AppText.headlineSm.copyWith(color: AppColors.textPrimary),
+          ),
           const SizedBox(height: 6),
-          Text('\$${coach.priceMonthly.toStringAsFixed(0)} / month',
-              style: AppText.titleMd.copyWith(color: kCoachGold)),
+          Text(
+            '\$${coach.priceMonthly.toStringAsFixed(0)} / month',
+            style: AppText.titleMd.copyWith(color: AppColors.accent),
+          ),
           const SizedBox(height: 8),
           Text(
             'You can cancel at any time. By subscribing you agree to our Terms of Service.',
             textAlign: TextAlign.center,
-            style: AppText.bodySm.copyWith(height: 1.5),
+            style: AppText.bodySm.copyWith(
+              height: 1.5,
+              color: AppColors.textSecondary,
+            ),
           ),
           const SizedBox(height: 28),
           Consumer<SubscriptionNotifier>(
             builder: (ctx, notifier, _) {
               if (notifier.isLoading) {
-                return  Center(
-                    child: CircularProgressIndicator(
-                        color: kCoachGold, strokeWidth: 2));
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.accent,
+                    strokeWidth: 2,
+                  ),
+                );
               }
               return Column(
                 children: [
                   if (notifier.error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Text(notifier.error!,
-                          style: AppText.bodySm
-                              .copyWith(color: AppColors.error)),
+                      child: Text(
+                        notifier.error!,
+                        style: AppText.bodySm.copyWith(color: AppColors.error),
+                      ),
                     ),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: kCoachGold,
-                        foregroundColor: Colors.black,
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: AppColors.onPrimary,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14)),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                         elevation: 0,
                       ),
                       onPressed: () async {
                         final navigator = Navigator.of(context);
-                        final activeSub =
-                            context.read<ActiveSubscriptionNotifier>();
+                        final activeSub = context
+                            .read<ActiveSubscriptionNotifier>();
                         final notifier = ctx.read<SubscriptionNotifier>();
                         await notifier.subscribeToCoach(coach.id);
                         // Failure keeps the sheet open so the error text
@@ -706,17 +807,23 @@ class _SubscribeBottomSheet extends StatelessWidget {
                         await activeSub.fetchActiveSubscription();
                         if (navigator.mounted) navigator.pop();
                       },
-                      child: Text('CONFIRM SUBSCRIPTION',
-                          style: AppText.buttonPrimary
-                              .copyWith(color: Colors.black)),
+                      child: Text(
+                        'Confirm subscription',
+                        style: AppText.buttonPrimary.copyWith(
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancel',
-                        style:
-                            AppText.bodySm.copyWith(color: kCoachMuted)),
+                    child: Text(
+                      'Cancel',
+                      style: AppText.bodySm.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                   ),
                 ],
               );

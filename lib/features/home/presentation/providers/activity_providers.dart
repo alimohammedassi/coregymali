@@ -9,13 +9,30 @@ final dashboardActivityRepositoryProvider = Provider<DashboardActivityRepository
   (ref) => DashboardActivityRepository(),
 );
 
-/// The current Fri..Thu week (7 slots, future days empty). Mutated by
+/// The Friday-based week currently loaded (7 slots, future days empty).
+/// Starts anchored on the current week; [switchWeek] pages it backwards
+/// (and forwards, never past now) for the strip's arrows. Mutated by
 /// [addWaterGlass] so the selector dot and both cards update optimistically
 /// from a single source.
 class ActivityWeekNotifier extends AsyncNotifier<List<DayActivity>> {
+  DateTime _anchor = DateTime.now();
+
+  /// Friday that starts the week this provider is currently showing.
+  DateTime get weekAnchor => DashboardActivityRepository.fridayOf(_anchor);
+
   @override
   Future<List<DayActivity>> build() {
-    return ref.read(dashboardActivityRepositoryProvider).fetchCurrentWeek();
+    return ref.read(dashboardActivityRepositoryProvider).fetchWeek(_anchor);
+  }
+
+  /// Loads the week containing [anchor]. The previous week's list stays on
+  /// screen until the fetch succeeds, so the strip never flashes empty; a
+  /// failed fetch keeps what was already shown.
+  Future<void> switchWeek(DateTime anchor) async {
+    _anchor = anchor;
+    final repo = ref.read(dashboardActivityRepositoryProvider);
+    final next = await AsyncValue.guard(() => repo.fetchWeek(anchor));
+    if (next.hasValue) state = next;
   }
 
   DateTime get _today {

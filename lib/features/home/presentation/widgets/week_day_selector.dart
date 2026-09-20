@@ -13,31 +13,94 @@ import '../../domain/day_activity.dart';
 /// day gets a high-contrast pill ([AppColors.onSurface] fill — white-on-dark
 /// in dark mode, ink-on-light in light mode). Future days render dimmed and
 /// are not tappable.
+///
+/// Owner brief 2026-09-18: the strip is week-navigable — chevron arrows on
+/// both ends page to the previous/next week (next is disabled once the
+/// current week is shown), so past days and their logged data are reachable.
 class WeekDaySelector extends StatelessWidget {
   final List<DayActivity> week;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onSelectDate;
+  final VoidCallback? onPreviousWeek;
+  final VoidCallback? onNextWeek;
+
+  /// False once the strip is showing the current week — the next-week
+  /// arrow grays out (there is never data in the future).
+  final bool canGoNext;
 
   const WeekDaySelector({
     super.key,
     required this.week,
     required this.selectedDate,
     required this.onSelectDate,
+    this.onPreviousWeek,
+    this.onNextWeek,
+    this.canGoNext = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // RTL flips the reading direction, so "previous week" points right.
+    final prevIcon = isArabic
+        ? Icons.chevron_right_rounded
+        : Icons.chevron_left_rounded;
+    final nextIcon = isArabic
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          for (final day in week)
-            _DayCell(
-              day: day,
-              selectedDate: selectedDate,
-              onSelectDate: onSelectDate,
+          _WeekArrow(icon: prevIcon, onTap: onPreviousWeek),
+          Expanded(
+            child: Row(
+              children: [
+                for (final day in week)
+                  _DayCell(
+                    day: day,
+                    selectedDate: selectedDate,
+                    onSelectDate: onSelectDate,
+                  ),
+              ],
             ),
+          ),
+          _WeekArrow(
+            icon: nextIcon,
+            onTap: canGoNext ? onNextWeek : null,
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// One chevron paging button at either end of the strip. A null [onTap]
+/// renders the disabled (muted) state.
+class _WeekArrow extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _WeekArrow({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return SizedBox(
+      width: 30,
+      height: 44,
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        visualDensity: VisualDensity.compact,
+        onPressed: onTap,
+        icon: Icon(
+          icon,
+          size: 20,
+          color: enabled
+              ? AppColors.textSecondary
+              : AppColors.textMuted.withValues(alpha: 0.35),
+        ),
       ),
     );
   }

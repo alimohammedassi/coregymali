@@ -31,7 +31,6 @@ class NutritionScreenState extends State<NutritionScreen>
   late AnimationController _macroController;
   late AnimationController _fadeController;
   late AnimationController _lineChartController;
-  late AnimationController _pulseController;
   late Animation<double> _ringAnim;
 
   final _nutritionService = NutritionService();
@@ -56,7 +55,10 @@ class NutritionScreenState extends State<NutritionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() => setState(() {}));
+    // Perf pass G3: the old per-tick `addListener(setState)` rebuilt the
+    // whole ~3.3k-line screen on every controller tick. Nothing outside the
+    // TabBar/TabBarView reads the index, so no explicit rebuild is needed —
+    // both widgets animate themselves through the shared controller.
 
     _ringController = AnimationController(
       vsync: this,
@@ -74,10 +76,9 @@ class NutritionScreenState extends State<NutritionScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat(reverse: true);
+    // Perf pass G6: the unused _pulseController (repeat(reverse: true)) was
+    // removed — it scheduled frames at display rate forever while driving
+    // nothing.
 
     _ringAnim = CurvedAnimation(
       parent: _ringController,
@@ -150,7 +151,6 @@ class NutritionScreenState extends State<NutritionScreen>
     _macroController.dispose();
     _fadeController.dispose();
     _lineChartController.dispose();
-    _pulseController.dispose();
     super.dispose();
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_animations.dart';
 import '../../theme/app_colors.dart';
@@ -27,6 +28,11 @@ class _MyProgramTabState extends State<MyProgramTab>
   /// Today's coach-assigned workout (same source as Home's card). Null =
   /// nothing assigned — the card simply stays hidden, never an error.
   AssignedWorkout? _assignedWorkout;
+
+  /// The rest of the coach's assignments for this client — upcoming,
+  /// completed and skipped — rendered as the compact schedule strip under
+  /// the today card.
+  List<AssignedWorkout> _assignmentHistory = const [];
 
   /// Weekday indices (Mon=0..Sun=6) the user chose for this program's
   /// sessions. Persisted on `user_active_program.training_days`
@@ -251,32 +257,63 @@ class _MyProgramTabState extends State<MyProgramTab>
   }
 
   /// Wraps the tab content with today's coach-assigned workout card on top —
-  /// the same card Home shows, driven by the same fetch. Hidden entirely
-  /// when the coach hasn't sent a workout for today.
+  /// the same card Home shows, driven by the same fetch — plus the compact
+  /// schedule strip of the coach's other assignments. Hidden entirely when
+  /// the coach hasn't sent anything.
   Widget _buildWithAssignedCard(Widget content) {
     final workout = _assignedWorkout;
-    if (workout == null) return content;
+    final history = _historyForDisplay;
+    if (workout == null && history.isEmpty) return content;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       children: [
         const SizedBox(height: 16),
-        AssignedWorkoutCard(
-          workout: workout,
-          isArabic: isArabic,
-          onTap: _openAssignedWorkout,
-        ),
-        const SizedBox(height: 16),
+        if (workout != null) ...[
+          AssignedWorkoutCard(
+            workout: workout,
+            isArabic: isArabic,
+            onTap: _openAssignedWorkout,
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (history.isNotEmpty)
+          _AssignmentHistoryStrip(
+            assignments: history,
+            isArabic: isArabic,
+          ),
         Expanded(child: content),
       ],
     );
   }
 
+  /// History rows worth showing: everything except the today card's own
+  /// live assignment (an 'assigned'/'started' row dated today is already
+  /// the big card above — showing it twice reads as a bug).
+  List<AssignedWorkout> get _historyForDisplay {
+    final today = DateTime.now();
+    return _assignmentHistory
+        .where((a) =>
+            a.scheduledDate.year != today.year ||
+            a.scheduledDate.month != today.month ||
+            a.scheduledDate.day != today.day ||
+            (a.assignmentStatus != 'assigned' &&
+                a.assignmentStatus != 'started'))
+        .toList();
+  }
+
   /// Same degrade-to-hidden contract as Home: any failure (assignment
   /// tables not deployed yet, etc.) resolves to null and hides the card.
   Future<void> _loadAssignedWorkout() async {
-    final assignment = await AssignedWorkoutService().fetchTodayAssignment();
+    final service = AssignedWorkoutService();
+    final results = await Future.wait([
+      service.fetchTodayAssignment(),
+      service.fetchAssignmentHistory(),
+    ]);
     if (!mounted) return;
-    setState(() => _assignedWorkout = assignment);
+    setState(() {
+      _assignedWorkout = results[0] as AssignedWorkout?;
+      _assignmentHistory = results[1] as List<AssignedWorkout>;
+    });
   }
 
   Future<void> _openAssignedWorkout() async {
@@ -994,6 +1031,134 @@ class _MyProgramTabState extends State<MyProgramTab>
           ),
         );
       },
+    );
+  }
+}
+
+/// Compact horizontal strip of the coach's other assignments (upcoming,
+/// completed, skipped). Read-only — today's live workout is the big card
+/// above; tapping a row here does nothing yet (detail view is the screen's
+/// job and it is fed by fetchTodayAssignment).
+class _AssignmentHistoryStrip extends StatelessWidget {
+  final List<AssignedWorkout> assignments;
+  final bool isArabic;
+
+  const _AssignmentHistoryStrip({
+    required this.assignments,
+    required this.isArabic,
+  });
+
+  Color _statusColor(String status) => switch (status) {
+        'completed' => AppColors.lightGreen,
+        'started' => AppColors.overGoalWarning,
+        'skipped' => AppColors.textMuted,
+        _ => AppColors.accent, // assigned
+      };
+
+  String _statusLabel(AppLocalizations l10n, String status) => switch (status) {
+        'completed' => l10n.assignedStatusCompleted,
+        'started' => l10n.assignedStatusStarted,
+        'skipped' => l10n.assignedStatusSkipped,
+        _ => l10n.assignedStatusAssigned,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final dateFmt = DateFormat('E d', l10n.localeName);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.assignedHistoryTitle.toUpperCase(),
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: assignments.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final a = assignments[index];
+                final color = _statusColor(a.assignmentStatus);
+                return Container(
+                  width: 168,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: color,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              _statusLabel(l10n, a.assignmentStatus),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.4,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            dateFmt.format(a.scheduledDate).toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 5),
+                      Expanded(
+                        child: Text(
+                          a.templateName,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            height: 1.2,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
     );
   }
 }

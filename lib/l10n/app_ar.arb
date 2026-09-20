@@ -48,6 +48,24 @@
   "protein": "البروتين",
   "carbs": "الكربوهيدرات",
   "fat": "الدهون",
+  "additionalNutrients": "عناصر غذائية إضافية",
+  "macronutrients": "الماكروز",
+  "fiber": "الألياف",
+  "sugars": "السكريات",
+  "sodium": "الصوديوم",
+  "potassium": "البوتاسيوم",
+  "calcium": "الكالسيوم",
+  "iron": "الحديد",
+  "cholesterol": "الكوليسترول",
+  "caffeine": "الكافيين",
+  "percentOfGoal": "{pct}% من الهدف",
+  "@percentOfGoal": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "quickAddWater": "+٢٥٠ مل",
   "quickWorkout": "تمرين",
   "setGoalsTitle": "تحديد أهدافك الرياضية",
@@ -603,6 +621,15 @@
   "assignedStatTime": "الوقت المتوقع",
   "assignedDoneTitle": "تم إكمال التدريب",
   "assignedDoneBody": "أحسنت — مدربك هيشوف هذا التدريب الآن.",
+  "assignedSkip": "تخطي التدريب",
+  "assignedSkipConfirmTitle": "تخطّي التدريب ده؟",
+  "assignedSkipConfirmBody": "هيتسجل كتدريب متخطّى ومدربك هيشوفه بالشكل ده.",
+  "assignedSkippedDone": "تم تخطي التدريب",
+  "assignedHistoryTitle": "تدريبات المدرب",
+  "assignedStatusAssigned": "مجدول",
+  "assignedStatusStarted": "جاري",
+  "assignedStatusCompleted": "مكتمل",
+  "assignedStatusSkipped": "متخطى",
   "assignedNone": "لا يوجد تدريب معيّن اليوم",
   "assignedNotes": "ملاحظات",
   "assignedTarget": "{sets} مجموعات × {reps} عدات",

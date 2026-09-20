@@ -117,6 +117,41 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fat => 'Fat';
 
   @override
+  String get additionalNutrients => 'Additional Nutrients';
+
+  @override
+  String get macronutrients => 'Macronutrients';
+
+  @override
+  String get fiber => 'Fiber';
+
+  @override
+  String get sugars => 'Sugar';
+
+  @override
+  String get sodium => 'Sodium';
+
+  @override
+  String get potassium => 'Potassium';
+
+  @override
+  String get calcium => 'Calcium';
+
+  @override
+  String get iron => 'Iron';
+
+  @override
+  String get cholesterol => 'Cholesterol';
+
+  @override
+  String get caffeine => 'Caffeine';
+
+  @override
+  String percentOfGoal(int pct) {
+    return '$pct% of goal';
+  }
+
+  @override
   String get quickAddWater => '+250ml';
 
   @override
@@ -1388,6 +1423,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get assignedDoneBody =>
       'Nice work — your coach can see this session now.';
+
+  @override
+  String get assignedSkip => 'Skip workout';
+
+  @override
+  String get assignedSkipConfirmTitle => 'Skip this workout?';
+
+  @override
+  String get assignedSkipConfirmBody =>
+      'It will be marked as skipped and your coach will see it that way.';
+
+  @override
+  String get assignedSkippedDone => 'Workout skipped';
+
+  @override
+  String get assignedHistoryTitle => 'Coach assignments';
+
+  @override
+  String get assignedStatusAssigned => 'Scheduled';
+
+  @override
+  String get assignedStatusStarted => 'In progress';
+
+  @override
+  String get assignedStatusCompleted => 'Completed';
+
+  @override
+  String get assignedStatusSkipped => 'Skipped';
 
   @override
   String get assignedNone => 'No workout assigned today';

@@ -71,6 +71,20 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   }
 
   Future<void> _load() async {
+    // The card that opened this screen may be stale (a skip from another
+    // tab, a dashboard change) — revalidate the assignment before offering
+    // start/resume. A workout that is no longer 'assigned'/'started' gets
+    // declined here: popping lets the host refetch and show the truth.
+    final fresh = await _service.fetchAssignmentById(_workout.assignmentId);
+    if (!mounted) return;
+    if (fresh == null ||
+        (fresh.assignmentStatus != 'assigned' &&
+            fresh.assignmentStatus != 'started')) {
+      Navigator.of(context).pop(false);
+      return;
+    }
+    setState(() => _workout = fresh);
+
     // A 'started' assignment means the user was mid-workout earlier today —
     // reconnect to the open session instead of duplicating it.
     if (_workout.isResumable) {
@@ -167,6 +181,62 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       _busy = false;
     });
     _ensureControllers();
+  }
+
+  /// Declining a scheduled workout: confirm first, then flip the assignment
+  /// to 'skipped' — no session is created — and pop so the host cards
+  /// refetch (the workout disappears from today, as it should).
+  Future<void> _skipWorkout() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainerHigh,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          l10n.assignedSkipConfirmTitle,
+          style: TextStyle(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+          ),
+        ),
+        content: Text(
+          l10n.assignedSkipConfirmBody,
+          style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.overGoalWarning,
+            ),
+            child: Text(l10n.assignedSkip),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _busy = true);
+    final ok = await _service.skipWorkout(_workout.assignmentId);
+    if (!mounted) return;
+    if (!ok) {
+      setState(() => _busy = false);
+      _showError(l10n.assignedErrorSet);
+      return;
+    }
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(l10n.assignedSkippedDone),
+        backgroundColor: AppColors.surfaceContainerHigh,
+      ),
+    );
+    Navigator.of(context).pop(true);
   }
 
   Future<void> _logSet(AssignedExercise e) async {
@@ -1318,6 +1388,24 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 ),
               ),
             ),
+            // Declining is only offered before the workout begins — once a
+            // session exists the user either finishes it or abandons it.
+            if (_phase == _AssignedPhase.ready && !_workout.isResumable)
+              TextButton(
+                onPressed: _busy ? null : _skipWorkout,
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.textMuted,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+                child: Text(
+                  l10n.assignedSkip,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

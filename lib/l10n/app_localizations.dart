@@ -302,6 +302,72 @@ abstract class AppLocalizations {
   /// **'Fat'**
   String get fat;
 
+  /// No description provided for @additionalNutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'Additional Nutrients'**
+  String get additionalNutrients;
+
+  /// No description provided for @macronutrients.
+  ///
+  /// In en, this message translates to:
+  /// **'Macronutrients'**
+  String get macronutrients;
+
+  /// No description provided for @fiber.
+  ///
+  /// In en, this message translates to:
+  /// **'Fiber'**
+  String get fiber;
+
+  /// No description provided for @sugars.
+  ///
+  /// In en, this message translates to:
+  /// **'Sugar'**
+  String get sugars;
+
+  /// No description provided for @sodium.
+  ///
+  /// In en, this message translates to:
+  /// **'Sodium'**
+  String get sodium;
+
+  /// No description provided for @potassium.
+  ///
+  /// In en, this message translates to:
+  /// **'Potassium'**
+  String get potassium;
+
+  /// No description provided for @calcium.
+  ///
+  /// In en, this message translates to:
+  /// **'Calcium'**
+  String get calcium;
+
+  /// No description provided for @iron.
+  ///
+  /// In en, this message translates to:
+  /// **'Iron'**
+  String get iron;
+
+  /// No description provided for @cholesterol.
+  ///
+  /// In en, this message translates to:
+  /// **'Cholesterol'**
+  String get cholesterol;
+
+  /// No description provided for @caffeine.
+  ///
+  /// In en, this message translates to:
+  /// **'Caffeine'**
+  String get caffeine;
+
+  /// No description provided for @percentOfGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'{pct}% of goal'**
+  String percentOfGoal(int pct);
+
   /// No description provided for @quickAddWater.
   ///
   /// In en, this message translates to:
@@ -2677,6 +2743,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Nice work — your coach can see this session now.'**
   String get assignedDoneBody;
+
+  /// No description provided for @assignedSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip workout'**
+  String get assignedSkip;
+
+  /// No description provided for @assignedSkipConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip this workout?'**
+  String get assignedSkipConfirmTitle;
+
+  /// No description provided for @assignedSkipConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It will be marked as skipped and your coach will see it that way.'**
+  String get assignedSkipConfirmBody;
+
+  /// No description provided for @assignedSkippedDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout skipped'**
+  String get assignedSkippedDone;
+
+  /// No description provided for @assignedHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach assignments'**
+  String get assignedHistoryTitle;
+
+  /// No description provided for @assignedStatusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled'**
+  String get assignedStatusAssigned;
+
+  /// No description provided for @assignedStatusStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress'**
+  String get assignedStatusStarted;
+
+  /// No description provided for @assignedStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get assignedStatusCompleted;
+
+  /// No description provided for @assignedStatusSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get assignedStatusSkipped;
 
   /// No description provided for @assignedNone.
   ///

@@ -52,8 +52,13 @@ class AssignedWorkout {
   final String? templateNotes;
   final List<AssignedExercise> exercises;
 
+  /// The day the coach scheduled this workout for. The today-card only ever
+  /// carries today's date; the history list carries past/upcoming days.
+  final DateTime scheduledDate;
+
   /// 'assigned' for a fresh workout, 'started' when the user already began
-  /// it earlier (app killed mid-way) and is resuming.
+  /// it earlier (app killed mid-way) and is resuming. The history list also
+  /// carries 'completed' and 'skipped'.
   final String assignmentStatus;
 
   const AssignedWorkout({
@@ -62,6 +67,7 @@ class AssignedWorkout {
     required this.targetMuscles,
     this.templateNotes,
     required this.exercises,
+    required this.scheduledDate,
     required this.assignmentStatus,
   });
 
@@ -99,6 +105,9 @@ class AssignedWorkout {
       templateName: (template?['name'] as String?) ?? '',
       targetMuscles: muscles,
       templateNotes: template?['notes'] as String?,
+      scheduledDate:
+          DateTime.tryParse((map['scheduled_date'] as String?) ?? '') ??
+          DateTime.now(),
       assignmentStatus: (map['status'] as String?) ?? 'assigned',
       exercises: rawExercises
           .whereType<Map<String, dynamic>>()
@@ -175,6 +184,43 @@ class AssignedWorkoutService {
       return null;
     } catch (e) {
       debugPrint('Error fetching today\'s assignment: $e');
+      return null;
+    }
+  }
+
+  /// Re-reads one assignment fresh from the DB (client-scoped). The today
+  /// card passes an assignment object that may be minutes old — the screen
+  /// revalidates with this before offering start/resume, so a stale card can
+  /// never start a workout the coach's data no longer offers (skipped,
+  /// completed, or deleted).
+  Future<AssignedWorkout?> fetchAssignmentById(String assignmentId) async {
+    if (currentUserId == null) return null;
+    try {
+      final rows = await supabase
+          .from('workout_assignments')
+          .select(
+            'id, status, scheduled_date, '
+            'workout_templates(name, target_muscles, notes, '
+            'workout_template_exercises(id, exercise_name, target_sets, '
+            'target_reps, target_weight_kg, rest_sec, notes, order_index))',
+          )
+          .eq('client_id', currentUserId!)
+          .eq('id', assignmentId)
+          .limit(1);
+      if (rows.isEmpty) return null;
+      return AssignedWorkout.fromMap(
+        (rows as List).whereType<Map<String, dynamic>>().first,
+      );
+    } on PostgrestException catch (e) {
+      if (e.code != _missingTable) {
+        debugPrint(
+          'Supabase error fetching assignment $assignmentId: '
+          '${e.message} | code: ${e.code}',
+        );
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error fetching assignment $assignmentId: $e');
       return null;
     }
   }
@@ -266,7 +312,10 @@ class AssignedWorkoutService {
 
   /// STEP 3 — one confirmed set = one workout_sets row. The exercise name
   /// is written exactly as the template spells it so the coach's dashboard
-  /// can join logged sets back to the template rows.
+  /// can join logged sets back to the template rows. Every set logged here
+  /// is a working set — `is_warmup` is written explicitly (false) because
+  /// the dashboard's volume/performance queries filter on it and a NULL
+  /// would drop the row from those calculations.
   Future<bool> logSet({
     required String sessionId,
     required String exerciseName,
@@ -282,6 +331,7 @@ class AssignedWorkoutService {
         'user_id': currentUserId,
         'exercise_name': exerciseName,
         'set_number': setNumber,
+        'is_warmup': false,
         if (reps != null) 'reps': reps,
         if (weightKg != null) 'weight_kg': weightKg,
         if (restSec != null) 'rest_sec': restSec,
@@ -365,6 +415,64 @@ class AssignedWorkoutService {
       }
     } catch (e) {
       debugPrint('Error updating assignment status: $e');
+    }
+  }
+
+  /// The customer explicitly declines a scheduled workout — the assignment
+  /// flips to 'skipped' and NO workout_sessions row is ever created for it,
+  /// so the coach's dashboard reads it as declined rather than missing.
+  Future<bool> skipWorkout(String assignmentId) async {
+    if (currentUserId == null) return false;
+    try {
+      await supabase
+          .from('workout_assignments')
+          .update({'status': 'skipped'})
+          .eq('id', assignmentId)
+          .eq('client_id', currentUserId!);
+      return true;
+    } on PostgrestException catch (e) {
+      debugPrint(
+        'Supabase error skipping assignment: ${e.message} | code: ${e.code}',
+      );
+      return false;
+    } catch (e) {
+      debugPrint('Error skipping assignment: $e');
+      return false;
+    }
+  }
+
+  /// The assignment list behind the program tab's schedule section:
+  /// upcoming (assigned, dated today or later — today's own card handles
+  /// the resumable 'started' state), then completed and skipped, newest
+  /// first. Exercises are deliberately not fetched — the list only shows
+  /// name/date/status; opening one for detail is the today-card's job.
+  Future<List<AssignedWorkout>> fetchAssignmentHistory() async {
+    if (currentUserId == null) return [];
+    try {
+      final rows = await supabase
+          .from('workout_assignments')
+          .select(
+            'id, status, scheduled_date, '
+            'workout_templates(name, target_muscles)',
+          )
+          .eq('client_id', currentUserId!)
+          .order('scheduled_date', ascending: false)
+          .limit(30);
+      return rows
+          .whereType<Map<String, dynamic>>()
+          .map(AssignedWorkout.fromMap)
+          .toList();
+    } on PostgrestException catch (e) {
+      if (e.code != _missingTable) {
+        debugPrint(
+          'Supabase error fetching assignment history: '
+          '${e.message} | code: ${e.code}',
+        );
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error fetching assignment history: $e');
+      return [];
     }
   }
 }

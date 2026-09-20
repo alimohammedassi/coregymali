@@ -48,6 +48,24 @@
   "protein": "Protein",
   "carbs": "Carbs",
   "fat": "Fat",
+  "additionalNutrients": "Additional Nutrients",
+  "macronutrients": "Macronutrients",
+  "fiber": "Fiber",
+  "sugars": "Sugar",
+  "sodium": "Sodium",
+  "potassium": "Potassium",
+  "calcium": "Calcium",
+  "iron": "Iron",
+  "cholesterol": "Cholesterol",
+  "caffeine": "Caffeine",
+  "percentOfGoal": "{pct}% of goal",
+  "@percentOfGoal": {
+    "placeholders": {
+      "pct": {
+        "type": "int"
+      }
+    }
+  },
   "quickAddWater": "+250ml",
   "quickWorkout": "Workout",
   "setGoalsTitle": "Personalize Your Target Goals",
@@ -624,6 +642,15 @@
   "assignedStatTime": "Est. time",
   "assignedDoneTitle": "Workout completed",
   "assignedDoneBody": "Nice work — your coach can see this session now.",
+  "assignedSkip": "Skip workout",
+  "assignedSkipConfirmTitle": "Skip this workout?",
+  "assignedSkipConfirmBody": "It will be marked as skipped and your coach will see it that way.",
+  "assignedSkippedDone": "Workout skipped",
+  "assignedHistoryTitle": "Coach assignments",
+  "assignedStatusAssigned": "Scheduled",
+  "assignedStatusStarted": "In progress",
+  "assignedStatusCompleted": "Completed",
+  "assignedStatusSkipped": "Skipped",
   "assignedNone": "No workout assigned today",
   "assignedNotes": "Notes",
   "assignedTarget": "{sets} sets × {reps} reps",

@@ -116,6 +116,41 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fat => 'الدهون';
 
   @override
+  String get additionalNutrients => 'عناصر غذائية إضافية';
+
+  @override
+  String get macronutrients => 'الماكروز';
+
+  @override
+  String get fiber => 'الألياف';
+
+  @override
+  String get sugars => 'السكريات';
+
+  @override
+  String get sodium => 'الصوديوم';
+
+  @override
+  String get potassium => 'البوتاسيوم';
+
+  @override
+  String get calcium => 'الكالسيوم';
+
+  @override
+  String get iron => 'الحديد';
+
+  @override
+  String get cholesterol => 'الكوليسترول';
+
+  @override
+  String get caffeine => 'الكافيين';
+
+  @override
+  String percentOfGoal(int pct) {
+    return '$pct% من الهدف';
+  }
+
+  @override
   String get quickAddWater => '+٢٥٠ مل';
 
   @override
@@ -1373,6 +1408,34 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get assignedDoneBody => 'أحسنت — مدربك هيشوف هذا التدريب الآن.';
+
+  @override
+  String get assignedSkip => 'تخطي التدريب';
+
+  @override
+  String get assignedSkipConfirmTitle => 'تخطّي التدريب ده؟';
+
+  @override
+  String get assignedSkipConfirmBody =>
+      'هيتسجل كتدريب متخطّى ومدربك هيشوفه بالشكل ده.';
+
+  @override
+  String get assignedSkippedDone => 'تم تخطي التدريب';
+
+  @override
+  String get assignedHistoryTitle => 'تدريبات المدرب';
+
+  @override
+  String get assignedStatusAssigned => 'مجدول';
+
+  @override
+  String get assignedStatusStarted => 'جاري';
+
+  @override
+  String get assignedStatusCompleted => 'مكتمل';
+
+  @override
+  String get assignedStatusSkipped => 'متخطى';
 
   @override
   String get assignedNone => 'لا يوجد تدريب معيّن اليوم';

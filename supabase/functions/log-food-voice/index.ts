@@ -32,9 +32,9 @@ Return ONLY a JSON object with exactly this shape:
       "protein_g": number,
       "carbs_g": number,
       "fat_g": number,
-      "fiber_g": number | null,        // null when unknown or trace
-      "sugars_g": number | null,
-      "sodium_mg": number | null,      // milligrams
+      "fiber_g": number | null,        // REQUIRED best estimate — null only for plain water/black coffee
+      "sugars_g": number | null,       // REQUIRED best estimate
+      "sodium_mg": number | null,      // REQUIRED best estimate, milligrams
       "potassium_mg": number | null,   // milligrams
       "calcium_mg": number | null,     // milligrams
       "iron_mg": number | null,        // milligrams
@@ -48,10 +48,31 @@ Rules:
 - transcript is the verbatim transcription of the speech (keep the original language, usually Arabic).
 - If the recording does not describe edible food/drink: set is_food to false, items to [], and explain briefly in notes.
 - If it is food: identify each distinct item mentioned, estimate its portion weight in grams (from any cues like cups, spoons, pieces), then estimate calories and macros for THAT estimated portion.
-- The micro-nutrient fields are for THAT estimated portion too. Estimate them from typical composition of the food; use null when unknown, negligible, or you are not confident — never guess wildly.
+- The micro-nutrient fields are for THAT estimated portion too.
+- fiber_g, sugars_g and sodium_mg power the user's daily tracker, so ALWAYS give your best estimate for them from the typical composition of the food (fiber from grain/vegetable/fruit content, sugars from sweet ingredients and dairy, sodium from salt, cheese and processed items). Return null ONLY when the item is genuinely free of that nutrient (e.g. water, black coffee); otherwise a reasonable estimate beats null — the app must show a number. Never guess wildly. If the speaker names a packaged product, use its known label values.
+- For the remaining micro-nutrients (potassium, calcium, iron, cholesterol, caffeine): estimate when reasonably confident, otherwise null.
 - confidence reflects how sure you are about the transcription AND the identification AND portion estimates overall.
 - notes should be one short sentence in English about the meal or any caveats.
 - Numbers must be plain numbers, no units or ranges.`;
+
+// Gemini intermittently answers 502/503/504 under load (measured ~40% of
+// calls during an overload burst); one bad roll must not kill the log the
+// user just recorded, so retry up to 5 attempts with growing backoff.
+async function generateContentWithRetry(model: string, apiKey: string, body: unknown): Promise<Response> {
+  let lastRes: Response | null = null;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    );
+    if (res.ok || ![429, 502, 503, 504].includes(res.status)) return res;
+    lastRes = res;
+    // 429 says "retry in ~22s" (free-tier 20 RPM) — the growing waits reach
+    // 22.5s total so the final attempt lands after the quota window rolls.
+    if (attempt < 5) await new Promise((r) => setTimeout(r, 1500 * attempt));
+  }
+  return lastRes!;
+}
 
 function json(body: unknown, status = 200) {
   return Response.json(body, { status, headers: { 'Access-Control-Allow-Origin': '*' } });
@@ -114,27 +135,20 @@ Deno.serve(async (req: Request) => {
       items: any[];
     };
     try {
-      const geminiRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  { text: ANALYSIS_PROMPT },
-                  { inline_data: { mime_type: mime, data: base64Data } },
-                ],
-              },
+      const geminiRes = await generateContentWithRetry(GEMINI_MODEL, GEMINI_API_KEY, {
+        contents: [
+          {
+            parts: [
+              { text: ANALYSIS_PROMPT },
+              { inline_data: { mime_type: mime, data: base64Data } },
             ],
-            generationConfig: {
-              temperature: 0.2,
-              responseMimeType: 'application/json',
-            },
-          }),
+          },
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          responseMimeType: 'application/json',
         },
-      );
+      });
 
       if (!geminiRes.ok) {
         const detail = await geminiRes.text();

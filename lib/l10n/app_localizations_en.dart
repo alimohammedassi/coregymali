@@ -1684,6 +1684,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestMeal => 'Suggest a meal';
 
   @override
+  String get suggestCardSubtitle =>
+      'AI builds a meal that hits your remaining calories';
+
+  @override
   String get suggestSheetTitle => 'Suggest a meal';
 
   @override
@@ -1738,6 +1742,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get styleHome => 'Home-style';
+
+  @override
+  String get styleJunk => 'Junk food';
 
   @override
   String get suggestCta => 'Suggest for me';

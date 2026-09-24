@@ -3224,6 +3224,12 @@ abstract class AppLocalizations {
   /// **'Suggest a meal'**
   String get suggestMeal;
 
+  /// No description provided for @suggestCardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'AI builds a meal that hits your remaining calories'**
+  String get suggestCardSubtitle;
+
   /// No description provided for @suggestSheetTitle.
   ///
   /// In en, this message translates to:
@@ -3331,6 +3337,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Home-style'**
   String get styleHome;
+
+  /// No description provided for @styleJunk.
+  ///
+  /// In en, this message translates to:
+  /// **'Junk food'**
+  String get styleJunk;
 
   /// No description provided for @suggestCta.
   ///

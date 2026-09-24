@@ -10,7 +10,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
-const GEMINI_MODEL = 'gemini-3.6-flash';
+const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
@@ -33,8 +33,11 @@ function todayCairo(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
 }
 
-// Candidate pool: deterministic per-category slices, ≤100 items total, so the
-// model sees a small curated menu instead of all ~430 catalog rows.
+// Candidate pool: deterministic category caps over a RANDOM slice of each
+// category, ≤100 items total — every request sees a different menu so the
+// suggestions rotate instead of repeating the same foods (owner fix 2026-09-24
+// for "it always shows the same food"). Junk categories (snacks/desserts/
+// drinks) are included so treat-mode has a real pool to compose from.
 const CATEGORY_LIMITS: Record<string, number> = {
   protein: 25,
   dairy: 8,
@@ -43,6 +46,21 @@ const CATEGORY_LIMITS: Record<string, number> = {
   fruits: 8,
   fats: 8,
   arabic: 10,
+  snacks: 20,
+  desserts: 12,
+  drinks: 10,
+};
+
+// Treat mode (owner finish "غير صحي بس محسوب السعرات"): the menu leans junk —
+// supermarket snacks + desserts + sugary drinks — with only a few healthy
+// categories left in as optional sides.
+const TREAT_LIMITS: Record<string, number> = {
+  snacks: 30,
+  desserts: 18,
+  drinks: 14,
+  fruits: 4,
+  dairy: 4,
+  arabic: 4,
 };
 
 interface CatalogFood {
@@ -53,6 +71,14 @@ interface CatalogFood {
   protein_g: number;
   carbs_g: number;
   fat_g: number;
+  fiber_g: number | null;
+  sugars_g: number | null;
+  sodium_mg: number | null;
+  potassium_mg: number | null;
+  calcium_mg: number | null;
+  iron_mg: number | null;
+  cholesterol_mg: number | null;
+  caffeine_mg: number | null;
   serving_size: number | null;
   serving_unit: string | null;
   category: string;
@@ -117,6 +143,29 @@ function extractJsonObject(raw: string): any | null {
   }
 }
 
+// Randomize within each category, then take the configured cap — the menu
+// differs from request to request, which is what makes two suggestions in a
+// row come out as different meals.
+function pickMenu(rows: CatalogFood[], limits: Record<string, number>): CatalogFood[] {
+  const byCategory = new Map<string, CatalogFood[]>();
+  for (const r of rows) {
+    const list = byCategory.get(r.category) ?? [];
+    list.push(r);
+    byCategory.set(r.category, list);
+  }
+  const menu: CatalogFood[] = [];
+  for (const [category, list] of byCategory) {
+    const limit = limits[category] ?? 0;
+    if (limit <= 0) continue;
+    for (let i = list.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [list[i], list[j]] = [list[j], list[i]];
+    }
+    menu.push(...list.slice(0, limit));
+  }
+  return menu;
+}
+
 function buildPrompt(
   target: { calories: number; protein: number; carbs: number; fat: number },
   foods: CatalogFood[],
@@ -145,7 +194,9 @@ Return ONLY a raw JSON object — no markdown fences, no prose before or after. 
 }
 
 Hard rules:
-- Build ONE meal with a protein component + a carb component + a fat and/or vegetable component: 2 to 4 items total.
+- ${style === 'treat'
+    ? 'Build ONE treat combo of 1 to 4 items from the menu. It does NOT need to be balanced — junk food is explicitly requested — but the calories must land within +/-10% of the target.'
+    : 'Build ONE meal with a protein component + a carb component + a fat and/or vegetable component: 2 to 4 items total.'}
 - Use ONLY food_ids copied EXACTLY from the menu below. Never invent, modify or reformat an id.
 - quantity_multiplier is in SERVINGS of that item (1.0 = one listed serving; 0.5 = half serving). Plain numbers only.
 - The meal's calories (sum of item calories x multiplier) must land within +/-10% of the remaining calorie target.
@@ -166,6 +217,9 @@ Hard rules:
     style === 'home'
       ? 'Preference: EGYPTIAN HOME-STYLE — prefer the arabic-category dishes and everyday staples the user knows.'
       : '',
+    style === 'treat'
+      ? 'Preference: TREAT / JUNK FOOD — the user explicitly asked for an unhealthy snack. Pick chocolate bars, chips, biscuits, candy or sugary drinks from the menu; the calories stay within the target so it still fits the day.'
+      : '',
   ]
     .filter(Boolean)
     .join('\n');
@@ -179,19 +233,25 @@ ${menu}`;
 
 // Validate strictly: real ids only, sane multipliers, recomputed calories
 // within ±10% of target. Totals are ALWAYS recomputed from the catalog —
-// a model's declared numbers are never trusted or forwarded.
+// a model's declared numbers are never trusted or forwarded. Macros come
+// from the catalog; micro-nutrients too (catalog value × multiplier, omitted
+// when the catalog row has no value — unknown stays unknown, never 0).
 function validateAndEnrich(
   parsed: any,
   byId: Map<string, CatalogFood>,
   targetCalories: number,
+  minItems = 2,
 ): { ok: true; payload: any } | { ok: false; reason: string } {
   if (!parsed || !Array.isArray(parsed.items)) return { ok: false, reason: 'missing items array' };
   const items = parsed.items;
-  if (items.length < 2 || items.length > 4) return { ok: false, reason: `item count ${items.length} not in 2..4` };
+  if (items.length < minItems || items.length > 4) {
+    return { ok: false, reason: `item count ${items.length} not in ${minItems}..4` };
+  }
 
   const seen = new Set<string>();
   const enriched: any[] = [];
   let kcal = 0, protein = 0, carbs = 0, fat = 0;
+  let fiber = 0, sugars = 0, sodium = 0, potassium = 0, calcium = 0, iron = 0, cholesterol = 0, caffeine = 0;
   for (const it of items) {
     const id = typeof it?.food_id === 'string' ? it.food_id.trim() : '';
     const food = byId.get(id);
@@ -206,6 +266,14 @@ function validateAndEnrich(
     protein += food.protein_g * mult;
     carbs += food.carbs_g * mult;
     fat += food.fat_g * mult;
+    if (food.fiber_g != null) fiber += food.fiber_g * mult;
+    if (food.sugars_g != null) sugars += food.sugars_g * mult;
+    if (food.sodium_mg != null) sodium += food.sodium_mg * mult;
+    if (food.potassium_mg != null) potassium += food.potassium_mg * mult;
+    if (food.calcium_mg != null) calcium += food.calcium_mg * mult;
+    if (food.iron_mg != null) iron += food.iron_mg * mult;
+    if (food.cholesterol_mg != null) cholesterol += food.cholesterol_mg * mult;
+    if (food.caffeine_mg != null) caffeine += food.caffeine_mg * mult;
     enriched.push({
       food_id: food.id,
       name: food.name,
@@ -219,6 +287,14 @@ function validateAndEnrich(
       protein_g: Math.round(food.protein_g * mult * 10) / 10,
       carbs_g: Math.round(food.carbs_g * mult * 10) / 10,
       fat_g: Math.round(food.fat_g * mult * 10) / 10,
+      ...(food.fiber_g != null ? { fiber_g: Math.round(food.fiber_g * mult * 10) / 10 } : {}),
+      ...(food.sugars_g != null ? { sugars_g: Math.round(food.sugars_g * mult * 10) / 10 } : {}),
+      ...(food.sodium_mg != null ? { sodium_mg: Math.round(food.sodium_mg * mult) } : {}),
+      ...(food.potassium_mg != null ? { potassium_mg: Math.round(food.potassium_mg * mult) } : {}),
+      ...(food.calcium_mg != null ? { calcium_mg: Math.round(food.calcium_mg * mult) } : {}),
+      ...(food.iron_mg != null ? { iron_mg: Math.round(food.iron_mg * mult * 10) / 10 } : {}),
+      ...(food.cholesterol_mg != null ? { cholesterol_mg: Math.round(food.cholesterol_mg * mult) } : {}),
+      ...(food.caffeine_mg != null ? { caffeine_mg: Math.round(food.caffeine_mg * mult * 10) / 10 } : {}),
     });
   }
 
@@ -243,6 +319,14 @@ function validateAndEnrich(
       total_protein: Math.round(protein * 10) / 10,
       total_carbs: Math.round(carbs * 10) / 10,
       total_fat: Math.round(fat * 10) / 10,
+      total_fiber_g: Math.round(fiber * 10) / 10,
+      total_sugars_g: Math.round(sugars * 10) / 10,
+      total_sodium_mg: Math.round(sodium),
+      total_potassium_mg: Math.round(potassium),
+      total_calcium_mg: Math.round(calcium),
+      total_iron_mg: Math.round(iron * 10) / 10,
+      total_cholesterol_mg: Math.round(cholesterol),
+      total_caffeine_mg: Math.round(caffeine * 10) / 10,
     },
   };
 }
@@ -268,7 +352,7 @@ Deno.serve(async (req: Request) => {
     const mealType = ['breakfast', 'lunch', 'dinner', 'snack'].includes(body?.meal_type)
       ? body.meal_type as string
       : undefined;
-    const style = ['balanced', 'high_protein', 'light', 'home'].includes(body?.style)
+    const style = ['balanced', 'high_protein', 'light', 'home', 'treat'].includes(body?.style)
       ? body.style as string
       : undefined;
     const rawFraction = Number(body?.calorie_fraction);
@@ -328,17 +412,17 @@ Deno.serve(async (req: Request) => {
     const remainingProtein = Math.max(
       0,
       ((goalsRes.data?.daily_protein_g as number) ?? 0) -
-        ((summaryRes.data?.protein_g as number) ?? 0),
+      ((summaryRes.data?.protein_g as number) ?? 0),
     );
     const remainingCarbs = Math.max(
       0,
       ((goalsRes.data?.daily_carbs_g as number) ?? 0) -
-        ((summaryRes.data?.carbs_g as number) ?? 0),
+      ((summaryRes.data?.carbs_g as number) ?? 0),
     );
     const remainingFat = Math.max(
       0,
       ((goalsRes.data?.daily_fat_g as number) ?? 0) -
-        ((summaryRes.data?.fat_g as number) ?? 0),
+      ((summaryRes.data?.fat_g as number) ?? 0),
     );
 
     // When custom target is used but caller has no remaining macros (already
@@ -365,37 +449,29 @@ Deno.serve(async (req: Request) => {
       fat: targetFat,
     };
 
-    // ── Candidate menu (deterministic slices, ≤100 rows) ────────────────────
+    // ── Candidate menu (random slices, ≤~100 rows; junk-biased in treat mode) ─
     const { data: rows, error: foodsError } = await admin
       .from('foods')
-      .select('id, name, name_ar, calories, protein_g, carbs_g, fat_g, serving_size, serving_unit, category, image_url')
+      .select('id, name, name_ar, calories, protein_g, carbs_g, fat_g, fiber_g, sugars_g, sodium_mg, potassium_mg, calcium_mg, iron_mg, cholesterol_mg, caffeine_mg, serving_size, serving_unit, category, image_url')
       .eq('is_custom', false)
-      .in('category', Object.keys(CATEGORY_LIMITS))
-      .order('category')
-      .order('name');
+      .in('category', Object.keys(style === 'treat' ? TREAT_LIMITS : CATEGORY_LIMITS));
     if (foodsError || !rows?.length) {
       console.error('foods query failed:', foodsError);
       return json({ error: 'foods_unavailable' }, 500);
     }
-    const perCategory = new Map<string, number>();
-    const menu: CatalogFood[] = [];
+    const menu = pickMenu(rows as CatalogFood[], style === 'treat' ? TREAT_LIMITS : CATEGORY_LIMITS);
     const byId = new Map<string, CatalogFood>();
-    for (const r of rows as CatalogFood[]) {
-      const used = perCategory.get(r.category) ?? 0;
-      if (used >= (CATEGORY_LIMITS[r.category] ?? 0)) continue;
-      perCategory.set(r.category, used + 1);
-      menu.push(r);
-      byId.set(r.id, r);
-    }
+    for (const r of menu) byId.set(r.id, r);
 
     // ── Gemini → validate → ONE corrective retry of the SAME call ───────────
     // No fallback model exists (PROJECT_MASTER §5): after one failed
     // validation the same prompt reruns with the correction note, then the
     // feature honestly reports it could not build a fitting meal.
     const { system, user } = buildPrompt(target, menu, mealType, style, fraction);
+    const minItems = style === 'treat' ? 1 : 2;
     const first = await callGemini(system, user);
     if (first.ok) {
-      const verdict = validateAndEnrich(extractJsonObject(first.content), byId, targetCalories);
+      const verdict = validateAndEnrich(extractJsonObject(first.content), byId, targetCalories, minItems);
       if (verdict.ok) return json(verdict.payload);
       console.warn('gemini validation failed:', verdict.reason);
 
@@ -404,7 +480,7 @@ Deno.serve(async (req: Request) => {
         `${user}\n\nIMPORTANT — your previous answer failed validation: ${verdict.reason}\nFix exactly that and return the corrected raw JSON object only.`,
       );
       if (retry.ok) {
-        const retryVerdict = validateAndEnrich(extractJsonObject(retry.content), byId, targetCalories);
+        const retryVerdict = validateAndEnrich(extractJsonObject(retry.content), byId, targetCalories, minItems);
         if (retryVerdict.ok) return json(retryVerdict.payload);
         console.warn('gemini retry validation failed:', retryVerdict.reason);
       }

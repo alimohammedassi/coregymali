@@ -3,6 +3,7 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:liquid_tab_bar/liquid_tab_bar.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/app_localizations.dart';
 import '../screens/barcode_scan_screen.dart';
@@ -13,6 +14,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import 'add_food_sheet.dart';
 import 'pixel_art_icons.dart';
+import 'suggest_meal_sheet.dart';
 
 /// Time-of-day default meal — shared by every FAB entry point so each
 /// logging screen opens preselected on the meal the user is most likely
@@ -329,6 +331,56 @@ class _FoodLogSheetState extends State<FoodLogSheet>
       if (logged) widget.onLogged?.call();
     }
 
+    // Suggest-a-Meal: close this hub first, then open the full flow sheet —
+    // same hand-off pattern as the other AI entries. The remaining budget is
+    // read from the same two tables the nutrition screen uses, so the sheet
+    // opens with the real target no matter which tab the FAB lives on.
+    Future<void> openSuggestMeal() async {
+      HapticFeedback.lightImpact();
+      final client = Supabase.instance.client;
+      final uid = client.auth.currentUser?.id;
+      double remain = 0, remainP = 0, remainC = 0, remainF = 0;
+      if (uid != null) {
+        try {
+          final day = DateTime.now().toIso8601String().substring(0, 10);
+          final results = await Future.wait([
+            client
+                .from('daily_summary')
+                .select('calories_consumed, protein_g, carbs_g, fat_g')
+                .eq('user_id', uid)
+                .eq('summary_date', day)
+                .maybeSingle(),
+            client
+                .from('user_goals')
+                .select('daily_calories, daily_protein_g, daily_carbs_g, daily_fat_g')
+                .eq('user_id', uid)
+                .maybeSingle(),
+          ]);
+          double g(String k) => (results[1]?[k] as num?)?.toDouble() ?? 0;
+          double s(String k) => (results[0]?[k] as num?)?.toDouble() ?? 0;
+          remain = (g('daily_calories') - s('calories_consumed'))
+              .clamp(0.0, double.infinity);
+          remainP = (g('daily_protein_g') - s('protein_g'))
+              .clamp(0.0, double.infinity);
+          remainC = (g('daily_carbs_g') - s('carbs_g'))
+              .clamp(0.0, double.infinity);
+          remainF = (g('daily_fat_g') - s('fat_g'))
+              .clamp(0.0, double.infinity);
+        } catch (e) {
+          debugPrint('FAB suggest-meal budget read failed: $e');
+        }
+      }
+      if (!mounted) return;
+      nav.pop();
+      await nav.push(SuggestMealPopupRoute(
+        remainingKcal: remain,
+        remainingProtein: remainP,
+        remainingCarbs: remainC,
+        remainingFat: remainF,
+        onLogged: widget.onLogged,
+      ));
+    }
+
     return Transform.translate(
       offset: Offset(0, currentDrag),
       child: GestureDetector(
@@ -571,6 +623,110 @@ class _FoodLogSheetState extends State<FoodLogSheet>
                                     color: AppColors.onPrimary.withValues(
                                       alpha: 0.7,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Suggest-a-Meal — the AI planner entry. Gold/ember
+                    // identity (the calorie-target language of the suggest
+                    // flow) so it reads as its own path, not a third quiet
+                    // tile and not a second volt hero.
+                    _Entrance(
+                      animation: widget.routeAnimation,
+                      begin: 0.075,
+                      child: Semantics(
+                        button: true,
+                        label: '${l10n.suggestMeal}. ${l10n.suggestCardSubtitle}',
+                        child: ExcludeSemantics(
+                          child: _PressScale(
+                            reduceMotion: reduceMotion,
+                            onTap: openSuggestMeal,
+                            child: Container(
+                              height: 64,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentCalories.withValues(
+                                  alpha: AppColors.isLight ? 0.12 : 0.16,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: AppColors.accentCalories.withValues(
+                                    alpha: AppColors.isLight ? 0.30 : 0.35,
+                                  ),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.accentCalories
+                                          .withValues(alpha: 0.16),
+                                      borderRadius: BorderRadius.circular(13),
+                                      border: Border.all(
+                                        color: AppColors.accentCalories
+                                            .withValues(alpha: 0.35),
+                                      ),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: PixelArtIcon(
+                                      type: PixelIconType.plate,
+                                      size: 22,
+                                      color: AppColors.accentCalories,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          l10n.suggestMeal,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w900,
+                                            color: AppColors.textPrimary,
+                                            fontFamily: AppText.fontFamily(
+                                              isArabic: isArabic,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          l10n.suggestCardSubtitle,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: AppColors.textSecondary,
+                                            fontFamily: AppText.fontFamily(
+                                              isArabic: isArabic,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 18,
+                                    color: AppColors.accentCalories,
                                   ),
                                 ],
                               ),

@@ -1666,6 +1666,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get suggestMeal => 'اقترح وجبة';
 
   @override
+  String get suggestCardSubtitle =>
+      'الـ AI يركّبلك وجبة تضبط على الكالوريز المتبقية ليك';
+
+  @override
   String get suggestSheetTitle => 'اقترح وجبة';
 
   @override
@@ -1720,6 +1724,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get styleHome => 'بيتي';
+
+  @override
+  String get styleJunk => 'غير صحي';
 
   @override
   String get suggestCta => 'اقترح لي';

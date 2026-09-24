@@ -59,6 +59,18 @@ class MealSuggestionItem {
   final double carbsG;
   final double fatG;
 
+  /// Micro-nutrients, also scaled by [quantityMultiplier] server-side.
+  /// Null = the catalog row has no value (unknown), never 0 — they ride into
+  /// the log as SQL NULL exactly like every other logging path.
+  final double? fiberG;
+  final double? sugarsG;
+  final double? sodiumMg;
+  final double? potassiumMg;
+  final double? calciumMg;
+  final double? ironMg;
+  final double? cholesterolMg;
+  final double? caffeineMg;
+
   const MealSuggestionItem({
     required this.foodId,
     required this.name,
@@ -68,6 +80,14 @@ class MealSuggestionItem {
     required this.proteinG,
     required this.carbsG,
     required this.fatG,
+    this.fiberG,
+    this.sugarsG,
+    this.sodiumMg,
+    this.potassiumMg,
+    this.calciumMg,
+    this.ironMg,
+    this.cholesterolMg,
+    this.caffeineMg,
     this.nameAr,
     this.servingSize,
     this.servingUnit,
@@ -75,6 +95,7 @@ class MealSuggestionItem {
   });
 
   factory MealSuggestionItem.fromJson(Map<String, dynamic> json) {
+    double? opt(dynamic v) => v is num ? v.toDouble() : null;
     return MealSuggestionItem(
       foodId: json['food_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -88,6 +109,14 @@ class MealSuggestionItem {
       proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
       carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
       fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+      fiberG: opt(json['fiber_g']),
+      sugarsG: opt(json['sugars_g']),
+      sodiumMg: opt(json['sodium_mg']),
+      potassiumMg: opt(json['potassium_mg']),
+      calciumMg: opt(json['calcium_mg']),
+      ironMg: opt(json['iron_mg']),
+      cholesterolMg: opt(json['cholesterol_mg']),
+      caffeineMg: opt(json['caffeine_mg']),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/additional_nutrients.dart';
 import 'nutrition_service.dart';
 import 'streak_service.dart';
 import 'supabase_client.dart';
@@ -436,6 +437,46 @@ class AssignedNutritionService {
 
     final nutrition = NutritionService();
     final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    // Micro-nutrients are NOT part of the assignment snapshot — the plan rows
+    // carry macros only. Pull them from the live foods catalog for the exact
+    // rows being logged (substituted foods included) and scale each bundle by
+    // the same ratio the logged calories represent against the catalog row,
+    // so client-edited quantities and substitutions stay proportional.
+    final catalogRows = <String, Map<String, dynamic>>{};
+    final foodIds = meal.foods
+        .map((f) => f.currentFoodId ?? f.foodId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+    if (foodIds.isNotEmpty) {
+      try {
+        final rows = await supabase
+            .from('foods')
+            .select('id, calories, fiber_g, sugars_g, sodium_mg, '
+                'potassium_mg, calcium_mg, iron_mg, cholesterol_mg, caffeine_mg')
+            .inFilter('id', foodIds.toList());
+        for (final row in rows) {
+          catalogRows[row['id'].toString()] = row;
+        }
+      } on PostgrestException catch (e) {
+        debugPrint('Micro-nutrient lookup for logged meal failed: ${e.code}');
+      } catch (e) {
+        debugPrint('Micro-nutrient lookup for logged meal failed: $e');
+      }
+    }
+
+    AdditionalNutrients? extrasFor(AssignedNutritionFood f) {
+      final row = catalogRows[f.currentFoodId ?? f.foodId];
+      if (row == null) return null;
+      final bundle = AdditionalNutrients.fromFoodRow(row);
+      if (!bundle.hasAny) return null;
+      final rowKcal = (row['calories'] as num?)?.toDouble() ?? 0;
+      final factor = rowKcal > 0 && f.effectiveCalories > 0
+          ? f.effectiveCalories / rowKcal
+          : f.effectiveQuantity;
+      return bundle.scaledBy(factor);
+    }
+
     for (final f in meal.foods) {
       try {
         await nutrition.insertNutritionLogRow({
@@ -450,7 +491,7 @@ class AssignedNutritionService {
           'carbs_g': f.effectiveCarbsG,
           'fat_g': f.effectiveFatG,
           'logged_date': today,
-        }, null);
+        }, extrasFor(f));
       } on PostgrestException catch (e) {
         debugPrint(
           'Supabase error logging eaten food "${f.displayName}": '

@@ -51,6 +51,26 @@ class ActiveSubscriptionNotifier extends ChangeNotifier {
     }
   }
 
+  Future<bool> cancelActiveSubscription() async {
+    final sub = _subscription;
+    if (sub == null) return false;
+    _isLoading = true;
+    _error = null;
+    if (!_disposed) notifyListeners();
+    try {
+      await _repository.cancelSubscription(sub.id);
+      _subscription = null;
+      _isLoading = false;
+      if (!_disposed) notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      if (!_disposed) notifyListeners();
+      return false;
+    }
+  }
+
   void clear() {
     _subscription = null;
     _error = null;

@@ -1379,6 +1379,56 @@ class AppLocalizationsEn extends AppLocalizations {
   String get assignedWorkoutTitle => 'Today\'s Workout';
 
   @override
+  String get assignedNutritionTitle => 'Today\'s Nutrition';
+
+  @override
+  String get assignedNutritionNoPlan => 'No nutrition plan assigned';
+
+  @override
+  String get assignedNutritionNoPlanBody =>
+      'Your coach hasn\'t assigned a nutrition plan for today yet.';
+
+  @override
+  String get assignedNutritionNoMealsToday => 'No meals assigned for today';
+
+  @override
+  String get assignedNutritionStatMeals => 'Meals';
+
+  @override
+  String get assignedNutritionStatFoods => 'Foods';
+
+  @override
+  String get assignedNutritionStatusAssigned => 'Assigned';
+
+  @override
+  String get assignedNutritionStatusCompleted => 'Completed';
+
+  @override
+  String get assignedNutritionStatusSkipped => 'Skipped';
+
+  @override
+  String get assignedNutritionChanged => 'Changed';
+
+  @override
+  String get assignedNutritionMealTotal => 'Meal total';
+
+  @override
+  String get assignedNutritionMarkEaten => 'Mark as eaten';
+
+  @override
+  String get assignedNutritionMarkedEaten =>
+      'Meal logged — calories added to today';
+
+  @override
+  String get assignedNutritionMarkFailed =>
+      'Couldn\'t mark the meal — try again';
+
+  @override
+  String assignedNutritionNextDay(String date) {
+    return 'No meals today — showing next scheduled day: $date';
+  }
+
+  @override
   String assignedCardMeta(int ex, int min) {
     return '$ex exercises · ~$min min';
   }
@@ -1629,4 +1679,114 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get foodLogConfirm => 'Log Food';
+
+  @override
+  String get suggestMeal => 'Suggest a meal';
+
+  @override
+  String get suggestSheetTitle => 'Suggest a meal';
+
+  @override
+  String get suggestMealSlot => 'MEAL';
+
+  @override
+  String get suggestStyle => 'STYLE';
+
+  @override
+  String get suggestCaloriesRow => 'CALORIES';
+
+  @override
+  String get suggestCaloriesLabel => 'CALORIES';
+
+  @override
+  String get suggestCaloriesHint => 'e.g. 550';
+
+  @override
+  String get suggestCaloriesInvalid => 'Enter 80–5000 kcal';
+
+  @override
+  String get suggestUseRemaining => 'Use remaining';
+
+  @override
+  String get suggestCustomCaloriesTitle => 'Your target';
+
+  @override
+  String get suggestCustomCaloriesSubtitle =>
+      'Type the calories you want this meal to hit — AI builds exactly to that number';
+
+  @override
+  String get suggestGoalMetTitle => 'You\'ve hit your goal';
+
+  @override
+  String get suggestGoalMetBody =>
+      'Your calories for today are covered — there\'s no room left for a suggested meal.';
+
+  @override
+  String get suggestMatchLabel => 'match';
+
+  @override
+  String get suggestRegenerate => 'Another idea';
+
+  @override
+  String get styleBalanced => 'Balanced';
+
+  @override
+  String get styleHighProtein => 'High protein';
+
+  @override
+  String get styleLight => 'Light';
+
+  @override
+  String get styleHome => 'Home-style';
+
+  @override
+  String get suggestCta => 'Suggest for me';
+
+  @override
+  String get suggestTargetLabel => 'Target';
+
+  @override
+  String get stageReadRemaining => 'Reading your remaining macros';
+
+  @override
+  String get stageScanCatalog => 'Picking from your foods catalog';
+
+  @override
+  String get stageCompose => 'Composing your meal';
+
+  @override
+  String get stageValidate => 'Checking the numbers';
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get suggestedMealTitle => 'Suggested meal';
+
+  @override
+  String get buildingMeal => 'Building your meal...';
+
+  @override
+  String get logThisMeal => 'Log this meal';
+
+  @override
+  String get mealLogged => 'Meal logged';
+
+  @override
+  String get servingUnitLabel => 'serving';
+
+  @override
+  String get suggestNoRemaining =>
+      'You\'ve used your calories for today — no room left for a suggested meal.';
+
+  @override
+  String get suggestNoMatch =>
+      'Couldn\'t build a meal that fits your remaining macros. Try again in a moment.';
+
+  @override
+  String get suggestUnavailable =>
+      'The suggestion service is busy right now. Try again in a bit.';
+
+  @override
+  String get suggestFailed => 'Couldn\'t get a suggestion. Try again.';
 }

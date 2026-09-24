@@ -267,15 +267,16 @@ class AppColors {
   static const Color accentSteps = Color(0xFFE8C468);    // Steps → gold
   static const Color accentWorkout = Color(0xFFF5A623);  // Workout (Pixel Dumbbell)
 
-  // ── Micro-Nutrient Accents (Additional Nutrients page) ──
+  // ── Micro-Nutrient Accents (calories card micros rows) ──
   // Same mid-saturation jewel band as the macro family above — no saturated
-  // RGB. Where the palette already covered a nutrient its hue is reused:
-  // fiber=vegetables green, sugars=fruits pink, potassium=purpleAccent,
-  // calcium=dairy blue, iron=clay. Sodium (slate), cholesterol (mauve) and
-  // caffeine (espresso) are new muted additions to complete the set.
-  static const Color accentFiber = Color(0xFF56B870);
-  static const Color accentSugars = Color(0xFFE84393);
-  static const Color accentSodium = Color(0xFF8E9BB5);
+  // RGB, and no hue collisions with the macros shown beside them in the
+  // calories card (2026-09-23: fiber moved off fat's green, sugars off the
+  // saturated pink, sodium brightened off dull slate). Fiber reuses the
+  // palette's teal (the "reuse a covered hue" precedent); sugars takes the
+  // violet freed when steps went gold.
+  static const Color accentFiber = Color(0xFF4FD1C5);
+  static const Color accentSugars = Color(0xFF9B8AFB);
+  static const Color accentSodium = Color(0xFF7E9CC9);
   static const Color accentPotassium = Color(0xFF9B8AFB);
   static const Color accentCalcium = Color(0xFF4A90D9);
   static const Color accentIron = Color(0xFFC97B3D);

@@ -581,6 +581,28 @@
     }
   },
   "assignedWorkoutTitle": "تدريب اليوم",
+  "assignedNutritionTitle": "تغذية اليوم",
+  "assignedNutritionNoPlan": "لا توجد خطة تغذية",
+  "assignedNutritionNoPlanBody": "الكوتش لسه مسندش خطة تغذية لليوم ده.",
+  "assignedNutritionNoMealsToday": "لا توجد وجبات مسندة لليوم",
+  "assignedNutritionStatMeals": "وجبات",
+  "assignedNutritionStatFoods": "أكلات",
+  "assignedNutritionStatusAssigned": "مسندة",
+  "assignedNutritionStatusCompleted": "مكتملة",
+  "assignedNutritionStatusSkipped": "متخطاة",
+  "assignedNutritionChanged": "مُعدّل",
+  "assignedNutritionMealTotal": "إجمالي الوجبة",
+  "assignedNutritionMarkEaten": "اتكلت خلاص",
+  "assignedNutritionMarkedEaten": "اتسجلت الوجبة — السعرات اتضافت لليوم",
+  "assignedNutritionMarkFailed": "معرفتش أسجل الوجبة — حاول تاني",
+  "assignedNutritionNextDay": "مفيش وجبات النهاردة — ده أقرب يوم متسجل: {date}",
+  "@assignedNutritionNextDay": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "assignedCardMeta": "{ex} تمارين · حوالي {min} دقيقة",
   "@assignedCardMeta": {
     "placeholders": {
@@ -728,5 +750,40 @@
   "foodLogQuantity": "الكمية",
   "foodLogAssignMeal": "اختر الوجبة",
   "foodLogLogged": "تم التسجيل!",
-  "foodLogConfirm": "سجّل الطعام"
+  "foodLogConfirm": "سجّل الطعام",
+  "suggestMeal": "اقترح وجبة",
+  "suggestSheetTitle": "اقترح وجبة",
+  "suggestMealSlot": "الوجبة",
+  "suggestStyle": "النوع",
+  "suggestCaloriesRow": "السعرات",
+  "suggestCaloriesLabel": "السعرات",
+  "suggestCaloriesHint": "مثال: ٥٥٠",
+  "suggestCaloriesInvalid": "اكتب ۸٠–٥٠٠٠ سعرة",
+  "suggestUseRemaining": "استخدم المتبقي",
+  "suggestCustomCaloriesTitle": "هدفك انت",
+  "suggestCustomCaloriesSubtitle": "اكتب السعرات اللي عايز الوجبة تغطيها — الذكاء هيبني وجبة بالظبط على الرقم ده",
+  "suggestGoalMetTitle": "وصلت لهدفك",
+  "suggestGoalMetBody": "كالوريز النهاردة خلصت — مفيش مساحة لوجبة مقترحة.",
+  "suggestMatchLabel": "تطابق",
+  "suggestRegenerate": "فكرة تانية",
+  "styleBalanced": "متوازن",
+  "styleHighProtein": "بروتين عالي",
+  "styleLight": "خفيف",
+  "styleHome": "بيتي",
+  "suggestCta": "اقترح لي",
+  "suggestTargetLabel": "الهدف",
+  "stageReadRemaining": "بقرا المتبقي بتاعك",
+  "stageScanCatalog": "بختار من كاتالوج الأكلات",
+  "stageCompose": "ببتكر وجبتك",
+  "stageValidate": "بتتأكد من الأرقام",
+  "tryAgain": "جرب تاني",
+  "suggestedMealTitle": "الوجبة المقترحة",
+  "buildingMeal": "بنجهز وجبتك...",
+  "logThisMeal": "سجل الوجبة دي",
+  "mealLogged": "الوجبة اتسجلت",
+  "servingUnitLabel": "حصة",
+  "suggestNoRemaining": "خلصت كالوريز النهاردة — مفيش مساحة لوجبة مقترحة.",
+  "suggestNoMatch": "مش قادرين نبني وجبة تناسب المتبقي ليك. جرب تاني بعد لحظات.",
+  "suggestUnavailable": "خدمة الاقتراح مشغولة دلوقتي. جرب تاني بعد شوية.",
+  "suggestFailed": "معرفناش نجيب اقتراح. جرب تاني."
 }

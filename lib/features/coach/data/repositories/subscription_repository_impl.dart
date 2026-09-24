@@ -54,6 +54,7 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
             .insert(data)
             .select()
             .single();
+        subscriptionChangeNotifier.value++;
         return response.toEntity();
       } on PostgrestException catch (e) {
         // Lost a double-submit race for the client's single active slot —
@@ -68,7 +69,10 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
               .eq('status', 'active')
               .limit(1)
               .maybeSingle();
-          if (existing != null) return existing.toEntity();
+          if (existing != null) {
+            subscriptionChangeNotifier.value++;
+            return existing.toEntity();
+          }
         }
         rethrow;
       }
@@ -96,6 +100,37 @@ class SubscriptionRepositoryImpl implements ISubscriptionRepository {
           })
           .eq('id', subscriptionId)
           .eq('client_id', userId);
+
+      // Best-effort cascade so all coach data disappears immediately on cancel.
+      // RLS on the enrollment table is dashboard-owned and may not allow the
+      // client to update — failures are swallowed so the subscription cancel
+      // itself is never rolled back. The service-layer gate in the assigned
+      // services (active subscription check) already hides the data even if
+      // this write is rejected, but closing the enrollment cleans up the
+      // dashboard's view and any future fetch that bypasses the gate.
+      try {
+        await _client
+            .from('client_nutrition_enrollments')
+            .update({'status': 'cancelled'})
+            .eq('client_id', userId)
+            .eq('status', 'active');
+      } catch (_) {}
+
+      // Future workout assignments are the only ones safe to clean up client-
+      // side (past completed/skipped are history). No delete policy exists for
+      // the client, so we best-effort mark future 'assigned' rows as
+      // 'skipped' — gated reads already hide them when no active subscription
+      // exists, but this keeps the dashboard tidy.
+      try {
+        final today = DateTime.now().toIso8601String().substring(0, 10);
+        await _client
+            .from('workout_assignments')
+            .update({'status': 'skipped'})
+            .eq('client_id', userId)
+            .eq('status', 'assigned')
+            .gte('scheduled_date', today);
+      } catch (_) {}
+      subscriptionChangeNotifier.value++;
     } on PostgrestException catch (e) {
       throw SubscriptionRepositoryException('Database error: ${e.message}');
     } catch (e) {

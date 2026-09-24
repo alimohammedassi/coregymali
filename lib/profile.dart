@@ -788,11 +788,11 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                   ),
                                 ),
-                              // Camera/Edit badge
+                              // Camera/Edit badge — directional so it mirrors with language
                               if (!_isUploadingAvatar)
-                                Positioned(
+                                PositionedDirectional(
                                   bottom: 3,
-                                  right: 3,
+                                  end: 3,
                                   child: Container(
                                     width: 30,
                                     height: 30,
@@ -828,9 +828,12 @@ class _ProfilePageState extends State<ProfilePage>
 
                   const SizedBox(height: 16),
 
-                  // ── Name ────────────────────────────────────────────────
+                  // ── Name — force LTR so "COACH / NAME" slash stays between
+                  // words in both EN and AR (RTL bidi would otherwise reverse it).
                   Text(
                     _userName.toUpperCase(),
+                    textDirection: TextDirection.ltr,
+                    textAlign: TextAlign.center,
                     style: AppText.headlineMd.copyWith(
                       letterSpacing: 2.0,
                       fontSize: 20,
@@ -1507,7 +1510,9 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios_rounded,
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.arrow_back_ios_rounded
+                  : Icons.arrow_forward_ios_rounded,
               size: 14,
               color: AppColors.textMuted,
             ),
@@ -1923,12 +1928,12 @@ class _ProfileCard extends StatelessWidget {
           clipBehavior: Clip.none,
           children: [
             card,
-            // Floating edit badge straddles the card border so it can
-            // never overlap the data rows inside.
+            // Floating edit badge — directional so it stays on the trailing
+            // edge in both LTR and RTL (mirrors when language toggles).
             if (showEditBadge)
-              Positioned(
+              PositionedDirectional(
                 top: -9,
-                right: 14,
+                end: 14,
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
@@ -2043,6 +2048,9 @@ class _InlineStat extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Row(
+            // Keep icon → value order physical LTR in both languages so the
+            // stats strip doesn't visibly jump left/right on EN↔AR toggle.
+            textDirection: TextDirection.ltr,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, color: color, size: 14),
@@ -2199,6 +2207,8 @@ class _Pill extends StatelessWidget {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        // Keep icon on physical left in both LTR/RTL so pill doesn't jump.
+        textDirection: TextDirection.ltr,
         children: [
           if (icon != null) ...[
             Icon(

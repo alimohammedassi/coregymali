@@ -146,8 +146,34 @@ class AssignedWorkoutService {
   /// PostgREST "could not find the table" — migration not applied yet.
   static const _missingTable = 'PGRST205';
 
+  /// Whether the client has any active subscription. Used to gate every
+  /// coach-assignment read so cancelling hides all coach data immediately.
+  /// We intentionally do NOT filter by coach_id to avoid mismatches between
+  /// subscriptions.coach_id (coaches.id vs profiles.id) and
+  /// workout_assignments.coach_id from the dashboard.
+  Future<bool> _hasActiveSubscription() async {
+    if (currentUserId == null) return false;
+    try {
+      final row = await supabase
+          .from('subscriptions')
+          .select('id')
+          .eq('client_id', currentUserId!)
+          .eq('status', 'active')
+          .limit(1)
+          .maybeSingle();
+      return row != null;
+    } on PostgrestException catch (e) {
+      if (e.code == _missingTable) return false;
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<AssignedWorkout?> fetchTodayAssignment() async {
     if (currentUserId == null) return null;
+    // Gate: no active subscription → no coach workout (must disappear on cancel).
+    if (!await _hasActiveSubscription()) return null;
     final today = DateTime.now().toIso8601String().substring(0, 10);
     try {
       final rows = await supabase
@@ -192,9 +218,10 @@ class AssignedWorkoutService {
   /// card passes an assignment object that may be minutes old — the screen
   /// revalidates with this before offering start/resume, so a stale card can
   /// never start a workout the coach's data no longer offers (skipped,
-  /// completed, or deleted).
+  /// completed, or deleted). Gated by active subscription.
   Future<AssignedWorkout?> fetchAssignmentById(String assignmentId) async {
     if (currentUserId == null) return null;
+    if (!await _hasActiveSubscription()) return null;
     try {
       final rows = await supabase
           .from('workout_assignments')
@@ -441,13 +468,19 @@ class AssignedWorkoutService {
     }
   }
 
-  /// The assignment list behind the program tab's schedule section:
-  /// upcoming (assigned, dated today or later — today's own card handles
-  /// the resumable 'started' state), then completed and skipped, newest
-  /// first. Exercises are deliberately not fetched — the list only shows
-  /// name/date/status; opening one for detail is the today-card's job.
+  /// The assignment list behind the program tab's "COACH ASSIGNMENTS"
+  /// strip — gated by active subscription. When no subscription is active
+  /// the strip is empty so cancel hides all coach data. Shows the coach's
+  /// assignments for this client (upcoming + recent) regardless of the
+  /// dashboard's coach_id domain, to avoid leaks from id-domain mismatches.
+  /// COACH ASSIGNMENTS Scheduled — current program the coach assigned.
+  /// When subscribed, returns upcoming `assigned` rows from today onward
+  /// (the coach's current program), ordered chronologically. Gated by
+  /// active subscription so it disappears on cancel.
   Future<List<AssignedWorkout>> fetchAssignmentHistory() async {
     if (currentUserId == null) return [];
+    if (!await _hasActiveSubscription()) return [];
+    final today = DateTime.now().toIso8601String().substring(0, 10);
     try {
       final rows = await supabase
           .from('workout_assignments')
@@ -456,8 +489,10 @@ class AssignedWorkoutService {
             'workout_templates(name, target_muscles)',
           )
           .eq('client_id', currentUserId!)
-          .order('scheduled_date', ascending: false)
-          .limit(30);
+          .gte('scheduled_date', today)
+          .eq('status', 'assigned')
+          .order('scheduled_date', ascending: true)
+          .limit(15);
       return rows
           .whereType<Map<String, dynamic>>()
           .map(AssignedWorkout.fromMap)

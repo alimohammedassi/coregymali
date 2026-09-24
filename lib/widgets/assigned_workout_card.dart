@@ -7,13 +7,16 @@ import '../theme/app_semantic_colors.dart';
 import '../theme/app_text.dart';
 
 /// Today's coach-assigned workout card — the HERO of the workout page's
-/// My Program tab (and the client entry point of the coach workflow).
+/// My Program tab and Home (the client entry point of the coach workflow).
 ///
-/// Designed to outrank every other card on the tab: volt-tinted border +
-/// lime glow, gradient icon tile, the biggest name on the page, a divided
-/// 3-stat row (exercises / sets / estimated time) and a full-width lime CTA
-/// that spells out the action (start — or resume when the session was
-/// already begun). The whole card is tappable.
+/// Anatomy follows the calories-card design language (solid surface, flat
+/// tinted squircle badge, no glows): an overline status row with a quiet
+/// icon stamp, the biggest name on the page, muscle tags as neutral pills
+/// carrying a semantic color dot, a hairline-divided 3-stat row (exercises /
+/// sets / estimated time) and the standard volt CTA that spells out the
+/// action (start — or resume when the session was already begun). The only
+/// accent-tinted border on the page stays here — this card is THE active
+/// commitment and reads as such in both modes. The whole card is tappable.
 class AssignedWorkoutCard extends StatelessWidget {
   final AssignedWorkout workout;
   final bool isArabic;
@@ -51,121 +54,76 @@ class AssignedWorkoutCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(24),
-            // The only accent-tinted border on the tab — this card is THE
+            borderRadius: BorderRadius.circular(22),
+            // The only accent-tinted border on the page — this card is THE
             // active commitment and reads as such in both modes.
-            border: Border.all(color: AppColors.glassBorderActive, width: 1.3),
+            border: Border.all(color: AppColors.glassBorderActive, width: 1.2),
             boxShadow: [
               BoxShadow(
                 color: AppColors.cardShadow,
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: AppColors.primaryGlow,
-                blurRadius: 22,
-                offset: const Offset(0, 4),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Eyebrow: gradient tile + badge + chevron ──
+              // ── Overline: status dot + label, icon stamp on the far end ──
+              // The label stays inflexible: a Flexible here would split the
+              // free space with the Spacer (both flex:1) and leave the stamp
+              // floating mid-row instead of pinned to the far edge.
               Row(
                 children: [
                   Container(
-                    width: 52,
-                    height: 52,
+                    width: 7,
+                    height: 7,
                     decoration: BoxDecoration(
-                      gradient: AppColors.primaryActionGradient,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      shape: BoxShape.circle,
+                      color: AppColors.accent,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.assignedWorkoutTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                      color: AppColors.onPrimaryContainer,
+                      fontFamily: font,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.lightGreen,
+                      borderRadius: BorderRadius.circular(13),
+                      border: Border.all(color: AppColors.glassBorderActive),
                     ),
                     child: Icon(
                       Icons.fitness_center_rounded,
-                      color: AppColors.onPrimary,
-                      size: 26,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.accent,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              l10n.assignedWorkoutTitle,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.3,
-                                color: AppColors.onPrimaryContainer,
-                                fontFamily: font,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          workout.isResumable
-                              ? l10n.assignedResume
-                              : l10n.assignedReadyHint,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11.5,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textMuted,
-                            fontFamily: font,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 30,
-                    height: 30,
-                    decoration: BoxDecoration(
-                      color: AppColors.lightGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      size: 20,
                       color: AppColors.onPrimaryContainer,
+                      size: 20,
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
 
-              // ── Name — the biggest text on the tab ──
+              // ── Name — the biggest text on the page ──
               Text(
                 workout.templateName,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 24,
-                  height: 1.1,
+                  height: 1.15,
                   fontWeight: FontWeight.w900,
                   letterSpacing: -0.4,
                   color: AppColors.textPrimary,
@@ -174,7 +132,9 @@ class AssignedWorkoutCard extends StatelessWidget {
               ),
 
               if (muscles.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 11),
+                // Neutral pills — the muscle hue lives in a small dot so four
+                // groups read as one calm row instead of a rainbow.
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -183,29 +143,41 @@ class AssignedWorkoutCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 9,
-                          vertical: 4,
+                          vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: AppSemanticColors.forMuscle(
-                            m,
-                          ).withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(9),
                         ),
-                        child: Text(
-                          m,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppSemanticColors.forMuscle(m),
-                            fontFamily: font,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 5,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppSemanticColors.forMuscle(m),
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              m,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.textSecondary,
+                                fontFamily: font,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                   ],
                 ),
               ],
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 15),
               Divider(height: 1, color: AppColors.borderSubtle),
               const SizedBox(height: 12),
 
@@ -213,21 +185,18 @@ class AssignedWorkoutCard extends StatelessWidget {
               Row(
                 children: [
                   _Stat(
-                    icon: Icons.list_alt_rounded,
                     value: '${workout.exercises.length}',
                     label: l10n.assignedStatExercises,
                     isArabic: isArabic,
                   ),
-                  _divider(),
+                  _hairline(),
                   _Stat(
-                    icon: Icons.repeat_rounded,
                     value: '${workout.totalSets}',
                     label: l10n.assignedStatSets,
                     isArabic: isArabic,
                   ),
-                  _divider(),
+                  _hairline(),
                   _Stat(
-                    icon: Icons.schedule_rounded,
                     value: '~${workout.estimatedMinutes}${isArabic ? ' د' : ' min'}',
                     label: l10n.assignedStatTime,
                     isArabic: isArabic,
@@ -235,22 +204,15 @@ class AssignedWorkoutCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 15),
 
               // ── CTA — spells out the action; the whole card opens it too ──
               Container(
                 width: double.infinity,
-                height: 46,
+                height: 48,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(15),
                   gradient: AppColors.primaryActionGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.28),
-                      blurRadius: 16,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -259,7 +221,7 @@ class AssignedWorkoutCard extends StatelessWidget {
                       workout.isResumable
                           ? Icons.play_arrow_rounded
                           : Icons.bolt_rounded,
-                      size: 20,
+                      size: 19,
                       color: AppColors.onPrimary,
                     ),
                     const SizedBox(width: 7),
@@ -268,7 +230,7 @@ class AssignedWorkoutCard extends StatelessWidget {
                           ? l10n.assignedResume
                           : l10n.startWorkout,
                       style: TextStyle(
-                        fontSize: 13.5,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: AppColors.onPrimary,
                         fontFamily: font,
@@ -284,23 +246,21 @@ class AssignedWorkoutCard extends StatelessWidget {
     );
   }
 
-  Widget _divider() => Container(
+  Widget _hairline() => Container(
     width: 1,
-    height: 30,
-    margin: const EdgeInsets.symmetric(horizontal: 6),
+    height: 26,
+    margin: const EdgeInsets.symmetric(horizontal: 4),
     color: AppColors.borderSubtle,
   );
 }
 
-/// One stat column: icon + bold value over a muted label, centered.
+/// One stat column: bold value over a muted label, centered.
 class _Stat extends StatelessWidget {
-  final IconData icon;
   final String value;
   final String label;
   final bool isArabic;
 
   const _Stat({
-    required this.icon,
     required this.value,
     required this.label,
     required this.isArabic,
@@ -312,28 +272,19 @@ class _Stat extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 13, color: AppColors.textMuted),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                    fontFamily: font,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 16,
+              height: 1,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+              fontFamily: font,
+            ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             label,
             maxLines: 1,

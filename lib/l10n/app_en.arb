@@ -602,6 +602,28 @@
     }
   },
   "assignedWorkoutTitle": "Today's Workout",
+  "assignedNutritionTitle": "Today's Nutrition",
+  "assignedNutritionNoPlan": "No nutrition plan assigned",
+  "assignedNutritionNoPlanBody": "Your coach hasn't assigned a nutrition plan for today yet.",
+  "assignedNutritionNoMealsToday": "No meals assigned for today",
+  "assignedNutritionStatMeals": "Meals",
+  "assignedNutritionStatFoods": "Foods",
+  "assignedNutritionStatusAssigned": "Assigned",
+  "assignedNutritionStatusCompleted": "Completed",
+  "assignedNutritionStatusSkipped": "Skipped",
+  "assignedNutritionChanged": "Changed",
+  "assignedNutritionMealTotal": "Meal total",
+  "assignedNutritionMarkEaten": "Mark as eaten",
+  "assignedNutritionMarkedEaten": "Meal logged — calories added to today",
+  "assignedNutritionMarkFailed": "Couldn't mark the meal — try again",
+  "assignedNutritionNextDay": "No meals today — showing next scheduled day: {date}",
+  "@assignedNutritionNextDay": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "assignedCardMeta": "{ex} exercises · ~{min} min",
   "@assignedCardMeta": {
     "placeholders": {
@@ -749,5 +771,40 @@
   "foodLogQuantity": "Quantity",
   "foodLogAssignMeal": "Assign to meal",
   "foodLogLogged": "Logged!",
-  "foodLogConfirm": "Log Food"
+  "foodLogConfirm": "Log Food",
+  "suggestMeal": "Suggest a meal",
+  "suggestSheetTitle": "Suggest a meal",
+  "suggestMealSlot": "MEAL",
+  "suggestStyle": "STYLE",
+  "suggestCaloriesRow": "CALORIES",
+  "suggestCaloriesLabel": "CALORIES",
+  "suggestCaloriesHint": "e.g. 550",
+  "suggestCaloriesInvalid": "Enter 80–5000 kcal",
+  "suggestUseRemaining": "Use remaining",
+  "suggestCustomCaloriesTitle": "Your target",
+  "suggestCustomCaloriesSubtitle": "Type the calories you want this meal to hit — AI builds exactly to that number",
+  "suggestGoalMetTitle": "You've hit your goal",
+  "suggestGoalMetBody": "Your calories for today are covered — there's no room left for a suggested meal.",
+  "suggestMatchLabel": "match",
+  "suggestRegenerate": "Another idea",
+  "styleBalanced": "Balanced",
+  "styleHighProtein": "High protein",
+  "styleLight": "Light",
+  "styleHome": "Home-style",
+  "suggestCta": "Suggest for me",
+  "suggestTargetLabel": "Target",
+  "stageReadRemaining": "Reading your remaining macros",
+  "stageScanCatalog": "Picking from your foods catalog",
+  "stageCompose": "Composing your meal",
+  "stageValidate": "Checking the numbers",
+  "tryAgain": "Try again",
+  "suggestedMealTitle": "Suggested meal",
+  "buildingMeal": "Building your meal...",
+  "logThisMeal": "Log this meal",
+  "mealLogged": "Meal logged",
+  "servingUnitLabel": "serving",
+  "suggestNoRemaining": "You've used your calories for today — no room left for a suggested meal.",
+  "suggestNoMatch": "Couldn't build a meal that fits your remaining macros. Try again in a moment.",
+  "suggestUnavailable": "The suggestion service is busy right now. Try again in a bit.",
+  "suggestFailed": "Couldn't get a suggestion. Try again."
 }

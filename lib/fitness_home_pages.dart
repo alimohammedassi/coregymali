@@ -420,6 +420,11 @@ class _FitnessHomePageState extends State<FitnessHomePage> {
           ),
         ),
         bottomNavigationBar: _LiquidNavBar(
+          // Key includes locale so the lens re-initializes at the mirrored
+          // visual slot when switching EN<->AR. Without it LiquidTabBar's
+          // internal _lens controller keeps its old visual position because
+          // didUpdateWidget only springs on selectedIndex change.
+          key: ValueKey('nav-${l10n.localeName}-$activeId'),
           currentIndex: currentIndex(visibleTabs, activeId),
           onTap: (i) {
             final id = visibleTabs[i].id;
@@ -476,6 +481,7 @@ class _LiquidNavBar extends StatelessWidget {
   final bool isArabic;
 
   const _LiquidNavBar({
+    super.key,
     required this.currentIndex,
     required this.onTap,
     required this.tabs,
@@ -485,7 +491,12 @@ class _LiquidNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool light = AppColors.isLight;
+    // Directionality is inherited from MaterialApp's locale-override builder.
+    // Passing the same key through to LiquidTabBar ensures its State
+    // re-creates when the key changes (EN<->AR), so the lens starts at the
+    // correct mirrored visualSlot for the current _rtl.
     return LiquidTabBar(
+      key: key,
       items: [
         for (final tab in tabs)
           LiquidTabItem.icon(
@@ -585,11 +596,51 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   /// several rows → several bus notifications) into a single refetch.
   Timer? _nutritionRefreshDebounce;
 
+  RealtimeChannel? _subscriptionChannel;
+
+  void _onSubscriptionChanged() {
+    if (mounted) _loadAssignedWorkout();
+  }
+
+  void _subscribeToSubscriptions() {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      _subscriptionChannel = supabase.channel('home_sub_$uid');
+      _subscriptionChannel!
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'subscriptions',
+            callback: (payload) {
+              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              if (rec['client_id']?.toString() == uid && mounted) {
+                _loadAssignedWorkout();
+              }
+            },
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'workout_assignments',
+            callback: (payload) {
+              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              if (rec['client_id']?.toString() == uid && mounted) {
+                _loadAssignedWorkout();
+              }
+            },
+          )
+          .subscribe();
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     NutritionService.addDataListener(_onNutritionDataChanged);
+    subscriptionChangeNotifier.addListener(_onSubscriptionChanged);
+    _subscribeToSubscriptions();
     // OneSignal SDK verification dialog — shown at most once per session
     // right after home paints. Its "Got it" button is the ONLY place the OS
     // notification permission is requested (per OneSignal's integration
@@ -764,6 +815,12 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     NotificationService.ready.removeListener(_onNotificationsReady);
     StreakService.milestoneReached.removeListener(_showMilestoneDialog);
     NutritionService.removeDataListener(_onNutritionDataChanged);
+    subscriptionChangeNotifier.removeListener(_onSubscriptionChanged);
+    try {
+      if (_subscriptionChannel != null) {
+        supabase.removeChannel(_subscriptionChannel!);
+      }
+    } catch (_) {}
     _nutritionRefreshDebounce?.cancel();
     _heroCtrl.dispose();
     _staggerCtrl.dispose();
@@ -944,11 +1001,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: _goalProtein,
         unit: 'g',
         color: AppColors.accentProtein,
-        icon: PixelArtIcon(
-          type: PixelIconType.chicken,
-          size: 16,
-          color: AppColors.accentProtein,
-        ),
+        // Native pixel palette (red meat + bone) — expressive like the old
+        // emoji icons (owner brief 2026-09-23).
+        icon: PixelArtIcon(type: PixelIconType.chicken, size: 18),
       ),
       NutrientChipMetric(
         label: l10n.carbs,
@@ -958,7 +1013,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         color: AppColors.accentCarbs,
         icon: PixelArtIcon(
           type: PixelIconType.grain,
-          size: 16,
+          size: 18,
           color: AppColors.accentCarbs,
         ),
       ),
@@ -968,11 +1023,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: _goalFat,
         unit: 'g',
         color: AppColors.accentFat,
-        icon: PixelArtIcon(
-          type: PixelIconType.avocado,
-          size: 16,
-          color: AppColors.accentFat,
-        ),
+        // Native pixel palette (greens + brown pit).
+        icon: PixelArtIcon(type: PixelIconType.avocado, size: 18),
       ),
     ];
 
@@ -983,7 +1035,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: NutritionDefaults.fiber,
         unit: 'g',
         color: AppColors.accentFiber,
-        icon: Icon(Icons.grass_rounded, size: 15, color: AppColors.accentFiber),
+        icon: PixelArtIcon(
+          type: PixelIconType.leaf,
+          size: 18,
+          color: AppColors.accentFiber,
+        ),
       ),
       NutrientChipMetric(
         label: l10n.sugars,
@@ -991,7 +1047,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: NutritionDefaults.sugars,
         unit: 'g',
         color: AppColors.accentSugars,
-        icon: Icon(Icons.cake_rounded, size: 15, color: AppColors.accentSugars),
+        icon: PixelArtIcon(
+          type: PixelIconType.sweet,
+          size: 18,
+          color: AppColors.accentSugars,
+        ),
       ),
       NutrientChipMetric(
         label: l10n.sodium,
@@ -999,7 +1059,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: NutritionDefaults.sodium,
         unit: 'mg',
         color: AppColors.accentSodium,
-        icon: Icon(Icons.grain_rounded, size: 15, color: AppColors.accentSodium),
+        icon: PixelArtIcon(
+          type: PixelIconType.salt,
+          size: 18,
+          color: AppColors.accentSodium,
+        ),
       ),
     ];
 
@@ -1355,7 +1419,13 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
               child: _Stagger(
                 ctrl: _staggerCtrl,
                 index: 2,
-                child: _buildGlassCaloriesCard(),
+                // Page-standard 20px inset — every other home section
+                // (header, week strip, activity, assigned card) self-pads
+                // with 20; without this the card runs edge-to-edge.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _buildGlassCaloriesCard(),
+                ),
               ),
             ),
 

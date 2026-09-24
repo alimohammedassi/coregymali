@@ -14,7 +14,8 @@ class LanguageToggle extends StatelessWidget {
     final isAr = provider.isArabic;
 
     if (compact) {
-      // Icon-only version for inside the app (top bar)
+      // Icon-only version for inside the app (top bar) — LTR fixed so
+      // 🌐 → label order doesn't jump left/right on EN↔AR.
       return GestureDetector(
         onTap: provider.toggle,
         child: Container(
@@ -26,6 +27,7 @@ class LanguageToggle extends StatelessWidget {
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
+            textDirection: TextDirection.ltr,
             children: [
               const Text('🌐', style: TextStyle(fontSize: 13)),
               const SizedBox(width: 2),

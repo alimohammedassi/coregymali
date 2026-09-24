@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Modify this file to customize your launch splash screen -->
+<!-- Native splash — static PNG layer before Flutter engine starts.
+     Background @color/launch_bg (#121310) matches Flutter's AnimatedCoreSplash
+     _bg and AppColors.darkBackground so handoff has no flash. Uses static PNG
+     because native layer can't decode GIF (shown before engine starts). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/launch_bg" />
-
-    <!-- You can insert your own image assets here -->
-    <!-- <item>
+    <item>
         <bitmap
             android:gravity="center"
-            android:src="@mipmap/launch_image" />
-    </item> -->
+            android:src="@drawable/logo_static" />
+    </item>
 </layer-list>

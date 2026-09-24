@@ -2666,6 +2666,96 @@ abstract class AppLocalizations {
   /// **'Today\'s Workout'**
   String get assignedWorkoutTitle;
 
+  /// No description provided for @assignedNutritionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Nutrition'**
+  String get assignedNutritionTitle;
+
+  /// No description provided for @assignedNutritionNoPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'No nutrition plan assigned'**
+  String get assignedNutritionNoPlan;
+
+  /// No description provided for @assignedNutritionNoPlanBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your coach hasn\'t assigned a nutrition plan for today yet.'**
+  String get assignedNutritionNoPlanBody;
+
+  /// No description provided for @assignedNutritionNoMealsToday.
+  ///
+  /// In en, this message translates to:
+  /// **'No meals assigned for today'**
+  String get assignedNutritionNoMealsToday;
+
+  /// No description provided for @assignedNutritionStatMeals.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals'**
+  String get assignedNutritionStatMeals;
+
+  /// No description provided for @assignedNutritionStatFoods.
+  ///
+  /// In en, this message translates to:
+  /// **'Foods'**
+  String get assignedNutritionStatFoods;
+
+  /// No description provided for @assignedNutritionStatusAssigned.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigned'**
+  String get assignedNutritionStatusAssigned;
+
+  /// No description provided for @assignedNutritionStatusCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get assignedNutritionStatusCompleted;
+
+  /// No description provided for @assignedNutritionStatusSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped'**
+  String get assignedNutritionStatusSkipped;
+
+  /// No description provided for @assignedNutritionChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Changed'**
+  String get assignedNutritionChanged;
+
+  /// No description provided for @assignedNutritionMealTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal total'**
+  String get assignedNutritionMealTotal;
+
+  /// No description provided for @assignedNutritionMarkEaten.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as eaten'**
+  String get assignedNutritionMarkEaten;
+
+  /// No description provided for @assignedNutritionMarkedEaten.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal logged — calories added to today'**
+  String get assignedNutritionMarkedEaten;
+
+  /// No description provided for @assignedNutritionMarkFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t mark the meal — try again'**
+  String get assignedNutritionMarkFailed;
+
+  /// No description provided for @assignedNutritionNextDay.
+  ///
+  /// In en, this message translates to:
+  /// **'No meals today — showing next scheduled day: {date}'**
+  String assignedNutritionNextDay(String date);
+
   /// No description provided for @assignedCardMeta.
   ///
   /// In en, this message translates to:
@@ -3127,6 +3217,216 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log Food'**
   String get foodLogConfirm;
+
+  /// No description provided for @suggestMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a meal'**
+  String get suggestMeal;
+
+  /// No description provided for @suggestSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest a meal'**
+  String get suggestSheetTitle;
+
+  /// No description provided for @suggestMealSlot.
+  ///
+  /// In en, this message translates to:
+  /// **'MEAL'**
+  String get suggestMealSlot;
+
+  /// No description provided for @suggestStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'STYLE'**
+  String get suggestStyle;
+
+  /// No description provided for @suggestCaloriesRow.
+  ///
+  /// In en, this message translates to:
+  /// **'CALORIES'**
+  String get suggestCaloriesRow;
+
+  /// No description provided for @suggestCaloriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CALORIES'**
+  String get suggestCaloriesLabel;
+
+  /// No description provided for @suggestCaloriesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. 550'**
+  String get suggestCaloriesHint;
+
+  /// No description provided for @suggestCaloriesInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter 80–5000 kcal'**
+  String get suggestCaloriesInvalid;
+
+  /// No description provided for @suggestUseRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Use remaining'**
+  String get suggestUseRemaining;
+
+  /// No description provided for @suggestCustomCaloriesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your target'**
+  String get suggestCustomCaloriesTitle;
+
+  /// No description provided for @suggestCustomCaloriesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Type the calories you want this meal to hit — AI builds exactly to that number'**
+  String get suggestCustomCaloriesSubtitle;
+
+  /// No description provided for @suggestGoalMetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve hit your goal'**
+  String get suggestGoalMetTitle;
+
+  /// No description provided for @suggestGoalMetBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your calories for today are covered — there\'s no room left for a suggested meal.'**
+  String get suggestGoalMetBody;
+
+  /// No description provided for @suggestMatchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'match'**
+  String get suggestMatchLabel;
+
+  /// No description provided for @suggestRegenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Another idea'**
+  String get suggestRegenerate;
+
+  /// No description provided for @styleBalanced.
+  ///
+  /// In en, this message translates to:
+  /// **'Balanced'**
+  String get styleBalanced;
+
+  /// No description provided for @styleHighProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'High protein'**
+  String get styleHighProtein;
+
+  /// No description provided for @styleLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get styleLight;
+
+  /// No description provided for @styleHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home-style'**
+  String get styleHome;
+
+  /// No description provided for @suggestCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggest for me'**
+  String get suggestCta;
+
+  /// No description provided for @suggestTargetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get suggestTargetLabel;
+
+  /// No description provided for @stageReadRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading your remaining macros'**
+  String get stageReadRemaining;
+
+  /// No description provided for @stageScanCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Picking from your foods catalog'**
+  String get stageScanCatalog;
+
+  /// No description provided for @stageCompose.
+  ///
+  /// In en, this message translates to:
+  /// **'Composing your meal'**
+  String get stageCompose;
+
+  /// No description provided for @stageValidate.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the numbers'**
+  String get stageValidate;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// No description provided for @suggestedMealTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested meal'**
+  String get suggestedMealTitle;
+
+  /// No description provided for @buildingMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Building your meal...'**
+  String get buildingMeal;
+
+  /// No description provided for @logThisMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Log this meal'**
+  String get logThisMeal;
+
+  /// No description provided for @mealLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal logged'**
+  String get mealLogged;
+
+  /// No description provided for @servingUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'serving'**
+  String get servingUnitLabel;
+
+  /// No description provided for @suggestNoRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve used your calories for today — no room left for a suggested meal.'**
+  String get suggestNoRemaining;
+
+  /// No description provided for @suggestNoMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t build a meal that fits your remaining macros. Try again in a moment.'**
+  String get suggestNoMatch;
+
+  /// No description provided for @suggestUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'The suggestion service is busy right now. Try again in a bit.'**
+  String get suggestUnavailable;
+
+  /// No description provided for @suggestFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get a suggestion. Try again.'**
+  String get suggestFailed;
 }
 
 class _AppLocalizationsDelegate

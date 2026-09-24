@@ -10,6 +10,7 @@ import '../theme/app_text.dart';
 import '../widgets/add_food_sheet.dart';
 import '../widgets/app_background.dart';
 import '../widgets/pixel_art_icons.dart';
+import '../widgets/suggest_meal_sheet.dart';
 import 'food_scan_screen.dart';
 import 'nutrition_history_page.dart';
 
@@ -1016,6 +1017,53 @@ class NutritionScreenState extends State<NutritionScreen>
   );
 
   // ─── TODAY TAB ─────────────────────────────────────────────────────────────
+  // ─── AI meal suggestion (suggest-meal edge function) ──────────────────────
+  // The button opens the full flow sheet: craving question (slot + style) →
+  // staged loading with the real remaining target → rich result with photos
+  // → one-tap log through the existing path. The page only refreshes after.
+
+  Future<void> _openSuggestSheet() async {
+    HapticFeedback.lightImpact();
+    await Navigator.of(context).push(SuggestMealPopupRoute(
+      remainingKcal: _caloriesRemaining,
+      remainingProtein:
+          (_proteinGoal - _proteinConsumed).clamp(0.0, double.infinity),
+      remainingCarbs: (_carbsGoal - _carbsConsumed).clamp(0.0, double.infinity),
+      remainingFat: (_fatGoal - _fatConsumed).clamp(0.0, double.infinity),
+      onLogged: _loadData,
+    ));
+  }
+
+  Widget _buildSuggestMealButton() {
+    final l10n = AppLocalizations.of(context)!;
+    return GestureDetector(
+      onTap: _openSuggestSheet,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.accent.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.auto_awesome, size: 13, color: AppColors.accent),
+            const SizedBox(width: 5),
+            Text(
+              l10n.suggestMeal,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: AppColors.accent,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildTodayTab() {
     // Account for: bottom safe area + nav bar (68) + nav margin (12) + FAB (56) + gap (16)
     final bottomPad = MediaQuery.of(context).padding.bottom + 68 + 12 + 56 + 16;
@@ -1073,6 +1121,8 @@ class NutritionScreenState extends State<NutritionScreen>
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(width: 10),
+                  _buildSuggestMealButton(),
                 ],
               ),
             ),

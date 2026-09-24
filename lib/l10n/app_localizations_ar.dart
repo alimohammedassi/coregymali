@@ -1365,6 +1365,55 @@ class AppLocalizationsAr extends AppLocalizations {
   String get assignedWorkoutTitle => 'تدريب اليوم';
 
   @override
+  String get assignedNutritionTitle => 'تغذية اليوم';
+
+  @override
+  String get assignedNutritionNoPlan => 'لا توجد خطة تغذية';
+
+  @override
+  String get assignedNutritionNoPlanBody =>
+      'الكوتش لسه مسندش خطة تغذية لليوم ده.';
+
+  @override
+  String get assignedNutritionNoMealsToday => 'لا توجد وجبات مسندة لليوم';
+
+  @override
+  String get assignedNutritionStatMeals => 'وجبات';
+
+  @override
+  String get assignedNutritionStatFoods => 'أكلات';
+
+  @override
+  String get assignedNutritionStatusAssigned => 'مسندة';
+
+  @override
+  String get assignedNutritionStatusCompleted => 'مكتملة';
+
+  @override
+  String get assignedNutritionStatusSkipped => 'متخطاة';
+
+  @override
+  String get assignedNutritionChanged => 'مُعدّل';
+
+  @override
+  String get assignedNutritionMealTotal => 'إجمالي الوجبة';
+
+  @override
+  String get assignedNutritionMarkEaten => 'اتكلت خلاص';
+
+  @override
+  String get assignedNutritionMarkedEaten =>
+      'اتسجلت الوجبة — السعرات اتضافت لليوم';
+
+  @override
+  String get assignedNutritionMarkFailed => 'معرفتش أسجل الوجبة — حاول تاني';
+
+  @override
+  String assignedNutritionNextDay(String date) {
+    return 'مفيش وجبات النهاردة — ده أقرب يوم متسجل: $date';
+  }
+
+  @override
   String assignedCardMeta(int ex, int min) {
     return '$ex تمارين · حوالي $min دقيقة';
   }
@@ -1612,4 +1661,114 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get foodLogConfirm => 'سجّل الطعام';
+
+  @override
+  String get suggestMeal => 'اقترح وجبة';
+
+  @override
+  String get suggestSheetTitle => 'اقترح وجبة';
+
+  @override
+  String get suggestMealSlot => 'الوجبة';
+
+  @override
+  String get suggestStyle => 'النوع';
+
+  @override
+  String get suggestCaloriesRow => 'السعرات';
+
+  @override
+  String get suggestCaloriesLabel => 'السعرات';
+
+  @override
+  String get suggestCaloriesHint => 'مثال: ٥٥٠';
+
+  @override
+  String get suggestCaloriesInvalid => 'اكتب ۸٠–٥٠٠٠ سعرة';
+
+  @override
+  String get suggestUseRemaining => 'استخدم المتبقي';
+
+  @override
+  String get suggestCustomCaloriesTitle => 'هدفك انت';
+
+  @override
+  String get suggestCustomCaloriesSubtitle =>
+      'اكتب السعرات اللي عايز الوجبة تغطيها — الذكاء هيبني وجبة بالظبط على الرقم ده';
+
+  @override
+  String get suggestGoalMetTitle => 'وصلت لهدفك';
+
+  @override
+  String get suggestGoalMetBody =>
+      'كالوريز النهاردة خلصت — مفيش مساحة لوجبة مقترحة.';
+
+  @override
+  String get suggestMatchLabel => 'تطابق';
+
+  @override
+  String get suggestRegenerate => 'فكرة تانية';
+
+  @override
+  String get styleBalanced => 'متوازن';
+
+  @override
+  String get styleHighProtein => 'بروتين عالي';
+
+  @override
+  String get styleLight => 'خفيف';
+
+  @override
+  String get styleHome => 'بيتي';
+
+  @override
+  String get suggestCta => 'اقترح لي';
+
+  @override
+  String get suggestTargetLabel => 'الهدف';
+
+  @override
+  String get stageReadRemaining => 'بقرا المتبقي بتاعك';
+
+  @override
+  String get stageScanCatalog => 'بختار من كاتالوج الأكلات';
+
+  @override
+  String get stageCompose => 'ببتكر وجبتك';
+
+  @override
+  String get stageValidate => 'بتتأكد من الأرقام';
+
+  @override
+  String get tryAgain => 'جرب تاني';
+
+  @override
+  String get suggestedMealTitle => 'الوجبة المقترحة';
+
+  @override
+  String get buildingMeal => 'بنجهز وجبتك...';
+
+  @override
+  String get logThisMeal => 'سجل الوجبة دي';
+
+  @override
+  String get mealLogged => 'الوجبة اتسجلت';
+
+  @override
+  String get servingUnitLabel => 'حصة';
+
+  @override
+  String get suggestNoRemaining =>
+      'خلصت كالوريز النهاردة — مفيش مساحة لوجبة مقترحة.';
+
+  @override
+  String get suggestNoMatch =>
+      'مش قادرين نبني وجبة تناسب المتبقي ليك. جرب تاني بعد لحظات.';
+
+  @override
+  String get suggestUnavailable =>
+      'خدمة الاقتراح مشغولة دلوقتي. جرب تاني بعد شوية.';
+
+  @override
+  String get suggestFailed => 'معرفناش نجيب اقتراح. جرب تاني.';
 }

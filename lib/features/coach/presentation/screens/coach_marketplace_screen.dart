@@ -12,6 +12,7 @@ import '../../data/services/stripe_service.dart';
 import '../../data/repositories/coach_repository_impl.dart';
 import '../../data/repositories/subscription_repository_impl.dart';
 import '../widgets/coach_shared.dart';
+import '../../data/repositories/review_repository.dart';
 import 'coach_detail_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -377,8 +378,10 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                   return CoachCard(
                     coach: coach,
                     isSubscribed: isSubscribed,
+                    isCancelling: isSubscribed && subNotifier.isLoading,
                     onTap: () => _navigateToDetail(coach),
                     onSubscribe: () => _showSubscribeSheet(coach),
+                    onCancel: () => _confirmCancelFromMarketplace(ctx, coach, subNotifier),
                   );
                 },
               ),
@@ -427,6 +430,51 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     );
   }
 
+  Future<void> _confirmCancelFromMarketplace(
+    BuildContext ctx, CoachEntity coach, ActiveSubscriptionNotifier subNotifier) async {
+    final confirmed = await showDialog<bool>(
+      context: ctx,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Cancel subscription?',
+            style: AppText.titleMd.copyWith(
+                color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+        content: Text(
+          'Your coach workouts and nutrition plan will be hidden until you subscribe again.',
+          style: AppText.bodySm.copyWith(color: AppColors.textSecondary, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text('Keep', style: TextStyle(color: AppColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Cancel subscription'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !ctx.mounted) return;
+    final ok = await subNotifier.cancelActiveSubscription();
+    if (!ctx.mounted) return;
+    ScaffoldMessenger.of(ctx).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok ? 'Subscription cancelled' : (subNotifier.error ?? 'Couldn\'t cancel — try again'),
+          style: AppText.bodyMd.copyWith(
+              color: ok ? AppColors.textPrimary : Colors.white),
+        ),
+        backgroundColor:
+            ok ? AppColors.surfaceContainerHigh : AppColors.error,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
   void _showSubscribeSheet(CoachEntity coach) {
     final subscriptionNotifier = context.read<SubscriptionNotifier>();
     // Passed through so the sheet can refresh the "active subscription"
@@ -457,15 +505,19 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
 class CoachCard extends StatelessWidget {
   final CoachEntity coach;
   final bool isSubscribed;
+  final bool isCancelling;
   final VoidCallback onTap;
   final VoidCallback onSubscribe;
+  final VoidCallback? onCancel;
 
   const CoachCard({
     super.key,
     required this.coach,
     required this.isSubscribed,
+    this.isCancelling = false,
     required this.onTap,
     required this.onSubscribe,
+    this.onCancel,
   });
 
   Widget _initialsFallback() {
@@ -645,6 +697,9 @@ class CoachCard extends StatelessWidget {
                           .map((s) => CoachSpecChip(label: s))
                           .toList(),
                     ),
+                    const SizedBox(height: 12),
+                    // Latest review preview — visible while scrolling coaches page
+                    _CoachCardReviewPreview(coachId: coach.id),
                     const SizedBox(height: 16),
 
                     // Price + button
@@ -670,30 +725,66 @@ class CoachCard extends StatelessWidget {
                         const Spacer(),
                         Semantics(
                           button: true,
-                          enabled: !isSubscribed,
-                          label: isSubscribed ? 'Subscribed' : 'Subscribe',
+                          enabled: !isCancelling,
+                          label: isSubscribed
+                              ? (isCancelling ? 'Cancelling' : 'Cancel subscription')
+                              : 'Subscribe',
                           child: GestureDetector(
-                            onTap: isSubscribed ? null : onSubscribe,
+                            onTap: isCancelling
+                                ? null
+                                : (isSubscribed ? onCancel : onSubscribe),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSubscribed ? 14 : 20,
                                 vertical: 12,
                               ),
                               decoration: BoxDecoration(
                                 color: isSubscribed
-                                    ? AppColors.surfaceContainerHigh
+                                    ? Colors.transparent
                                     : AppColors.accent,
                                 borderRadius: BorderRadius.circular(12),
+                                border: isSubscribed
+                                    ? Border.all(
+                                        color: AppColors.error
+                                            .withValues(alpha: 0.85),
+                                        width: 1.2,
+                                      )
+                                    : null,
                               ),
-                              child: Text(
-                                isSubscribed ? 'Subscribed' : 'Subscribe',
-                                style: AppText.buttonPrimary.copyWith(
-                                  color: isSubscribed
-                                      ? AppColors.textMuted
-                                      : AppColors.onPrimary,
-                                ),
-                              ),
+                              child: isCancelling
+                                  ? SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.error,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (isSubscribed) ...[
+                                          Icon(Icons.close_rounded,
+                                              color: AppColors.error,
+                                              size: 14),
+                                          const SizedBox(width: 6),
+                                        ],
+                                        Text(
+                                          isSubscribed
+                                              ? 'Cancel'
+                                              : 'Subscribe',
+                                          style: AppText.buttonPrimary
+                                              .copyWith(
+                                            color: isSubscribed
+                                                ? AppColors.error
+                                                : AppColors.onPrimary,
+                                            fontSize:
+                                                isSubscribed ? 12 : null,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ),
                         ),
@@ -706,6 +797,54 @@ class CoachCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ── Review preview on coach card (visible while scrolling marketplace) ───────
+
+class _CoachCardReviewPreview extends StatelessWidget {
+  final String coachId;
+  const _CoachCardReviewPreview({required this.coachId});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: ReviewRepository().fetchReviews(coachId),
+      builder: (ctx, snapshot) {
+        if (!snapshot.hasData) return const SizedBox.shrink();
+        final reviews = snapshot.data as List;
+        if (reviews.isEmpty) return const SizedBox.shrink();
+        final latest = reviews.first;
+        final rating = (latest as dynamic).rating as int? ?? 0;
+        final comment = (latest as dynamic).comment as String?;
+        if ((comment == null || comment.trim().isEmpty) && rating == 0) return const SizedBox.shrink();
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.borderSubtle),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.star_rounded, color: AppColors.tertiary, size: 14),
+              const SizedBox(width: 4),
+              Text('$rating.0', style: AppText.labelSm.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w800, fontSize: 11)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  comment?.trim().isNotEmpty == true ? comment! : 'Rated $rating stars',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.bodySm.copyWith(color: AppColors.textSecondary, fontSize: 11.5, height: 1.3),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

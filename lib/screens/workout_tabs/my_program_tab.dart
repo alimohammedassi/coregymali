@@ -46,6 +46,8 @@ class _MyProgramTabState extends State<MyProgramTab>
   // Consistent level accent mapping — single source of truth app-wide
   static Map<String, Color> get _levelColors => AppSemanticColors.level;
 
+  RealtimeChannel? _subscriptionChannel;
+
   @override
   void initState() {
     super.initState();
@@ -62,10 +64,54 @@ class _MyProgramTabState extends State<MyProgramTab>
 
     _loadActiveProgram();
     _loadAssignedWorkout();
+    subscriptionChangeNotifier.addListener(_onSubscriptionChanged);
+    _subscribeToSubscriptionChanges();
+  }
+
+  void _onSubscriptionChanged() {
+    if (mounted) _loadAssignedWorkout();
+  }
+
+  void _subscribeToSubscriptionChanges() {
+    final uid = currentUserId;
+    if (uid == null) return;
+    try {
+      _subscriptionChannel = supabase.channel('my_program_sub_$uid');
+      _subscriptionChannel!
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'subscriptions',
+            callback: (payload) {
+              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              if (rec['client_id']?.toString() == uid && mounted) {
+                _loadAssignedWorkout();
+              }
+            },
+          )
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'workout_assignments',
+            callback: (payload) {
+              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              if (rec['client_id']?.toString() == uid && mounted) {
+                _loadAssignedWorkout();
+              }
+            },
+          )
+          .subscribe();
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    subscriptionChangeNotifier.removeListener(_onSubscriptionChanged);
+    try {
+      if (_subscriptionChannel != null) {
+        supabase.removeChannel(_subscriptionChannel!);
+      }
+    } catch (_) {}
     _heroController.dispose();
     super.dispose();
   }

@@ -8,7 +8,7 @@ import 'supabase/supabase_config.dart';
 import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'splashScreen.dart';
+import 'features/splash/presentation/screens/animated_core_splash.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -128,7 +128,7 @@ class MyApp extends StatelessWidget {
         );
       },
       title: 'Core Gym',
-      home: const SplashScreen(),
+      home: const AnimatedCoreSplash(),
       debugShowCheckedModeBanner: false,
     );
   }

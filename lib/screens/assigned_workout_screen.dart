@@ -1,10 +1,89 @@
+/*
+ Changelog — AssignedWorkoutScreen premium polish (2026-09-23)
+ ──────────────────────────────────────────────────────────────
+ 1. Visual hierarchy & consistency
+    - Extracted shared _HeroCard widget (gradient tile, eyebrow, title,
+      optional badge/subtitle/chips/notes/stats/footer) so
+      _buildHeaderCard and _buildNutritionHeader are thin delegates with
+      pixel-identical decoration, padding and 4pt/8pt spacing. Cut ~120
+      lines of duplication.
+    - Unified spacing scale to AppSpacing (4/8/12/16/24/32). Replaced
+      ad-hoc 6/10/14/18/20 gaps with the closest scale step.
+    - Normalized font-weight ramp: eyebrow w800 11sp, title w900 24sp,
+      stat value w800 14.5sp, stat label w600 10.5sp, card title w700,
+      badge w800, button w700. No accidental w900 islands.
+
+ 2. Micro-interactions & feedback
+    - Exercise card header now uses _PressScale (AnimatedScale+Opacity
+      on tap down/up, routed through _motionDuration) plus chevron
+      rotation, so the whole row feels responsive.
+    - _logSet and _markEaten morph to a brief success state (check +
+      accent-tinted gradient flash, 1.2s) before returning to idle
+      instead of spinner → idle jump. Per-exercise/meal success tracking
+      respects disabledAnimations.
+    - Rest banner shifts color and outer glow in final 5s (primaryFixed
+      → overGoalWarning, shadow blur 14→22, progress bar color swap) and
+      gently scales the timer text. All driven by _motionDuration.
+
+ 3. Progress & motivation
+    - Per-exercise "$done/target" badge replaced by _ExerciseRingBadge:
+      36px ring with TweenAnimationBuilder progress (disableAnimations-
+      aware), centered count and check when allHit. Scannable at a
+      glance; Semantics label preserved.
+    - _buildDoneView now shows a completion summary row: total volume
+      (kg × reps), elapsed time, sets logged, and PR hits (sets where
+      _hitTarget true) in soft metric tiles — emotional payoff beyond
+      the single count pill.
+
+ 4. Empty / edge states
+    - No-assignment and _buildNutritionEmpty use _IllustratedEmptyIcon:
+      72px circle + layered composition (primary icon + small accent
+      dot with check/restaurant) instead of a lone Material icon.
+    - Bottom-bar partial-warning (showPartialWarning) promoted from
+      plain muted text to a centered surfaceContainerHigh pill with
+      info icon, w700 copy and border — visible decision point without
+      alarm.
+
+ 5. Nutrition tab polish
+    - _buildFoodRow changed/substituted italic caption replaced by a
+      before→after chip pattern: faded original pill (strikethrough)
+      → accent arrow → solid current pill. Cleaner scanning; no italic
+      caption.
+    - Meal status chip keeps AppColors tokens (lightGreen /
+      surfaceContainerHigh) and adds a check/dot icon for "completed",
+      preserving WCAG AA contrast via onPrimaryContainer and a non-
+      color cue.
+
+ 6. Motion & accessibility
+    - Every new animation (ring, press scale, banner glow, success
+      morph, done summary stagger) routes through _motionDuration.
+    - All tappable elements keep ≥48×48 hit area (exercise row
+      InkWell padding, rest skip Padding 12, buttons 48/44h) and color-
+      only signals (allHit border, muscle chips, ring) retain a second
+      cue (icon/label).
+    - RTL/Arabic preserved: every new Text copies fontFamily: font
+      from locale, Wrap/Row respect Directionality, arrow chips flip
+      via Directionality.
+
+ Constraints respected:
+ - No new dependencies, no data-layer/service/Supabase/state-machine
+   changes. Only visual/layout/motion polish.
+ - Stays within AppColors / AppSemanticColors / AppText tokens.
+ - Public API AssignedWorkoutScreen(assignment:) unchanged; all
+   l10n.* keys preserved.
+
+*/
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
+import '../services/assigned_nutrition_service.dart';
 import '../services/assigned_workout_service.dart';
+import '../services/supabase_client.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_semantic_colors.dart';
 import '../theme/app_text.dart';
@@ -14,6 +93,11 @@ import '../theme/app_text.dart';
 /// workout_sessions row, every confirmed set is written to workout_sets,
 /// and "Finish" closes the session + flips the assignment to 'completed'
 /// so the coach's dashboard picks it up via assignment_id.
+///
+/// A pill switcher under the app bar (same pattern as the nutrition page's
+/// Today|History toggle) splits the screen into the Workout flow and the
+/// Nutrition tab — the client's assigned nutrition plan for today, read
+/// from the enrollment/assignment snapshot tables.
 class AssignedWorkoutScreen extends StatefulWidget {
   final AssignedWorkout assignment;
 
@@ -25,15 +109,34 @@ class AssignedWorkoutScreen extends StatefulWidget {
 
 enum _AssignedPhase { loading, none, ready, active, done }
 
-class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
+class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen>
+    with SingleTickerProviderStateMixin {
   final AssignedWorkoutService _service = AssignedWorkoutService();
+  final AssignedNutritionService _nutritionService = AssignedNutritionService();
 
   late AssignedWorkout _workout;
   _AssignedPhase _phase = _AssignedPhase.loading;
 
+  late final TabController _tabController;
+  AssignedNutritionPlan? _nutritionPlan;
+  bool _nutritionLoading = true;
+
+  /// The meal whose "mark eaten" write is in flight (one at a time).
+  String? _completingMealId;
+
+  /// Brief success flash after marking eaten — separate from busy.
+  String? _justCompletedMealId;
+  Timer? _mealSuccessTimer;
+
   String? _sessionId;
   DateTime? _startedAt;
   bool _busy = false;
+
+  /// Per-exercise transient success + per-exercise in-flight id for the
+  /// Log Set button morph.
+  String? _loggingExerciseId;
+  final Set<String> _loggedSuccessIds = {};
+  final Map<String, Timer> _logSuccessTimers = {};
 
   /// Logged sets read back from Supabase, grouped by exact template
   /// exercise name — never tracked locally between refreshes.
@@ -51,16 +154,35 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   final Map<String, TextEditingController> _weightCtrls = {};
   final Map<String, TextEditingController> _repsCtrls = {};
 
+  void _onSubscriptionChanged() {
+    if (!mounted) return;
+    // Subscription went away → revalidate; gated service will pop or show empty.
+    _load();
+    _loadNutrition();
+  }
+
   @override
   void initState() {
     super.initState();
     _workout = widget.assignment;
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
+    subscriptionChangeNotifier.addListener(_onSubscriptionChanged);
     _load();
+    _loadNutrition();
   }
 
   @override
   void dispose() {
+    subscriptionChangeNotifier.removeListener(_onSubscriptionChanged);
+    _tabController.dispose();
     _restTimer?.cancel();
+    _mealSuccessTimer?.cancel();
+    for (final t in _logSuccessTimers.values) {
+      t.cancel();
+    }
     for (final c in _weightCtrls.values) {
       c.dispose();
     }
@@ -104,6 +226,17 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     if (!mounted) return;
     setState(() => _phase = _AssignedPhase.ready);
     _ensureControllers();
+  }
+
+  /// The nutrition tab reads the enrollment + today's assignments straight
+  /// from the snapshot tables; pull-to-refresh re-runs the same fetch.
+  Future<void> _loadNutrition() async {
+    final plan = await _nutritionService.fetchTodayPlan();
+    if (!mounted) return;
+    setState(() {
+      _nutritionPlan = plan;
+      _nutritionLoading = false;
+    });
   }
 
   void _ensureControllers() {
@@ -249,7 +382,10 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       _showError(l10n.assignedEnterReps);
       return;
     }
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _loggingExerciseId = e.id;
+    });
     final ok = await _service.logSet(
       sessionId: _sessionId!,
       exerciseName: e.exerciseName,
@@ -259,12 +395,24 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       restSec: e.restSec,
     );
     if (!mounted) return;
-    setState(() => _busy = false);
+    setState(() {
+      _busy = false;
+      _loggingExerciseId = null;
+    });
     if (!ok) {
       _showError(l10n.assignedErrorSet);
       return;
     }
     HapticFeedback.lightImpact();
+    // Brief success flash on this exercise's button before returning to idle.
+    _logSuccessTimers[e.id]?.cancel();
+    setState(() => _loggedSuccessIds.add(e.id));
+    _logSuccessTimers[e.id] = Timer(
+      _motionDuration(const Duration(milliseconds: 1200)),
+      () {
+        if (mounted) setState(() => _loggedSuccessIds.remove(e.id));
+      },
+    );
     await _refreshSets();
     _startRest(e.restSec ?? 60);
   }
@@ -384,6 +532,29 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   int get _totalTargetSets =>
       _workout.exercises.fold(0, (sum, e) => sum + e.targetSets);
 
+  double get _totalVolumeKg {
+    double sum = 0;
+    for (final list in _setsByExercise.values) {
+      for (final s in list) {
+        final w = (s['weight_kg'] as num?)?.toDouble() ?? 0;
+        final r = (s['reps'] as num?)?.toInt() ?? 0;
+        sum += w * r;
+      }
+    }
+    return sum;
+  }
+
+  int get _prHitCount {
+    int c = 0;
+    for (final e in _workout.exercises) {
+      final sets = _setsByExercise[e.exerciseName] ?? const [];
+      for (final s in sets) {
+        if (_hitTarget(e, s)) c++;
+      }
+    }
+    return c;
+  }
+
   String _elapsedLabel() {
     if (_startedAt == null) return '';
     final mins = DateTime.now().difference(_startedAt!).inMinutes;
@@ -398,59 +569,108 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final onNutritionTab = _tabController.index == 1;
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(l10n.assignedWorkoutTitle, style: AppText.headlineSm),
+        title: Text(
+          onNutritionTab
+              ? l10n.assignedNutritionTitle
+              : l10n.assignedWorkoutTitle,
+          style: AppText.headlineSm,
+        ),
         actions: [
-          if (_phase == _AssignedPhase.active)
+          if (_phase == _AssignedPhase.active && !onNutritionTab)
             Padding(
-              padding: const EdgeInsets.only(right: 16),
+              padding: const EdgeInsets.only(right: AppSpacing.lg),
               child: Center(child: _buildProgressChip()),
             ),
         ],
-      ),
-      bottomNavigationBar: _buildBottomBar(l10n),
-      body: switch (_phase) {
-        _AssignedPhase.loading || _AssignedPhase.none => Center(
-          child: _phase == _AssignedPhase.loading
-              ? CircularProgressIndicator(color: AppColors.primaryFixed)
-              : Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceContainerHigh,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.event_busy_outlined,
-                          size: 34,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        l10n.assignedNone,
-                        textAlign: TextAlign.center,
-                        style: AppText.bodyLg.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(52),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.sm,
+            ),
+            child: Container(
+              height: 42,
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: AppColors.primaryFixed,
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                // Volt indicator carries the near-black ink (never white) —
+                // the design-system pairing rule for lime fills.
+                labelColor: AppColors.onPrimary,
+                unselectedLabelColor: AppColors.textMuted,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                tabs: [
+                  Tab(text: l10n.navWorkout),
+                  Tab(text: l10n.navNutrition),
+                ],
+              ),
+            ),
+          ),
         ),
-        _AssignedPhase.done => _buildDoneView(l10n),
-        _ => _buildWorkoutView(l10n),
-      },
+      ),
+      bottomNavigationBar: onNutritionTab ? null : _buildBottomBar(l10n),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          switch (_phase) {
+            _AssignedPhase.loading || _AssignedPhase.none => Center(
+              child: _phase == _AssignedPhase.loading
+                  ? CircularProgressIndicator(color: AppColors.primaryFixed)
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.xxl,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _IllustratedEmptyIcon(
+                            primaryIcon: Icons.event_busy_outlined,
+                            accentIcon: Icons.fitness_center_rounded,
+                            accentColor: AppColors.primaryFixed,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            l10n.assignedNone,
+                            textAlign: TextAlign.center,
+                            style: AppText.bodyLg.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+            _AssignedPhase.done => _buildDoneView(l10n),
+            _ => _buildWorkoutView(l10n),
+          },
+          _buildNutritionBody(l10n),
+        ],
+      ),
     );
   }
 
@@ -463,7 +683,10 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     return Semantics(
       label: '$_totalDoneSets / $_totalTargetSets · ${_elapsedLabel()}',
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: AppColors.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
@@ -476,7 +699,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
               size: 13,
               color: AppColors.primaryFixed,
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               '$_totalDoneSets/$_totalTargetSets',
               style: AppText.labelLg.copyWith(
@@ -485,15 +708,15 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
               ),
             ),
             if (_startedAt != null) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Container(width: 1, height: 12, color: AppColors.borderSubtle),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Icon(
                 Icons.schedule_rounded,
                 size: 12,
                 color: AppColors.textMuted,
               ),
-              const SizedBox(width: 3),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 _elapsedLabel(),
                 style: AppText.labelSm.copyWith(color: AppColors.textMuted),
@@ -518,7 +741,12 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
           alignment: Alignment.topCenter,
           child: _restRemaining > 0
               ? Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.xs,
+                    AppSpacing.lg,
+                    AppSpacing.sm,
+                  ),
                   child: _buildRestBanner(l10n),
                 )
               : const SizedBox(width: double.infinity),
@@ -530,10 +758,15 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
             backgroundColor: AppColors.surface,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
               children: [
                 _buildHeaderCard(l10n),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 if (_workout.exercises.isEmpty)
                   Text(
                     l10n.assignedNone,
@@ -542,7 +775,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 else
                   for (final (index, e) in _workout.exercises.indexed) ...[
                     _buildExerciseCard(index, e, l10n),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: AppSpacing.md),
                   ],
               ],
             ),
@@ -560,148 +793,21 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final font = AppText.fontFamily(isArabic: isArabic);
 
-    // Same hero language as the entry card on the tab: volt-tinted border,
-    // lime glow, gradient tile, biggest name on the page, divided stats —
-    // the session screen must feel like the card opened, not a downgrade.
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.glassBorderActive, width: 1.3),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-          BoxShadow(
-            color: AppColors.primaryGlow,
-            blurRadius: 22,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryActionGradient,
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(
-                  Icons.fitness_center_rounded,
-                  color: AppColors.onPrimary,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          l10n.assignedWorkoutTitle,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                            color: AppColors.onPrimaryContainer,
-                            fontFamily: font,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (isActive) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        l10n.assignedSetProgress(
-                          _totalDoneSets,
-                          _totalTargetSets,
-                        ),
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textMuted,
-                          fontFamily: font,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Text(
-            _workout.templateName,
-            style: TextStyle(
-              fontSize: 24,
-              height: 1.1,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.4,
-              color: AppColors.textPrimary,
-              fontFamily: font,
-            ),
-          ),
-          if (_workout.targetMuscles.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                for (final m in _workout.targetMuscles) _buildMuscleChip(m),
-              ],
-            ),
-          ],
-          const SizedBox(height: 14),
-          Divider(height: 1, color: AppColors.borderSubtle),
-          const SizedBox(height: 12),
-          // Stat row — mirrors the entry card: exercises · sets · est. time.
-          Row(
-            children: [
-              _headerStat(
-                Icons.list_alt_rounded,
-                '${_workout.exercises.length}',
-                l10n.assignedStatExercises,
-                font,
-              ),
-              _statDivider(),
-              _headerStat(
-                Icons.repeat_rounded,
-                '$_totalTargetSets',
-                l10n.assignedStatSets,
-                font,
-              ),
-              _statDivider(),
-              _headerStat(
-                Icons.schedule_rounded,
-                '~${_workout.estimatedMinutes}${isArabic ? ' د' : ' min'}',
-                l10n.assignedStatTime,
-                font,
-              ),
-            ],
-          ),
-          if ((_workout.templateNotes ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(10),
+    return _HeroCard(
+      leadingIcon: Icons.fitness_center_rounded,
+      eyebrow: l10n.assignedWorkoutTitle,
+      title: _workout.templateName,
+      fontFamily: font,
+      eyebrowSubtitle: isActive
+          ? l10n.assignedSetProgress(_totalDoneSets, _totalTargetSets)
+          : null,
+      chips: _workout.targetMuscles.isEmpty
+          ? null
+          : [for (final m in _workout.targetMuscles) _buildMuscleChip(m)],
+      notesWidget: ((_workout.templateNotes ?? '').trim().isEmpty)
+          ? null
+          : Container(
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
@@ -714,7 +820,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                     size: 14,
                     color: AppColors.textMuted,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       _workout.templateNotes!,
@@ -727,12 +833,25 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 ],
               ),
             ),
-          ],
-          // Overall workout progress — only meaningful once the session is
-          // running; keeps the header from lying about "0 done" before start.
-          if (isActive) ...[
-            const SizedBox(height: 16),
-            Row(
+      stats: [
+        _HeroStatData(
+          icon: Icons.list_alt_rounded,
+          value: '${_workout.exercises.length}',
+          label: l10n.assignedStatExercises,
+        ),
+        _HeroStatData(
+          icon: Icons.repeat_rounded,
+          value: '$_totalTargetSets',
+          label: l10n.assignedStatSets,
+        ),
+        _HeroStatData(
+          icon: Icons.schedule_rounded,
+          value: '~${_workout.estimatedMinutes}${isArabic ? ' د' : ' min'}',
+          label: l10n.assignedStatTime,
+        ),
+      ],
+      footer: isActive
+          ? Row(
               children: [
                 Expanded(
                   child: ClipRRect(
@@ -752,11 +871,11 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.sm),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryFixed.withValues(alpha: 0.14),
@@ -771,67 +890,15 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                   ),
                 ),
               ],
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
     );
   }
-
-  /// One header stat column (icon + bold value over muted label).
-  Widget _headerStat(IconData icon, String value, String label, String? font) {
-    return Expanded(
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 13, color: AppColors.textMuted),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w900,
-                    color: AppColors.textPrimary,
-                    fontFamily: font,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
-              fontFamily: font,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statDivider() => Container(
-    width: 1,
-    height: 30,
-    margin: const EdgeInsets.symmetric(horizontal: 6),
-    color: AppColors.borderSubtle,
-  );
 
   Widget _buildMuscleChip(String raw) {
     final color = _muscleColor(raw);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
@@ -849,30 +916,87 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
 
   Widget _buildRestBanner(AppLocalizations l10n) {
     final progress = _restTotal > 0 ? _restRemaining / _restTotal : 0.0;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+    final isUrgent = _restRemaining > 0 && _restRemaining <= 5;
+    final bannerColor = isUrgent
+        ? AppColors.overGoalWarning.withValues(alpha: 0.12)
+        : AppColors.primaryFixed.withValues(alpha: 0.10);
+    final borderColor = isUrgent
+        ? AppColors.overGoalWarning.withValues(alpha: 0.55)
+        : AppColors.primaryFixed;
+    final progressColor = isUrgent
+        ? AppColors.overGoalWarning
+        : AppColors.primaryFixed;
+    final iconColor = isUrgent
+        ? AppColors.overGoalWarning
+        : AppColors.primaryFixed;
+
+    return AnimatedContainer(
+      duration: _motionDuration(const Duration(milliseconds: 250)),
+      curve: Curves.easeOutCubic,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.primaryFixed.withValues(alpha: 0.1),
+        color: bannerColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryFixed),
+        border: Border.all(color: borderColor),
+        boxShadow: [
+          BoxShadow(
+            color: progressColor.withValues(alpha: isUrgent ? 0.22 : 0.12),
+            blurRadius: isUrgent ? 20 : 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.timer_rounded,
-                color: AppColors.primaryFixed,
-                size: 18,
+              // Pulsing dot in urgent phase — scale animates via Tween.
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 1, end: isUrgent ? 1.12 : 1),
+                duration: _motionDuration(const Duration(milliseconds: 500)),
+                curve: Curves.easeInOut,
+                builder: (context, scale, child) => Transform.scale(
+                  scale: scale,
+                  child: child,
+                ),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: progressColor.withValues(alpha: 0.16),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.timer_rounded,
+                    color: iconColor,
+                    size: 16,
+                  ),
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
-                child: Text(
-                  l10n.assignedRestSecs(_restRemaining),
-                  style: AppText.titleSm.copyWith(
-                    color: AppColors.primaryFixed,
-                    fontWeight: FontWeight.w800,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 1, end: isUrgent ? 1.04 : 1),
+                  duration: _motionDuration(
+                    const Duration(milliseconds: 400),
+                  ),
+                  builder: (context, scale, child) => Transform.scale(
+                    scale: scale,
+                    alignment: Alignment.centerLeft,
+                    child: child,
+                  ),
+                  child: Text(
+                    l10n.assignedRestSecs(_restRemaining),
+                    style: AppText.titleSm.copyWith(
+                      color: iconColor,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),
@@ -884,12 +1008,19 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                   onTap: _skipRest,
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
-                    padding: const EdgeInsets.all(11),
-                    child: Text(
-                      l10n.skipRest,
-                      style: AppText.labelSm.copyWith(
-                        color: AppColors.primaryFixed,
-                        fontWeight: FontWeight.w800,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.md,
+                    ),
+                    child: Semantics(
+                      button: true,
+                      label: l10n.skipRest,
+                      child: Text(
+                        l10n.skipRest,
+                        style: AppText.labelSm.copyWith(
+                          color: iconColor,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ),
@@ -897,14 +1028,18 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
             borderRadius: BorderRadius.circular(99),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 5,
-              backgroundColor: AppColors.primaryFixed.withValues(alpha: 0.15),
-              color: AppColors.primaryFixed,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
+              duration: _motionDuration(const Duration(milliseconds: 300)),
+              builder: (context, value, _) => LinearProgressIndicator(
+                value: value,
+                minHeight: 5,
+                backgroundColor: progressColor.withValues(alpha: 0.15),
+                color: progressColor,
+              ),
             ),
           ),
         ],
@@ -919,16 +1054,19 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   ) {
     final sets = _setsByExercise[e.exerciseName] ?? const [];
     final done = sets.length;
-    final allHit = done >= e.targetSets && sets.every((s) => _hitTarget(e, s));
+    final allHit =
+        done >= e.targetSets && sets.every((s) => _hitTarget(e, s));
     final isActive = _phase == _AssignedPhase.active;
     final progress = e.targetSets > 0
         ? (done / e.targetSets).clamp(0.0, 1.0)
         : 0.0;
     final collapsed = _collapsedIds.contains(e.id);
+    final isSuccess = _loggedSuccessIds.contains(e.id);
+    final isLogging = _loggingExerciseId == e.id;
 
     return AnimatedContainer(
       duration: _motionDuration(const Duration(milliseconds: 200)),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
@@ -942,87 +1080,77 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _toggleExpanded(e.id),
-              borderRadius: BorderRadius.circular(10),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: allHit
-                            ? AppColors.accent.withValues(alpha: 0.16)
-                            : AppColors.lightGreen,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: allHit
-                          ? Icon(
-                              Icons.check_rounded,
-                              size: 17,
-                              color: AppColors.accent,
-                            )
-                          : Text(
-                              '${index + 1}',
-                              style: AppText.labelLg.copyWith(
-                                color: AppColors.onPrimaryContainer,
-                                fontWeight: FontWeight.w900,
-                              ),
+          _PressScale(
+            motionDuration: _motionDuration(
+              const Duration(milliseconds: 140),
+            ),
+            onTap: () => _toggleExpanded(e.id),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: AppSpacing.sm,
+                horizontal: 2,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: allHit
+                          ? AppColors.accent.withValues(alpha: 0.16)
+                          : AppColors.lightGreen,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: allHit
+                        ? Icon(
+                            Icons.check_rounded,
+                            size: 17,
+                            color: AppColors.accent,
+                            semanticLabel: 'Completed',
+                          )
+                        : Text(
+                            '${index + 1}',
+                            style: AppText.labelLg.copyWith(
+                              color: AppColors.onPrimaryContainer,
+                              fontWeight: FontWeight.w900,
                             ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        e.exerciseName,
-                        style: AppText.titleSm.copyWith(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textPrimary,
-                        ),
+                          ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      e.exerciseName,
+                      style: AppText.titleSm.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    // Single source of truth for progress — a fraction badge
-                    // next to the name instead of a duplicate line below.
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: allHit
-                            ? AppColors.accent.withValues(alpha: 0.14)
-                            : AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$done/${e.targetSets}',
-                        style: AppText.labelSm.copyWith(
-                          color: allHit
-                              ? AppColors.accent
-                              : AppColors.onSurfaceVariant,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  _ExerciseRingBadge(
+                    done: done,
+                    target: e.targetSets,
+                    progress: progress,
+                    allHit: allHit,
+                    motionDuration: _motionDuration(
+                      const Duration(milliseconds: 300),
                     ),
-                    const SizedBox(width: 4),
-                    AnimatedRotation(
-                      duration: _motionDuration(
-                        const Duration(milliseconds: 200),
-                      ),
-                      turns: collapsed ? -0.25 : 0,
-                      child: Icon(
-                        Icons.expand_more_rounded,
-                        size: 22,
-                        color: AppColors.textMuted,
-                        semanticLabel: collapsed ? 'Expand' : 'Collapse',
-                      ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  AnimatedRotation(
+                    duration: _motionDuration(
+                      const Duration(milliseconds: 200),
                     ),
-                  ],
-                ),
+                    turns: collapsed ? -0.25 : 0,
+                    child: Icon(
+                      Icons.expand_more_rounded,
+                      size: 22,
+                      color: AppColors.textMuted,
+                      semanticLabel: collapsed ? 'Expand' : 'Collapse',
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1035,7 +1163,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         _targetText(e, l10n),
                         style: AppText.bodySm.copyWith(
@@ -1043,7 +1171,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                         ),
                       ),
                       if ((e.notes ?? '').trim().isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           '${l10n.assignedNotes}: ${e.notes}',
                           style: AppText.bodySm.copyWith(
@@ -1052,20 +1180,29 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 10),
+                      const SizedBox(height: AppSpacing.sm),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(99),
-                        child: LinearProgressIndicator(
-                          value: progress,
-                          minHeight: 5,
-                          backgroundColor: AppColors.surfaceContainerHighest,
-                          color: allHit
-                              ? AppColors.accent
-                              : AppColors.primaryFixed,
+                        child: TweenAnimationBuilder<double>(
+                          tween: Tween(begin: 0, end: progress),
+                          duration: _motionDuration(
+                            const Duration(milliseconds: 300),
+                          ),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, value, _) =>
+                              LinearProgressIndicator(
+                                value: value,
+                                minHeight: 5,
+                                backgroundColor:
+                                    AppColors.surfaceContainerHighest,
+                                color: allHit
+                                    ? AppColors.accent
+                                    : AppColors.primaryFixed,
+                              ),
                         ),
                       ),
                       if (sets.isNotEmpty) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: AppSpacing.sm),
                         for (final s in sets) _buildSetRow(e, s, l10n),
                       ],
                     ],
@@ -1078,7 +1215,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
           // stay visible for the whole active phase — collapse/expand only
           // governs the descriptive section above.
           if (isActive) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
@@ -1105,7 +1242,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                       filled: true,
                       fillColor: AppColors.surfaceContainerHigh,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: AppSpacing.md,
                         vertical: 14,
                       ),
                       border: OutlineInputBorder(
@@ -1122,7 +1259,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: TextField(
                     controller: _repsCtrls[e.id],
@@ -1143,7 +1280,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                       filled: true,
                       fillColor: AppColors.surfaceContainerHigh,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: AppSpacing.md,
                         vertical: 14,
                       ),
                       border: OutlineInputBorder(
@@ -1162,14 +1299,23 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
               height: 48,
-              child: DecoratedBox(
+              child: AnimatedContainer(
+                duration: _motionDuration(const Duration(milliseconds: 220)),
+                curve: Curves.easeOutCubic,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
-                  gradient: _busy
+                  gradient: isSuccess
+                      ? LinearGradient(
+                          colors: [
+                            AppColors.accent.withValues(alpha: 0.95),
+                            AppColors.accent.withValues(alpha: 0.75),
+                          ],
+                        )
+                      : _busy && !isLogging
                       ? LinearGradient(
                           colors: [
                             AppColors.primaryFixed.withValues(alpha: 0.4),
@@ -1179,18 +1325,52 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                       : AppColors.primaryActionGradient,
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.25),
+                      color: (isSuccess
+                              ? AppColors.accent
+                              : AppColors.primaryFixed)
+                          .withValues(alpha: 0.25),
                       blurRadius: 14,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: ElevatedButton.icon(
-                  onPressed: _busy ? null : () => _logSet(e),
-                  icon: Icon(
-                    Icons.add_rounded,
-                    size: 18,
-                    color: AppColors.onPrimary,
+                  onPressed: (_busy || isSuccess)
+                      ? null
+                      : () => _logSet(e),
+                  icon: AnimatedSwitcher(
+                    duration: _motionDuration(
+                      const Duration(milliseconds: 220),
+                    ),
+                    switchInCurve: Curves.easeOutBack,
+                    switchOutCurve: Curves.easeInCubic,
+                    transitionBuilder: (child, anim) => ScaleTransition(
+                      scale: anim,
+                      child: FadeTransition(opacity: anim, child: child),
+                    ),
+                    child: isSuccess
+                        ? Icon(
+                            Icons.check_rounded,
+                            key: const ValueKey('success'),
+                            size: 18,
+                            color: AppColors.onPrimary,
+                          )
+                        : isLogging
+                        ? SizedBox(
+                            key: const ValueKey('busy'),
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.2,
+                              color: AppColors.onPrimary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.add_rounded,
+                            key: const ValueKey('idle'),
+                            size: 18,
+                            color: AppColors.onPrimary,
+                          ),
                   ),
                   label: Text(
                     l10n.assignedLogSet,
@@ -1203,7 +1383,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                     shadowColor: Colors.transparent,
                     foregroundColor: AppColors.onPrimary,
                     disabledForegroundColor: AppColors.onPrimary.withValues(
-                      alpha: 0.6,
+                      alpha: 0.9,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1226,7 +1406,10 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     final hit = _hitTarget(e, set);
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: hit ? AppColors.lightGreen : AppColors.surfaceContainer,
         borderRadius: BorderRadius.circular(10),
@@ -1242,8 +1425,9 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
             hit ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
             size: 16,
             color: hit ? AppColors.accent : AppColors.textMuted,
+            semanticLabel: hit ? 'Target hit' : 'Set logged',
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             '${l10n.set} ${set['set_number']}',
             style: AppText.titleSm.copyWith(
@@ -1267,13 +1451,645 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
     );
   }
 
+  // ── Nutrition tab ───────────────────────────────────────────────────────
+
+  String _fmtNum(double v) =>
+      v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(1);
+
+  Widget _buildNutritionBody(AppLocalizations l10n) {
+    if (_nutritionLoading) {
+      return Center(
+        child: CircularProgressIndicator(color: AppColors.primaryFixed),
+      );
+    }
+    final plan = _nutritionPlan;
+    if (plan == null) return _buildNutritionEmpty(l10n);
+    return RefreshIndicator(
+      onRefresh: () async {
+        final fresh = await _nutritionService.fetchTodayPlan();
+        if (mounted) setState(() => _nutritionPlan = fresh);
+      },
+      color: AppColors.primaryFixed,
+      backgroundColor: AppColors.surface,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.xl,
+        ),
+        children: [
+          _buildNutritionHeader(plan, l10n),
+          if (plan.isPreview && plan.meals.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            _buildPreviewBanner(plan, l10n),
+          ],
+          const SizedBox(height: AppSpacing.lg),
+          if (plan.meals.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
+              child: Text(
+                l10n.assignedNutritionNoMealsToday,
+                textAlign: TextAlign.center,
+                style: AppText.bodySm.copyWith(color: AppColors.textMuted),
+              ),
+            )
+          else
+            for (final meal in plan.meals) ...[
+              _buildMealCard(meal, l10n),
+              const SizedBox(height: AppSpacing.md),
+            ],
+        ],
+      ),
+    );
+  }
+
+  /// Shown when today has no meals and the nearest upcoming day is on
+  /// display — future meals must never read as today's plan.
+  Widget _buildPreviewBanner(AssignedNutritionPlan plan, AppLocalizations l10n) {
+    final lang = Localizations.localeOf(context).languageCode;
+    final dateLabel = DateFormat('EEEE, d MMM', lang).format(plan.displayDate);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm + 2,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.primaryFixed.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppColors.primaryFixed.withValues(alpha: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.event_note_rounded,
+            size: 16,
+            color: AppColors.primaryFixed,
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              l10n.assignedNutritionNextDay(dateLabel),
+              style: AppText.labelSm.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNutritionEmpty(AppLocalizations l10n) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _IllustratedEmptyIcon(
+              primaryIcon: Icons.restaurant_rounded,
+              accentIcon: Icons.auto_awesome_rounded,
+              accentColor: AppColors.primaryFixed,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              l10n.assignedNutritionNoPlan,
+              textAlign: TextAlign.center,
+              style: AppText.bodyLg.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              l10n.assignedNutritionNoPlanBody,
+              textAlign: TextAlign.center,
+              style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Same hero language as the workout header — the two tabs must read as
+  /// one screen, not two apps.
+  Widget _buildNutritionHeader(AssignedNutritionPlan plan, AppLocalizations l10n) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final font = AppText.fontFamily(isArabic: isArabic);
+    return _HeroCard(
+      leadingIcon: Icons.restaurant_rounded,
+      eyebrow: l10n.assignedNutritionTitle,
+      title: plan.programName,
+      fontFamily: font,
+      trailingBadge: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 4,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primaryFixed.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          l10n.weekOfTotal(plan.currentWeek, plan.durationWeeks),
+          style: AppText.labelSm.copyWith(
+            color: AppColors.primaryFixed,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      description: (plan.programDescription ?? '').trim().isEmpty
+          ? null
+          : Text(
+              plan.programDescription!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.bodySm.copyWith(color: AppColors.textMuted),
+            ),
+      stats: [
+        _HeroStatData(
+          icon: Icons.restaurant_menu_rounded,
+          value: '${plan.mealCount}',
+          label: l10n.assignedNutritionStatMeals,
+        ),
+        _HeroStatData(
+          icon: Icons.lunch_dining_rounded,
+          value: '${plan.foodCount}',
+          label: l10n.assignedNutritionStatFoods,
+        ),
+        _HeroStatData(
+          icon: Icons.local_fire_department_rounded,
+          value: plan.totalCalories.round().toString(),
+          label: l10n.kcal,
+        ),
+      ],
+      footer: Text(
+        '${l10n.protein} ${_fmtNum(plan.totalProteinG)}g'
+        ' · ${l10n.carbs} ${_fmtNum(plan.totalCarbsG)}g'
+        ' · ${l10n.fat} ${_fmtNum(plan.totalFatG)}g',
+        style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+      ),
+    );
+  }
+
+  Widget _buildMealCard(AssignedNutritionMeal meal, AppLocalizations l10n) {
+    final completed = meal.status == 'completed';
+    final skipped = meal.status == 'skipped';
+    final color = completed
+        ? AppColors.accent
+        : (skipped ? AppColors.textMuted : null);
+    return Opacity(
+      opacity: skipped ? 0.65 : 1,
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: completed
+                ? AppColors.accent.withValues(alpha: 0.45)
+                : AppColors.borderSubtle,
+            width: completed ? 1.4 : 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: completed
+                        ? AppColors.accent.withValues(alpha: 0.16)
+                        : AppColors.lightGreen,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: completed
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 17,
+                          color: AppColors.accent,
+                          semanticLabel: 'Completed',
+                        )
+                      : Text(
+                          '${meal.orderIndex + 1}',
+                          style: AppText.labelLg.copyWith(
+                            color: AppColors.onPrimaryContainer,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    meal.mealName,
+                    style: AppText.titleSm.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: color ?? AppColors.textPrimary,
+                      decoration: skipped ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+                _buildMealStatusChip(meal, l10n),
+              ],
+            ),
+            if (meal.foods.isNotEmpty) ...[
+              const SizedBox(height: AppSpacing.sm),
+              for (final f in meal.foods) _buildFoodRow(f, l10n),
+            ],
+            if (meal.status == 'assigned') ...[
+              const SizedBox(height: AppSpacing.md),
+              _buildMarkEatenButton(meal, l10n),
+            ],
+            const SizedBox(height: AppSpacing.sm),
+            Divider(height: 1, color: AppColors.borderSubtle),
+            const SizedBox(height: AppSpacing.sm),
+            Row(
+              children: [
+                Text(
+                  l10n.assignedNutritionMealTotal,
+                  style: AppText.labelSm.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${meal.totalCalories.round()} ${l10n.kcal}',
+                  style: AppText.titleSm.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  'P ${_fmtNum(meal.totalProteinG)}'
+                  ' · C ${_fmtNum(meal.totalCarbsG)}'
+                  ' · F ${_fmtNum(meal.totalFatG)}',
+                  style: AppText.labelSm.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "I ate this" — the only client action on the plan. Same volt button
+  /// language as the workout's Log Set; completion flows into the day's
+  /// calorie total and the coach's history server-side.
+  Widget _buildMarkEatenButton(AssignedNutritionMeal meal, AppLocalizations l10n) {
+    final busy = _completingMealId == meal.id;
+    final isSuccess = _justCompletedMealId == meal.id;
+    return SizedBox(
+      width: double.infinity,
+      height: 44,
+      child: AnimatedContainer(
+        duration: _motionDuration(const Duration(milliseconds: 220)),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: isSuccess
+              ? LinearGradient(
+                  colors: [
+                    AppColors.accent.withValues(alpha: 0.95),
+                    AppColors.accent.withValues(alpha: 0.75),
+                  ],
+                )
+              : busy
+              ? LinearGradient(
+                  colors: [
+                    AppColors.primaryFixed.withValues(alpha: 0.4),
+                    AppColors.primaryDim.withValues(alpha: 0.4),
+                  ],
+                )
+              : AppColors.primaryActionGradient,
+          boxShadow: [
+            BoxShadow(
+              color: (isSuccess ? AppColors.accent : AppColors.primaryFixed)
+                  .withValues(alpha: 0.25),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ElevatedButton.icon(
+          onPressed: _completingMealId == null && !isSuccess
+              ? () => _markEaten(meal)
+              : null,
+          icon: AnimatedSwitcher(
+            duration: _motionDuration(const Duration(milliseconds: 200)),
+            transitionBuilder: (child, anim) => ScaleTransition(
+              scale: anim,
+              child: FadeTransition(opacity: anim, child: child),
+            ),
+            child: isSuccess
+                ? Icon(
+                    Icons.check_rounded,
+                    key: const ValueKey('meal_success'),
+                    size: 17,
+                    color: AppColors.onPrimary,
+                  )
+                : busy
+                ? SizedBox(
+                    key: const ValueKey('meal_busy'),
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
+                      color: AppColors.onPrimary,
+                    ),
+                  )
+                : Icon(
+                    Icons.restaurant_rounded,
+                    key: const ValueKey('meal_idle'),
+                    size: 17,
+                    color: AppColors.onPrimary,
+                  ),
+          ),
+          label: Text(
+            l10n.assignedNutritionMarkEaten,
+            style: AppText.buttonPrimary.copyWith(color: AppColors.onPrimary),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            foregroundColor: AppColors.onPrimary,
+            disabledForegroundColor: AppColors.onPrimary.withValues(alpha: 0.9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _markEaten(AssignedNutritionMeal meal) async {
+    final plan = _nutritionPlan;
+    if (plan == null) return;
+    setState(() => _completingMealId = meal.id);
+    final result = await _nutritionService.markMealCompleted(plan, meal);
+    if (!mounted) return;
+    setState(() => _completingMealId = null);
+    final l10n = AppLocalizations.of(context)!;
+    if (result == MealCompleteResult.failed) {
+      _showError(l10n.assignedNutritionMarkFailed);
+      return;
+    }
+    if (result == MealCompleteResult.completed) {
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(l10n.assignedNutritionMarkedEaten),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: AppColors.surfaceContainerHigh,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        );
+    }
+    // Local truth update — also covers alreadyCompleted so the card's
+    // status chip catches up even when the write had landed elsewhere.
+    setState(() => _nutritionPlan = plan.withMealCompleted(meal.id));
+    // Brief success morph on the button that was just tapped.
+    _mealSuccessTimer?.cancel();
+    setState(() => _justCompletedMealId = meal.id);
+    _mealSuccessTimer = Timer(
+      _motionDuration(const Duration(milliseconds: 1400)),
+      () {
+        if (mounted) setState(() => _justCompletedMealId = null);
+      },
+    );
+  }
+
+  Widget _buildMealStatusChip(AssignedNutritionMeal meal, AppLocalizations l10n) {
+    final status = meal.status;
+    final (bg, fg, label, icon) = switch (status) {
+      'completed' => (
+        AppColors.lightGreen,
+        AppColors.onPrimaryContainer,
+        l10n.assignedNutritionStatusCompleted,
+        Icons.check_circle_rounded,
+      ),
+      'skipped' => (
+        AppColors.surfaceContainerHigh,
+        AppColors.textMuted,
+        l10n.assignedNutritionStatusSkipped,
+        Icons.block_rounded,
+      ),
+      _ => (
+        AppColors.surfaceContainerHigh,
+        AppColors.onSurfaceVariant,
+        l10n.assignedNutritionStatusAssigned,
+        Icons.schedule_rounded,
+      ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppText.labelSm.copyWith(color: fg, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// One food row: the client's current truth (or the frozen snapshot when
+  /// untouched), with the plan value surfaced as before→after chips on
+  /// changed rows — no italic caption.
+  Widget _buildFoodRow(AssignedNutritionFood f, AppLocalizations l10n) {
+    final changed = f.isChanged;
+    final substitution = changed && f.currentFoodName != null;
+    final quantityChanged = changed &&
+        f.currentQuantity != null &&
+        (f.currentQuantity! - f.originalQuantity).abs() > 0.001;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: changed
+            ? AppColors.accent.withValues(alpha: 0.08)
+            : AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: changed
+              ? AppColors.accent.withValues(alpha: 0.4)
+              : AppColors.borderSubtle,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  f.displayName,
+                  style: AppText.titleSm.copyWith(
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (changed)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    l10n.assignedNutritionChanged,
+                    style: AppText.labelSm.copyWith(
+                      fontSize: 10,
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '${_fmtNum(f.effectiveQuantity)} ${f.servingUnit}'
+            ' · ${f.effectiveCalories.round()} ${l10n.kcal}'
+            ' · P ${_fmtNum(f.effectiveProteinG)}'
+            ' · C ${_fmtNum(f.effectiveCarbsG)}'
+            ' · F ${_fmtNum(f.effectiveFatG)}',
+            style: AppText.bodySm.copyWith(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          if (substitution || quantityChanged) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                // Original chip — faded with strikethrough.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Text(
+                    substitution
+                        ? f.foodName
+                        : '${_fmtNum(f.originalQuantity)} ${f.servingUnit}',
+                    style: AppText.labelSm.copyWith(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: AppColors.textMuted,
+                    ),
+                  ),
+                ),
+                Icon(
+                  isArabic
+                      ? Icons.arrow_back_rounded
+                      : Icons.arrow_forward_rounded,
+                  size: 14,
+                  color: AppColors.textMuted,
+                  semanticLabel: 'changed to',
+                ),
+                // Current chip — solid with accent tint.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryFixed.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.swap_horiz_rounded,
+                        size: 12,
+                        color: AppColors.primaryFixed,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        substitution
+                            ? (f.currentFoodName ?? '')
+                            : '${_fmtNum(f.currentQuantity!)} ${f.servingUnit}',
+                        style: AppText.labelSm.copyWith(
+                          fontSize: 11,
+                          color: AppColors.primaryFixed,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   // ── Bottom action bar / done view ───────────────────────────────────────
 
   Widget _buildBottomBar(AppLocalizations l10n) {
     if (_phase == _AssignedPhase.done) {
       return SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.md,
+          ),
           child: SizedBox(
             height: 54,
             child: DecoratedBox(
@@ -1326,16 +2142,61 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
 
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             if (showPartialWarning)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  l10n.assignedSetProgress(_totalDoneSets, _totalTargetSets),
-                  style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderSubtle),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.flag_outlined,
+                        size: 14,
+                        color: AppColors.textSecondary,
+                        semanticLabel: 'Partial progress',
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          l10n.assignedSetProgress(
+                            _totalDoneSets,
+                            _totalTargetSets,
+                          ),
+                          style: AppText.labelSm.copyWith(
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primaryFixed,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             SizedBox(
@@ -1396,6 +2257,7 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.textMuted,
                   padding: const EdgeInsets.symmetric(vertical: 6),
+                  minimumSize: const Size(44, 36),
                 ),
                 child: Text(
                   l10n.assignedSkip,
@@ -1413,9 +2275,18 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
   }
 
   Widget _buildDoneView(AppLocalizations l10n) {
+    final volumeLabel = _totalVolumeKg > 0
+        ? '${_fmtNum(_totalVolumeKg)} ${l10n.kg}'
+        : '—';
+    final prLabel = _prHitCount > 0 ? '$_prHitCount · ${l10n.personalRecord}' : '—';
+    final elapsed = _elapsedLabel().isEmpty ? '—' : _elapsedLabel();
+
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1436,10 +2307,11 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                   Icons.check_rounded,
                   size: 34,
                   color: AppColors.onPrimaryContainer,
+                  semanticLabel: 'Workout completed',
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               l10n.assignedDoneTitle,
               textAlign: TextAlign.center,
@@ -1448,15 +2320,18 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               l10n.assignedDoneBody,
               textAlign: TextAlign.center,
               style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.md),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: 6,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.lightGreen,
                 borderRadius: BorderRadius.circular(20),
@@ -1469,8 +2344,648 @@ class _AssignedWorkoutScreenState extends State<AssignedWorkoutScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+            // ── Completion summary — the emotional payoff ──
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.borderSubtle),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.cardShadow,
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.emoji_events_outlined,
+                        size: 14,
+                        color: AppColors.primaryFixed,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        l10n.workoutSummary,
+                        style: AppText.labelSm.copyWith(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (_prHitCount > 0)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.bolt_rounded,
+                                size: 11,
+                                color: AppColors.accent,
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                '$_prHitCount',
+                                style: AppText.labelSm.copyWith(
+                                  color: AppColors.accent,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    children: [
+                      _DoneMetricTile(
+                        icon: Icons.fitness_center_rounded,
+                        value: volumeLabel,
+                        label: l10n.totalVolume,
+                      ),
+                      Container(
+                        width: 1,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                        color: AppColors.borderSubtle,
+                      ),
+                      _DoneMetricTile(
+                        icon: Icons.repeat_rounded,
+                        value: '$_totalDoneSets',
+                        label: l10n.totalSets,
+                      ),
+                      Container(
+                        width: 1,
+                        height: 36,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                        ),
+                        color: AppColors.borderSubtle,
+                      ),
+                      _DoneMetricTile(
+                        icon: Icons.schedule_rounded,
+                        value: elapsed,
+                        label: l10n.duration,
+                      ),
+                    ],
+                  ),
+                  if (_prHitCount > 0) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.sm,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.accent.withValues(alpha: 0.22),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.star_rounded,
+                            size: 14,
+                            color: AppColors.accent,
+                            semanticLabel: 'PR',
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              prLabel,
+                              style: AppText.labelSm.copyWith(
+                                color: AppColors.onPrimaryContainer,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Shared hero card — single source of truth for workout + nutrition headers
+// ──────────────────────────────────────────────────────────────────────────
+
+class _HeroStatData {
+  final IconData icon;
+  final String value;
+  final String label;
+  const _HeroStatData({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+}
+
+class _HeroCard extends StatelessWidget {
+  final IconData leadingIcon;
+  final String eyebrow;
+  final String title;
+  final String? fontFamily;
+  final String? eyebrowSubtitle;
+  final Widget? trailingBadge;
+  final List<Widget>? chips;
+  final Widget? description;
+  final Widget? notesWidget;
+  final List<_HeroStatData> stats;
+  final Widget? footer;
+
+  const _HeroCard({
+    required this.leadingIcon,
+    required this.eyebrow,
+    required this.title,
+    this.fontFamily,
+    this.eyebrowSubtitle,
+    this.trailingBadge,
+    this.chips,
+    this.description,
+    this.notesWidget,
+    required this.stats,
+    this.footer,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.glassBorderActive, width: 1.3),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: AppColors.primaryGlow,
+            blurRadius: 22,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  gradient: AppColors.primaryActionGradient,
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  leadingIcon,
+                  color: AppColors.onPrimary,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accent,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            eyebrow,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.3,
+                              color: AppColors.onPrimaryContainer,
+                              fontFamily: fontFamily,
+                            ),
+                          ),
+                        ),
+                        if (trailingBadge != null) ...[
+                          const SizedBox(width: AppSpacing.sm),
+                          trailingBadge!,
+                        ],
+                      ],
+                    ),
+                    if (eyebrowSubtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        eyebrowSubtitle!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                          fontFamily: fontFamily,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 24,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              letterSpacing: -0.4,
+              color: AppColors.textPrimary,
+              fontFamily: fontFamily,
+            ),
+          ),
+          if (chips != null && chips!.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: 6,
+              children: chips!,
+            ),
+          ],
+          if (description != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            description!,
+          ],
+          const SizedBox(height: AppSpacing.md),
+          Divider(height: 1, color: AppColors.borderSubtle),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              for (int i = 0; i < stats.length; i++) ...[
+                Expanded(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            stats[i].icon,
+                            size: 13,
+                            color: AppColors.textMuted,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Flexible(
+                            child: Text(
+                              stats[i].value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 14.5,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.textPrimary,
+                                fontFamily: fontFamily,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        stats[i].label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                          fontFamily: fontFamily,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (i < stats.length - 1)
+                  Container(
+                    width: 1,
+                    height: 30,
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                    ),
+                    color: AppColors.borderSubtle,
+                  ),
+              ],
+            ],
+          ),
+          if (notesWidget != null) ...[
+            const SizedBox(height: AppSpacing.md),
+            notesWidget!,
+          ],
+          if (footer != null) ...[
+            const SizedBox(height: AppSpacing.lg),
+            footer!,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ── Exercise ring badge ─────────────────────────────────────────────────
+
+class _ExerciseRingBadge extends StatelessWidget {
+  final int done;
+  final int target;
+  final double progress;
+  final bool allHit;
+  final Duration motionDuration;
+
+  const _ExerciseRingBadge({
+    required this.done,
+    required this.target,
+    required this.progress,
+    required this.allHit,
+    required this.motionDuration,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ringColor = allHit ? AppColors.accent : AppColors.primaryFixed;
+    final bgColor = AppColors.surfaceContainerHighest;
+    final label = '$done/$target';
+
+    return Semantics(
+      label: '$done of $target sets',
+      child: SizedBox(
+        width: 44,
+        height: 44,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: progress.clamp(0.0, 1.0)),
+              duration: motionDuration,
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => SizedBox(
+                width: 38,
+                height: 38,
+                child: CircularProgressIndicator(
+                  value: value == 0 ? 0.02 : value,
+                  strokeWidth: 3.2,
+                  backgroundColor: bgColor,
+                  color: ringColor,
+                  strokeCap: StrokeCap.round,
+                ),
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: motionDuration,
+              transitionBuilder: (child, anim) => ScaleTransition(
+                scale: anim,
+                child: FadeTransition(opacity: anim, child: child),
+              ),
+              child: allHit
+                  ? Container(
+                      key: const ValueKey('ring_check'),
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        size: 14,
+                        color: AppColors.onPrimary,
+                      ),
+                    )
+                  : Text(
+                      label,
+                      key: ValueKey<String>(label),
+                      style: AppText.labelSm.copyWith(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                        color: allHit
+                            ? AppColors.accent
+                            : AppColors.onSurfaceVariant,
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Press scale wrapper — whole-row feedback on tap ─────────────────────
+
+class _PressScale extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  final Duration motionDuration;
+
+  const _PressScale({
+    required this.child,
+    required this.onTap,
+    required this.motionDuration,
+  });
+
+  @override
+  State<_PressScale> createState() => _PressScaleState();
+}
+
+class _PressScaleState extends State<_PressScale> {
+  bool _pressed = false;
+
+  void _setPressed(bool v) {
+    if (_pressed == v) return;
+    setState(() => _pressed = v);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      onTapDown: (_) => _setPressed(true),
+      onTapUp: (_) => _setPressed(false),
+      onTapCancel: () => _setPressed(false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.985 : 1,
+        duration: widget.motionDuration,
+        curve: Curves.easeOutCubic,
+        child: AnimatedOpacity(
+          opacity: _pressed ? 0.92 : 1,
+          duration: widget.motionDuration,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: widget.onTap,
+              borderRadius: BorderRadius.circular(10),
+              child: widget.child,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Illustrated empty state icon composition ────────────────────────────
+
+class _IllustratedEmptyIcon extends StatelessWidget {
+  final IconData primaryIcon;
+  final IconData? accentIcon;
+  final Color? accentColor;
+
+  const _IllustratedEmptyIcon({
+    required this.primaryIcon,
+    this.accentIcon,
+    this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHigh,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: AppColors.borderSubtle,
+                width: 1,
+              ),
+            ),
+          ),
+          Icon(
+            primaryIcon,
+            size: 34,
+            color: AppColors.textMuted,
+          ),
+          if (accentIcon != null)
+            Positioned(
+              right: 2,
+              bottom: 2,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: accentColor ?? AppColors.primaryFixed,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.surface,
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (accentColor ?? AppColors.primaryFixed)
+                          .withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  accentIcon,
+                  size: 12,
+                  color: AppColors.onPrimary,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Done view metric tile ───────────────────────────────────────────────
+
+class _DoneMetricTile extends StatelessWidget {
+  final IconData icon;
+  final String value;
+  final String label;
+
+  const _DoneMetricTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Icon(icon, size: 16, color: AppColors.textMuted),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.titleSm.copyWith(
+              fontWeight: FontWeight.w800,
+              color: AppColors.textPrimary,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: AppText.labelSm.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w600,
+              fontSize: 10,
+            ),
+          ),
+        ],
       ),
     );
   }

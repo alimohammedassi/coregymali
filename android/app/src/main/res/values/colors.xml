@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#d1fc00</color>
+    <color name="ic_launcher_background">#121310</color>
     <!-- Splash canvas color — matches the Flutter splash background (dark in
          both theme modes) so the native → Flutter handoff has no white cut. -->
     <color name="launch_bg">#121310</color>

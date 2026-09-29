@@ -31,6 +31,27 @@ class NutritionService {
     }
   }
 
+  /// The day the Home week strip currently targets — the day every
+  /// nutrition write attributes its rows to (backdated logging), instead of
+  /// the wall clock at save time. Save paths used to recompute
+  /// DateTime.now() on "Add", so a meal logged just after midnight while a
+  /// past day was open landed on the wrong day. Home keeps this in sync
+  /// through [syncSelectedLogDate]; a caller carrying its own explicit date
+  /// (FoodLoggingModal opened from home) overrides it.
+  static final ValueNotifier<DateTime> selectedLogDate =
+      ValueNotifier<DateTime>(DateTime.now());
+
+  /// Date-only read for save paths without an explicit date context: the
+  /// day new entries are attributed to.
+  static DateTime get currentLogDate => selectedLogDate.value;
+
+  /// Date-only sync — strips the time component so day comparisons and
+  /// `logged_date` writes can never drift on hours/minutes.
+  static void syncSelectedLogDate(DateTime d) {
+    final day = DateTime(d.year, d.month, d.day);
+    if (selectedLogDate.value != day) selectedLogDate.value = day;
+  }
+
   /// Whether the DB has the additional-nutrient columns (fiber_g, sodium_mg,
   /// …). Flips to false the first time Postgres says one is missing, so the
   /// app keeps logging macros normally when the migration hasn't been
@@ -258,7 +279,11 @@ class NutritionService {
       return false;
     }
     try {
-      final d = (date ?? DateTime.now()).toIso8601String().substring(0, 10);
+      // Selected-date first: never recompute now() at save time — that is
+      // the midnight-boundary bug this replaces.
+      final d = (date ?? selectedLogDate.value)
+          .toIso8601String()
+          .substring(0, 10);
 
       // Only include food_id if it looks like a real UUID (not a custom string)
       final bool isUuid = RegExp(
@@ -320,11 +345,14 @@ class NutritionService {
   Future<bool> saveScannedItems({
     required List<FoodScanItem> items,
     required String mealType, // breakfast/lunch/dinner/snack
+    DateTime? date,
   }) async {
     final userId = currentUserId;
     if (userId == null || items.isEmpty) return false;
 
-    final d = DateTime.now().toIso8601String().substring(0, 10);
+    final d = (date ?? selectedLogDate.value)
+        .toIso8601String()
+        .substring(0, 10);
     var savedCount = 0;
 
     for (final item in items) {
@@ -378,11 +406,14 @@ class NutritionService {
   Future<bool> saveVoiceLogItems({
     required List<VoiceFoodLogItem> items,
     required String mealType, // breakfast/lunch/dinner/snack
+    DateTime? date,
   }) async {
     final userId = currentUserId;
     if (userId == null || items.isEmpty) return false;
 
-    final d = DateTime.now().toIso8601String().substring(0, 10);
+    final d = (date ?? selectedLogDate.value)
+        .toIso8601String()
+        .substring(0, 10);
     var savedCount = 0;
 
     for (final item in items) {
@@ -430,8 +461,108 @@ class NutritionService {
     return false;
   }
 
-  // Get today's logs grouped by meal
-  Future<Map<String, List<Map<String, dynamic>>>> getTodayLogs() async {
+  // Catalog food photos for the day's logs — resolved in ONE batch query
+  // against `foods` and memoized per session (catalog images are immutable),
+  // so the meal sections can show real photos without storing image URLs on
+  // nutrition_logs rows. Rows keep their `food_id`; we only attach a
+  // derived `image_url` key (null when the log has no catalog food).
+  static final Map<String, String> _foodImageCache = {};
+
+  // Same, keyed by lowercased FOOD NAME — covers logs with no food_id
+  // (AI-scan items, rows logged before food_id existed). Null value means
+  // "already looked up, no catalog match" so we never re-query.
+  static final Map<String, String?> _foodNameImageCache = {};
+
+  Future<List<Map<String, dynamic>>> _enrichWithFoodImages(
+    List<dynamic> rows,
+  ) async {
+    final logs = rows.map((r) => Map<String, dynamic>.from(r)).toList();
+    final missing = <String>{};
+    for (final row in logs) {
+      final id = row['food_id']?.toString();
+      if (id != null && id.isNotEmpty && !_foodImageCache.containsKey(id)) {
+        missing.add(id);
+      }
+    }
+    if (missing.isNotEmpty) {
+      try {
+        final foods = await supabase
+            .from('foods')
+            .select('id, image_url')
+            .inFilter('id', missing.toList());
+        for (final f in foods) {
+          final id = f['id']?.toString();
+          final url = f['image_url']?.toString();
+          if (id != null && url != null && url.isNotEmpty) {
+            _foodImageCache[id] = url;
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ food image lookup skipped: $e');
+      }
+    }
+    for (final row in logs) {
+      final id = row['food_id']?.toString();
+      row['image_url'] = id == null ? null : _foodImageCache[id];
+    }
+
+    // Name-based fallback (one case-insensitive match per distinct name,
+    // parenthetical qualifiers stripped: "Brown Toast (2 slices)" →
+    // "Brown Toast"). Filter text is sanitized so odd dish names can't
+    // break the .or() expression; failures just keep the emoji fallback.
+    final strippedByRowKey = <String, String>{};
+    for (final row in logs) {
+      if (row['image_url'] != null) continue;
+      final name = (row['food_name']?.toString() ?? '').trim();
+      if (name.isEmpty) continue;
+      final key = name.toLowerCase();
+      final stripped = key.replaceAll(RegExp(r'\s*\(.*\)\s*$'), '').trim();
+      if (stripped.isEmpty) continue;
+      if (_foodNameImageCache.containsKey(stripped)) {
+        final cached = _foodNameImageCache[stripped];
+        if (cached != null) row['image_url'] = cached;
+        continue;
+      }
+      strippedByRowKey[key] = stripped;
+    }
+    if (strippedByRowKey.isNotEmpty) {
+      final filters = strippedByRowKey.values.toSet().map((n) {
+        final safe = n.replaceAll(RegExp(r'["%,()]'), '');
+        return 'name.ilike."$safe"';
+      }).toList();
+      try {
+        final foods = await supabase
+            .from('foods')
+            .select('name, image_url')
+            .or(filters.join(','));
+        for (final f in foods) {
+          final fname = f['name']?.toString().toLowerCase() ?? '';
+          final url = f['image_url']?.toString();
+          if (fname.isNotEmpty && url != null && url.isNotEmpty) {
+            _foodNameImageCache[fname] = url;
+          }
+        }
+        for (final row in logs) {
+          if (row['image_url'] != null) continue;
+          final name = (row['food_name']?.toString() ?? '').trim();
+          final stripped =
+              name.toLowerCase().replaceAll(RegExp(r'\s*\(.*\)\s*$'), '');
+          final cached = _foodNameImageCache[stripped];
+          if (cached != null) row['image_url'] = cached;
+        }
+      } catch (e) {
+        debugPrint('⚠️ food image name lookup skipped: $e');
+      }
+    }
+    return logs;
+  }
+
+  // Get the selected day's logs grouped by meal — the Nutrition tab mirrors
+  // whatever day the Home week strip targets (backdated viewing), so this
+  // follows the selected log date unless a caller pins an explicit one.
+  Future<Map<String, List<Map<String, dynamic>>>> getTodayLogs({
+    DateTime? date,
+  }) async {
     final Map<String, List<Map<String, dynamic>>> grouped = {
       'breakfast': [],
       'lunch': [],
@@ -439,15 +570,17 @@ class NutritionService {
       'snack': []
     };
     if (currentUserId == null) return grouped;
+    final day = (date ?? selectedLogDate.value)
+        .toIso8601String()
+        .substring(0, 10);
     try {
-      final today = DateTime.now().toIso8601String().substring(0, 10);
       final rows = await supabase
           .from('nutrition_logs')
           .select()
           .eq('user_id', currentUserId!)
-          .eq('logged_date', today)
+          .eq('logged_date', day)
           .order('logged_at', ascending: true);
-      for (final row in rows) {
+      for (final row in await _enrichWithFoodImages(rows)) {
         grouped[row['meal_type']]?.add(row);
       }
       return grouped;
@@ -455,13 +588,12 @@ class NutritionService {
       debugPrint('❌ Supabase error getting today logs: ${e.message} | code: ${e.code}');
       // Try without ordering if column doesn't exist
       try {
-        final today = DateTime.now().toIso8601String().substring(0, 10);
         final rows = await supabase
             .from('nutrition_logs')
             .select()
             .eq('user_id', currentUserId!)
-            .eq('logged_date', today);
-        for (final row in rows) {
+            .eq('logged_date', day);
+        for (final row in await _enrichWithFoodImages(rows)) {
           grouped[row['meal_type']]?.add(row);
         }
         return grouped;
@@ -733,11 +865,14 @@ class NutritionService {
       final today = DateTime.now().toIso8601String().substring(0, 10);
       final startIso = DateTime.parse(today).toIso8601String();
 
+      // Count by logged_date, not logged_at: a backdated entry carries
+      // today's creation timestamp but belongs to another day's total, and
+      // the alert speaks about today's budget.
       final rows = await supabase
           .from('nutrition_logs')
           .select('calories')
           .eq('user_id', uid)
-          .gte('logged_at', startIso);
+          .eq('logged_date', today);
       final total = rows.fold<double>(
         0,
         (sum, r) => sum + ((r['calories'] as num?)?.toDouble() ?? 0),

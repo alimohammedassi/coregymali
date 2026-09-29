@@ -626,6 +626,12 @@ abstract class AppLocalizations {
   /// **'Log Meal'**
   String get logMeal;
 
+  /// No description provided for @loggingNotToday.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re logging for {date} — not today'**
+  String loggingNotToday(String date);
+
   /// No description provided for @breakfast.
   ///
   /// In en, this message translates to:
@@ -2336,6 +2342,12 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearance;
 
+  /// No description provided for @themeMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeMode;
+
   /// No description provided for @themeSystem.
   ///
   /// In en, this message translates to:
@@ -2498,6 +2510,348 @@ abstract class AppLocalizations {
   /// **'CONTINUE'**
   String get onbContinue;
 
+  /// No description provided for @flow1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s get to\nknow you'**
+  String get flow1Title;
+
+  /// No description provided for @flow1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your basic info'**
+  String get flow1Subtitle;
+
+  /// No description provided for @flow2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current\nbody'**
+  String get flow2Title;
+
+  /// No description provided for @flow2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help us tailor your plan'**
+  String get flow2Subtitle;
+
+  /// No description provided for @flow3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s your\ngoal?'**
+  String get flow3Title;
+
+  /// No description provided for @flow3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select your primary focus'**
+  String get flow3Subtitle;
+
+  /// No description provided for @flow4Title.
+  ///
+  /// In en, this message translates to:
+  /// **'How fast do you\nwant results?'**
+  String get flow4Title;
+
+  /// No description provided for @flow4Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pace sets the calorie adjustment'**
+  String get flow4Subtitle;
+
+  /// No description provided for @flowPaceNotNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Your goal is about performance — calories stay at full burn, no pace adjustment needed.'**
+  String get flowPaceNotNeeded;
+
+  /// No description provided for @flow5Title.
+  ///
+  /// In en, this message translates to:
+  /// **'How active\nare you?'**
+  String get flow5Title;
+
+  /// No description provided for @flow5Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Helps calculate your nutrition'**
+  String get flow5Subtitle;
+
+  /// No description provided for @flow6Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your\ntargets'**
+  String get flow6Title;
+
+  /// No description provided for @flow6Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build your routine'**
+  String get flow6Subtitle;
+
+  /// No description provided for @flowAge.
+  ///
+  /// In en, this message translates to:
+  /// **'AGE'**
+  String get flowAge;
+
+  /// No description provided for @flowGender.
+  ///
+  /// In en, this message translates to:
+  /// **'GENDER'**
+  String get flowGender;
+
+  /// No description provided for @flowHeight.
+  ///
+  /// In en, this message translates to:
+  /// **'HEIGHT (CM)'**
+  String get flowHeight;
+
+  /// No description provided for @flowWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'WEIGHT (KG)'**
+  String get flowWeight;
+
+  /// No description provided for @flowBodyFat.
+  ///
+  /// In en, this message translates to:
+  /// **'BODY FAT %'**
+  String get flowBodyFat;
+
+  /// No description provided for @flowOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'OPTIONAL'**
+  String get flowOptional;
+
+  /// No description provided for @flowKnowBodyFat.
+  ///
+  /// In en, this message translates to:
+  /// **'I know my body fat %'**
+  String get flowKnowBodyFat;
+
+  /// No description provided for @flowBodyFatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Lean-mass math (Katch-McArdle) — the most precise estimate'**
+  String get flowBodyFatHint;
+
+  /// No description provided for @flowTargetWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'TARGET WEIGHT'**
+  String get flowTargetWeight;
+
+  /// No description provided for @flowYears.
+  ///
+  /// In en, this message translates to:
+  /// **'years'**
+  String get flowYears;
+
+  /// No description provided for @flowGoalDescGain.
+  ///
+  /// In en, this message translates to:
+  /// **'Build strength and mass'**
+  String get flowGoalDescGain;
+
+  /// No description provided for @flowGoalDescLoss.
+  ///
+  /// In en, this message translates to:
+  /// **'Burn fat, feel lighter'**
+  String get flowGoalDescLoss;
+
+  /// No description provided for @flowGoalDescEndurance.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve stamina and cardio'**
+  String get flowGoalDescEndurance;
+
+  /// No description provided for @flowGoalDescFlex.
+  ///
+  /// In en, this message translates to:
+  /// **'Move better, recover faster'**
+  String get flowGoalDescFlex;
+
+  /// No description provided for @flowGoalDescGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay healthy and active'**
+  String get flowGoalDescGeneral;
+
+  /// No description provided for @flowPaceSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Steady'**
+  String get flowPaceSlow;
+
+  /// No description provided for @flowPaceStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Standard'**
+  String get flowPaceStandard;
+
+  /// No description provided for @flowPaceFast.
+  ///
+  /// In en, this message translates to:
+  /// **'Fast'**
+  String get flowPaceFast;
+
+  /// No description provided for @flowPaceDescSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'{delta} kcal / day — gentler on your routine'**
+  String flowPaceDescSlow(int delta);
+
+  /// No description provided for @flowPaceDescStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'{delta} kcal / day — the classic rate'**
+  String flowPaceDescStandard(int delta);
+
+  /// No description provided for @flowPaceDescFast.
+  ///
+  /// In en, this message translates to:
+  /// **'{delta} kcal / day — demanding, needs discipline'**
+  String flowPaceDescFast(int delta);
+
+  /// No description provided for @flowActDescSedentary.
+  ///
+  /// In en, this message translates to:
+  /// **'Little to no exercise'**
+  String get flowActDescSedentary;
+
+  /// No description provided for @flowActDescLight.
+  ///
+  /// In en, this message translates to:
+  /// **'1–3 days / week'**
+  String get flowActDescLight;
+
+  /// No description provided for @flowActDescModerate.
+  ///
+  /// In en, this message translates to:
+  /// **'3–5 days / week'**
+  String get flowActDescModerate;
+
+  /// No description provided for @flowActDescVery.
+  ///
+  /// In en, this message translates to:
+  /// **'6–7 days / week'**
+  String get flowActDescVery;
+
+  /// No description provided for @flowActDescExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Twice daily / athlete'**
+  String get flowActDescExtra;
+
+  /// No description provided for @flowEstDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. daily calories:'**
+  String get flowEstDaily;
+
+  /// No description provided for @flowBmiTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your BMI'**
+  String get flowBmiTitle;
+
+  /// No description provided for @flowBmiUnder.
+  ///
+  /// In en, this message translates to:
+  /// **'Underweight'**
+  String get flowBmiUnder;
+
+  /// No description provided for @flowBmiNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get flowBmiNormal;
+
+  /// No description provided for @flowBmiOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Overweight'**
+  String get flowBmiOver;
+
+  /// No description provided for @flowBmiObese.
+  ///
+  /// In en, this message translates to:
+  /// **'Obese'**
+  String get flowBmiObese;
+
+  /// No description provided for @flowGainInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'Gain {diff} kg from current weight'**
+  String flowGainInsight(String diff);
+
+  /// No description provided for @flowLoseInsight.
+  ///
+  /// In en, this message translates to:
+  /// **'Lose {diff} kg from current weight'**
+  String flowLoseInsight(String diff);
+
+  /// No description provided for @flowAllSet.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all set!'**
+  String get flowAllSet;
+
+  /// No description provided for @flowAllSetDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Here\'s the plan your numbers built — change anything and it updates live.'**
+  String get flowAllSetDesc;
+
+  /// No description provided for @flowResultDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR DAILY TARGET'**
+  String get flowResultDaily;
+
+  /// No description provided for @flowResultBmr.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting burn (BMR)'**
+  String get flowResultBmr;
+
+  /// No description provided for @flowResultActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity burn'**
+  String get flowResultActivity;
+
+  /// No description provided for @flowResultGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal adjustment'**
+  String get flowResultGoal;
+
+  /// No description provided for @flowResultMacros.
+  ///
+  /// In en, this message translates to:
+  /// **'RECOMMENDED MACROS'**
+  String get flowResultMacros;
+
+  /// No description provided for @flowKcalDay.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal / day'**
+  String get flowKcalDay;
+
+  /// No description provided for @flowContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get flowContinue;
+
+  /// No description provided for @flowComplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete'**
+  String get flowComplete;
+
   /// No description provided for @pushDialogTitle.
   ///
   /// In en, this message translates to:
@@ -2647,6 +3001,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No data logged yet'**
   String get cpNoData;
+
+  /// No description provided for @cpActivityPrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'This member keeps their daily activity private — you\'re seeing their competitive standing only.'**
+  String get cpActivityPrivate;
 
   /// No description provided for @rankCard.
   ///
@@ -3224,6 +3584,66 @@ abstract class AppLocalizations {
   /// **'Suggest a meal'**
   String get suggestMeal;
 
+  /// No description provided for @dailyMeals.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Meals'**
+  String get dailyMeals;
+
+  /// No description provided for @itemsLoggedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} items logged'**
+  String itemsLoggedCount(String count);
+
+  /// No description provided for @kcalRemainingShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{kcal} kcal remaining'**
+  String kcalRemainingShort(String kcal);
+
+  /// No description provided for @kcalGoalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{kcal} kcal goal'**
+  String kcalGoalLabel(String kcal);
+
+  /// No description provided for @ofGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {goal}'**
+  String ofGoal(String goal);
+
+  /// No description provided for @syncingNutrition.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing nutrition data...'**
+  String get syncingNutrition;
+
+  /// No description provided for @addLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addLabel;
+
+  /// No description provided for @quickLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick'**
+  String get quickLabel;
+
+  /// No description provided for @removeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get removeLabel;
+
+  /// No description provided for @keepGoing.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep going!'**
+  String get keepGoing;
+
   /// No description provided for @suggestCardSubtitle.
   ///
   /// In en, this message translates to:
@@ -3253,6 +3673,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'CALORIES'**
   String get suggestCaloriesRow;
+
+  /// No description provided for @suggestCravingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CRAVING (OPTIONAL)'**
+  String get suggestCravingLabel;
+
+  /// No description provided for @suggestCravingHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The meal in your head — e.g. koshary, burger, shawarma'**
+  String get suggestCravingHint;
 
   /// No description provided for @suggestCaloriesLabel.
   ///
@@ -3439,6 +3871,1068 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t get a suggestion. Try again.'**
   String get suggestFailed;
+
+  /// No description provided for @removeLogConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove \"{name}\" from today\'s log?'**
+  String removeLogConfirm(String name);
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account and all of its data — profile, workout history, subscriptions — will be permanently deleted. This cannot be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete your account. Try again.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @legal.
+  ///
+  /// In en, this message translates to:
+  /// **'LEGAL'**
+  String get legal;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @rankRookie.
+  ///
+  /// In en, this message translates to:
+  /// **'ROOKIE'**
+  String get rankRookie;
+
+  /// No description provided for @rankIron.
+  ///
+  /// In en, this message translates to:
+  /// **'IRON'**
+  String get rankIron;
+
+  /// No description provided for @rankBronze.
+  ///
+  /// In en, this message translates to:
+  /// **'BRONZE'**
+  String get rankBronze;
+
+  /// No description provided for @rankSilver.
+  ///
+  /// In en, this message translates to:
+  /// **'SILVER'**
+  String get rankSilver;
+
+  /// No description provided for @rankGold.
+  ///
+  /// In en, this message translates to:
+  /// **'GOLD'**
+  String get rankGold;
+
+  /// No description provided for @lbTierDiamond.
+  ///
+  /// In en, this message translates to:
+  /// **'DIAMOND'**
+  String get lbTierDiamond;
+
+  /// No description provided for @lbWeeklyChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'WEEKLY CHALLENGE'**
+  String get lbWeeklyChallenge;
+
+  /// No description provided for @lbMonthlyChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'MONTHLY CHALLENGE'**
+  String get lbMonthlyChallenge;
+
+  /// No description provided for @lbDaysLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days left'**
+  String lbDaysLeft(int n);
+
+  /// No description provided for @lbResetsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'New cycle starts {date}'**
+  String lbResetsOn(String date);
+
+  /// No description provided for @lbWindowWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get lbWindowWeekly;
+
+  /// No description provided for @lbWindowMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get lbWindowMonthly;
+
+  /// No description provided for @lbCatOverall.
+  ///
+  /// In en, this message translates to:
+  /// **'Overall'**
+  String get lbCatOverall;
+
+  /// No description provided for @lbCatCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get lbCatCalories;
+
+  /// No description provided for @lbCatWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get lbCatWater;
+
+  /// No description provided for @lbCatWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get lbCatWorkouts;
+
+  /// No description provided for @lbCatStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get lbCatStreak;
+
+  /// No description provided for @lbCatLongestStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest streak'**
+  String get lbCatLongestStreak;
+
+  /// No description provided for @lbYourRank.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR RANK'**
+  String get lbYourRank;
+
+  /// No description provided for @lbUnitPts.
+  ///
+  /// In en, this message translates to:
+  /// **'pts'**
+  String get lbUnitPts;
+
+  /// No description provided for @lbUnitWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'workouts'**
+  String get lbUnitWorkouts;
+
+  /// No description provided for @lbUnitDays.
+  ///
+  /// In en, this message translates to:
+  /// **'days'**
+  String get lbUnitDays;
+
+  /// No description provided for @lbDayStreakN.
+  ///
+  /// In en, this message translates to:
+  /// **'{n}-day streak'**
+  String lbDayStreakN(int n);
+
+  /// No description provided for @lbLongestStreakN.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest: {n} days'**
+  String lbLongestStreakN(int n);
+
+  /// No description provided for @lbLeadingBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re leading the board'**
+  String get lbLeadingBoard;
+
+  /// No description provided for @lbTiedWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Level with #{rank}'**
+  String lbTiedWith(int rank);
+
+  /// No description provided for @lbPtsToNextRank.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} pts to #{rank}'**
+  String lbPtsToNextRank(int n, int rank);
+
+  /// No description provided for @lbTopTier.
+  ///
+  /// In en, this message translates to:
+  /// **'Top tier reached'**
+  String get lbTopTier;
+
+  /// No description provided for @lbPtsToTier.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} pts to {tier}'**
+  String lbPtsToTier(int n, String tier);
+
+  /// No description provided for @lbNewHere.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get lbNewHere;
+
+  /// No description provided for @lbSameRank.
+  ///
+  /// In en, this message translates to:
+  /// **'No change'**
+  String get lbSameRank;
+
+  /// No description provided for @lbMovedUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Moved up {n} spots'**
+  String lbMovedUp(int n);
+
+  /// No description provided for @lbMovedDown.
+  ///
+  /// In en, this message translates to:
+  /// **'Dropped {n} spots'**
+  String lbMovedDown(int n);
+
+  /// No description provided for @lbLastWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'LAST WEEK'**
+  String get lbLastWeek;
+
+  /// No description provided for @lbNewCycle.
+  ///
+  /// In en, this message translates to:
+  /// **'New competition started'**
+  String get lbNewCycle;
+
+  /// No description provided for @lbDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get lbDismiss;
+
+  /// No description provided for @lbScoreTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'How your score is calculated'**
+  String get lbScoreTooltip;
+
+  /// No description provided for @lbScoreCalcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your score'**
+  String get lbScoreCalcTitle;
+
+  /// No description provided for @lbScoreFormula.
+  ///
+  /// In en, this message translates to:
+  /// **'Score = 60% calorie adherence + 40% water adherence over the selected window. Log consistently to climb.'**
+  String get lbScoreFormula;
+
+  /// No description provided for @lbSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a name…'**
+  String get lbSearchHint;
+
+  /// No description provided for @lbNoSearchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No one named \"{query}\" here'**
+  String lbNoSearchResults(String query);
+
+  /// No description provided for @lbEmptyCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'No one has claimed this board yet'**
+  String get lbEmptyCategory;
+
+  /// No description provided for @lbEmptyCategorySub.
+  ///
+  /// In en, this message translates to:
+  /// **'Log today and take the top spot'**
+  String get lbEmptyCategorySub;
+
+  /// No description provided for @lbPinJump.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rank — tap to jump'**
+  String get lbPinJump;
+
+  /// No description provided for @lbYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get lbYou;
+
+  /// No description provided for @lbYouBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'YOU'**
+  String get lbYouBadge;
+
+  /// No description provided for @lbCompCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'COMPETITIVE'**
+  String get lbCompCardTitle;
+
+  /// No description provided for @lbRankOf.
+  ///
+  /// In en, this message translates to:
+  /// **'#{rank} of {total}'**
+  String lbRankOf(int rank, int total);
+
+  /// No description provided for @lbRankOfTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'of {total}'**
+  String lbRankOfTotal(int total);
+
+  /// No description provided for @lbRankJourney.
+  ///
+  /// In en, this message translates to:
+  /// **'#{from} → #{to}'**
+  String lbRankJourney(int from, int to);
+
+  /// No description provided for @lbRankHistoryEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Not enough data yet'**
+  String get lbRankHistoryEmpty;
+
+  /// No description provided for @profilePhotoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PROFILE PHOTO'**
+  String get profilePhotoTitle;
+
+  /// No description provided for @editDataTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'EDIT DATA'**
+  String get editDataTitle;
+
+  /// No description provided for @saveDataBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE DATA'**
+  String get saveDataBtn;
+
+  /// No description provided for @saveGoalsBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE GOALS'**
+  String get saveGoalsBtn;
+
+  /// No description provided for @viewPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'View Photo'**
+  String get viewPhoto;
+
+  /// No description provided for @changePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get changePhoto;
+
+  /// No description provided for @uploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Photo'**
+  String get uploadPhoto;
+
+  /// No description provided for @profilePhotoUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo updated'**
+  String get profilePhotoUpdated;
+
+  /// No description provided for @uploadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed. Try again.'**
+  String get uploadFailed;
+
+  /// No description provided for @coachDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach Dashboard'**
+  String get coachDashboard;
+
+  /// No description provided for @coachDashboardSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage clients & programs on the web'**
+  String get coachDashboardSubtitle;
+
+  /// No description provided for @noProgressData.
+  ///
+  /// In en, this message translates to:
+  /// **'No progress data yet'**
+  String get noProgressData;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @refreshProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh profile'**
+  String get refreshProfile;
+
+  /// No description provided for @profilePhotoTapOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo. Tap for options.'**
+  String get profilePhotoTapOptions;
+
+  /// No description provided for @editBodyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit body data'**
+  String get editBodyData;
+
+  /// No description provided for @editDailyTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit daily targets'**
+  String get editDailyTargets;
+
+  /// No description provided for @activeProgramTapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Active program: {name}. Tap to view.'**
+  String activeProgramTapHint(String name);
+
+  /// No description provided for @chartSessionsSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'1RM progress line chart — {count} sessions recorded.'**
+  String chartSessionsSemantics(int count);
+
+  /// No description provided for @sessionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sessions'**
+  String sessionsCount(int count);
+
+  /// No description provided for @yearsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'yrs'**
+  String get yearsShort;
+
+  /// No description provided for @perWeekShort.
+  ///
+  /// In en, this message translates to:
+  /// **'×/wk'**
+  String get perWeekShort;
+
+  /// No description provided for @statsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your stats.'**
+  String get statsLoadFailed;
+
+  /// No description provided for @invalidAgeRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Age must be a whole number between 10 and 100.'**
+  String get invalidAgeRange;
+
+  /// No description provided for @invalidWeightRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight must be a number between 20 and 300 kg.'**
+  String get invalidWeightRange;
+
+  /// No description provided for @invalidHeightRange.
+  ///
+  /// In en, this message translates to:
+  /// **'Height must be a number between 100 and 250 cm.'**
+  String get invalidHeightRange;
+
+  /// No description provided for @invalidCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories must be a non-negative whole number.'**
+  String get invalidCalories;
+
+  /// No description provided for @invalidProtein.
+  ///
+  /// In en, this message translates to:
+  /// **'Protein must be a non-negative whole number.'**
+  String get invalidProtein;
+
+  /// No description provided for @invalidWeeklyWorkouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly workouts must be a non-negative whole number.'**
+  String get invalidWeeklyWorkouts;
+
+  /// No description provided for @motivationEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Log your first meal to start your day! 🌟'**
+  String get motivationEmpty;
+
+  /// No description provided for @motivationStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Great start! Fuel up with clean nutrients 🌱'**
+  String get motivationStart;
+
+  /// No description provided for @motivationZone.
+  ///
+  /// In en, this message translates to:
+  /// **'You are in the zone! Hit your protein target ⚡'**
+  String get motivationZone;
+
+  /// No description provided for @motivationAlmost.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost at your target! Finish strong 🎯'**
+  String get motivationAlmost;
+
+  /// No description provided for @motivationBullseye.
+  ///
+  /// In en, this message translates to:
+  /// **'Bullseye! Perfect nutrition day 🎉'**
+  String get motivationBullseye;
+
+  /// No description provided for @motivationOver.
+  ///
+  /// In en, this message translates to:
+  /// **'Over target — balance with light hydration 🧘'**
+  String get motivationOver;
+
+  /// No description provided for @addCaloriesTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Add calories directly to {meal}'**
+  String addCaloriesTo(String meal);
+
+  /// No description provided for @addToLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Log'**
+  String get addToLog;
+
+  /// No description provided for @foodItemFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Food item'**
+  String get foodItemFallback;
+
+  /// No description provided for @editServingMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit serving & meal section'**
+  String get editServingMeal;
+
+  /// No description provided for @overBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Over Budget'**
+  String get overBudget;
+
+  /// No description provided for @targetKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'Target: {kcal} kcal'**
+  String targetKcal(String kcal);
+
+  /// No description provided for @dailyTargetMl.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily target: {ml} ml'**
+  String dailyTargetMl(String ml);
+
+  /// No description provided for @waterGlassSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Glass 🥛'**
+  String get waterGlassSub;
+
+  /// No description provided for @waterBottleSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Bottle 💧'**
+  String get waterBottleSub;
+
+  /// No description provided for @dailyGoalTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Goal Targets'**
+  String get dailyGoalTargets;
+
+  /// No description provided for @macroLeftKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{kcal} kcal · {grams}g left'**
+  String macroLeftKcal(String kcal, String grams);
+
+  /// No description provided for @noFoodLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'No food logged yet'**
+  String get noFoodLogged;
+
+  /// No description provided for @mealTotals.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal totals:'**
+  String get mealTotals;
+
+  /// No description provided for @removeItem.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove item?'**
+  String get removeItem;
+
+  /// No description provided for @avgCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg Calories'**
+  String get avgCalories;
+
+  /// No description provided for @onTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'On Track'**
+  String get onTrack;
+
+  /// No description provided for @daysInZone.
+  ///
+  /// In en, this message translates to:
+  /// **'days in zone'**
+  String get daysInZone;
+
+  /// No description provided for @workouts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workouts'**
+  String get workouts;
+
+  /// No description provided for @thisWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'this week'**
+  String get thisWeek;
+
+  /// No description provided for @kcalPerDay.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal / day'**
+  String get kcalPerDay;
+
+  /// No description provided for @aiWaitWorking.
+  ///
+  /// In en, this message translates to:
+  /// **'Still working…'**
+  String get aiWaitWorking;
+
+  /// No description provided for @aiWaitElapsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{secs}s'**
+  String aiWaitElapsed(String secs);
+
+  /// No description provided for @aiWaitSlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Taking a little longer than usual — still working on it. Busy moments can take up to a minute.'**
+  String get aiWaitSlow;
+
+  /// No description provided for @verifyTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFY'**
+  String get verifyTitle1;
+
+  /// No description provided for @verifyTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'CODE'**
+  String get verifyTitle2;
+
+  /// No description provided for @verifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ve sent a verification code to {email}'**
+  String verifySubtitle(String email);
+
+  /// No description provided for @verifyButton.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFY CODE'**
+  String get verifyButton;
+
+  /// No description provided for @verifyDidntReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'DIDN\'T RECEIVE?'**
+  String get verifyDidntReceive;
+
+  /// No description provided for @verifyResendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'RESEND IN {seconds}s'**
+  String verifyResendIn(int seconds);
+
+  /// No description provided for @verifyResend.
+  ///
+  /// In en, this message translates to:
+  /// **'RESEND'**
+  String get verifyResend;
+
+  /// No description provided for @verifyRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'REMEMBER PASSWORD?'**
+  String get verifyRemember;
+
+  /// No description provided for @verifyDidntRemember.
+  ///
+  /// In en, this message translates to:
+  /// **'DIDN\'T REMEMBER IT?'**
+  String get verifyDidntRemember;
+
+  /// No description provided for @verifySignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'SIGN IN'**
+  String get verifySignIn;
+
+  /// No description provided for @verifyErrIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the full code from your email'**
+  String get verifyErrIncomplete;
+
+  /// No description provided for @verifyErrRateLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Too many attempts. Please wait a moment.'**
+  String get verifyErrRateLimit;
+
+  /// No description provided for @verifyErrInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid or expired code'**
+  String get verifyErrInvalid;
+
+  /// No description provided for @verifyErrKeepTyping.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid code - if it has more digits, keep typing'**
+  String get verifyErrKeepTyping;
+
+  /// No description provided for @verifyErrConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong. Check your connection.'**
+  String get verifyErrConnection;
+
+  /// No description provided for @verifySnackResent.
+  ///
+  /// In en, this message translates to:
+  /// **'A new code was sent to your email'**
+  String get verifySnackResent;
+
+  /// No description provided for @verifySnackWait.
+  ///
+  /// In en, this message translates to:
+  /// **'Please wait before requesting another code'**
+  String get verifySnackWait;
+
+  /// No description provided for @verifySnackFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not resend the code. Try again.'**
+  String get verifySnackFailed;
+
+  /// No description provided for @forgotTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET'**
+  String get forgotTitle1;
+
+  /// No description provided for @forgotTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'ACCESS'**
+  String get forgotTitle2;
+
+  /// No description provided for @forgotSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ENTER YOUR EMAIL TO RECEIVE A RESET CODE'**
+  String get forgotSubtitle;
+
+  /// No description provided for @forgotEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OPERATOR_ID'**
+  String get forgotEmailLabel;
+
+  /// No description provided for @forgotEmailEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get forgotEmailEmpty;
+
+  /// No description provided for @forgotEmailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get forgotEmailInvalid;
+
+  /// No description provided for @forgotSendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'SEND RESET CODE'**
+  String get forgotSendButton;
+
+  /// No description provided for @resetTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get resetTitle1;
+
+  /// No description provided for @resetTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'PASSWORD'**
+  String get resetTitle2;
+
+  /// No description provided for @resetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'ENTER YOUR NEW ENCRYPTED KEY'**
+  String get resetSubtitle;
+
+  /// No description provided for @resetNewKey.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW_KEY'**
+  String get resetNewKey;
+
+  /// No description provided for @resetConfirmKey.
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRM_KEY'**
+  String get resetConfirmKey;
+
+  /// No description provided for @resetPassEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a password'**
+  String get resetPassEmpty;
+
+  /// No description provided for @resetPassShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 8 characters'**
+  String get resetPassShort;
+
+  /// No description provided for @resetPassWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Must contain uppercase, lowercase, and number'**
+  String get resetPassWeak;
+
+  /// No description provided for @resetPassConfirmEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get resetPassConfirmEmpty;
+
+  /// No description provided for @resetPassMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get resetPassMismatch;
+
+  /// No description provided for @resetButton.
+  ///
+  /// In en, this message translates to:
+  /// **'RESET PASSWORD'**
+  String get resetButton;
+
+  /// No description provided for @resetSessionExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reset session expired. Please request a new code.'**
+  String get resetSessionExpired;
+
+  /// No description provided for @resetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password reset successfully!'**
+  String get resetSuccess;
+
+  /// No description provided for @authLoginTitleA.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome'**
+  String get authLoginTitleA;
+
+  /// No description provided for @authLoginTitleB.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get authLoginTitleB;
+
+  /// No description provided for @authSignupTitleA.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get authSignupTitleA;
+
+  /// No description provided for @authSignupTitleB.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get authSignupTitleB;
+
+  /// No description provided for @authStrengthWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak'**
+  String get authStrengthWeak;
+
+  /// No description provided for @authStrengthFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get authStrengthFair;
+
+  /// No description provided for @authStrengthStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong'**
+  String get authStrengthStrong;
+
+  /// No description provided for @authNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your name'**
+  String get authNameError;
+
+  /// No description provided for @authPassMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get authPassMismatch;
+
+  /// No description provided for @authPassMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords match'**
+  String get authPassMatch;
+
+  /// No description provided for @authEmailEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your email'**
+  String get authEmailEmpty;
+
+  /// No description provided for @authEmailError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get authEmailError;
+
+  /// No description provided for @authPassEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your password'**
+  String get authPassEmpty;
+
+  /// No description provided for @authPassShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get authPassShort;
+
+  /// No description provided for @authAgreeTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Please agree to the Terms & Conditions'**
+  String get authAgreeTerms;
+
+  /// No description provided for @authAgreeTermsShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree to the Terms first'**
+  String get authAgreeTermsShort;
+
+  /// No description provided for @authAppleSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple sign-in coming soon'**
+  String get authAppleSoon;
+
+  /// No description provided for @authLegalSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Legal pages coming soon'**
+  String get authLegalSoon;
+
+  /// No description provided for @authShowPass.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get authShowPass;
+
+  /// No description provided for @authHidePass.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get authHidePass;
+
+  /// No description provided for @authWelcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back, {email}!'**
+  String authWelcomeBack(String email);
+
+  /// No description provided for @authWelcomeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome, {name}!'**
+  String authWelcomeNew(String name);
+
+  /// No description provided for @authGoogleOk.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in with Google!'**
+  String get authGoogleOk;
 }
 
 class _AppLocalizationsDelegate

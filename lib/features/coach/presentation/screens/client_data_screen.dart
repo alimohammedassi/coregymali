@@ -17,7 +17,7 @@ Color get _kGoldGlow => AppColors.tertiary.withValues(alpha: 0.20);
 Color get _kGoldSubtle => AppColors.tertiary.withValues(alpha: 0.10);
 Color get _kSuccess => AppColors.greenAccent;
 Color get _kBlue => AppColors.secondary;
-Color get _kPurple => AppColors.accentSteps;
+Color get _kPurple => AppColors.purpleAccent; // not accentSteps — steps is azure now (2026-09-27)
 Color get _kRed => AppColors.error;
 Color get _kAmber => AppColors.accentCalories;
 

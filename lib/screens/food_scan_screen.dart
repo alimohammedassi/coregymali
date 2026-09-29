@@ -11,6 +11,7 @@ import '../services/food_scan_service.dart';
 import '../services/nutrition_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +76,11 @@ class _FoodScanScreenState extends State<FoodScanScreen>
 
   Timer? _stepTimer;
   int _stepIndex = 0;
-  int _elapsedSteps = 0; // how many analyzing-step ticks have elapsed
+
+  /// When the current analyze request started — feeds [AiWaitLine]'s live
+  /// elapsed counter (the analyze call retries Gemini server-side, so its
+  /// length is invisible to the client).
+  DateTime _analyzingStarted = DateTime.now();
 
   Timer? _idleTipTimer;
   int _tipIndex = 0;
@@ -205,7 +210,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       _errorType = null;
       _saveErrorType = null;
       _stepIndex = 0;
-      _elapsedSteps = 0;
+      _analyzingStarted = DateTime.now();
     });
     _startStepCycle();
     await _analyze();
@@ -217,7 +222,6 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       if (!mounted || _phase != _ScanPhase.analyzing) return;
       setState(() {
         _stepIndex = (_stepIndex + 1) % _analyzingSteps.length;
-        _elapsedSteps++;
       });
     });
   }
@@ -688,7 +692,6 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     // actually returns.
     final progress = (0.15 + (_stepIndex + 1) / _analyzingSteps.length * 0.6)
         .clamp(0.0, 0.92);
-    final takingAWhile = _elapsedSteps >= 4; // ~6s of real elapsed time
 
     return Center(
       child: SingleChildScrollView(
@@ -809,25 +812,16 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                 ),
               ),
             ),
-            // Reassurance for slower connections so a long wait doesn't feel
-            // like the app has stalled.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 260),
-              child: takingAWhile
-                  ? Padding(
-                      padding: const EdgeInsets.only(top: 14),
-                      child: Text(
-                        'Taking a little longer than usual — still working…',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.onSurfaceVariant.withValues(
-                            alpha: 0.8,
-                          ),
-                        ),
-                      ),
-                    )
-                  : const SizedBox(width: double.infinity, height: 0),
+            // Live wait feedback for slower connections so a long analyze
+            // (server-side Gemini retries) never feels like a stall —
+            // elapsed counter + reassurance, localized (2026-09-27).
+            Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: AiWaitLine(
+                startedAt: _analyzingStarted,
+                slowAfter: const Duration(seconds: 6),
+                center: true,
+              ),
             ),
           ],
         ),
@@ -1571,7 +1565,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
                   setState(() {
                     _phase = _ScanPhase.analyzing;
                     _stepIndex = 0;
-                    _elapsedSteps = 0;
+                    _analyzingStarted = DateTime.now();
                   });
                   _startStepCycle();
                   _analyze();

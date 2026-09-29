@@ -144,6 +144,14 @@
   "noMealsYet": "No meals logged yet",
   "logFirstMeal": "Log your first meal today",
   "logMeal": "Log Meal",
+  "loggingNotToday": "You're logging for {date} — not today",
+  "@loggingNotToday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "breakfast": "Breakfast",
   "lunch": "Lunch",
   "dinner": "Dinner",
@@ -533,6 +541,7 @@
   "nextDay": "Next day",
   "smartwatchSync": "Smartwatch sync",
   "appearance": "Appearance",
+  "themeMode": "Theme",
   "themeSystem": "System",
   "themeLight": "Light",
   "themeDark": "Dark",
@@ -560,6 +569,68 @@
   "onbFemale": "FEMALE",
   "onbMale": "MALE",
   "onbContinue": "CONTINUE",
+  "flow1Title": "Let's get to\nknow you",
+  "flow1Subtitle": "Enter your basic info",
+  "flow2Title": "Your current\nbody",
+  "flow2Subtitle": "Help us tailor your plan",
+  "flow3Title": "What's your\ngoal?",
+  "flow3Subtitle": "Select your primary focus",
+  "flow4Title": "How fast do you\nwant results?",
+  "flow4Subtitle": "Your pace sets the calorie adjustment",
+  "flowPaceNotNeeded": "Your goal is about performance — calories stay at full burn, no pace adjustment needed.",
+  "flow5Title": "How active\nare you?",
+  "flow5Subtitle": "Helps calculate your nutrition",
+  "flow6Title": "Set your\ntargets",
+  "flow6Subtitle": "Build your routine",
+  "flowAge": "AGE",
+  "flowGender": "GENDER",
+  "flowHeight": "HEIGHT (CM)",
+  "flowWeight": "WEIGHT (KG)",
+  "flowBodyFat": "BODY FAT %",
+  "flowOptional": "OPTIONAL",
+  "flowKnowBodyFat": "I know my body fat %",
+  "flowBodyFatHint": "Lean-mass math (Katch-McArdle) — the most precise estimate",
+  "flowTargetWeight": "TARGET WEIGHT",
+  "flowYears": "years",
+  "flowGoalDescGain": "Build strength and mass",
+  "flowGoalDescLoss": "Burn fat, feel lighter",
+  "flowGoalDescEndurance": "Improve stamina and cardio",
+  "flowGoalDescFlex": "Move better, recover faster",
+  "flowGoalDescGeneral": "Stay healthy and active",
+  "flowPaceSlow": "Steady",
+  "flowPaceStandard": "Standard",
+  "flowPaceFast": "Fast",
+  "flowPaceDescSlow": "{delta} kcal / day — gentler on your routine",
+  "@flowPaceDescSlow": {"placeholders": {"delta": {"type": "int"}}},
+  "flowPaceDescStandard": "{delta} kcal / day — the classic rate",
+  "@flowPaceDescStandard": {"placeholders": {"delta": {"type": "int"}}},
+  "flowPaceDescFast": "{delta} kcal / day — demanding, needs discipline",
+  "@flowPaceDescFast": {"placeholders": {"delta": {"type": "int"}}},
+  "flowActDescSedentary": "Little to no exercise",
+  "flowActDescLight": "1–3 days / week",
+  "flowActDescModerate": "3–5 days / week",
+  "flowActDescVery": "6–7 days / week",
+  "flowActDescExtra": "Twice daily / athlete",
+  "flowEstDaily": "Est. daily calories:",
+  "flowBmiTitle": "Your BMI",
+  "flowBmiUnder": "Underweight",
+  "flowBmiNormal": "Normal",
+  "flowBmiOver": "Overweight",
+  "flowBmiObese": "Obese",
+  "flowGainInsight": "Gain {diff} kg from current weight",
+  "@flowGainInsight": {"placeholders": {"diff": {"type": "String"}}},
+  "flowLoseInsight": "Lose {diff} kg from current weight",
+  "@flowLoseInsight": {"placeholders": {"diff": {"type": "String"}}},
+  "flowAllSet": "You're all set!",
+  "flowAllSetDesc": "Here's the plan your numbers built — change anything and it updates live.",
+  "flowResultDaily": "YOUR DAILY TARGET",
+  "flowResultBmr": "Resting burn (BMR)",
+  "flowResultActivity": "Activity burn",
+  "flowResultGoal": "Goal adjustment",
+  "flowResultMacros": "RECOMMENDED MACROS",
+  "flowKcalDay": "kcal / day",
+  "flowContinue": "Continue",
+  "flowComplete": "Complete",
   "pushDialogTitle": "Enable notifications",
   "pushDialogBody": "Enable notifications so we can remind you about meals, water and your daily calorie goal.",
   "pushDialogCta": "Got it",
@@ -585,6 +656,7 @@
   "cpWater": "Water",
   "cpSteps": "Steps",
   "cpNoData": "No data logged yet",
+  "cpActivityPrivate": "This member keeps their daily activity private — you're seeing their competitive standing only.",
   "rankCard": "Rankings",
   "rankCardSub": "Weekly leaderboard",
   "@rankDaysLogged": {
@@ -773,11 +845,51 @@
   "foodLogLogged": "Logged!",
   "foodLogConfirm": "Log Food",
   "suggestMeal": "Suggest a meal",
+  "dailyMeals": "Daily Meals",
+  "itemsLoggedCount": "{count} items logged",
+  "@itemsLoggedCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalRemainingShort": "{kcal} kcal remaining",
+  "@kcalRemainingShort": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalGoalLabel": "{kcal} kcal goal",
+  "@kcalGoalLabel": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "ofGoal": "of {goal}",
+  "@ofGoal": {
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "syncingNutrition": "Syncing nutrition data...",
+  "addLabel": "Add",
+  "quickLabel": "Quick",
+  "removeLabel": "Remove",
+  "keepGoing": "Keep going!",
   "suggestCardSubtitle": "AI builds a meal that hits your remaining calories",
   "suggestSheetTitle": "Suggest a meal",
   "suggestMealSlot": "MEAL",
   "suggestStyle": "STYLE",
   "suggestCaloriesRow": "CALORIES",
+  "suggestCravingLabel": "CRAVING (OPTIONAL)",
+  "suggestCravingHint": "The meal in your head — e.g. koshary, burger, shawarma",
   "suggestCaloriesLabel": "CALORIES",
   "suggestCaloriesHint": "e.g. 550",
   "suggestCaloriesInvalid": "Enter 80–5000 kcal",
@@ -808,5 +920,293 @@
   "suggestNoRemaining": "You've used your calories for today — no room left for a suggested meal.",
   "suggestNoMatch": "Couldn't build a meal that fits your remaining macros. Try again in a moment.",
   "suggestUnavailable": "The suggestion service is busy right now. Try again in a bit.",
-  "suggestFailed": "Couldn't get a suggestion. Try again."
+  "suggestFailed": "Couldn't get a suggestion. Try again.",
+  "removeLogConfirm": "Remove \"{name}\" from today's log?",
+  "@removeLogConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteAccount": "Delete Account",
+  "deleteAccountTitle": "Delete Account?",
+  "deleteAccountBody": "Your account and all of its data — profile, workout history, subscriptions — will be permanently deleted. This cannot be undone.",
+  "deleteAccountFailed": "Couldn't delete your account. Try again.",
+  "legal": "LEGAL",
+  "termsOfService": "Terms of Service",
+  "rankRookie": "ROOKIE",
+  "rankIron": "IRON",
+  "rankBronze": "BRONZE",
+  "rankSilver": "SILVER",
+  "rankGold": "GOLD",
+  "lbTierDiamond": "DIAMOND",
+  "lbWeeklyChallenge": "WEEKLY CHALLENGE",
+  "lbMonthlyChallenge": "MONTHLY CHALLENGE",
+  "lbDaysLeft": "{n} days left",
+  "@lbDaysLeft": { "placeholders": { "n": { "type": "int" } } },
+  "lbResetsOn": "New cycle starts {date}",
+  "@lbResetsOn": { "placeholders": { "date": { "type": "String" } } },
+  "lbWindowWeekly": "Weekly",
+  "lbWindowMonthly": "Monthly",
+  "lbCatOverall": "Overall",
+  "lbCatCalories": "Calories",
+  "lbCatWater": "Water",
+  "lbCatWorkouts": "Workouts",
+  "lbCatStreak": "Streak",
+  "lbCatLongestStreak": "Longest streak",
+  "lbYourRank": "YOUR RANK",
+  "lbUnitPts": "pts",
+  "lbUnitWorkouts": "workouts",
+  "lbUnitDays": "days",
+  "lbDayStreakN": "{n}-day streak",
+  "@lbDayStreakN": { "placeholders": { "n": { "type": "int" } } },
+  "lbLongestStreakN": "Longest: {n} days",
+  "@lbLongestStreakN": { "placeholders": { "n": { "type": "int" } } },
+  "lbLeadingBoard": "You're leading the board",
+  "lbTiedWith": "Level with #{rank}",
+  "@lbTiedWith": { "placeholders": { "rank": { "type": "int" } } },
+  "lbPtsToNextRank": "{n} pts to #{rank}",
+  "@lbPtsToNextRank": { "placeholders": { "n": { "type": "int" }, "rank": { "type": "int" } } },
+  "lbTopTier": "Top tier reached",
+  "lbPtsToTier": "{n} pts to {tier}",
+  "@lbPtsToTier": { "placeholders": { "n": { "type": "int" }, "tier": { "type": "String" } } },
+  "lbNewHere": "NEW",
+  "lbSameRank": "No change",
+  "lbMovedUp": "Moved up {n} spots",
+  "@lbMovedUp": { "placeholders": { "n": { "type": "int" } } },
+  "lbMovedDown": "Dropped {n} spots",
+  "@lbMovedDown": { "placeholders": { "n": { "type": "int" } } },
+  "lbLastWeek": "LAST WEEK",
+  "lbNewCycle": "New competition started",
+  "lbDismiss": "Dismiss",
+  "lbScoreTooltip": "How your score is calculated",
+  "lbScoreCalcTitle": "Your score",
+  "lbScoreFormula": "Score = 60% calorie adherence + 40% water adherence over the selected window. Log consistently to climb.",
+  "lbSearchHint": "Search a name…",
+  "lbNoSearchResults": "No one named \"{query}\" here",
+  "@lbNoSearchResults": { "placeholders": { "query": { "type": "String" } } },
+  "lbEmptyCategory": "No one has claimed this board yet",
+  "lbEmptyCategorySub": "Log today and take the top spot",
+  "lbPinJump": "Your rank — tap to jump",
+  "lbYou": "You",
+  "lbYouBadge": "YOU",
+  "lbCompCardTitle": "COMPETITIVE",
+  "lbRankOf": "#{rank} of {total}",
+  "@lbRankOf": { "placeholders": { "rank": { "type": "int" }, "total": { "type": "int" } } },
+  "lbRankOfTotal": "of {total}",
+  "@lbRankOfTotal": { "placeholders": { "total": { "type": "int" } } },
+  "lbRankJourney": "#{from} → #{to}",
+  "@lbRankJourney": { "placeholders": { "from": { "type": "int" }, "to": { "type": "int" } } },
+  "lbRankHistoryEmpty": "Not enough data yet",
+  "profilePhotoTitle": "PROFILE PHOTO",
+  "editDataTitle": "EDIT DATA",
+  "saveDataBtn": "SAVE DATA",
+  "saveGoalsBtn": "SAVE GOALS",
+  "viewPhoto": "View Photo",
+  "changePhoto": "Change Photo",
+  "uploadPhoto": "Upload Photo",
+  "profilePhotoUpdated": "Profile photo updated",
+  "uploadFailed": "Upload failed. Try again.",
+  "coachDashboard": "Coach Dashboard",
+  "coachDashboardSubtitle": "Manage clients & programs on the web",
+  "noProgressData": "No progress data yet",
+  "refresh": "Refresh",
+  "refreshProfile": "Refresh profile",
+  "profilePhotoTapOptions": "Profile photo. Tap for options.",
+  "editBodyData": "Edit body data",
+  "editDailyTargets": "Edit daily targets",
+  "activeProgramTapHint": "Active program: {name}. Tap to view.",
+  "@activeProgramTapHint": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "chartSessionsSemantics": "1RM progress line chart — {count} sessions recorded.",
+  "@chartSessionsSemantics": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionsCount": "{count} sessions",
+  "@sessionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "yearsShort": "yrs",
+  "perWeekShort": "×/wk",
+  "statsLoadFailed": "Couldn't load your stats.",
+  "invalidAgeRange": "Age must be a whole number between 10 and 100.",
+  "invalidWeightRange": "Weight must be a number between 20 and 300 kg.",
+  "invalidHeightRange": "Height must be a number between 100 and 250 cm.",
+  "invalidCalories": "Calories must be a non-negative whole number.",
+  "invalidProtein": "Protein must be a non-negative whole number.",
+  "invalidWeeklyWorkouts": "Weekly workouts must be a non-negative whole number.",
+  "motivationEmpty": "Log your first meal to start your day! 🌟",
+  "motivationStart": "Great start! Fuel up with clean nutrients 🌱",
+  "motivationZone": "You are in the zone! Hit your protein target ⚡",
+  "motivationAlmost": "Almost at your target! Finish strong 🎯",
+  "motivationBullseye": "Bullseye! Perfect nutrition day 🎉",
+  "motivationOver": "Over target — balance with light hydration 🧘",
+  "addCaloriesTo": "Add calories directly to {meal}",
+  "@addCaloriesTo": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "addToLog": "Add to Log",
+  "foodItemFallback": "Food item",
+  "editServingMeal": "Edit serving & meal section",
+  "overBudget": "Over Budget",
+  "targetKcal": "Target: {kcal} kcal",
+  "@targetKcal": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      }
+    }
+  },
+  "dailyTargetMl": "Daily target: {ml} ml",
+  "@dailyTargetMl": {
+    "placeholders": {
+      "ml": {
+        "type": "String"
+      }
+    }
+  },
+  "waterGlassSub": "Glass 🥛",
+  "waterBottleSub": "Bottle 💧",
+  "dailyGoalTargets": "Daily Goal Targets",
+  "macroLeftKcal": "{kcal} kcal · {grams}g left",
+  "@macroLeftKcal": {
+    "placeholders": {
+      "kcal": {
+        "type": "String"
+      },
+      "grams": {
+        "type": "String"
+      }
+    }
+  },
+  "noFoodLogged": "No food logged yet",
+  "mealTotals": "Meal totals:",
+  "removeItem": "Remove item?",
+  "avgCalories": "Avg Calories",
+  "onTrack": "On Track",
+  "daysInZone": "days in zone",
+  "workouts": "Workouts",
+  "thisWeek": "this week",
+  "kcalPerDay": "kcal / day",
+  "aiWaitWorking": "Still working…",
+  "@aiWaitWorking": {},
+  "aiWaitElapsed": "{secs}s",
+  "@aiWaitElapsed": {
+    "placeholders": {
+      "secs": {
+        "type": "String"
+      }
+    }
+  },
+  "aiWaitSlow": "Taking a little longer than usual — still working on it. Busy moments can take up to a minute.",
+
+  "verifyTitle1": "VERIFY",
+  "verifyTitle2": "CODE",
+  "verifySubtitle": "We've sent a verification code to {email}",
+  "@verifySubtitle": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "verifyButton": "VERIFY CODE",
+  "verifyDidntReceive": "DIDN'T RECEIVE?",
+  "verifyResendIn": "RESEND IN {seconds}s",
+  "@verifyResendIn": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "verifyResend": "RESEND",
+  "verifyRemember": "REMEMBER PASSWORD?",
+  "verifyDidntRemember": "DIDN'T REMEMBER IT?",
+  "verifySignIn": "SIGN IN",
+  "verifyErrIncomplete": "Enter the full code from your email",
+  "verifyErrRateLimit": "Too many attempts. Please wait a moment.",
+  "verifyErrInvalid": "Invalid or expired code",
+  "verifyErrKeepTyping": "Invalid code - if it has more digits, keep typing",
+  "verifyErrConnection": "Something went wrong. Check your connection.",
+  "verifySnackResent": "A new code was sent to your email",
+  "verifySnackWait": "Please wait before requesting another code",
+  "verifySnackFailed": "Could not resend the code. Try again.",
+
+  "forgotTitle1": "RESET",
+  "forgotTitle2": "ACCESS",
+  "forgotSubtitle": "ENTER YOUR EMAIL TO RECEIVE A RESET CODE",
+  "forgotEmailLabel": "OPERATOR_ID",
+  "forgotEmailEmpty": "Please enter your email",
+  "forgotEmailInvalid": "Please enter a valid email",
+  "forgotSendButton": "SEND RESET CODE",
+  "resetTitle1": "NEW",
+  "resetTitle2": "PASSWORD",
+  "resetSubtitle": "ENTER YOUR NEW ENCRYPTED KEY",
+  "resetNewKey": "NEW_KEY",
+  "resetConfirmKey": "CONFIRM_KEY",
+  "resetPassEmpty": "Please enter a password",
+  "resetPassShort": "Password must be at least 8 characters",
+  "resetPassWeak": "Must contain uppercase, lowercase, and number",
+  "resetPassConfirmEmpty": "Please confirm your password",
+  "resetPassMismatch": "Passwords do not match",
+  "resetButton": "RESET PASSWORD",
+  "resetSessionExpired": "Your reset session expired. Please request a new code.",
+  "resetSuccess": "Password reset successfully!",
+
+  "authLoginTitleA": "Welcome",
+  "authLoginTitleB": "Back",
+  "authSignupTitleA": "Create",
+  "authSignupTitleB": "Account",
+  "authStrengthWeak": "Weak",
+  "authStrengthFair": "Fair",
+  "authStrengthStrong": "Strong",
+  "authNameError": "Enter your name",
+  "authPassMismatch": "Passwords do not match",
+  "authPassMatch": "Passwords match",
+  "authEmailEmpty": "Please enter your email",
+  "authEmailError": "Please enter a valid email",
+  "authPassEmpty": "Please enter your password",
+  "authPassShort": "Password must be at least 6 characters",
+  "authAgreeTerms": "Please agree to the Terms & Conditions",
+  "authAgreeTermsShort": "Agree to the Terms first",
+  "authAppleSoon": "Apple sign-in coming soon",
+  "authLegalSoon": "Legal pages coming soon",
+  "authShowPass": "Show password",
+  "authHidePass": "Hide password",
+  "authWelcomeBack": "Welcome back, {email}!",
+  "@authWelcomeBack": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "authWelcomeNew": "Welcome, {name}!",
+  "@authWelcomeNew": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "authGoogleOk": "Signed in with Google!"
 }

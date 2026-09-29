@@ -142,10 +142,12 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      // The CAL field is a TextField with digitsOnly formatter.
-      expect(find.byType(TextField), findsOneWidget);
-      final textField = tester.widget<TextField>(find.byType(TextField));
-      expect(textField.controller?.text, '650');
+      // CAL field = the 2nd TextField (the optional craving field comes first).
+      expect(find.byType(TextField), findsNWidgets(2));
+      final calField = tester.widget<TextField>(find.byType(TextField).at(1));
+      expect(calField.controller?.text, '650');
+      // Craving field present with its hint.
+      expect(find.textContaining('The meal in your head'), findsOneWidget);
       // Hint should reference kcal (localized).
       expect(find.textContaining('kcal'), findsWidgets);
     });
@@ -163,9 +165,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byType(TextField), findsOneWidget);
-      final textField = tester.widget<TextField>(find.byType(TextField));
-      expect(textField.controller?.text, isEmpty);
+      expect(find.byType(TextField), findsNWidgets(2));
+      final calField = tester.widget<TextField>(find.byType(TextField).at(1));
+      expect(calField.controller?.text, isEmpty);
       // Should show helper text about goal met or subtitle
       expect(find.textContaining('kcal'), findsWidgets);
     });
@@ -186,7 +188,7 @@ void main() {
       // Initially field == 800, chip hidden because matches remaining.
       expect(find.textContaining('Use remaining'), findsNothing);
       // Change to 550.
-      await tester.enterText(find.byType(TextField), '550');
+      await tester.enterText(find.byType(TextField).at(1), '550');
       await tester.pumpAndSettle();
       expect(find.textContaining('Use remaining'), findsOneWidget);
     });
@@ -204,7 +206,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), '10');
+      await tester.enterText(find.byType(TextField).at(1), '10');
       await tester.pumpAndSettle();
       // Tap the CTA button ("Suggest for me").
       final ctaFinder = find.text('Suggest for me');
@@ -232,8 +234,8 @@ void main() {
       expect(find.text('High protein'), findsOneWidget);
       await tester.tap(find.text('High protein'));
       await tester.pumpAndSettle();
-      // CAL field still present.
-      expect(find.byType(TextField), findsOneWidget);
+      // Both fields still present.
+      expect(find.byType(TextField), findsNWidgets(2));
     });
   });
 }

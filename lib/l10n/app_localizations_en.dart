@@ -292,6 +292,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get logMeal => 'Log Meal';
 
   @override
+  String loggingNotToday(String date) {
+    return 'You\'re logging for $date — not today';
+  }
+
+  @override
   String get breakfast => 'Breakfast';
 
   @override
@@ -1202,6 +1207,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearance => 'Appearance';
 
   @override
+  String get themeMode => 'Theme';
+
+  @override
   String get themeSystem => 'System';
 
   @override
@@ -1288,6 +1296,190 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onbContinue => 'CONTINUE';
 
   @override
+  String get flow1Title => 'Let\'s get to\nknow you';
+
+  @override
+  String get flow1Subtitle => 'Enter your basic info';
+
+  @override
+  String get flow2Title => 'Your current\nbody';
+
+  @override
+  String get flow2Subtitle => 'Help us tailor your plan';
+
+  @override
+  String get flow3Title => 'What\'s your\ngoal?';
+
+  @override
+  String get flow3Subtitle => 'Select your primary focus';
+
+  @override
+  String get flow4Title => 'How fast do you\nwant results?';
+
+  @override
+  String get flow4Subtitle => 'Your pace sets the calorie adjustment';
+
+  @override
+  String get flowPaceNotNeeded =>
+      'Your goal is about performance — calories stay at full burn, no pace adjustment needed.';
+
+  @override
+  String get flow5Title => 'How active\nare you?';
+
+  @override
+  String get flow5Subtitle => 'Helps calculate your nutrition';
+
+  @override
+  String get flow6Title => 'Set your\ntargets';
+
+  @override
+  String get flow6Subtitle => 'Build your routine';
+
+  @override
+  String get flowAge => 'AGE';
+
+  @override
+  String get flowGender => 'GENDER';
+
+  @override
+  String get flowHeight => 'HEIGHT (CM)';
+
+  @override
+  String get flowWeight => 'WEIGHT (KG)';
+
+  @override
+  String get flowBodyFat => 'BODY FAT %';
+
+  @override
+  String get flowOptional => 'OPTIONAL';
+
+  @override
+  String get flowKnowBodyFat => 'I know my body fat %';
+
+  @override
+  String get flowBodyFatHint =>
+      'Lean-mass math (Katch-McArdle) — the most precise estimate';
+
+  @override
+  String get flowTargetWeight => 'TARGET WEIGHT';
+
+  @override
+  String get flowYears => 'years';
+
+  @override
+  String get flowGoalDescGain => 'Build strength and mass';
+
+  @override
+  String get flowGoalDescLoss => 'Burn fat, feel lighter';
+
+  @override
+  String get flowGoalDescEndurance => 'Improve stamina and cardio';
+
+  @override
+  String get flowGoalDescFlex => 'Move better, recover faster';
+
+  @override
+  String get flowGoalDescGeneral => 'Stay healthy and active';
+
+  @override
+  String get flowPaceSlow => 'Steady';
+
+  @override
+  String get flowPaceStandard => 'Standard';
+
+  @override
+  String get flowPaceFast => 'Fast';
+
+  @override
+  String flowPaceDescSlow(int delta) {
+    return '$delta kcal / day — gentler on your routine';
+  }
+
+  @override
+  String flowPaceDescStandard(int delta) {
+    return '$delta kcal / day — the classic rate';
+  }
+
+  @override
+  String flowPaceDescFast(int delta) {
+    return '$delta kcal / day — demanding, needs discipline';
+  }
+
+  @override
+  String get flowActDescSedentary => 'Little to no exercise';
+
+  @override
+  String get flowActDescLight => '1–3 days / week';
+
+  @override
+  String get flowActDescModerate => '3–5 days / week';
+
+  @override
+  String get flowActDescVery => '6–7 days / week';
+
+  @override
+  String get flowActDescExtra => 'Twice daily / athlete';
+
+  @override
+  String get flowEstDaily => 'Est. daily calories:';
+
+  @override
+  String get flowBmiTitle => 'Your BMI';
+
+  @override
+  String get flowBmiUnder => 'Underweight';
+
+  @override
+  String get flowBmiNormal => 'Normal';
+
+  @override
+  String get flowBmiOver => 'Overweight';
+
+  @override
+  String get flowBmiObese => 'Obese';
+
+  @override
+  String flowGainInsight(String diff) {
+    return 'Gain $diff kg from current weight';
+  }
+
+  @override
+  String flowLoseInsight(String diff) {
+    return 'Lose $diff kg from current weight';
+  }
+
+  @override
+  String get flowAllSet => 'You\'re all set!';
+
+  @override
+  String get flowAllSetDesc =>
+      'Here\'s the plan your numbers built — change anything and it updates live.';
+
+  @override
+  String get flowResultDaily => 'YOUR DAILY TARGET';
+
+  @override
+  String get flowResultBmr => 'Resting burn (BMR)';
+
+  @override
+  String get flowResultActivity => 'Activity burn';
+
+  @override
+  String get flowResultGoal => 'Goal adjustment';
+
+  @override
+  String get flowResultMacros => 'RECOMMENDED MACROS';
+
+  @override
+  String get flowKcalDay => 'kcal / day';
+
+  @override
+  String get flowContinue => 'Continue';
+
+  @override
+  String get flowComplete => 'Complete';
+
+  @override
   String get pushDialogTitle => 'Enable notifications';
 
   @override
@@ -1368,6 +1560,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cpNoData => 'No data logged yet';
+
+  @override
+  String get cpActivityPrivate =>
+      'This member keeps their daily activity private — you\'re seeing their competitive standing only.';
 
   @override
   String get rankCard => 'Rankings';
@@ -1684,6 +1880,44 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestMeal => 'Suggest a meal';
 
   @override
+  String get dailyMeals => 'Daily Meals';
+
+  @override
+  String itemsLoggedCount(String count) {
+    return '$count items logged';
+  }
+
+  @override
+  String kcalRemainingShort(String kcal) {
+    return '$kcal kcal remaining';
+  }
+
+  @override
+  String kcalGoalLabel(String kcal) {
+    return '$kcal kcal goal';
+  }
+
+  @override
+  String ofGoal(String goal) {
+    return 'of $goal';
+  }
+
+  @override
+  String get syncingNutrition => 'Syncing nutrition data...';
+
+  @override
+  String get addLabel => 'Add';
+
+  @override
+  String get quickLabel => 'Quick';
+
+  @override
+  String get removeLabel => 'Remove';
+
+  @override
+  String get keepGoing => 'Keep going!';
+
+  @override
   String get suggestCardSubtitle =>
       'AI builds a meal that hits your remaining calories';
 
@@ -1698,6 +1932,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestCaloriesRow => 'CALORIES';
+
+  @override
+  String get suggestCravingLabel => 'CRAVING (OPTIONAL)';
+
+  @override
+  String get suggestCravingHint =>
+      'The meal in your head — e.g. koshary, burger, shawarma';
 
   @override
   String get suggestCaloriesLabel => 'CALORIES';
@@ -1796,4 +2037,597 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get suggestFailed => 'Couldn\'t get a suggestion. Try again.';
+
+  @override
+  String removeLogConfirm(String name) {
+    return 'Remove \"$name\" from today\'s log?';
+  }
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountTitle => 'Delete Account?';
+
+  @override
+  String get deleteAccountBody =>
+      'Your account and all of its data — profile, workout history, subscriptions — will be permanently deleted. This cannot be undone.';
+
+  @override
+  String get deleteAccountFailed => 'Couldn\'t delete your account. Try again.';
+
+  @override
+  String get legal => 'LEGAL';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get rankRookie => 'ROOKIE';
+
+  @override
+  String get rankIron => 'IRON';
+
+  @override
+  String get rankBronze => 'BRONZE';
+
+  @override
+  String get rankSilver => 'SILVER';
+
+  @override
+  String get rankGold => 'GOLD';
+
+  @override
+  String get lbTierDiamond => 'DIAMOND';
+
+  @override
+  String get lbWeeklyChallenge => 'WEEKLY CHALLENGE';
+
+  @override
+  String get lbMonthlyChallenge => 'MONTHLY CHALLENGE';
+
+  @override
+  String lbDaysLeft(int n) {
+    return '$n days left';
+  }
+
+  @override
+  String lbResetsOn(String date) {
+    return 'New cycle starts $date';
+  }
+
+  @override
+  String get lbWindowWeekly => 'Weekly';
+
+  @override
+  String get lbWindowMonthly => 'Monthly';
+
+  @override
+  String get lbCatOverall => 'Overall';
+
+  @override
+  String get lbCatCalories => 'Calories';
+
+  @override
+  String get lbCatWater => 'Water';
+
+  @override
+  String get lbCatWorkouts => 'Workouts';
+
+  @override
+  String get lbCatStreak => 'Streak';
+
+  @override
+  String get lbCatLongestStreak => 'Longest streak';
+
+  @override
+  String get lbYourRank => 'YOUR RANK';
+
+  @override
+  String get lbUnitPts => 'pts';
+
+  @override
+  String get lbUnitWorkouts => 'workouts';
+
+  @override
+  String get lbUnitDays => 'days';
+
+  @override
+  String lbDayStreakN(int n) {
+    return '$n-day streak';
+  }
+
+  @override
+  String lbLongestStreakN(int n) {
+    return 'Longest: $n days';
+  }
+
+  @override
+  String get lbLeadingBoard => 'You\'re leading the board';
+
+  @override
+  String lbTiedWith(int rank) {
+    return 'Level with #$rank';
+  }
+
+  @override
+  String lbPtsToNextRank(int n, int rank) {
+    return '$n pts to #$rank';
+  }
+
+  @override
+  String get lbTopTier => 'Top tier reached';
+
+  @override
+  String lbPtsToTier(int n, String tier) {
+    return '$n pts to $tier';
+  }
+
+  @override
+  String get lbNewHere => 'NEW';
+
+  @override
+  String get lbSameRank => 'No change';
+
+  @override
+  String lbMovedUp(int n) {
+    return 'Moved up $n spots';
+  }
+
+  @override
+  String lbMovedDown(int n) {
+    return 'Dropped $n spots';
+  }
+
+  @override
+  String get lbLastWeek => 'LAST WEEK';
+
+  @override
+  String get lbNewCycle => 'New competition started';
+
+  @override
+  String get lbDismiss => 'Dismiss';
+
+  @override
+  String get lbScoreTooltip => 'How your score is calculated';
+
+  @override
+  String get lbScoreCalcTitle => 'Your score';
+
+  @override
+  String get lbScoreFormula =>
+      'Score = 60% calorie adherence + 40% water adherence over the selected window. Log consistently to climb.';
+
+  @override
+  String get lbSearchHint => 'Search a name…';
+
+  @override
+  String lbNoSearchResults(String query) {
+    return 'No one named \"$query\" here';
+  }
+
+  @override
+  String get lbEmptyCategory => 'No one has claimed this board yet';
+
+  @override
+  String get lbEmptyCategorySub => 'Log today and take the top spot';
+
+  @override
+  String get lbPinJump => 'Your rank — tap to jump';
+
+  @override
+  String get lbYou => 'You';
+
+  @override
+  String get lbYouBadge => 'YOU';
+
+  @override
+  String get lbCompCardTitle => 'COMPETITIVE';
+
+  @override
+  String lbRankOf(int rank, int total) {
+    return '#$rank of $total';
+  }
+
+  @override
+  String lbRankOfTotal(int total) {
+    return 'of $total';
+  }
+
+  @override
+  String lbRankJourney(int from, int to) {
+    return '#$from → #$to';
+  }
+
+  @override
+  String get lbRankHistoryEmpty => 'Not enough data yet';
+
+  @override
+  String get profilePhotoTitle => 'PROFILE PHOTO';
+
+  @override
+  String get editDataTitle => 'EDIT DATA';
+
+  @override
+  String get saveDataBtn => 'SAVE DATA';
+
+  @override
+  String get saveGoalsBtn => 'SAVE GOALS';
+
+  @override
+  String get viewPhoto => 'View Photo';
+
+  @override
+  String get changePhoto => 'Change Photo';
+
+  @override
+  String get uploadPhoto => 'Upload Photo';
+
+  @override
+  String get profilePhotoUpdated => 'Profile photo updated';
+
+  @override
+  String get uploadFailed => 'Upload failed. Try again.';
+
+  @override
+  String get coachDashboard => 'Coach Dashboard';
+
+  @override
+  String get coachDashboardSubtitle => 'Manage clients & programs on the web';
+
+  @override
+  String get noProgressData => 'No progress data yet';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get refreshProfile => 'Refresh profile';
+
+  @override
+  String get profilePhotoTapOptions => 'Profile photo. Tap for options.';
+
+  @override
+  String get editBodyData => 'Edit body data';
+
+  @override
+  String get editDailyTargets => 'Edit daily targets';
+
+  @override
+  String activeProgramTapHint(String name) {
+    return 'Active program: $name. Tap to view.';
+  }
+
+  @override
+  String chartSessionsSemantics(int count) {
+    return '1RM progress line chart — $count sessions recorded.';
+  }
+
+  @override
+  String sessionsCount(int count) {
+    return '$count sessions';
+  }
+
+  @override
+  String get yearsShort => 'yrs';
+
+  @override
+  String get perWeekShort => '×/wk';
+
+  @override
+  String get statsLoadFailed => 'Couldn\'t load your stats.';
+
+  @override
+  String get invalidAgeRange =>
+      'Age must be a whole number between 10 and 100.';
+
+  @override
+  String get invalidWeightRange =>
+      'Weight must be a number between 20 and 300 kg.';
+
+  @override
+  String get invalidHeightRange =>
+      'Height must be a number between 100 and 250 cm.';
+
+  @override
+  String get invalidCalories => 'Calories must be a non-negative whole number.';
+
+  @override
+  String get invalidProtein => 'Protein must be a non-negative whole number.';
+
+  @override
+  String get invalidWeeklyWorkouts =>
+      'Weekly workouts must be a non-negative whole number.';
+
+  @override
+  String get motivationEmpty => 'Log your first meal to start your day! 🌟';
+
+  @override
+  String get motivationStart => 'Great start! Fuel up with clean nutrients 🌱';
+
+  @override
+  String get motivationZone => 'You are in the zone! Hit your protein target ⚡';
+
+  @override
+  String get motivationAlmost => 'Almost at your target! Finish strong 🎯';
+
+  @override
+  String get motivationBullseye => 'Bullseye! Perfect nutrition day 🎉';
+
+  @override
+  String get motivationOver => 'Over target — balance with light hydration 🧘';
+
+  @override
+  String addCaloriesTo(String meal) {
+    return 'Add calories directly to $meal';
+  }
+
+  @override
+  String get addToLog => 'Add to Log';
+
+  @override
+  String get foodItemFallback => 'Food item';
+
+  @override
+  String get editServingMeal => 'Edit serving & meal section';
+
+  @override
+  String get overBudget => 'Over Budget';
+
+  @override
+  String targetKcal(String kcal) {
+    return 'Target: $kcal kcal';
+  }
+
+  @override
+  String dailyTargetMl(String ml) {
+    return 'Daily target: $ml ml';
+  }
+
+  @override
+  String get waterGlassSub => 'Glass 🥛';
+
+  @override
+  String get waterBottleSub => 'Bottle 💧';
+
+  @override
+  String get dailyGoalTargets => 'Daily Goal Targets';
+
+  @override
+  String macroLeftKcal(String kcal, String grams) {
+    return '$kcal kcal · ${grams}g left';
+  }
+
+  @override
+  String get noFoodLogged => 'No food logged yet';
+
+  @override
+  String get mealTotals => 'Meal totals:';
+
+  @override
+  String get removeItem => 'Remove item?';
+
+  @override
+  String get avgCalories => 'Avg Calories';
+
+  @override
+  String get onTrack => 'On Track';
+
+  @override
+  String get daysInZone => 'days in zone';
+
+  @override
+  String get workouts => 'Workouts';
+
+  @override
+  String get thisWeek => 'this week';
+
+  @override
+  String get kcalPerDay => 'kcal / day';
+
+  @override
+  String get aiWaitWorking => 'Still working…';
+
+  @override
+  String aiWaitElapsed(String secs) {
+    return '${secs}s';
+  }
+
+  @override
+  String get aiWaitSlow =>
+      'Taking a little longer than usual — still working on it. Busy moments can take up to a minute.';
+
+  @override
+  String get verifyTitle1 => 'VERIFY';
+
+  @override
+  String get verifyTitle2 => 'CODE';
+
+  @override
+  String verifySubtitle(String email) {
+    return 'We\'ve sent a verification code to $email';
+  }
+
+  @override
+  String get verifyButton => 'VERIFY CODE';
+
+  @override
+  String get verifyDidntReceive => 'DIDN\'T RECEIVE?';
+
+  @override
+  String verifyResendIn(int seconds) {
+    return 'RESEND IN ${seconds}s';
+  }
+
+  @override
+  String get verifyResend => 'RESEND';
+
+  @override
+  String get verifyRemember => 'REMEMBER PASSWORD?';
+
+  @override
+  String get verifyDidntRemember => 'DIDN\'T REMEMBER IT?';
+
+  @override
+  String get verifySignIn => 'SIGN IN';
+
+  @override
+  String get verifyErrIncomplete => 'Enter the full code from your email';
+
+  @override
+  String get verifyErrRateLimit => 'Too many attempts. Please wait a moment.';
+
+  @override
+  String get verifyErrInvalid => 'Invalid or expired code';
+
+  @override
+  String get verifyErrKeepTyping =>
+      'Invalid code - if it has more digits, keep typing';
+
+  @override
+  String get verifyErrConnection =>
+      'Something went wrong. Check your connection.';
+
+  @override
+  String get verifySnackResent => 'A new code was sent to your email';
+
+  @override
+  String get verifySnackWait => 'Please wait before requesting another code';
+
+  @override
+  String get verifySnackFailed => 'Could not resend the code. Try again.';
+
+  @override
+  String get forgotTitle1 => 'RESET';
+
+  @override
+  String get forgotTitle2 => 'ACCESS';
+
+  @override
+  String get forgotSubtitle => 'ENTER YOUR EMAIL TO RECEIVE A RESET CODE';
+
+  @override
+  String get forgotEmailLabel => 'OPERATOR_ID';
+
+  @override
+  String get forgotEmailEmpty => 'Please enter your email';
+
+  @override
+  String get forgotEmailInvalid => 'Please enter a valid email';
+
+  @override
+  String get forgotSendButton => 'SEND RESET CODE';
+
+  @override
+  String get resetTitle1 => 'NEW';
+
+  @override
+  String get resetTitle2 => 'PASSWORD';
+
+  @override
+  String get resetSubtitle => 'ENTER YOUR NEW ENCRYPTED KEY';
+
+  @override
+  String get resetNewKey => 'NEW_KEY';
+
+  @override
+  String get resetConfirmKey => 'CONFIRM_KEY';
+
+  @override
+  String get resetPassEmpty => 'Please enter a password';
+
+  @override
+  String get resetPassShort => 'Password must be at least 8 characters';
+
+  @override
+  String get resetPassWeak => 'Must contain uppercase, lowercase, and number';
+
+  @override
+  String get resetPassConfirmEmpty => 'Please confirm your password';
+
+  @override
+  String get resetPassMismatch => 'Passwords do not match';
+
+  @override
+  String get resetButton => 'RESET PASSWORD';
+
+  @override
+  String get resetSessionExpired =>
+      'Your reset session expired. Please request a new code.';
+
+  @override
+  String get resetSuccess => 'Password reset successfully!';
+
+  @override
+  String get authLoginTitleA => 'Welcome';
+
+  @override
+  String get authLoginTitleB => 'Back';
+
+  @override
+  String get authSignupTitleA => 'Create';
+
+  @override
+  String get authSignupTitleB => 'Account';
+
+  @override
+  String get authStrengthWeak => 'Weak';
+
+  @override
+  String get authStrengthFair => 'Fair';
+
+  @override
+  String get authStrengthStrong => 'Strong';
+
+  @override
+  String get authNameError => 'Enter your name';
+
+  @override
+  String get authPassMismatch => 'Passwords do not match';
+
+  @override
+  String get authPassMatch => 'Passwords match';
+
+  @override
+  String get authEmailEmpty => 'Please enter your email';
+
+  @override
+  String get authEmailError => 'Please enter a valid email';
+
+  @override
+  String get authPassEmpty => 'Please enter your password';
+
+  @override
+  String get authPassShort => 'Password must be at least 6 characters';
+
+  @override
+  String get authAgreeTerms => 'Please agree to the Terms & Conditions';
+
+  @override
+  String get authAgreeTermsShort => 'Agree to the Terms first';
+
+  @override
+  String get authAppleSoon => 'Apple sign-in coming soon';
+
+  @override
+  String get authLegalSoon => 'Legal pages coming soon';
+
+  @override
+  String get authShowPass => 'Show password';
+
+  @override
+  String get authHidePass => 'Hide password';
+
+  @override
+  String authWelcomeBack(String email) {
+    return 'Welcome back, $email!';
+  }
+
+  @override
+  String authWelcomeNew(String name) {
+    return 'Welcome, $name!';
+  }
+
+  @override
+  String get authGoogleOk => 'Signed in with Google!';
 }

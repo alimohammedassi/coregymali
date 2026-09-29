@@ -73,7 +73,11 @@ class BarcodeLookupService {
     final userId = currentUserId;
     if (userId == null || quantityG <= 0) return false;
 
-    final d = DateTime.now().toIso8601String().substring(0, 10);
+    // Selected-date first (home week strip) — never recompute now() at
+    // save time, or a post-midnight save lands on the wrong day.
+    final d = NutritionService.currentLogDate
+        .toIso8601String()
+        .substring(0, 10);
     final name = product.brand == null || product.brand!.isEmpty
         ? product.productName
         : '${product.productName} (${product.brand})';

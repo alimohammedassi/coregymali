@@ -400,9 +400,9 @@ class AssignedNutritionService {
   /// atomic transition (only from 'assigned', client-scoped — so a double
   /// tap can never double-log), then writes every food row into
   /// `nutrition_logs` with the client's current (or snapshot) values so the
-  /// meal's calories land in today's daily_summary through the exact same
-  /// funnel as manual food logging — home's calories card, the nutrition
-  /// page's today list and the streak all pick it up from there. A
+  /// meal's calories land in the selected day's daily_summary through the
+  /// exact same funnel as manual food logging — home's calories card, the
+  /// nutrition page's today list and the streak all pick it up from there. A
   /// 'completion' record is added to nutrition_change_log (best-effort) so
   /// the coach's dashboard history sees it.
   Future<MealCompleteResult> markMealCompleted(
@@ -436,7 +436,11 @@ class AssignedNutritionService {
     }
 
     final nutrition = NutritionService();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    // Selected-date first (home week strip) — "mark eaten" attributes the
+    // meal's calories to the day the user is viewing, not the wall clock.
+    final logDateStr = NutritionService.currentLogDate
+        .toIso8601String()
+        .substring(0, 10);
 
     // Micro-nutrients are NOT part of the assignment snapshot — the plan rows
     // carry macros only. Pull them from the live foods catalog for the exact
@@ -490,7 +494,7 @@ class AssignedNutritionService {
           'protein_g': f.effectiveProteinG,
           'carbs_g': f.effectiveCarbsG,
           'fat_g': f.effectiveFatG,
-          'logged_date': today,
+          'logged_date': logDateStr,
         }, extrasFor(f));
       } on PostgrestException catch (e) {
         debugPrint(
@@ -502,7 +506,7 @@ class AssignedNutritionService {
       }
     }
 
-    await nutrition.syncDailySummary(today);
+    await nutrition.syncDailySummary(logDateStr);
     StreakService().recordActivity('nutrition');
     unawaited(nutrition.maybeSendCalorieAlert());
 

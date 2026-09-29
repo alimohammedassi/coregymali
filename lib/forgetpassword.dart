@@ -1,11 +1,27 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'dart:async';
 import 'supabase/supabase_exports.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'l10n/app_localizations.dart';
 import 'theme/app_colors.dart';
+import 'theme/app_text.dart';
 import 'theme/auth_app_text.dart';
+import 'verify_code_screen.dart';
+
+/// Dark-pinned palette for the forgot/reset flow (same family as the login /
+/// signup screens and VerifyCodeScreen). Values mirror the AppColors dark
+/// tokens so a light-mode switch elsewhere never washes these screens out.
+class _F {
+  static const bg = Color(0xFF121310);
+  static const card = Color(0x0AFFFFFF);
+  static const cardBorder = Color(0x14FFFFFF);
+  static const fieldFill = Color(0xFF2B2C26);
+  static const ink = Color(0xFFF1F3E9);
+  static const muted = Color(0xFFA9ADA0);
+  static const outline = Color(0xFF6E7268);
+  static const error = Color(0xFFEE7F60);
+  static const success = Color(0xFF4CAF6D);
+}
 
 // ────────────────────────────────────────────────────────────────────────────
 // Forgot Password Screen
@@ -50,15 +66,34 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
     try {
-      // Actually send the Supabase recovery email — this used to be a
-      // 2-second fake delay that sent nothing.
-      await AuthService().resetPassword(_emailController.text.trim());
+      // Send the Supabase recovery email, then hand off to the shared
+      // VerifyCodeScreen ([Image 1] layout + OTP logic).
+      final email = _emailController.text.trim();
+      await AuthService().resetPassword(email);
       if (mounted) {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => OTPVerificationScreen(
-              email: _emailController.text.trim(),
-              onBackToLogin: widget.onBackToLogin,
+            builder: (context) => VerifyCodeScreen(
+              email: email,
+              flow: VerifyFlow.recovery,
+              onVerified: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => ResetPasswordScreen(
+                      email: email,
+                      otp: '',
+                      onBackToLogin: widget.onBackToLogin,
+                    ),
+                  ),
+                );
+              },
+              onSignInTap: () {
+                widget.onBackToLogin?.call();
+                Navigator.of(context).popUntil(
+                  (route) =>
+                      route.settings.name == 'auth' || route.isFirst,
+                );
+              },
             ),
           ),
         );
@@ -68,7 +103,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: Colors.red[600],
+            backgroundColor: _F.error,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -83,14 +118,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final font = AppText.fontFamily(isArabic: isArabic);
     return Scaffold(
-      backgroundColor: AppColors.surfaceLowest,
+      backgroundColor: _F.bg,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon: const Icon(Icons.arrow_back, color: _F.ink),
           onPressed: () {
             widget.onBackToLogin?.call();
             Navigator.of(context).pop();
@@ -135,7 +173,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.glass1,
+                          color: _F.card,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: AppColors.primaryFixed.withValues(alpha: 0.3),
@@ -147,7 +185,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                             ),
                           ],
                         ),
-                        child:  Icon(
+                        child: Icon(
                           Icons.lock_reset,
                           size: 36,
                           color: AppColors.primaryFixed,
@@ -157,10 +195,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
                     const SizedBox(height: 32),
 
-                    Text('RESET', style: AuthAppText.displaySm),
+                    Text(l10n.forgotTitle1,
+                        style: AuthAppText.displaySm.copyWith(
+                          fontFamily: font,
+                          color: _F.ink,
+                        )),
                     Text(
-                      'ACCESS',
+                      l10n.forgotTitle2,
                       style: AuthAppText.displaySm.copyWith(
+                        fontFamily: font,
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -168,9 +211,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     const SizedBox(height: 12),
 
                     Text(
-                      'ENTER YOUR EMAIL TO RECEIVE A RESET CODE',
+                      l10n.forgotSubtitle,
                       style: AuthAppText.bodyMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        fontFamily: font,
+                        color: _F.muted,
                       ),
                     ),
 
@@ -184,18 +228,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         child: Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppColors.glass1,
+                            color: _F.card,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.glassBorder),
+                            border: Border.all(color: _F.cardBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'OPERATOR_ID',
+                                l10n.forgotEmailLabel,
                                 style: AuthAppText.labelMd.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                  letterSpacing: 2.0,
+                                  fontFamily: font,
+                                  color: _F.muted,
+                                  letterSpacing: isArabic ? 0 : 2.0,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -204,14 +249,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                                 hintText: 'user@kineticsystem.com',
                                 prefixIcon: Icons.alternate_email,
                                 keyboardType: TextInputType.emailAddress,
+                                fontFamily: font,
                                 validator: (value) {
                                   if (value?.isEmpty ?? true) {
-                                    return 'Please enter your email';
+                                    return l10n.forgotEmailEmpty;
                                   }
                                   if (!RegExp(
                                     r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                                   ).hasMatch(value!)) {
-                                    return 'Please enter a valid email';
+                                    return l10n.forgotEmailInvalid;
                                   }
                                   return null;
                                 },
@@ -227,8 +273,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     ScaleTransition(
                       scale: _buttonAnimation,
                       child: _buildButton(
-                        text: 'SEND RESET CODE',
+                        text: l10n.forgotSendButton,
                         isLoading: _isLoading,
+                        fontFamily: font,
                         onPressed: _handleSendOTP,
                         onTapDown: (_) => _buttonController.forward(),
                         onTapUp: (_) => _buttonController.reverse(),
@@ -248,13 +295,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                         child: RichText(
                           text: TextSpan(
                             style: AuthAppText.labelMd.copyWith(
-                              color: AppColors.onSurfaceVariant,
+                              fontFamily: font,
+                              color: _F.muted,
                             ),
                             children: [
-                              const TextSpan(text: 'REMEMBER PASSWORD?  '),
+                              TextSpan(text: '${l10n.verifyRemember}  '),
                               TextSpan(
-                                text: 'SIGN IN',
+                                text: l10n.verifySignIn,
                                 style: AuthAppText.labelMd.copyWith(
+                                  fontFamily: font,
                                   color: AppColors.primaryFixed,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -266,414 +315,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ────────────────────────────────────────────────────────────────────────────
-// OTP Verification Screen
-// ────────────────────────────────────────────────────────────────────────────
-class OTPVerificationScreen extends StatefulWidget {
-  final String email;
-  final VoidCallback? onBackToLogin;
-
-  const OTPVerificationScreen({
-    super.key,
-    required this.email,
-    this.onBackToLogin,
-  });
-
-  @override
-  State<OTPVerificationScreen> createState() => _OTPVerificationScreenState();
-}
-
-class _OTPVerificationScreenState extends State<OTPVerificationScreen>
-    with TickerProviderStateMixin {
-  final List<TextEditingController> _otpControllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  bool _isLoading = false;
-  bool _isResending = false;
-  int _resendTimer = 30;
-  Timer? _timer;
-  late AnimationController _buttonController;
-  late Animation<double> _buttonAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _buttonController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _buttonAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _buttonController, curve: Curves.easeInOut),
-    );
-    _startResendTimer();
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _otpControllers) {
-      controller.dispose();
-    }
-    for (var node in _focusNodes) {
-      node.dispose();
-    }
-    _timer?.cancel();
-    _buttonController.dispose();
-    super.dispose();
-  }
-
-  void _startResendTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_resendTimer > 0) {
-        setState(() {
-          _resendTimer--;
-        });
-      } else {
-        timer.cancel();
-      }
-    });
-  }
-
-  String _getOTPValue() {
-    return _otpControllers.map((controller) => controller.text).join();
-  }
-
-  bool _isOTPComplete() {
-    return _getOTPValue().length == 6;
-  }
-
-  Future<void> _handleVerifyOTP() async {
-    if (_isOTPComplete()) {
-      setState(() => _isLoading = true);
-      try {
-        // Verify the recovery code against Supabase — success also signs the
-        // user in, which is what lets the next screen update the password.
-        // Any 6 digits used to pass here.
-        await SupabaseConfig.client.auth.verifyOTP(
-          type: OtpType.recovery,
-          email: widget.email.trim(),
-          token: _getOTPValue(),
-        );
-        if (mounted) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ResetPasswordScreen(
-                email: widget.email,
-                otp: _getOTPValue(),
-                onBackToLogin: widget.onBackToLogin,
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Colors.red[600],
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          );
-        }
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please enter complete OTP'),
-          backgroundColor: Colors.red[600],
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
-    }
-  }
-
-  Future<void> _handleResendOTP() async {
-    setState(() => _isResending = true);
-    try {
-      await AuthService().resetPassword(widget.email.trim());
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('OTP sent successfully!'),
-            backgroundColor: Colors.green[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isResending = false;
-          // Supabase rate-limits recovery emails to one per minute.
-          _resendTimer = 60;
-        });
-        _startResendTimer();
-      }
-    }
-  }
-
-  Widget _buildOTPField(int index) {
-    return Container(
-      width: 50,
-      height: 60,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: _otpControllers[index].text.isNotEmpty
-              ? AppColors.primaryFixed
-              : AppColors.outline.withValues(alpha: 0.3),
-          width: _focusNodes[index].hasFocus ? 2 : 1,
-        ),
-      ),
-      child: TextFormField(
-        controller: _otpControllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: AuthAppText.metricLg.copyWith(
-          color: AppColors.primaryFixed,
-        ),
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-        ),
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        onChanged: (value) {
-          if (value.isNotEmpty && index < 5) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
-          }
-          setState(() {});
-        },
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surfaceLowest,
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Stack(
-        children: [
-          Positioned(
-            top: -100,
-            left: -60,
-            child: IgnorePointer(
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      AppColors.secondary.withValues(alpha: 0.06),
-                      Colors.transparent,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Spacer(flex: 2),
-
-                  // Icon
-                  Center(
-                    child: Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: AppColors.glass1,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: AppColors.secondary.withValues(alpha: 0.3),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.secondary.withValues(alpha: 0.15),
-                            blurRadius: 30,
-                          ),
-                        ],
-                      ),
-                      child:  Icon(
-                        Icons.mark_email_read_outlined,
-                        size: 36,
-                        color: AppColors.secondary,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  Text('VERIFY', style: AuthAppText.displaySm),
-                  Text(
-                    'CODE',
-                    style: AuthAppText.displaySm.copyWith(
-                      color: AppColors.primaryFixed,
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  Text(
-                    'WE\'VE SENT A 6-DIGIT CODE TO\n${widget.email.toUpperCase()}',
-                    style: AuthAppText.bodyMd.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
-                  ),
-
-                  const SizedBox(height: 40),
-
-                  // OTP Fields
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: List.generate(6, (index) => _buildOTPField(index)),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  ScaleTransition(
-                    scale: _buttonAnimation,
-                    child: _buildButton(
-                      text: 'VERIFY CODE',
-                      isLoading: _isLoading,
-                      onPressed: _handleVerifyOTP,
-                      onTapDown: (_) => _buttonController.forward(),
-                      onTapUp: (_) => _buttonController.reverse(),
-                      onTapCancel: () => _buttonController.reverse(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Resend
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "DIDN'T RECEIVE?  ",
-                        style: AuthAppText.labelSm.copyWith(
-                          color: AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                      if (_resendTimer > 0)
-                        Text(
-                          'RESEND IN ${_resendTimer}s',
-                          style: AuthAppText.labelSm.copyWith(
-                            color: AppColors.outline,
-                          ),
-                        )
-                      else
-                        GestureDetector(
-                          onTap: _isResending ? null : _handleResendOTP,
-                          child: _isResending
-                              ?  SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      AppColors.primaryFixed,
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  'RESEND NOW',
-                                  style: AuthAppText.labelSm.copyWith(
-                                    color: AppColors.primaryFixed,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                        ),
-                    ],
-                  ),
-
-                  const Spacer(flex: 3),
-
-                  // Back to login
-                  Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        widget.onBackToLogin?.call();
-                        // Land on the login screen, not the onboarding
-                        // carousel underneath it.
-                        Navigator.of(context).popUntil(
-                          (route) =>
-                              route.settings.name == 'auth' ||
-                              route.isFirst,
-                        );
-                      },
-                      child: RichText(
-                        text: TextSpan(
-                          style: AuthAppText.labelMd.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                          children: [
-                            const TextSpan(text: 'REMEMBER PASSWORD?  '),
-                            TextSpan(
-                              text: 'SIGN IN',
-                              style: AuthAppText.labelMd.copyWith(
-                                color: AppColors.primaryFixed,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
@@ -736,6 +377,34 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   Future<void> _handleResetPassword() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
+      // Recovery-session guard: updateUser only works while the session that
+      // verifyOTP(recovery) created is still alive. If it expired (code
+      // verified too long ago, signed out elsewhere, ...), say so plainly and
+      // send the user back for a fresh code instead of surfacing the raw
+      // "Auth session missing!" exception.
+      if (SupabaseConfig.client.auth.currentUser == null) {
+        setState(() => _isLoading = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(context)!.resetSessionExpired,
+              ),
+              backgroundColor: _F.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+          );
+          // Stack here is always [..., ForgotPasswordScreen,
+          // VerifyCodeScreen, this] (see ForgotPasswordScreen._handleSendOTP),
+          // so two pops land back on the forgot-password screen.
+          Navigator.of(context)
+            ..pop()
+            ..pop();
+        }
+        return;
+      }
       try {
         // Update password via Supabase
         await SupabaseConfig.client.auth.updateUser(
@@ -745,8 +414,8 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Password reset successfully!'),
-              backgroundColor: Colors.green[600],
+              content: Text(AppLocalizations.of(context)!.resetSuccess),
+              backgroundColor: _F.success,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10)),
@@ -763,7 +432,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.toString()),
-              backgroundColor: Colors.red[600],
+              backgroundColor: _F.error,
             ),
           );
         }
@@ -773,14 +442,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final font = AppText.fontFamily(isArabic: isArabic);
     return Scaffold(
-      backgroundColor: AppColors.surfaceLowest,
+      backgroundColor: _F.bg,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon:  Icon(Icons.arrow_back, color: AppColors.onSurface),
+          icon: const Icon(Icons.arrow_back, color: _F.ink),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -821,7 +493,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: AppColors.glass1,
+                          color: _F.card,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: AppColors.primaryFixed.withValues(alpha: 0.3),
@@ -833,7 +505,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                             ),
                           ],
                         ),
-                        child:  Icon(
+                        child: Icon(
                           Icons.lock_reset,
                           size: 36,
                           color: AppColors.primaryFixed,
@@ -843,10 +515,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
                     const SizedBox(height: 32),
 
-                    Text('NEW', style: AuthAppText.displaySm),
+                    Text(l10n.resetTitle1,
+                        style: AuthAppText.displaySm.copyWith(
+                          fontFamily: font,
+                          color: _F.ink,
+                        )),
                     Text(
-                      'PASSWORD',
+                      l10n.resetTitle2,
                       style: AuthAppText.displaySm.copyWith(
+                        fontFamily: font,
                         color: AppColors.primaryFixed,
                       ),
                     ),
@@ -854,9 +531,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     const SizedBox(height: 12),
 
                     Text(
-                      'ENTER YOUR NEW ENCRYPTED KEY',
+                      l10n.resetSubtitle,
                       style: AuthAppText.bodyMd.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                        fontFamily: font,
+                        color: _F.muted,
                       ),
                     ),
 
@@ -870,18 +548,19 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                         child: Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppColors.glass1,
+                            color: _F.card,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.glassBorder),
+                            border: Border.all(color: _F.cardBorder),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'NEW_KEY',
+                                l10n.resetNewKey,
                                 style: AuthAppText.labelMd.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                  letterSpacing: 2.0,
+                                  fontFamily: font,
+                                  color: _F.muted,
+                                  letterSpacing: isArabic ? 0 : 2.0,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -890,12 +569,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 hintText: '••••••••••••',
                                 prefixIcon: Icons.key,
                                 obscureText: !_isPasswordVisible,
+                                fontFamily: font,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isPasswordVisible
                                         ? Icons.visibility_off
                                         : Icons.visibility,
-                                    color: AppColors.outline,
+                                    color: _F.outline,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -905,15 +585,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 ),
                                 validator: (value) {
                                   if (value?.isEmpty ?? true) {
-                                    return 'Please enter a password';
+                                    return l10n.resetPassEmpty;
                                   }
                                   if ((value?.length ?? 0) < 8) {
-                                    return 'Password must be at least 8 characters';
+                                    return l10n.resetPassShort;
                                   }
                                   if (!RegExp(
                                     r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)',
                                   ).hasMatch(value!)) {
-                                    return 'Must contain uppercase, lowercase, and number';
+                                    return l10n.resetPassWeak;
                                   }
                                   return null;
                                 },
@@ -922,10 +602,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                               const SizedBox(height: 20),
 
                               Text(
-                                'CONFIRM_KEY',
+                                l10n.resetConfirmKey,
                                 style: AuthAppText.labelMd.copyWith(
-                                  color: AppColors.onSurfaceVariant,
-                                  letterSpacing: 2.0,
+                                  fontFamily: font,
+                                  color: _F.muted,
+                                  letterSpacing: isArabic ? 0 : 2.0,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -934,12 +615,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 hintText: '••••••••••••',
                                 prefixIcon: Icons.key,
                                 obscureText: !_isConfirmPasswordVisible,
+                                fontFamily: font,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _isConfirmPasswordVisible
                                         ? Icons.visibility_off
                                         : Icons.visibility,
-                                    color: AppColors.outline,
+                                    color: _F.outline,
                                   ),
                                   onPressed: () {
                                     setState(() {
@@ -950,10 +632,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 ),
                                 validator: (value) {
                                   if (value?.isEmpty ?? true) {
-                                    return 'Please confirm your password';
+                                    return l10n.resetPassConfirmEmpty;
                                   }
                                   if (value != _passwordController.text) {
-                                    return 'Passwords do not match';
+                                    return l10n.resetPassMismatch;
                                   }
                                   return null;
                                 },
@@ -969,8 +651,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                     ScaleTransition(
                       scale: _buttonAnimation,
                       child: _buildButton(
-                        text: 'RESET PASSWORD',
+                        text: l10n.resetButton,
                         isLoading: _isLoading,
+                        fontFamily: font,
                         onPressed: _handleResetPassword,
                         onTapDown: (_) => _buttonController.forward(),
                         onTapUp: (_) => _buttonController.reverse(),
@@ -996,13 +679,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                         child: RichText(
                           text: TextSpan(
                             style: AuthAppText.labelMd.copyWith(
-                              color: AppColors.onSurfaceVariant,
+                              fontFamily: font,
+                              color: _F.muted,
                             ),
                             children: [
-                              const TextSpan(text: 'REMEMBER PASSWORD?  '),
+                              TextSpan(text: '${l10n.verifyRemember}  '),
                               TextSpan(
-                                text: 'SIGN IN',
+                                text: l10n.verifySignIn,
                                 style: AuthAppText.labelMd.copyWith(
+                                  fontFamily: font,
                                   color: AppColors.primaryFixed,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -1035,49 +720,52 @@ Widget _buildTextField({
   bool obscureText = false,
   TextInputType keyboardType = TextInputType.text,
   String? Function(String?)? validator,
+  String? fontFamily,
 }) {
+  final font = fontFamily ?? 'Inter';
   return TextFormField(
     controller: controller,
     obscureText: obscureText,
     keyboardType: keyboardType,
     validator: validator,
-    style:  TextStyle(
-      color: AppColors.onSurface,
-      fontFamily: 'Inter',
+    style: TextStyle(
+      color: _F.ink,
+      fontFamily: font,
       fontSize: 14,
       letterSpacing: 1.0,
     ),
     decoration: InputDecoration(
       hintText: hintText,
       hintStyle: TextStyle(
-        color: AppColors.outline.withValues(alpha: 0.5),
-        fontFamily: 'Inter',
+        color: _F.outline.withValues(alpha: 0.5),
+        fontFamily: font,
         fontSize: 11,
         letterSpacing: 2.0,
       ),
-      prefixIcon: Icon(prefixIcon, color: AppColors.outline, size: 20),
+      prefixIcon: Icon(prefixIcon, color: _F.outline, size: 20),
       suffixIcon: suffixIcon,
       filled: true,
-      fillColor: AppColors.surfaceContainerHighest,
-      border:  UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.outline, width: 0.5),
+      fillColor: _F.fieldFill,
+      border: const UnderlineInputBorder(
+        borderSide: BorderSide(color: _F.outline, width: 0.5),
       ),
       enabledBorder: UnderlineInputBorder(
         borderSide: BorderSide(
-          color: AppColors.outline.withValues(alpha: 0.3),
+          color: _F.outline.withValues(alpha: 0.3),
         ),
       ),
-      focusedBorder:  UnderlineInputBorder(
+      focusedBorder: UnderlineInputBorder(
         borderSide: BorderSide(color: AppColors.primaryFixed, width: 2),
       ),
-      errorBorder:  UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.error, width: 2),
+      errorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: _F.error, width: 2),
       ),
-      focusedErrorBorder:  UnderlineInputBorder(
-        borderSide: BorderSide(color: AppColors.error, width: 2),
+      focusedErrorBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: _F.error, width: 2),
       ),
-      errorStyle:  TextStyle(
-        color: AppColors.error,
+      errorStyle: TextStyle(
+        color: _F.error,
+        fontFamily: font,
         fontWeight: FontWeight.w500,
         fontSize: 11,
       ),
@@ -1093,6 +781,7 @@ Widget _buildButton({
   void Function(TapDownDetails)? onTapDown,
   void Function(TapUpDetails)? onTapUp,
   VoidCallback? onTapCancel,
+  String? fontFamily,
 }) {
   return GestureDetector(
     onTapDown: onTapDown,
@@ -1123,7 +812,7 @@ Widget _buildButton({
               children: [
                 const SizedBox(width: 32),
                 isLoading
-                    ?  SizedBox(
+                    ? SizedBox(
                         height: 24,
                         width: 24,
                         child: CircularProgressIndicator(
@@ -1133,7 +822,12 @@ Widget _buildButton({
                           ),
                         ),
                       )
-                    : Text(text, style: AuthAppText.buttonPrimary),
+                    : Text(
+                        text,
+                        style: AuthAppText.buttonPrimary.copyWith(
+                          fontFamily: fontFamily,
+                        ),
+                      ),
                 Container(
                   width: 32,
                   height: 32,

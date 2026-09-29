@@ -1,7 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fl_chart/fl_chart.dart';
 import '../l10n/app_localizations.dart';
 import '../services/nutrition_service.dart';
 import '../services/stats_service.dart';
@@ -9,9 +8,9 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/add_food_sheet.dart';
 import '../widgets/app_background.dart';
+import '../widgets/food/food_thumbnail.dart';
+import '../widgets/not_today_banner.dart';
 import '../widgets/pixel_art_icons.dart';
-import '../widgets/suggest_meal_sheet.dart';
-import 'food_scan_screen.dart';
 import 'nutrition_history_page.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -47,7 +46,30 @@ class NutritionScreenState extends State<NutritionScreen>
   Map<String, dynamic> _goals = {};
   List<Map<String, dynamic>> _weeklyProgress = [];
   bool _isLoading = true;
-  int _selectedHistoryIndex = 0;
+
+  /// The day this screen's data was loaded for — mirrors the Home week
+  /// strip's selection (the shared selected-log-date state). Everything on
+  /// the TODAY tab (logs, totals, hero, micros) is attributed to it.
+  DateTime _loadedDate = DateTime.now();
+
+  /// Water edits stay today-only (updateTodaySummary always writes today's
+  /// row) — the same read-only rule the Home activity cards apply to past
+  /// days via canEditDaily.
+  bool get _canEditWater => _isSameDay(_loadedDate, DateTime.now());
+
+  static bool _isSameDay(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  // Hero card pager — page 1 = calories (gauge / net energy / progress),
+  // page 2 = the fiber/sugar/sodium tiles merged in from the old standalone
+  // micronutrients card (2026-09-27 redesign). keepPage:false so a fresh
+  // open always lands on the calories page, like the Home card.
+  final PageController _heroPageController = PageController(keepPage: false);
+  int _heroPage = 0;
+
+  /// Fixed viewport height for both hero pages: page 1's natural content
+  /// (135 gauge + paddings + progress track ≈ 214) with headroom.
+  static const double _heroPageHeight = 218;
 
   // Track expanded meal sections
   final Set<String> _expandedMeals = {'breakfast', 'lunch', 'dinner', 'snack'};
@@ -86,6 +108,17 @@ class NutritionScreenState extends State<NutritionScreen>
       curve: Curves.easeOutCubic,
     );
 
+    // Follow the Home week strip: the shared selected-log-date notifier
+    // fires when the user picks another day, so the TODAY tab always shows
+    // the day being viewed.
+    NutritionService.selectedLogDate.addListener(_onSelectedDateChanged);
+
+    _loadData();
+  }
+
+  void _onSelectedDateChanged() {
+    if (!mounted) return;
+    if (_isSameDay(NutritionService.currentLogDate, _loadedDate)) return;
     _loadData();
   }
 
@@ -95,23 +128,26 @@ class NutritionScreenState extends State<NutritionScreen>
     _macroController.reset();
     _fadeController.reset();
 
+    // Capture the day up front: the notifier can move again mid-fetch (fast
+    // strip taps) — results for a day that is no longer selected are dropped.
+    final d = NutritionService.currentLogDate;
+    _loadedDate = d;
+
     final results = await Future.wait([
-      _nutritionService.getTodayLogs(),
-      _statsService.getTodaySummary(),
+      _nutritionService.getTodayLogs(date: d),
+      _statsService.getTodaySummary(date: d),
       _statsService.getGoals(),
       _statsService.getWeeklyProgress(),
     ]);
 
     if (!mounted) return;
+    if (!_isSameDay(d, NutritionService.currentLogDate)) return;
     setState(() {
       _todayLogs = results[0] as Map<String, List<Map<String, dynamic>>>;
       _summary = results[1] as Map<String, dynamic>;
       _goals = results[2] as Map<String, dynamic>;
       _weeklyProgress = List<Map<String, dynamic>>.from(results[3] as Iterable);
       _isLoading = false;
-      if (_weeklyProgress.isNotEmpty) {
-        _selectedHistoryIndex = _weeklyProgress.length - 1;
-      }
     });
 
     _ringController.forward();
@@ -126,13 +162,16 @@ class NutritionScreenState extends State<NutritionScreen>
     await _loadData();
   }
 
-  /// Light refresh of today's logs + summary, used when food was logged externally
+  /// Light refresh of the selected day's logs + summary, used when food was
+  /// logged externally
   Future<void> refreshAfterExternalSave() async {
+    final d = NutritionService.currentLogDate;
     final results = await Future.wait([
-      _nutritionService.getTodayLogs(),
-      _statsService.getTodaySummary(),
+      _nutritionService.getTodayLogs(date: d),
+      _statsService.getTodaySummary(date: d),
     ]);
     if (!mounted) return;
+    if (!_isSameDay(d, _loadedDate)) return;
     setState(() {
       _todayLogs = results[0] as Map<String, List<Map<String, dynamic>>>;
       _summary = results[1];
@@ -147,11 +186,13 @@ class NutritionScreenState extends State<NutritionScreen>
 
   @override
   void dispose() {
+    NutritionService.selectedLogDate.removeListener(_onSelectedDateChanged);
     _tabController.dispose();
     _ringController.dispose();
     _macroController.dispose();
     _fadeController.dispose();
     _lineChartController.dispose();
+    _heroPageController.dispose();
     super.dispose();
   }
 
@@ -191,50 +232,22 @@ class NutritionScreenState extends State<NutritionScreen>
   int get _totalFoodsLogged =>
       _todayLogs.values.fold(0, (s, list) => s + list.length);
 
-  /// Returns exactly 7 continuous calendar days ending today (left→right
-  /// oldest→newest). Gaps in DB are filled with 0 so the chart never drops
-  /// a point and dates are never out of order or missing.
-  List<Map<String, dynamic>> get _normalizedWeeklyProgress {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final mapByDate = <String, Map<String, dynamic>>{};
-    for (final r in _weeklyProgress) {
-      final raw = r['summary_date']?.toString() ?? '';
-      final key = raw.length >= 10 ? raw.substring(0, 10) : raw;
-      if (key.isNotEmpty) mapByDate[key] = Map<String, dynamic>.from(r);
-    }
-    return List.generate(7, (i) {
-      final d = today.subtract(Duration(days: 6 - i));
-      final key =
-          "${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
-      final row = mapByDate[key];
-      if (row != null) return row;
-      return <String, dynamic>{
-        'summary_date': key,
-        'calories_consumed': 0,
-        'protein_g': 0,
-        'carbs_g': 0,
-        'fat_g': 0,
-        'workout_done': false,
-      };
-    });
-  }
-
-  String get _motivationalMessage {
-    if (_caloriesConsumed == 0)
-      return 'Log your first meal to start your day! 🌟';
-    if (_calorieProgress < 0.35)
-      return 'Great start! Fuel up with clean nutrients 🌱';
-    if (_calorieProgress < 0.7)
-      return 'You are in the zone! Hit your protein target ⚡';
-    if (_calorieProgress < 0.95)
-      return 'Almost at your target! Finish strong 🎯';
-    if (_calorieProgress <= 1.05) return 'Bullseye! Perfect nutrition day 🎉';
-    return 'Over target — balance with light hydration 🧘';
+  String _motivationalMessage(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    if (_caloriesConsumed == 0) return l10n.motivationEmpty;
+    if (_calorieProgress < 0.35) return l10n.motivationStart;
+    if (_calorieProgress < 0.7) return l10n.motivationZone;
+    if (_calorieProgress < 0.95) return l10n.motivationAlmost;
+    if (_calorieProgress <= 1.05) return l10n.motivationBullseye;
+    return l10n.motivationOver;
   }
 
   // ─── Water Tracking ────────────────────────────────────────────────────────
   Future<void> _updateWater(int deltaMl) async {
+    // Water writes always land on today's summary row — editing while a past
+    // day is selected would silently retarget the write. Past days are
+    // read-only here (buttons are dimmed too).
+    if (!_canEditWater) return;
     HapticFeedback.lightImpact();
     final newAmount = max(0, _waterConsumed + deltaMl);
     setState(() {
@@ -269,223 +282,6 @@ class NutritionScreenState extends State<NutritionScreen>
       context,
       preselectedMeal: preselectedMeal ?? 'breakfast',
       onFoodLogged: _loadData,
-    );
-  }
-
-  // ─── Quick Calories Dialog ─────────────────────────────────────────────────
-  void _showQuickCaloriesDialog(String mealType) {
-    HapticFeedback.lightImpact();
-    final calCtrl = TextEditingController();
-    final nameCtrl = TextEditingController(text: 'Quick Snack');
-    final protCtrl = TextEditingController(text: '0');
-    final carbCtrl = TextEditingController(text: '0');
-    final fatCtrl = TextEditingController(text: '0');
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.accentCalories.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const PixelArtIcon(
-                      type: PixelIconType.fire,
-                      size: 22,
-                      color: AppColors.accentCalories,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Quick Log Calories',
-                          style: AppText.headlineSm.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          'Add calories directly to ${mealType.toUpperCase()}',
-                          style: AppText.bodySm.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: nameCtrl,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  labelText: 'Item Name',
-                  filled: true,
-                  fillColor: AppColors.surfaceContainerHigh,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: calCtrl,
-                autofocus: true,
-                keyboardType: TextInputType.number,
-                style: AppText.displaySm.copyWith(
-                  color: AppColors.accentCalories,
-                  fontWeight: FontWeight.w900,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Calories (kcal)',
-                  suffixText: 'kcal',
-                  filled: true,
-                  fillColor: AppColors.surfaceContainerHigh,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: protCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Protein (g)',
-                        filled: true,
-                        fillColor: AppColors.surfaceContainerHigh,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: carbCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Carbs (g)',
-                        filled: true,
-                        fillColor: AppColors.surfaceContainerHigh,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      controller: fatCtrl,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: 'Fat (g)',
-                        filled: true,
-                        fillColor: AppColors.surfaceContainerHigh,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: () async {
-                    final cals = double.tryParse(calCtrl.text) ?? 0;
-                    if (cals <= 0) return;
-                    HapticFeedback.mediumImpact();
-                    final navigator = Navigator.of(ctx);
-                    final messenger = ScaffoldMessenger.of(ctx);
-                    final ok = await _nutritionService.logQuickCalories(
-                      foodName: nameCtrl.text.trim().isEmpty
-                          ? 'Quick Calories'
-                          : nameCtrl.text.trim(),
-                      mealType: mealType,
-                      calories: cals,
-                      proteinG: double.tryParse(protCtrl.text) ?? 0,
-                      carbsG: double.tryParse(carbCtrl.text) ?? 0,
-                      fatG: double.tryParse(fatCtrl.text) ?? 0,
-                    );
-                    if (!ok) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            '❌ حدث خطأ عند الحفظ — تأكد من الاتصال بالإنترنت',
-                          ),
-                          backgroundColor: AppColors.error,
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return; // keep the dialog open so entries aren't lost
-                    }
-                    navigator.pop();
-                    _loadData();
-                  },
-                  child: const Text(
-                    'Add to Log',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -550,14 +346,14 @@ class NutritionScreenState extends State<NutritionScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              log['food_name'] ?? 'Food item',
+                              log['food_name'] ?? AppLocalizations.of(ctx)!.foodItemFallback,
                               style: AppText.headlineSm.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.textPrimary,
                               ),
                             ),
                             Text(
-                              'Edit serving & meal section',
+                              AppLocalizations.of(ctx)!.editServingMeal,
                               style: AppText.bodySm.copyWith(
                                 color: AppColors.textSecondary,
                               ),
@@ -590,25 +386,25 @@ class NutritionScreenState extends State<NutritionScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _editMacroTile(
-                          'Calories',
+                          AppLocalizations.of(context)!.caloriesLabel,
                           '${(originalCals * f).toInt()}',
                           'kcal',
                           AppColors.accentCalories,
                         ),
                         _editMacroTile(
-                          'Protein',
+                          AppLocalizations.of(context)!.protein,
                           (originalProtein * f).toStringAsFixed(1),
                           'g',
                           AppColors.accentProtein,
                         ),
                         _editMacroTile(
-                          'Carbs',
+                          AppLocalizations.of(context)!.carbs,
                           (originalCarbs * f).toStringAsFixed(1),
                           'g',
                           AppColors.accentCarbs,
                         ),
                         _editMacroTile(
-                          'Fat',
+                          AppLocalizations.of(context)!.fat,
                           (originalFat * f).toStringAsFixed(1),
                           'g',
                           AppColors.accentFat,
@@ -887,7 +683,7 @@ class NutritionScreenState extends State<NutritionScreen>
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '${_caloriesGoal.toInt()} kcal goal',
+                  AppLocalizations.of(context)!.kcalGoalLabel('${_caloriesGoal.toInt()}'),
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
@@ -899,8 +695,8 @@ class NutritionScreenState extends State<NutritionScreen>
           ),
           Text(
             _isLoading
-                ? 'Syncing nutrition data...'
-                : '$_totalFoodsLogged items logged · ${_caloriesRemaining.toInt()} kcal remaining',
+                ? AppLocalizations.of(context)!.syncingNutrition
+                : '${AppLocalizations.of(context)!.itemsLoggedCount('$_totalFoodsLogged')} · ${AppLocalizations.of(context)!.kcalRemainingShort('${_caloriesRemaining.toInt()}')}',
             style: AppText.bodySm.copyWith(
               fontSize: 11,
               color: AppColors.textSecondary,
@@ -993,13 +789,14 @@ class NutritionScreenState extends State<NutritionScreen>
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _shimmerBox(210, radius: 24),
+          // Mirrors the redesigned layout: tall 2-page hero, hydration,
+          // macros carousel. The old 4th block (standalone micros card) is
+          // gone — micros now live inside the hero card.
+          _shimmerBox(280, radius: 24),
           const SizedBox(height: 16),
           _shimmerBox(85, radius: 20),
           const SizedBox(height: 16),
-          _shimmerBox(130, radius: 24),
-          const SizedBox(height: 16),
-          _shimmerBox(100, radius: 20),
+          _shimmerBox(190, radius: 24),
         ],
       ),
     );
@@ -1017,53 +814,6 @@ class NutritionScreenState extends State<NutritionScreen>
   );
 
   // ─── TODAY TAB ─────────────────────────────────────────────────────────────
-  // ─── AI meal suggestion (suggest-meal edge function) ──────────────────────
-  // The button opens the full flow sheet: craving question (slot + style) →
-  // staged loading with the real remaining target → rich result with photos
-  // → one-tap log through the existing path. The page only refreshes after.
-
-  Future<void> _openSuggestSheet() async {
-    HapticFeedback.lightImpact();
-    await Navigator.of(context).push(SuggestMealPopupRoute(
-      remainingKcal: _caloriesRemaining,
-      remainingProtein:
-          (_proteinGoal - _proteinConsumed).clamp(0.0, double.infinity),
-      remainingCarbs: (_carbsGoal - _carbsConsumed).clamp(0.0, double.infinity),
-      remainingFat: (_fatGoal - _fatConsumed).clamp(0.0, double.infinity),
-      onLogged: _loadData,
-    ));
-  }
-
-  Widget _buildSuggestMealButton() {
-    final l10n = AppLocalizations.of(context)!;
-    return GestureDetector(
-      onTap: _openSuggestSheet,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: AppColors.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.35)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_awesome, size: 13, color: AppColors.accent),
-            const SizedBox(width: 5),
-            Text(
-              l10n.suggestMeal,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: AppColors.accent,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTodayTab() {
     // Account for: bottom safe area + nav bar (68) + nav margin (12) + FAB (56) + gap (16)
     final bottomPad = MediaQuery.of(context).padding.bottom + 68 + 12 + 56 + 16;
@@ -1077,6 +827,18 @@ class NutritionScreenState extends State<NutritionScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // "Not today" banner — while the Home week strip targets a past
+            // day, this whole tab mirrors that day and every new entry lands
+            // on it, so say so. Disappears the moment today is selected.
+            if (!_isSameDay(_loadedDate, DateTime.now()))
+              Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: LoggingNotTodayBanner(
+                  date: _loadedDate,
+                  isArabic:
+                      Localizations.localeOf(context).languageCode == 'ar',
+                ),
+              ),
             _FadeSlideIn(
               parent: _fadeController,
               delayMs: 50,
@@ -1094,12 +856,6 @@ class NutritionScreenState extends State<NutritionScreen>
               delayMs: 180,
               child: _buildMacrosCard(),
             ),
-            const SizedBox(height: 14),
-            _FadeSlideIn(
-              parent: _fadeController,
-              delayMs: 230,
-              child: _buildMicronutrientsCard(),
-            ),
             const SizedBox(height: 22),
             _FadeSlideIn(
               parent: _fadeController,
@@ -1107,7 +863,7 @@ class NutritionScreenState extends State<NutritionScreen>
               child: Row(
                 children: [
                   Text(
-                    'Daily Meals',
+                    AppLocalizations.of(context)!.dailyMeals,
                     style: AppText.headlineMd.copyWith(
                       fontWeight: FontWeight.w800,
                       color: AppColors.textPrimary,
@@ -1115,14 +871,12 @@ class NutritionScreenState extends State<NutritionScreen>
                   ),
                   const Spacer(),
                   Text(
-                    '$_totalFoodsLogged items logged',
+                    AppLocalizations.of(context)!.itemsLoggedCount('$_totalFoodsLogged'),
                     style: AppText.bodySm.copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  _buildSuggestMealButton(),
                 ],
               ),
             ),
@@ -1177,6 +931,11 @@ class NutritionScreenState extends State<NutritionScreen>
   }
 
   // ─── Hero Calories Card ────────────────────────────────────────────────────
+  // One card, two swipeable pages (2026-09-27 redesign): page 1 = calories
+  // (gauge, net energy, progress track), page 2 = the fiber/sugar/sodium
+  // tiles that used to be a standalone card in the scroll body. Same token
+  // system as before — surface card + hairline border, no glass surfaces.
+  // The status banner stays fixed above both pages.
   Widget _buildHeroCaloriesCard() {
     final statusColor = _calorieProgress > 1.0
         ? AppColors.error
@@ -1230,7 +989,7 @@ class NutritionScreenState extends State<NutritionScreen>
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    _motivationalMessage,
+                    _motivationalMessage(context),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -1260,151 +1019,284 @@ class NutritionScreenState extends State<NutritionScreen>
             ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Row(
+          // Two-page body — swipe horizontally (flips automatically in RTL).
+          SizedBox(
+            height: _heroPageHeight,
+            child: PageView(
+              controller: _heroPageController,
+              onPageChanged: (page) => setState(() => _heroPage = page),
               children: [
-                // Calorie Gauge Ring
-                SizedBox(
-                  width: 135,
-                  height: 135,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      AnimatedBuilder(
-                        animation: _ringAnim,
-                        builder: (_, __) {
-                          return CustomPaint(
-                            size: const Size(135, 135),
-                            painter: _ModernCalorieRingPainter(
-                              progress: _calorieProgress * _ringAnim.value,
-                              ringColor: statusColor,
-                              trackColor: AppColors.surfaceContainerHigh,
-                              strokeWidth: 12,
-                            ),
-                          );
-                        },
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TweenAnimationBuilder<double>(
-                            tween: Tween(
-                              begin: 0,
-                              end: _caloriesConsumed.toDouble(),
-                            ),
-                            duration: const Duration(milliseconds: 1400),
-                            curve: Curves.easeOutCubic,
-                            builder: (context, val, _) {
-                              return Text(
-                                val.toInt().toString(),
-                                style: AppText.displaySm.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: AppColors.textPrimary,
-                                  height: 1,
-                                ),
-                              );
-                            },
-                          ),
-                          Text(
-                            AppLocalizations.of(context)!.kcal,
-                            style: AppText.bodySm.copyWith(
-                              fontSize: 10,
-                              color: AppColors.textSecondary,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'of ${_caloriesGoal.toInt()}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: statusColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 22),
-
-                // Net Energy Breakdown Columns
-                Expanded(
-                  child: Column(
-                    children: [
-                      _heroStatRow(
-                        label: 'Eaten',
-                        value: '${_caloriesConsumed.toInt()}',
-                        unit: 'kcal',
-                        icon: PixelIconType.fire,
-                        color: AppColors.accentCalories,
-                      ),
-                      const SizedBox(height: 10),
-                      _heroStatRow(
-                        label: 'Burned',
-                        value: '${_caloriesBurned.toInt()}',
-                        unit: 'kcal',
-                        icon: PixelIconType.dumbbell,
-                        color: AppColors.accentWorkout,
-                      ),
-                      const SizedBox(height: 10),
-                      _heroStatRow(
-                        label: _isOverGoal ? 'Over Budget' : 'Remaining',
-                        value: _isOverGoal
-                            ? '+${(_caloriesConsumed - _caloriesGoal).toInt()}'
-                            : '${_caloriesRemaining.toInt()}',
-                        unit: 'kcal',
-                        icon: PixelIconType.bolt,
-                        color: _isOverGoal
-                            ? AppColors.error
-                            : AppColors.primary,
-                      ),
-                    ],
-                  ),
-                ),
+                _buildHeroCaloriesPage(statusColor),
+                _buildHeroMicronutrientsPage(),
               ],
             ),
           ),
 
-          // Calorie Progress Track Bar
+          // 2-dot page indicator — neutral ink: a pager dot is informational
+          // and the volt accent stays reserved for actionable elements.
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: _calorieProgress,
-                    minHeight: 8,
-                    backgroundColor: AppColors.surfaceContainerHigh,
-                    valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(2, (page) {
+                final active = _heroPage == page;
+                return GestureDetector(
+                  onTap: () => _heroPageController.animateToPage(
+                    page,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeOutCubic,
                   ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '0 kcal',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textMuted,
-                      ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOut,
+                    width: active ? 18 : 5,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                    decoration: BoxDecoration(
+                      color: active
+                          ? AppColors.textPrimary
+                          : AppColors.textMuted.withValues(alpha: 0.30),
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
-                    Text(
-                      'Target: ${_caloriesGoal.toInt()} kcal',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Hero page 1 — calories: gauge, net energy breakdown, progress track ──
+  Widget _buildHeroCaloriesPage(Color statusColor) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Row(
+            children: [
+              // Calorie Gauge Ring
+              SizedBox(
+                width: 135,
+                height: 135,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    AnimatedBuilder(
+                      animation: _ringAnim,
+                      builder: (_, __) {
+                        return CustomPaint(
+                          size: const Size(135, 135),
+                          painter: _ModernCalorieRingPainter(
+                            progress: _calorieProgress * _ringAnim.value,
+                            ringColor: statusColor,
+                            trackColor: AppColors.surfaceContainerHigh,
+                            strokeWidth: 12,
+                          ),
+                        );
+                      },
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TweenAnimationBuilder<double>(
+                          tween: Tween(
+                            begin: 0,
+                            end: _caloriesConsumed.toDouble(),
+                          ),
+                          duration: const Duration(milliseconds: 1400),
+                          curve: Curves.easeOutCubic,
+                          builder: (context, val, _) {
+                            final number = Text(
+                              val.toInt().toString(),
+                              style: AppText.displaySm.copyWith(
+                                fontWeight: FontWeight.w900,
+                                // Mask base — the volt sweep below recolors
+                                // it; flat error red when over goal so the
+                                // warning reads instantly.
+                                color: _isOverGoal
+                                    ? AppColors.error
+                                    : Colors.white,
+                                height: 1,
+                              ),
+                            );
+                            if (_isOverGoal) return number;
+                            // The one volt moment on the card: a subtle
+                            // Electric-Volt → soft-volt sweep on the kcal
+                            // number (2026-09-27 redesign).
+                            return ShaderMask(
+                              shaderCallback: (bounds) => LinearGradient(
+                                colors: [
+                                  AppColors.accent,
+                                  AppColors.primary,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ).createShader(bounds),
+                              blendMode: BlendMode.srcIn,
+                              child: number,
+                            );
+                          },
+                        ),
+                        Text(
+                          AppLocalizations.of(context)!.kcal,
+                          style: AppText.bodySm.copyWith(
+                            fontSize: 10,
+                            color: AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          AppLocalizations.of(context)!.ofGoal('${_caloriesGoal.toInt()}'),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
+              const SizedBox(width: 22),
+
+              // Net Energy Breakdown Columns
+              Expanded(
+                child: Column(
+                  children: [
+                    _heroStatRow(
+                      label: AppLocalizations.of(context)!.eaten,
+                      value: '${_caloriesConsumed.toInt()}',
+                      unit: 'kcal',
+                      icon: PixelIconType.fire,
+                      color: AppColors.accentCalories,
+                    ),
+                    const SizedBox(height: 10),
+                    _heroStatRow(
+                      label: AppLocalizations.of(context)!.burned,
+                      value: '${_caloriesBurned.toInt()}',
+                      unit: 'kcal',
+                      icon: PixelIconType.dumbbell,
+                      color: AppColors.accentWorkout,
+                    ),
+                    const SizedBox(height: 10),
+                    _heroStatRow(
+                      label: _isOverGoal ? AppLocalizations.of(context)!.overBudget : AppLocalizations.of(context)!.caloriesRemaining,
+                      value: _isOverGoal
+                          ? '+${(_caloriesConsumed - _caloriesGoal).toInt()}'
+                          : '${_caloriesRemaining.toInt()}',
+                      unit: 'kcal',
+                      icon: PixelIconType.bolt,
+                      color: _isOverGoal
+                          ? AppColors.error
+                          : AppColors.primary,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Calorie Progress Track Bar
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: Column(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: _calorieProgress,
+                  minHeight: 8,
+                  backgroundColor: AppColors.surfaceContainerHigh,
+                  valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '0 kcal',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  Text(
+                    AppLocalizations.of(context)!.targetKcal('${_caloriesGoal.toInt()}'),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── Hero page 2 — micronutrients merged from the old standalone card ──────
+  Widget _buildHeroMicronutrientsPage() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ADDITIONAL NUTRIENTS',
+            style: TextStyle(
+              fontSize: 10,
+              color: AppColors.textSecondary,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
             ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _micronutrientTile(
+                  'Fiber',
+                  _fiberConsumed,
+                  30,
+                  'g',
+                  AppColors.accentFat,
+                  Icons.spa_rounded,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _micronutrientTile(
+                  'Sugar',
+                  _sugarConsumed,
+                  50,
+                  'g',
+                  const Color(0xFFFD79A8),
+                  Icons.cake_rounded,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _micronutrientTile(
+                  'Sodium',
+                  _sodiumConsumed,
+                  2300,
+                  'mg',
+                  const Color(0xFFF59E0B),
+                  Icons.grain_rounded,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1517,14 +1409,14 @@ class NutritionScreenState extends State<NutritionScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Water Hydration',
+                      AppLocalizations.of(context)!.water,
                       style: AppText.headlineSm.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textPrimary,
                       ),
                     ),
                     Text(
-                      'Daily target: $_waterGoal ml',
+                      AppLocalizations.of(context)!.dailyTargetMl('$_waterGoal'),
                       style: AppText.bodySm.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -1570,45 +1462,52 @@ class NutritionScreenState extends State<NutritionScreen>
           ),
           const SizedBox(height: 14),
 
-          // Quick Action Water Buttons
-          Row(
-            children: [
-              Expanded(
-                child: _waterQuickButton(
-                  label: '+250 ml',
-                  sub: 'Glass 🥛',
-                  onTap: () => _updateWater(250),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _waterQuickButton(
-                  label: '+500 ml',
-                  sub: 'Bottle 💧',
-                  onTap: () => _updateWater(500),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _updateWater(-250),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
+          // Quick Action Water Buttons — dimmed + inert on a past day
+          // (water edits are today-only; see _updateWater).
+          IgnorePointer(
+            ignoring: !_canEditWater,
+            child: Opacity(
+              opacity: _canEditWater ? 1.0 : 0.4,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _waterQuickButton(
+                      label: '+250 ml',
+                      sub: AppLocalizations.of(context)!.waterGlassSub,
+                      onTap: () => _updateWater(250),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.borderSubtle),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _waterQuickButton(
+                      label: '+500 ml',
+                      sub: AppLocalizations.of(context)!.waterBottleSub,
+                      onTap: () => _updateWater(500),
+                    ),
                   ),
-                  child: Icon(
-                    Icons.undo_rounded,
-                    size: 18,
-                    color: AppColors.textSecondary,
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => _updateWater(-250),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.borderSubtle),
+                      ),
+                      child: Icon(
+                        Icons.undo_rounded,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1660,10 +1559,40 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  // ─── Target Macros Card ────────────────────────────────────────────────────
+  // ─── Target Macros Card — horizontal carousel (2026-09-27 redesign) ───────
+  // One compact card per macro (protein/carbs/fat), horizontally scrollable
+  // on narrow screens. Same per-macro accents as before; each card carries a
+  // rounded-square icon badge, current/goal and a compact progress bar.
   Widget _buildMacrosCard() {
+    final macros = [
+      (
+        label: AppLocalizations.of(context)!.protein,
+        current: _proteinConsumed,
+        goal: _proteinGoal,
+        color: AppColors.accentProtein,
+        icon: PixelIconType.chicken,
+        kcalFactor: 4,
+      ),
+      (
+        label: AppLocalizations.of(context)!.carbs,
+        current: _carbsConsumed,
+        goal: _carbsGoal,
+        color: AppColors.accentCarbs,
+        icon: PixelIconType.grain,
+        kcalFactor: 4,
+      ),
+      (
+        label: AppLocalizations.of(context)!.fat,
+        current: _fatConsumed,
+        goal: _fatGoal,
+        color: AppColors.accentFat,
+        icon: PixelIconType.avocado,
+        kcalFactor: 9,
+      ),
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -1679,59 +1608,56 @@ class NutritionScreenState extends State<NutritionScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text(
-                'Macronutrients',
-                style: AppText.headlineSm.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.macronutrients,
+                  style: AppText.headlineSm.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Text(
-                'Daily Goal Targets',
-                style: AppText.bodySm.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                const Spacer(),
+                Text(
+                  AppLocalizations.of(context)!.dailyGoalTargets,
+                  style: AppText.bodySm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 18),
-          _macroProgressRow(
-            label: 'Protein',
-            current: _proteinConsumed,
-            goal: _proteinGoal,
-            color: AppColors.accentProtein,
-            icon: PixelIconType.chicken,
-            kcalFactor: 4,
-          ),
-          const SizedBox(height: 18),
-          _macroProgressRow(
-            label: 'Carbohydrates',
-            current: _carbsConsumed,
-            goal: _carbsGoal,
-            color: AppColors.accentCarbs,
-            icon: PixelIconType.grain,
-            kcalFactor: 4,
-          ),
-          const SizedBox(height: 18),
-          _macroProgressRow(
-            label: 'Fats',
-            current: _fatConsumed,
-            goal: _fatGoal,
-            color: AppColors.accentFat,
-            icon: PixelIconType.avocado,
-            kcalFactor: 9,
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 150,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: macros.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final m = macros[i];
+                return _macroCarouselCard(
+                  label: m.label,
+                  current: m.current,
+                  goal: m.goal,
+                  color: m.color,
+                  icon: m.icon,
+                  kcalFactor: m.kcalFactor,
+                );
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _macroProgressRow({
+  Widget _macroCarouselCard({
     required String label,
     required double current,
     required double goal,
@@ -1743,135 +1669,106 @@ class NutritionScreenState extends State<NutritionScreen>
     final remaining = (goal - current).clamp(0.0, double.infinity);
     final cals = (current * kcalFactor).toInt();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: PixelArtIcon(type: icon, size: 16, color: color),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '$cals kcal · ${remaining.toInt()}g left',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  '${current.toInt()}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                    color: color,
-                  ),
-                ),
-                Text(
-                  ' / ${goal.toInt()}g',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 7,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ─── Micronutrients Card ───────────────────────────────────────────────────
-  Widget _buildMicronutrientsCard() {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: 156,
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderSubtle, width: 1.2),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              // Rounded-square icon badge — squircles, not circles.
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                alignment: Alignment.center,
+                child: PixelArtIcon(type: icon, size: 15, color: color),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${current.toInt()}g',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
+              const SizedBox(width: 3),
+              Text(
+                '/ ${goal.toInt()}g',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
           Text(
-            'ADDITIONAL NUTRIENTS',
+            AppLocalizations.of(context)!.macroLeftKcal(
+              '$cals',
+              '${remaining.toInt()}',
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 10,
               color: AppColors.textSecondary,
-              letterSpacing: 1.2,
-              fontWeight: FontWeight.w800,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           Row(
             children: [
               Expanded(
-                child: _micronutrientTile(
-                  'Fiber',
-                  _fiberConsumed,
-                  30,
-                  'g',
-                  AppColors.accentFat,
-                  Icons.spa_rounded,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: color.withValues(alpha: 0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(color),
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _micronutrientTile(
-                  'Sugar',
-                  _sugarConsumed,
-                  50,
-                  'g',
-                  const Color(0xFFFD79A8),
-                  Icons.cake_rounded,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _micronutrientTile(
-                  'Sodium',
-                  _sodiumConsumed,
-                  2300,
-                  'mg',
-                  const Color(0xFFF59E0B),
-                  Icons.grain_rounded,
+              const SizedBox(width: 6),
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: color,
                 ),
               ),
             ],
@@ -2064,35 +1961,8 @@ class NutritionScreenState extends State<NutritionScreen>
                     const SizedBox(width: 8),
                   ],
 
-                  // Action: AI Scan Button
-                  GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              FoodScanScreen(initialMealType: mealType),
-                        ),
-                      ).then((_) => _loadData());
-                    },
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: AppColors.accentWorkout.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt_rounded,
-                        color: AppColors.accentWorkout,
-                        size: 16,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-
-                  // Action: Add Button
+                  // Action: the single "+" entry — food logging app-wide goes
+                  // through this flow (the FAB opens the same sheet).
                   GestureDetector(
                     onTap: () =>
                         _showAddFoodBottomSheet(preselectedMeal: mealType),
@@ -2101,7 +1971,7 @@ class NutritionScreenState extends State<NutritionScreen>
                       height: 30,
                       decoration: BoxDecoration(
                         color: AppColors.primary.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
                         Icons.add_rounded,
@@ -2152,7 +2022,7 @@ class NutritionScreenState extends State<NutritionScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'No food logged yet',
+                              AppLocalizations.of(context)!.noFoodLogged,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
@@ -2166,24 +2036,9 @@ class NutritionScreenState extends State<NutritionScreen>
                               preselectedMeal: mealType,
                             ),
                             icon: const Icon(Icons.add_rounded, size: 14),
-                            label: const Text('Add'),
+                            label: Text(AppLocalizations.of(context)!.addLabel),
                             style: TextButton.styleFrom(
                               foregroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          TextButton.icon(
-                            onPressed: () => _showQuickCaloriesDialog(mealType),
-                            icon: const Icon(Icons.bolt_rounded, size: 14),
-                            label: const Text('Quick'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: AppColors.accentCalories,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
                                 vertical: 4,
@@ -2215,7 +2070,7 @@ class NutritionScreenState extends State<NutritionScreen>
                     confirmDismiss: (_) =>
                         _showDeleteConfirm(context, log['food_name'] ?? ''),
                     onDismissed: (_) => _deleteLog(log['id'].toString()),
-                    child: _buildLogItem(log, accentColor),
+                    child: _buildLogItem(log),
                   );
                 }),
 
@@ -2234,7 +2089,7 @@ class NutritionScreenState extends State<NutritionScreen>
                     child: Row(
                       children: [
                         Text(
-                          'Meal totals:',
+                          AppLocalizations.of(context)!.mealTotals,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -2276,7 +2131,7 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  Widget _buildLogItem(Map<String, dynamic> log, Color accentColor) {
+  Widget _buildLogItem(Map<String, dynamic> log) {
     return InkWell(
       onTap: () => _showEditLogSheet(log),
       child: Container(
@@ -2286,18 +2141,13 @@ class NutritionScreenState extends State<NutritionScreen>
         ),
         child: Row(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                _foodEmoji(log['category'] ?? ''),
-                style: const TextStyle(fontSize: 18),
-              ),
+            // Real catalog photo when the log came from the foods table
+            // (image_url resolved in getTodayLogs); category-emoji tile
+            // otherwise — same thumbnail language as AddFoodSheet.
+            FoodThumbnail(
+              imageUrl: log['image_url']?.toString(),
+              category: log['category']?.toString(),
+              size: 38,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -2374,22 +2224,6 @@ class NutritionScreenState extends State<NutritionScreen>
     );
   }
 
-  String _foodEmoji(String category) {
-    const map = {
-      'protein': '🍗',
-      'carbs': '🍚',
-      'vegetables': '🥦',
-      'fruits': '🍎',
-      'dairy': '🧀',
-      'fats': '🥑',
-      'fastfood': '🍔',
-      'drinks': '🥤',
-      'arabic': '🧆',
-      'breakfast': '🍳',
-    };
-    return map[category.toLowerCase()] ?? '🍽';
-  }
-
   Widget _microPill(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
     decoration: BoxDecoration(
@@ -2420,12 +2254,12 @@ class NutritionScreenState extends State<NutritionScreen>
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Remove item?',
-          style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
+        title: Text(
+          AppLocalizations.of(ctx)!.removeItem,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 17),
         ),
         content: Text(
-          'Remove "$name" from today\'s log?',
+          AppLocalizations.of(ctx)!.removeLogConfirm(name),
           style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
         actions: [
@@ -2440,7 +2274,7 @@ class NutritionScreenState extends State<NutritionScreen>
               elevation: 0,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove'),
+            child: Text(AppLocalizations.of(ctx)!.removeLabel),
           ),
         ],
       ),
@@ -2456,150 +2290,6 @@ class NutritionScreenState extends State<NutritionScreen>
       caloriesGoal: _caloriesGoal,
     );
   }
-
-  Widget _buildWeeklyStatsRowNormalized(
-    List<Map<String, dynamic>> normalized,
-    double avgCals,
-  ) {
-    final daysOnTrack = normalized.where((d) {
-      final c = (d["calories_consumed"] as num?)?.toDouble() ?? 0;
-      final g = _caloriesGoal;
-      return c >= g * 0.85 && c <= g * 1.15;
-    }).length;
-
-    final workoutDays = normalized
-        .where((d) => d["workout_done"] == true)
-        .length;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _weeklyStatCard(
-            "Avg Calories",
-            "${avgCals.toInt()}",
-            "kcal / day",
-            AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _weeklyStatCard(
-            "On Track",
-            "$daysOnTrack",
-            "days in zone",
-            AppColors.accentCalories,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _weeklyStatCard(
-            "Workouts",
-            "$workoutDays",
-            "this week",
-            AppColors.accentWorkout,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeeklyStatsRow(double avgCals) {
-    final daysOnTrack = _weeklyProgress.where((d) {
-      final c = (d['calories_consumed'] as num?)?.toDouble() ?? 0;
-      final g = _caloriesGoal;
-      return c >= g * 0.85 && c <= g * 1.15;
-    }).length;
-
-    final workoutDays = _weeklyProgress
-        .where((d) => d['workout_done'] == true)
-        .length;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _weeklyStatCard(
-            'Avg Calories',
-            '${avgCals.toInt()}',
-            'kcal / day',
-            AppColors.primary,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _weeklyStatCard(
-            'On Track',
-            '$daysOnTrack',
-            'days in zone',
-            AppColors.accentCalories,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _weeklyStatCard(
-            'Workouts',
-            '$workoutDays',
-            'this week',
-            AppColors.accentWorkout,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _weeklyStatCard(String label, String value, String sub, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.borderSubtle, width: 1.2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              color: color,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            sub,
-            style: TextStyle(
-              fontSize: 9,
-              color: color.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _historyMacroPill(String text, Color color) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-    decoration: BoxDecoration(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(8),
-    ),
-    child: Text(
-      text,
-      style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w800),
-    ),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -3343,59 +3033,6 @@ class _ModernCalorieRingPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ModernCalorieRingPainter old) =>
       old.progress != progress || old.ringColor != ringColor;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// History chart dot — single consistent circle, latest slightly larger (fix #4)
-// ─────────────────────────────────────────────────────────────────────────────
-class _HistoryDotPainter extends FlDotPainter {
-  final Color color;
-  final bool isLatest;
-  final Color borderColor;
-  final bool isTouched;
-  const _HistoryDotPainter({
-    required this.color,
-    this.isLatest = false,
-    this.borderColor = Colors.white,
-    this.isTouched = false,
-  });
-  @override
-  void draw(Canvas canvas, FlSpot spot, Offset offset) {
-    final double r = isTouched ? 5.0 : (isLatest ? 5.2 : 3.8);
-    final double border = isLatest ? 1.6 : 1.3;
-    canvas.drawCircle(
-      offset,
-      r + border,
-      Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.fill,
-    );
-    canvas.drawCircle(
-      offset,
-      r,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.fill,
-    );
-    if (isLatest) {
-      canvas.drawCircle(
-        offset,
-        1.3,
-        Paint()
-          ..color = Colors.white.withValues(alpha: 0.92)
-          ..style = PaintingStyle.fill,
-      );
-    }
-  }
-
-  @override
-  Size getSize(FlSpot spot) => Size(isLatest ? 13 : 10, isLatest ? 13 : 10);
-  @override
-  Color get mainColor => color;
-  @override
-  FlDotPainter lerp(FlDotPainter a, FlDotPainter b, double t) => b;
-  @override
-  List<Object?> get props => [color, isLatest, borderColor, isTouched];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

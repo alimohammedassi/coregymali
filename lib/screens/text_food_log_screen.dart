@@ -8,6 +8,7 @@ import '../models/text_food_log_result.dart';
 import '../services/text_food_log_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -51,6 +52,11 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
 
   Timer? _stepTimer;
   int _stepIndex = 0;
+
+  /// When the current analyze request started — feeds [AiWaitLine]'s live
+  /// elapsed counter (the analyze call retries server-side, so its length is
+  /// invisible to the client).
+  DateTime _analyzingStarted = DateTime.now();
 
   _TextPhase _phase = _TextPhase.input;
   late String _mealType = _defaultMealType();
@@ -146,6 +152,7 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
     setState(() {
       _phase = _TextPhase.analyzing;
       _stepIndex = 0;
+      _analyzingStarted = DateTime.now();
       _errorType = null;
       _saveErrorType = null;
     });
@@ -593,6 +600,16 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
                   backgroundColor: AppColors.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(AppColors.primaryFixed),
                 ),
+              ),
+            ),
+            // Live wait feedback: elapsed counter + reassurance when the
+            // server-side AI call runs long (2026-09-27).
+            Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: AiWaitLine(
+                startedAt: _analyzingStarted,
+                slowAfter: const Duration(seconds: 6),
+                center: true,
               ),
             ),
           ],

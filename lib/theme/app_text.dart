@@ -10,10 +10,10 @@ class AppText {
   AppText._();
 
   /// Gets the font family based on whether the active locale is Arabic
+  /// Arabic resolves to the locally bundled 'Cairo' family
+  /// (assets/fonts/Cairo/, registered in pubspec.yaml) — no runtime fetch.
   static String? fontFamily({bool isArabic = false}) {
-    return isArabic
-        ? GoogleFonts.cairo().fontFamily
-        : GoogleFonts.poppins().fontFamily;
+    return isArabic ? 'Cairo' : GoogleFonts.poppins().fontFamily;
   }
 
   // ── Display (Huge Bold Hero Numbers: Calories, Weights) ──

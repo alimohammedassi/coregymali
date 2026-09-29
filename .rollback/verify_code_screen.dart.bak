@@ -1,0 +1,550 @@
+import 'dart:async';
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'theme/app_colors.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VerifyCodeScreen — 6-digit email OTP (Supabase Auth), [Image 1] layout.
+//
+// signup flow   : verifyOTP(type: OtpType.signup)   + auth.resend(...)
+// recovery flow : verifyOTP(type: OtpType.recovery) + resetPasswordForEmail(...)
+//
+// Requires in the Supabase dashboard:
+//   Auth → Providers → Email → "Confirm email" ON
+//   Auth → Email Templates → "Confirm signup" (and "Reset password") must
+//   print {{ .Token }} instead of {{ .ConfirmationURL }}.
+//
+// Theming: every color comes from AppColors (mode-aware via AppColors.apply),
+// layout metrics (badge 96, title 46 italic, boxes 64/r16, button 64/r32)
+// pixel-match [Image 1] which is the light-mode rendering.
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum VerifyFlow { signup, recovery }
+
+class VerifyCodeScreen extends StatefulWidget {
+  final String email;
+  final VerifyFlow flow;
+
+  /// Called after the code is verified and a session exists.
+  /// Default: pop back to the first route (an auth-state listener / AuthGate
+  /// will then route the user in).
+  final VoidCallback? onVerified;
+
+  /// Called when "SIGN IN" at the bottom is tapped. Default: pop to first route.
+  final VoidCallback? onSignInTap;
+
+  const VerifyCodeScreen({
+    super.key,
+    required this.email,
+    this.flow = VerifyFlow.signup,
+    this.onVerified,
+    this.onSignInTap,
+  });
+
+  @override
+  State<VerifyCodeScreen> createState() => _VerifyCodeScreenState();
+}
+
+class _VerifyCodeScreenState extends State<VerifyCodeScreen>
+    with SingleTickerProviderStateMixin {
+  static const int _codeLength = 6;
+  static const int _resendSeconds = 60;
+
+  final _supabase = Supabase.instance.client;
+  final _controller = TextEditingController();
+  final _focus = FocusNode();
+  late final AnimationController _shake;
+
+  Timer? _timer;
+  int _cooldown = 0;
+  bool _verifying = false;
+  bool _resending = false;
+  String? _error;
+
+  String get _code => _controller.text;
+
+  @override
+  void initState() {
+    super.initState();
+    _shake = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
+    );
+    _focus.addListener(() {
+      if (mounted) setState(() {});
+    });
+    _startCooldown();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _shake.dispose();
+    _controller.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  // ─── Cooldown ──────────────────────────────────────────────────────────────
+  void _startCooldown() {
+    _timer?.cancel();
+    setState(() => _cooldown = _resendSeconds);
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return t.cancel();
+      if (_cooldown <= 1) {
+        t.cancel();
+        setState(() => _cooldown = 0);
+      } else {
+        setState(() => _cooldown--);
+      }
+    });
+  }
+
+  // ─── Input ─────────────────────────────────────────────────────────────────
+  void _onChanged(String _) {
+    setState(() => _error = null);
+    if (_code.length == _codeLength) {
+      _verify();
+    }
+  }
+
+  // ─── Verify ────────────────────────────────────────────────────────────────
+  Future<void> _verify() async {
+    if (_verifying) return;
+    if (_code.length != _codeLength) {
+      _fail('Enter the 6-digit code');
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+
+    try {
+      await _supabase.auth.verifyOTP(
+        email: widget.email,
+        token: _code,
+        type: widget.flow == VerifyFlow.signup
+            ? OtpType.signup
+            : OtpType.recovery,
+      );
+
+      if (!mounted) return;
+      HapticFeedback.mediumImpact();
+
+      if (widget.onVerified != null) {
+        widget.onVerified!();
+      } else {
+        Navigator.of(context).popUntil((r) => r.isFirst);
+      }
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      final msg = e.message.toLowerCase();
+      if (e.statusCode == '429' || msg.contains('rate limit')) {
+        _fail('Too many attempts. Please wait a moment.');
+      } else if (msg.contains('expired') || msg.contains('invalid')) {
+        _fail('Invalid or expired code');
+      } else {
+        _fail(e.message);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      _fail('Something went wrong. Check your connection.');
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
+
+  void _fail(String message) {
+    HapticFeedback.heavyImpact();
+    setState(() {
+      _error = message;
+      _controller.clear();
+    });
+    _shake.forward(from: 0);
+    _focus.requestFocus();
+  }
+
+  // ─── Resend ────────────────────────────────────────────────────────────────
+  Future<void> _resend() async {
+    if (_cooldown > 0 || _resending) return;
+    HapticFeedback.lightImpact();
+    setState(() {
+      _resending = true;
+      _error = null;
+    });
+
+    try {
+      if (widget.flow == VerifyFlow.signup) {
+        await _supabase.auth.resend(type: OtpType.signup, email: widget.email);
+      } else {
+        await _supabase.auth.resetPasswordForEmail(widget.email);
+      }
+      if (!mounted) return;
+      _controller.clear();
+      _startCooldown();
+      _snack('A new code was sent to your email');
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      final msg = e.message.toLowerCase();
+      _snack(
+        (e.statusCode == '429' || msg.contains('rate limit'))
+            ? 'Please wait before requesting another code'
+            : e.message,
+        isError: true,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      _snack('Could not resend the code. Try again.', isError: true);
+    } finally {
+      if (mounted) setState(() => _resending = false);
+    }
+  }
+
+  void _snack(String text, {bool isError = false}) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(text),
+          backgroundColor: isError ? AppColors.error : AppColors.onSurface,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  void _goSignIn() {
+    if (widget.onSignInTap != null) {
+      widget.onSignInTap!();
+    } else {
+      Navigator.of(context).popUntil((r) => r.isFirst);
+    }
+  }
+
+  // ─── UI ────────────────────────────────────────────────────────────────────
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.surfaceLowest,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: AppColors.onSurface),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 32),
+                    Center(child: _buildIconBadge()),
+                    const SizedBox(height: 36),
+                    _buildTitle(),
+                    const SizedBox(height: 18),
+                    Text(
+                      "WE'VE SENT A 6-DIGIT CODE TO\n${widget.email.toUpperCase()}",
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        letterSpacing: 0.6,
+                        color: AppColors.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    _buildCodeBoxes(),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          color: AppColors.error,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 32),
+                    _buildVerifyButton(),
+                    const SizedBox(height: 22),
+                    Center(child: _buildResendRow()),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 18, top: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'REMEMBER PASSWORD?',
+                    style: TextStyle(
+                      fontSize: 11,
+                      letterSpacing: 1.4,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: _goSignIn,
+                    child: Text(
+                      'SIGN IN',
+                      style: TextStyle(
+                        fontSize: 11,
+                        letterSpacing: 1.4,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.onPrimaryContainer,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconBadge() {
+    return Container(
+      width: 96,
+      height: 96,
+      decoration: BoxDecoration(
+        color: AppColors.secondary.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: AppColors.secondary.withValues(alpha: 0.30)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.secondary.withValues(alpha: 0.12),
+            blurRadius: 32,
+            spreadRadius: 4,
+          ),
+        ],
+      ),
+      child: Icon(Icons.mark_email_read_outlined,
+          size: 38, color: AppColors.secondary),
+    );
+  }
+
+  Widget _buildTitle() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('VERIFY',
+            style: TextStyle(
+                fontSize: 46,
+                height: 0.95,
+                fontWeight: FontWeight.w900,
+                fontStyle: FontStyle.italic,
+                letterSpacing: -1,
+                color: AppColors.onSurface)),
+        Text('CODE',
+            style: TextStyle(
+                fontSize: 46,
+                height: 0.95,
+                fontWeight: FontWeight.w900,
+                fontStyle: FontStyle.italic,
+                letterSpacing: -1,
+                color: AppColors.primaryFixed)),
+      ],
+    );
+  }
+
+  Widget _buildCodeBoxes() {
+    return AnimatedBuilder(
+      animation: _shake,
+      builder: (context, child) {
+        final t = _shake.value;
+        final dx = math.sin(t * math.pi * 6) * 9 * (1 - t);
+        return Transform.translate(offset: Offset(dx, 0), child: child);
+      },
+      child: SizedBox(
+        height: 64,
+        child: Stack(
+          children: [
+            // Visual boxes
+            Row(
+              children: List.generate(_codeLength, (i) {
+                final filled = i < _code.length;
+                final active = _focus.hasFocus &&
+                    i == math.min(_code.length, _codeLength - 1);
+                final hasError = _error != null;
+                return Expanded(
+                  child: Padding(
+                    padding:
+                        EdgeInsets.only(right: i == _codeLength - 1 ? 0 : 8),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: hasError
+                              ? AppColors.error
+                              : active
+                                  ? AppColors.primaryFixed
+                                  : AppColors.outlineVariant,
+                          width: active || hasError ? 2 : 1.2,
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        filled ? _code[i] : '',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+            // Invisible input on top: handles typing, paste and OTP autofill
+            Positioned.fill(
+              child: TextField(
+                controller: _controller,
+                focusNode: _focus,
+                autofocus: true,
+                autofillHints: const [AutofillHints.oneTimeCode],
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                enableInteractiveSelection: false,
+                showCursor: false,
+                cursorColor: Colors.transparent,
+                style: const TextStyle(color: Colors.transparent, fontSize: 1),
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(_codeLength),
+                ],
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  counterText: '',
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onChanged: _onChanged,
+                onSubmitted: (_) => _verify(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerifyButton() {
+    final enabled = _code.length == _codeLength && !_verifying;
+    return Opacity(
+      opacity: (enabled || _verifying) ? 1 : 0.6,
+      child: GestureDetector(
+        onTap: enabled ? _verify : null,
+        child: Container(
+          height: 64,
+          padding: const EdgeInsets.only(left: 24, right: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(32),
+            gradient: AppColors.primaryActionGradient,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryFixed.withValues(alpha: 0.35),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Text(
+                    'VERIFY CODE',
+                    style: TextStyle(
+                      fontSize: 14,
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.onPrimary,
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                    color: AppColors.onPrimary, shape: BoxShape.circle),
+                alignment: Alignment.center,
+                child: _verifying
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: AppColors.primaryFixed,
+                        ),
+                      )
+                    : Icon(Icons.bolt_rounded,
+                        size: 20, color: AppColors.primaryFixed),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResendRow() {
+    const labelStyle = TextStyle(
+      fontSize: 11,
+      letterSpacing: 1.4,
+      fontWeight: FontWeight.w800,
+    );
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text("DIDN'T RECEIVE?",
+            style: labelStyle.copyWith(color: AppColors.onSurfaceVariant)),
+        const SizedBox(width: 8),
+        if (_cooldown > 0)
+          Text('RESEND IN ${_cooldown}s',
+              style: labelStyle.copyWith(
+                  color: AppColors.onSurfaceVariant.withValues(alpha: 0.7)))
+        else
+          GestureDetector(
+            onTap: _resend,
+            child: _resending
+                ? SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: AppColors.primaryDim),
+                  )
+                : Text('RESEND',
+                    style: labelStyle.copyWith(
+                        color: AppColors.onPrimaryContainer,
+                        fontWeight: FontWeight.w900)),
+          ),
+      ],
+    );
+  }
+}

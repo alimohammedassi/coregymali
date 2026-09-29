@@ -62,8 +62,9 @@ class TextFoodLogService {
     return result;
   }
 
-  /// Saves confirmed items into today's `nutrition_logs`, one row per item,
-  /// scaled to each item's edited weight in [weightsG] (parallel to [items]).
+  /// Saves confirmed items into the selected day's `nutrition_logs`, one row
+  /// per item, scaled to each item's edited weight in [weightsG] (parallel to
+  /// [items]).
   ///
   /// Same column mapping and daily-summary/streak contract as every other
   /// logger (`saveScannedItems`, `BarcodeLookupService.saveToLog`). Returns
@@ -80,7 +81,11 @@ class TextFoodLogService {
       return false;
     }
 
-    final d = DateTime.now().toIso8601String().substring(0, 10);
+    // Selected-date first (home week strip) — never recompute now() at
+    // save time, or a post-midnight save lands on the wrong day.
+    final d = NutritionService.currentLogDate
+        .toIso8601String()
+        .substring(0, 10);
     var savedCount = 0;
 
     for (var i = 0; i < items.length; i++) {

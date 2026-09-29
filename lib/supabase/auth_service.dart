@@ -121,6 +121,33 @@ class AuthService {
     }
   }
 
+  // Verify a 6-digit email OTP (signup or recovery). Success signs the user
+  // in, which is what lets the recovery flow call updateUser afterwards.
+  Future<AuthResponse> verifyCode({
+    required String email,
+    required String token,
+    required bool isRecovery,
+  }) async {
+    try {
+      return await _client.auth.verifyOTP(
+        email: email,
+        token: token,
+        type: isRecovery ? OtpType.recovery : OtpType.signup,
+      );
+    } on AuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  // Resend a signup confirmation code.
+  Future<void> resendSignupCode(String email) async {
+    try {
+      await _client.auth.resend(type: OtpType.signup, email: email);
+    } on AuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
   // Error handler — same messages as Firebase version
   String _handleAuthException(AuthException e) {
     final msg = e.message.toLowerCase();

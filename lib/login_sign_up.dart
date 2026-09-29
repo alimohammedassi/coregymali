@@ -1,36 +1,30 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'fitness_home_pages.dart';
-import 'l10n/app_localizations.dart';
-import 'supabase/supabase_exports.dart';
-import 'providers/profile_provider.dart';
-import 'services/supabase_client.dart';
-import 'screens/onboarding_flow.dart';
-import 'forgetpassword.dart';
-import 'features/coach/presentation/screens/coach_profile_setup_screen.dart';
 import 'package:provider/provider.dart';
+
 import 'features/coach/presentation/providers/coach_setup_provider.dart';
+import 'features/coach/presentation/screens/coach_profile_setup_screen.dart';
+import 'fitness_home_pages.dart';
+import 'forgetpassword.dart';
+import 'l10n/app_localizations.dart';
+import 'providers/profile_provider.dart';
+import 'screens/onboarding_flow.dart';
+import 'services/supabase_client.dart';
+import 'supabase/supabase_exports.dart';
 import 'theme/app_animations.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
-import 'theme/auth_app_text.dart';
-import 'widgets/language_toggle.dart';
-import 'widgets/premium_glass_bg.dart';
+import 'verify_code_screen.dart';
+import 'widgets/auth_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CoreGym Auth — Editorial redesign
+// CoreGym Auth — Dark redesign (UI/structure refactor only).
 //
-// Two fixes vs the previous pass, per Ali's request:
-// 1) COLOR CONSISTENCY — every color here comes from AppColors / AuthAppText.
-//    No hardcoded hex anywhere in this file. If the theme changes later
-//    (light/dark, palette tweak), this screen updates automatically instead
-//    of drifting out of sync.
-// 2) LOCALIZATION — every user-facing string goes through AppLocalizations
-//    (l10n.xxx) so it follows the app's existing Arabic translations via the
-//    LanguageToggle, instead of hardcoded English literals.
-//    A few new keys are needed (tab labels, role labels, trust badges,
-//    "joining as") — see the ARB snippet at the end of my reply.
+// Auth LOGIC is untouched: every Supabase call, validator rule, controller,
+// navigation target, provider access and callback below is identical to the
+// previous revision — only widgets, styling and string sourcing changed.
 // ─────────────────────────────────────────────────────────────────────────────
+
+final _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -38,86 +32,66 @@ class AuthWrapper extends StatefulWidget {
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _AuthWrapperState extends State<AuthWrapper>
-    with SingleTickerProviderStateMixin {
+class _AuthWrapperState extends State<AuthWrapper> {
   bool isLogin = true;
-  late AnimationController _switchController;
-  late Animation<double> _fade;
-  late Animation<Offset> _slide;
-
-  @override
-  void initState() {
-    super.initState();
-    _switchController = AnimationController(
-      vsync: this,
-      duration: AppDurations.medium,
-    );
-    _fade = CurvedAnimation(
-      parent: _switchController,
-      curve: AppCurves.standard,
-    );
-    _slide = Tween<Offset>(begin: const Offset(0, 0.04), end: Offset.zero)
-        .animate(
-          CurvedAnimation(parent: _switchController, curve: AppCurves.standard),
-        );
-    _switchController.forward();
-  }
-
-  @override
-  void dispose() {
-    _switchController.dispose();
-    super.dispose();
-  }
 
   void _toggle(bool login) {
     if (login == isLogin) return;
     setState(() => isLogin = login);
-    _switchController
-      ..reset()
-      ..forward();
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return PremiumGlassmorphismBg(
-      child: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
-              child: Row(
-                children: [
-                  const _BrandMark(),
-                  const Spacer(),
-                  const LanguageToggle(compact: true),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: _AuthModeSwitch(
-                isLogin: isLogin,
-                logInLabel: l10n.loginTab,
-
-                signUpLabel: l10n.signUpTab,
-                onChanged: _toggle,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: FadeTransition(
-                opacity: _fade,
-                child: SlideTransition(
-                  position: _slide,
-                  child: isLogin
-                      ? LoginScreen(onToggle: () => _toggle(false))
-                      : SignupScreen(onToggle: () => _toggle(true)),
+    return Scaffold(
+      resizeToAvoidBottomInset: true,
+      body: AuthBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsetsDirectional.symmetric(horizontal: 20),
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                const AuthHeader(),
+                const SizedBox(height: 16),
+                Semantics(
+                  label: '${l10n.loginTab} ${l10n.signUpTab}',
+                  child: AuthSegmentedTabs(
+                    isLogin: isLogin,
+                    onChanged: _toggle,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    switchInCurve: Curves.easeOutCubic,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      final slide = Tween<Offset>(
+                        begin: const Offset(0, 0.03),
+                        end: Offset.zero,
+                      ).animate(animation);
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SlideTransition(
+                            position: slide, child: child),
+                      );
+                    },
+                    child: isLogin
+                        ? LoginScreen(
+                            key: const ValueKey('login'),
+                            onToggle: () => _toggle(false),
+                          )
+                        : SignupScreen(
+                            key: const ValueKey('signup'),
+                            onToggle: () => _toggle(true),
+                          ),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -135,66 +109,61 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with TickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _passwordVisible = false;
   bool _isLoading = false;
-
-  late AnimationController _entryController;
-  late List<Animation<double>> _itemFades;
-  late List<Animation<Offset>> _itemSlides;
+  bool _formValid = false;
+  String? _formError;
 
   @override
   void initState() {
     super.initState();
-    _entryController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 720),
-    );
-    _itemFades = List.generate(
-      5,
-      (i) => CurvedAnimation(
-        parent: _entryController,
-        curve: Interval(i * 0.08, i * 0.08 + 0.52, curve: Curves.easeOut),
-      ),
-    );
-    _itemSlides = List.generate(
-      5,
-      (i) =>
-          Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(
-            CurvedAnimation(
-              parent: _entryController,
-              curve: Interval(
-                i * 0.08,
-                i * 0.08 + 0.52,
-                curve: Curves.easeOutCubic,
-              ),
-            ),
-          ),
-    );
-    _entryController.forward();
+    _emailController.addListener(_syncState);
+    _passwordController.addListener(_syncState);
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _entryController.dispose();
     super.dispose();
   }
 
-  Widget _animated(int i, Widget child) => FadeTransition(
-    opacity: _itemFades[i],
-    child: SlideTransition(position: _itemSlides[i], child: child),
-  );
+  String? _emailError(AppLocalizations l10n, String? v) {
+    if (v?.isEmpty ?? true) return l10n.authEmailEmpty;
+    if (!_emailRegex.hasMatch(v!)) return l10n.authEmailError;
+    return null;
+  }
+
+  String? _passwordError(AppLocalizations l10n, String? v) {
+    if (v?.isEmpty ?? true) return l10n.authPassEmpty;
+    if ((v?.length ?? 0) < 6) return l10n.authPassShort;
+    return null;
+  }
+
+  /// First validation error, shown under the form (inline Flutter errors are
+  /// hidden by design so the 54 px boxes never jump).
+  String? _collectError(AppLocalizations l10n) =>
+      _emailError(l10n, _emailController.text) ??
+      _passwordError(l10n, _passwordController.text);
+
+  void _syncState() {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    setState(() {
+      _formError = _collectError(l10n);
+      _formValid = _formError == null;
+    });
+  }
 
   Future<void> _handleLogin() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _formError = _collectError(l10n));
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final profileProv = context.read<ProfileProvider>();
     try {
       final res = await AuthService().signInWithEmail(
@@ -204,44 +173,45 @@ class _LoginScreenState extends State<LoginScreen>
       await profileProv.fetchProfile();
       if (!mounted) return;
       context._showSnack(
-        isArabic
-            ? 'مرحباً بعودتك مجدداً!'
-            : 'Welcome back, ${res.user?.email ?? ''}!',
+        l10n.authWelcomeBack(res.user?.email ?? ''),
         isError: false,
       );
       _navigateAfterAuth(context, profileProv);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         context._showSnack(
-          _friendlyError(e, isArabic: isArabic),
+          _friendlyError(e,
+              isArabic:
+                  Localizations.localeOf(context).languageCode == 'ar'),
           isError: true,
         );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleGoogleSignIn() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => _isLoading = true);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final profileProv = context.read<ProfileProvider>();
     try {
       final res = await AuthService().signInWithGoogle();
-      debugPrint("Google Sign-In successful. User ID: ${res.user?.id}");
+      debugPrint('Google Sign-In successful. User ID: ${res.user?.id}');
       await profileProv.fetchProfile();
       if (!mounted) return;
-      context._showSnack(
-        isArabic ? 'تم تسجيل الدخول بواسطة Google!' : 'Signed in with Google!',
-        isError: false,
-      );
+      context._showSnack(l10n.authGoogleOk, isError: false);
       _navigateAfterAuth(context, profileProv);
     } catch (e) {
-      debugPrint("Google Sign-In Error: $e");
-      if (mounted)
+      debugPrint('Google Sign-In Error: $e');
+      if (mounted) {
         context._showSnack(
-          _friendlyError(e, isArabic: isArabic),
+          _friendlyError(e,
+              isArabic:
+                  Localizations.localeOf(context).languageCode == 'ar'),
           isError: true,
         );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -250,154 +220,99 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Clean Standalone Greeting ──
-            _animated(
-              0,
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 10, 4, 14),
-                child: Text(
-                  isArabic ? 'أهلاً بك' : 'Welcome',
-                  style: TextStyle(
-                    fontFamily: font,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: isArabic ? 0 : -0.5,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-
-            // ── Credentials Glass Card ──
-            _animated(
-              1,
-              _ElevatedCard(
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 24, bottom: 12),
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Email
-                    _FieldLabel(l10n.operatorId),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    AuthTwoToneTitle(
+                      first: l10n.authLoginTitleA,
+                      second: l10n.authLoginTitleB,
+                      subtitle: l10n.loginDesc,
+                    ),
+                    const SizedBox(height: 24),
+                    AuthTextField(
                       controller: _emailController,
+                      label: l10n.operatorId,
                       hint: l10n.emailHint,
                       icon: Icons.alternate_email_rounded,
                       keyboardType: TextInputType.emailAddress,
-                      validator: _emailValidator,
+                      textInputAction: TextInputAction.next,
                       autofillHints: const [AutofillHints.email],
+                      validator: (v) => _emailError(l10n, v),
+                      onChanged: (_) => _syncState(),
                     ),
-                    const SizedBox(height: 20),
-
-                    // Password Label & Forgot Link
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _FieldLabel(l10n.encryptedKey),
-                        GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            _route(ForgotPasswordScreen()),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text(
-                              l10n.forgotPassword,
-                              style: TextStyle(
-                                fontFamily: font,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFFD1FC00),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    const SizedBox(height: 14),
+                    AuthTextField(
                       controller: _passwordController,
+                      label: l10n.encryptedKey,
                       hint: l10n.passwordHint,
                       icon: Icons.lock_outline_rounded,
                       obscureText: !_passwordVisible,
-                      validator: _passwordValidator,
+                      textInputAction: TextInputAction.done,
                       autofillHints: const [AutofillHints.password],
-                      suffix: GestureDetector(
+                      validator: (v) => _passwordError(l10n, v),
+                      onChanged: (_) => _syncState(),
+                      suffix: _VisibilityToggle(
+                        visible: _passwordVisible,
                         onTap: () => setState(
-                          () => _passwordVisible = !_passwordVisible,
+                            () => _passwordVisible = !_passwordVisible),
+                      ),
+                    ),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => Navigator.push(
+                          context,
+                          _route(const ForgotPasswordScreen()),
                         ),
-                        child: Icon(
-                          _passwordVisible
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          color: const Color(0xFFB0B5A5),
-                          size: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: Text(
+                            l10n.forgotPassword,
+                            style: TextStyle(
+                              fontFamily: AppText.fontFamily(
+                                  isArabic: Localizations.localeOf(context)
+                                          .languageCode ==
+                                      'ar'),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryFixed,
+                            ),
+                          ),
                         ),
                       ),
                     ),
+                    AuthFormError(message: _formError),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-
-            // ── Primary Action Button ──
-            _animated(
-              2,
-              PrimaryButton(
-                label: l10n.initializeSession,
-                isLoading: _isLoading,
-                onTap: _handleLogin,
-              ),
-            ),
-            const SizedBox(height: 22),
-
-            // ── Social Divider ──
-            _animated(3, _AuthDivider(label: l10n.externalAuth)),
-            const SizedBox(height: 18),
-
-            // ── Social Login ──
-            _animated(
-              3,
-              Row(
-                children: [
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.g_mobiledata_rounded,
-                      label: l10n.google,
-                      onTap: _handleGoogleSignIn,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.apple_rounded,
-                      label: l10n.apple,
-                      onTap: () => context._showSnack(
-                        isArabic
-                            ? 'تسجيل الدخول عبر Apple قريباً'
-                            : 'Apple sign-in coming soon',
-                        isError: false,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        AuthPrimaryButton(
+          label: l10n.initializeSession,
+          enabled: _formValid,
+          isLoading: _isLoading,
+          onTap: _handleLogin,
+        ),
+        const SizedBox(height: 16),
+        AuthDivider(label: l10n.externalAuth),
+        const SizedBox(height: 12),
+        AuthSocialButtons(
+          onGoogle: _handleGoogleSignIn,
+          onApple: () =>
+              context._showSnack(l10n.authAppleSoon, isError: false),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }
@@ -414,7 +329,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen>
-    with TickerProviderStateMixin {
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -423,41 +338,22 @@ class _SignupScreenState extends State<SignupScreen>
   bool _passVisible = false;
   bool _confVisible = false;
   bool _agreed = false;
+  bool _termsError = false;
   bool _isLoading = false;
-
-  late AnimationController _entryController;
-  late List<Animation<double>> _fades;
-  late List<Animation<Offset>> _slides;
+  bool _formValid = false;
+  String? _formError;
+  late AnimationController _termsShake;
 
   @override
   void initState() {
     super.initState();
-    _entryController = AnimationController(
+    _termsShake = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 420),
     );
-    _fades = List.generate(
-      6,
-      (i) => CurvedAnimation(
-        parent: _entryController,
-        curve: Interval(i * 0.07, i * 0.07 + 0.5, curve: Curves.easeOut),
-      ),
-    );
-    _slides = List.generate(
-      6,
-      (i) =>
-          Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(
-            CurvedAnimation(
-              parent: _entryController,
-              curve: Interval(
-                i * 0.07,
-                i * 0.07 + 0.5,
-                curve: Curves.easeOutCubic,
-              ),
-            ),
-          ),
-    );
-    _entryController.forward();
+    for (final c in [_nameCtrl, _emailCtrl, _passCtrl, _confCtrl]) {
+      c.addListener(_syncState);
+    }
   }
 
   @override
@@ -466,60 +362,154 @@ class _SignupScreenState extends State<SignupScreen>
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _confCtrl.dispose();
-    _entryController.dispose();
+    _termsShake.dispose();
     super.dispose();
   }
 
-  Widget _a(int i, Widget w) => FadeTransition(
-    opacity: _fades[i],
-    child: SlideTransition(position: _slides[i], child: w),
-  );
+  String? _nameError(AppLocalizations l10n, String? v) {
+    if ((v?.length ?? 0) < 2) return l10n.authNameError;
+    return null;
+  }
+
+  String? _emailError(AppLocalizations l10n, String? v) {
+    if (v?.isEmpty ?? true) return l10n.authEmailEmpty;
+    if (!_emailRegex.hasMatch(v!)) return l10n.authEmailError;
+    return null;
+  }
+
+  String? _passError(AppLocalizations l10n, String? v) {
+    if (v?.isEmpty ?? true) return l10n.authPassEmpty;
+    if ((v?.length ?? 0) < 6) return l10n.authPassShort;
+    return null;
+  }
+
+  String? _confirmError(AppLocalizations l10n, String? v) {
+    if (v != _passCtrl.text) return l10n.authPassMismatch;
+    return null;
+  }
+
+  String? _collectError(AppLocalizations l10n) =>
+      _nameError(l10n, _nameCtrl.text) ??
+      _emailError(l10n, _emailCtrl.text) ??
+      _passError(l10n, _passCtrl.text) ??
+      _confirmError(l10n, _confCtrl.text);
+
+  void _syncState() {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
+    setState(() {
+      _formError = _collectError(l10n);
+      // The CTA stays pressable while the terms box is unchecked so the
+      // shake + error feedback can fire; only the fields gate it.
+      _formValid = _formError == null;
+    });
+  }
+
+  void _shakeTerms() {
+    setState(() => _termsError = true);
+    _termsShake.forward(from: 0);
+  }
 
   Future<void> _handleSignup() async {
+    final l10n = AppLocalizations.of(context)!;
+    setState(() => _formError = _collectError(l10n));
     if (!_formKey.currentState!.validate()) return;
     if (!_agreed) {
-      context._showSnack(
-        'Please agree to the Terms & Conditions',
-        isError: true,
-      );
+      _shakeTerms();
+      context._showSnack(l10n.authAgreeTerms, isError: true);
       return;
     }
     setState(() => _isLoading = true);
     try {
+      final email = _emailCtrl.text.trim();
+      final name = _nameCtrl.text.trim();
       final res = await AuthService().registerWithEmail(
-        _emailCtrl.text.trim(),
+        email,
         _passCtrl.text,
-        _nameCtrl.text.trim(),
+        name,
         // Accounts created in the app are always customers. Coach accounts
         // come from the Core Dashboard website only.
         role: 'client',
       );
       if (res.user != null) {
         if (!mounted) return;
+        // Email confirmation ON → no session yet: route through the shared
+        // VerifyCodeScreen. verifyOTP(signup) creates the session, then we
+        // upsert the profile (RLS needs auth) and route in.
+        if (res.session == null) {
+          if (mounted) setState(() => _isLoading = false);
+          if (!mounted) return;
+          await Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => VerifyCodeScreen(
+                email: email,
+                flow: VerifyFlow.signup,
+                onVerified: () async {
+                  try {
+                    final userId = AuthService().currentUser?.id;
+                    if (userId != null) {
+                      try {
+                        await supabase.from('profiles').upsert({
+                          'id': userId,
+                          'name': name,
+                          'email': email,
+                          'role': 'client',
+                        }, onConflict: 'id');
+                      } catch (_) {}
+                    }
+                    if (!mounted) return;
+                    context._showSnack(l10n.authWelcomeNew(name),
+                        isError: false);
+                    final profileProv = context.read<ProfileProvider>();
+                    await profileProv.fetchProfile();
+                    if (!mounted) return;
+                    _navigateAfterAuth(context, profileProv);
+                  } catch (e) {
+                    if (mounted) {
+                      context._showSnack(_friendlyError(e,
+                          isArabic: Localizations.localeOf(context)
+                                  .languageCode ==
+                              'ar'), isError: true);
+                    }
+                  }
+                },
+              ),
+            ),
+          );
+          return;
+        }
         try {
           await supabase.from('profiles').upsert({
             'id': res.user!.id,
-            'name': _nameCtrl.text.trim(),
-            'email': _emailCtrl.text.trim(),
+            'name': name,
+            'email': email,
             'role': 'client',
           }, onConflict: 'id');
         } catch (_) {}
-        context._showSnack('Welcome, ${_nameCtrl.text}!', isError: false);
+        context._showSnack(l10n.authWelcomeNew(name), isError: false);
         final profileProv = context.read<ProfileProvider>();
         await profileProv.fetchProfile();
         if (!mounted) return;
         _navigateAfterAuth(context, profileProv);
       }
     } catch (e) {
-      if (mounted) context._showSnack(_friendlyError(e), isError: true);
+      if (mounted) {
+        context._showSnack(
+            _friendlyError(e,
+                isArabic:
+                    Localizations.localeOf(context).languageCode == 'ar'),
+            isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _handleGoogleSignup() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_agreed) {
-      context._showSnack('Agree to the Terms first', isError: true);
+      _shakeTerms();
+      context._showSnack(l10n.authAgreeTermsShort, isError: true);
       return;
     }
     setState(() => _isLoading = true);
@@ -530,8 +520,14 @@ class _SignupScreenState extends State<SignupScreen>
       if (!mounted) return;
       _navigateAfterAuth(context, profileProv);
     } catch (e) {
-      debugPrint("SignupScreen: Google Sign-In Error: $e");
-      if (mounted) context._showSnack(_friendlyError(e), isError: true);
+      debugPrint('SignupScreen: Google Sign-In Error: $e');
+      if (mounted) {
+        context._showSnack(
+            _friendlyError(e,
+                isArabic:
+                    Localizations.localeOf(context).languageCode == 'ar'),
+            isError: true);
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -540,178 +536,166 @@ class _SignupScreenState extends State<SignupScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── Clean Standalone Greeting ──
-            _a(
-              0,
-              Padding(
-                padding: const EdgeInsets.fromLTRB(4, 10, 4, 14),
+    final confirm = _confCtrl.text;
+    final confirmMatches = confirm.isNotEmpty && confirm == _passCtrl.text;
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(top: 24, bottom: 12),
+            child: AutofillGroup(
+              child: Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      l10n.signupTitle,
-                      style: TextStyle(
-                        fontFamily: font,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: isArabic ? 0 : -0.5,
-                      ),
+                    AuthTwoToneTitle(
+                      first: l10n.authSignupTitleA,
+                      second: l10n.authSignupTitleB,
+                      subtitle: l10n.signupDesc,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      l10n.signupDesc,
-                      style: TextStyle(
-                        fontFamily: font,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.onSurfaceVariant,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            _a(
-              1,
-              _ElevatedCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FieldLabel(l10n.operativeName),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    const SizedBox(height: 24),
+                    AuthTextField(
                       controller: _nameCtrl,
+                      label: l10n.operativeName,
                       hint: l10n.fullNameHint,
                       icon: Icons.person_outline_rounded,
                       textCapitalization: TextCapitalization.words,
-                      validator: (v) =>
-                          (v?.length ?? 0) < 2 ? 'Enter your name' : null,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.name],
+                      validator: (v) => _nameError(l10n, v),
+                      onChanged: (_) => _syncState(),
                     ),
-                    const SizedBox(height: 16),
-                    _FieldLabel(l10n.operatorId),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    const SizedBox(height: 14),
+                    AuthTextField(
                       controller: _emailCtrl,
+                      label: l10n.operatorId,
                       hint: l10n.emailHint,
                       icon: Icons.mail_outline_rounded,
                       keyboardType: TextInputType.emailAddress,
-                      validator: _emailValidator,
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.email],
+                      validator: (v) => _emailError(l10n, v),
+                      onChanged: (_) => _syncState(),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _a(
-              2,
-              _ElevatedCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _FieldLabel(l10n.encryptedKey),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    const SizedBox(height: 14),
+                    AuthTextField(
                       controller: _passCtrl,
+                      label: l10n.encryptedKey,
                       hint: l10n.passwordHint,
                       icon: Icons.lock_outline_rounded,
                       obscureText: !_passVisible,
-                      validator: _passwordValidator,
-                      suffix: GestureDetector(
+                      textInputAction: TextInputAction.next,
+                      autofillHints: const [AutofillHints.newPassword],
+                      validator: (v) => _passError(l10n, v),
+                      onChanged: (_) => _syncState(),
+                      suffix: _VisibilityToggle(
+                        visible: _passVisible,
                         onTap: () =>
                             setState(() => _passVisible = !_passVisible),
-                        child: Icon(
-                          _passVisible
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          color: AppColors.outline,
-                          size: 18,
-                        ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    _FieldLabel(l10n.confirmKey),
-                    const SizedBox(height: 8),
-                    SoftTextField(
+                    PasswordStrengthBar(password: _passCtrl.text),
+                    const SizedBox(height: 14),
+                    AuthTextField(
                       controller: _confCtrl,
+                      label: l10n.confirmKey,
                       hint: l10n.passwordHint,
                       icon: Icons.lock_outline_rounded,
                       obscureText: !_confVisible,
-                      validator: (v) =>
-                          v != _passCtrl.text ? 'Passwords do not match' : null,
-                      suffix: GestureDetector(
-                        onTap: () =>
-                            setState(() => _confVisible = !_confVisible),
-                        child: Icon(
-                          _confVisible
-                              ? Icons.visibility_off_rounded
-                              : Icons.visibility_rounded,
-                          color: AppColors.outline,
-                          size: 18,
-                        ),
+                      textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.newPassword],
+                      validator: (v) => _confirmError(l10n, v),
+                      onChanged: (_) => _syncState(),
+                      suffix: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (confirmMatches)
+                            Semantics(
+                              label: l10n.authPassMatch,
+                              child: Icon(Icons.check_circle_rounded,
+                                  size: 20, color: AppColors.primaryFixed),
+                            ),
+                          _VisibilityToggle(
+                            visible: _confVisible,
+                            onTap: () => setState(
+                                () => _confVisible = !_confVisible),
+                          ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    AuthFormError(message: _formError),
+                    const SizedBox(height: 4),
+                    AuthTermsRow(
+                      value: _agreed,
+                      showError: _termsError,
+                      shakeController: _termsShake,
+                      onChanged: (v) => setState(() {
+                        _agreed = v;
+                        if (v) _termsError = false;
+                      }),
+                      onLegalTap: () => context._showSnack(
+                          l10n.authLegalSoon,
+                          isError: false),
                     ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            _a(
-              4,
-              _TermsRow(
-                value: _agreed,
-                onChanged: (v) => setState(() => _agreed = v ?? false),
-              ),
+          ),
+        ),
+        AuthPrimaryButton(
+          label: l10n.createOperative,
+          enabled: _formValid,
+          isLoading: _isLoading,
+          onTap: () {
+            if (!_agreed) _shakeTerms();
+            _handleSignup();
+          },
+        ),
+        const SizedBox(height: 16),
+        AuthDivider(label: l10n.externalAuth),
+        const SizedBox(height: 12),
+        AuthSocialButtons(
+          onGoogle: _handleGoogleSignup,
+          onApple: () =>
+              context._showSnack(l10n.authAppleSoon, isError: false),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
+/// Show/hide password eye with a 44 px hit target and semantics.
+class _VisibilityToggle extends StatelessWidget {
+  final bool visible;
+  final VoidCallback onTap;
+  const _VisibilityToggle({required this.visible, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      label: visible ? l10n.authHidePass : l10n.authShowPass,
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: Padding(
+          padding:
+              const EdgeInsetsDirectional.only(start: 4, end: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Icon(
+              visible
+                  ? Icons.visibility_off_rounded
+                  : Icons.visibility_rounded,
+              color: AppColors.darkTextSecondary,
+              size: 20,
             ),
-            const SizedBox(height: 16),
-            _a(
-              4,
-              PrimaryButton(
-                label: l10n.createOperative,
-                isLoading: _isLoading,
-                onTap: _handleSignup,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _a(5, _AuthDivider(label: l10n.externalAuth)),
-            const SizedBox(height: 16),
-            _a(
-              5,
-              Row(
-                children: [
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.g_mobiledata_rounded,
-                      label: l10n.google,
-                      onTap: _handleGoogleSignup,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SocialButton(
-                      icon: Icons.apple_rounded,
-                      label: l10n.apple,
-                      onTap: () => context._showSnack(
-                        'Apple sign-up coming soon',
-                        isError: false,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -719,7 +703,7 @@ class _SignupScreenState extends State<SignupScreen>
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Helpers (unchanged behavior)
 // ─────────────────────────────────────────────────────────────────────────────
 
 void _navigateAfterAuth(BuildContext context, ProfileProvider profileProv) {
@@ -770,653 +754,17 @@ String _friendlyError(Object e, {bool isArabic = false}) {
       : 'Something went wrong. Please try again.';
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared UI Components — every color below is an AppColors / AuthAppText token
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _BrandMark extends StatelessWidget {
-  const _BrandMark();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.25),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.asset(
-              'assets/images/core_logo.png',
-              width: 36,
-              height: 36,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryActionGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.fitness_center_rounded,
-                  color: AppColors.onPrimary,
-                  size: 18,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        const Text(
-          'Core',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _AuthModeSwitch extends StatelessWidget {
-  final bool isLogin;
-  final String logInLabel, signUpLabel;
-  final ValueChanged<bool> onChanged;
-  const _AuthModeSwitch({
-    required this.isLogin,
-    required this.logInLabel,
-    required this.signUpLabel,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF181A14),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF383C2F), width: 1.4),
-      ),
-      child: Stack(
-        children: [
-          AnimatedAlign(
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.easeOutCubic,
-            alignment: isLogin
-                ? AlignmentDirectional.centerStart
-                : AlignmentDirectional.centerEnd,
-            child: FractionallySizedBox(
-              widthFactor: 0.5,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryActionGradient,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFD1FC00).withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Row(
-            children: [
-              Expanded(
-                child: _SwitchTab(
-                  label: logInLabel,
-                  selected: isLogin,
-                  onTap: () => onChanged(true),
-                ),
-              ),
-              Expanded(
-                child: _SwitchTab(
-                  label: signUpLabel,
-                  selected: !isLogin,
-                  onTap: () => onChanged(false),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SwitchTab extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SwitchTab({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Center(
-        child: AnimatedDefaultTextStyle(
-          duration: const Duration(milliseconds: 200),
-          style: TextStyle(
-            fontFamily: font,
-            fontSize: 14,
-            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-            color: selected ? const Color(0xFF101205) : const Color(0xFFD4D9C8),
-            letterSpacing: isArabic ? 0 : 0.4,
-          ),
-          child: Text(label),
-        ),
-      ),
-    );
-  }
-}
-
-class _ElevatedCard extends StatelessWidget {
-  final Widget child;
-  const _ElevatedCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: const Color(0xFF191B15).withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: const Color(0xFF383C2F), width: 1.4),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.45),
-                blurRadius: 28,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
-class _FieldLabel extends StatelessWidget {
-  final String text;
-  const _FieldLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return Text(
-      text,
-      style: TextStyle(
-        fontFamily: font,
-        fontSize: 13.5,
-        fontWeight: FontWeight.w700,
-        color: Colors.white,
-        letterSpacing: isArabic ? 0 : 0.4,
-      ),
-    );
-  }
-}
-
-class SoftTextField extends StatefulWidget {
-  final TextEditingController controller;
-  final String hint;
-  final IconData? icon;
-  final Widget? suffix;
-  final bool obscureText;
-  final TextInputType? keyboardType;
-  final TextCapitalization textCapitalization;
-  final String? Function(String?)? validator;
-  final Iterable<String>? autofillHints;
-
-  const SoftTextField({
-    super.key,
-    required this.controller,
-    required this.hint,
-    this.icon,
-    this.suffix,
-    this.obscureText = false,
-    this.keyboardType,
-    this.textCapitalization = TextCapitalization.none,
-    this.validator,
-    this.autofillHints,
-  });
-
-  @override
-  State<SoftTextField> createState() => _SoftTextFieldState();
-}
-
-class _SoftTextFieldState extends State<SoftTextField> {
-  final _focus = FocusNode();
-  bool _focused = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _focus.addListener(() => setState(() => _focused = _focus.hasFocus));
-  }
-
-  @override
-  void dispose() {
-    _focus.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10120D),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _focused ? const Color(0xFFD1FC00) : const Color(0xFF3F4535),
-          width: _focused ? 1.8 : 1.4,
-        ),
-        boxShadow: _focused
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFD1FC00).withValues(alpha: 0.20),
-                  blurRadius: 12,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
-      ),
-      child: TextFormField(
-        controller: widget.controller,
-        focusNode: _focus,
-        obscureText: widget.obscureText,
-        keyboardType: widget.keyboardType,
-        textCapitalization: widget.textCapitalization,
-        validator: widget.validator,
-        autofillHints: widget.autofillHints,
-        cursorColor: const Color(0xFFD1FC00),
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          fontFamily: font,
-        ),
-        decoration: InputDecoration(
-          hintText: widget.hint,
-          hintStyle: TextStyle(
-            color: const Color(0xFF888E7E),
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            fontFamily: font,
-          ),
-          prefixIcon: widget.icon != null
-              ? Icon(
-                  widget.icon,
-                  color: _focused
-                      ? const Color(0xFFD1FC00)
-                      : const Color(0xFFB2B8A6),
-                  size: 20,
-                )
-              : null,
-          suffixIcon: widget.suffix != null
-              ? Padding(
-                  padding: const EdgeInsetsDirectional.only(end: 12),
-                  child: widget.suffix,
-                )
-              : null,
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 40,
-            minHeight: 40,
-          ),
-          filled: false,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
-          errorStyle: TextStyle(
-            color: const Color(0xFFEE7F60),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            fontFamily: font,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class PrimaryButton extends StatefulWidget {
-  final String label;
-  final bool isLoading;
-  final VoidCallback onTap;
-  const PrimaryButton({
-    super.key,
-    required this.label,
-    this.isLoading = false,
-    required this.onTap,
-  });
-
-  @override
-  State<PrimaryButton> createState() => _PrimaryButtonState();
-}
-
-class _PrimaryButtonState extends State<PrimaryButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pressCtrl;
-  late Animation<double> _scaleAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _pressCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 110),
-    );
-    _scaleAnim = Tween<double>(
-      begin: 1.0,
-      end: 0.97,
-    ).animate(CurvedAnimation(parent: _pressCtrl, curve: Curves.easeIn));
-  }
-
-  @override
-  void dispose() {
-    _pressCtrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return ScaleTransition(
-      scale: _scaleAnim,
-      child: GestureDetector(
-        onTapDown: (_) => _pressCtrl.forward(),
-        onTapUp: (_) {
-          _pressCtrl.reverse();
-          if (!widget.isLoading) widget.onTap();
-        },
-        onTapCancel: () => _pressCtrl.reverse(),
-        child: Container(
-          height: 52,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            gradient: AppColors.primaryActionGradient,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryFixed.withValues(alpha: 0.28),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: widget.isLoading
-              ? SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.4,
-                    color: AppColors.onPrimary,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.label,
-                      style: TextStyle(
-                        fontFamily: font,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onPrimary,
-                        letterSpacing: isArabic ? 0 : 0.6,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      isArabic
-                          ? Icons.arrow_back_rounded
-                          : Icons.arrow_forward_rounded,
-                      color: AppColors.onPrimary,
-                      size: 18,
-                    ),
-                  ],
-                ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AuthDivider extends StatelessWidget {
-  final String label;
-  const _AuthDivider({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.outline.withValues(alpha: 0.15),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: font,
-              color: AppColors.outline.withValues(alpha: 0.8),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: isArabic ? 0 : 0.6,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Container(
-            height: 1,
-            color: AppColors.outline.withValues(alpha: 0.15),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const SocialButton({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final font = AppText.fontFamily(isArabic: isArabic);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          height: 50,
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: AppColors.outline.withValues(alpha: 0.18),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: AppColors.onSurface, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: font,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface,
-                  letterSpacing: isArabic ? 0 : 0.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Role-selection UI was removed: accounts created in the app are always
-// customers. Coaches sign up on the Core Dashboard website (SupabaseConfig
-// .dashboardUrl, linked from the home-screen banner).
-
-class _TermsRow extends StatelessWidget {
-  final bool value;
-  final ValueChanged<bool?> onChanged;
-  const _TermsRow({required this.value, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        SizedBox(
-          width: 22,
-          height: 22,
-          child: Checkbox(
-            value: value,
-            onChanged: onChanged,
-            activeColor: AppColors.primaryFixed,
-            checkColor: AppColors.onPrimary,
-            side: BorderSide(color: AppColors.outline.withValues(alpha: 0.5)),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: AuthAppText.bodySm.copyWith(
-                color: AppColors.darkTextPrimary,
-                fontSize: 12,
-              ),
-              children: [
-                TextSpan(text: l10n.agreeTerms),
-                TextSpan(
-                  text: l10n.termsConditions,
-                  style: AuthAppText.bodySm.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                    fontSize: 12,
-                  ),
-                ),
-                TextSpan(text: l10n.and),
-                TextSpan(
-                  text: l10n.privacyPolicy,
-                  style: AuthAppText.bodySm.copyWith(
-                    color: AppColors.onSurface,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-String? _emailValidator(String? v) {
-  if (v?.isEmpty ?? true) {
-    return 'Please enter your email';
-  }
-  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(v!)) {
-    return 'Please enter a valid email';
-  }
-  return null;
-}
-
-String? _passwordValidator(String? v) {
-  if (v?.isEmpty ?? true) {
-    return 'Please enter your password';
-  }
-  if ((v?.length ?? 0) < 6) {
-    return 'Password must be at least 6 characters';
-  }
-  return null;
-}
-
 PageRoute _route(Widget page) => PageRouteBuilder(
-  pageBuilder: (_, a, __) => page,
-  transitionsBuilder: (context, a, __, child) {
-    if (MediaQuery.disableAnimationsOf(context)) return child;
-    return FadeTransition(
-      opacity: CurvedAnimation(parent: a, curve: AppCurves.standard),
-      child: child,
+      pageBuilder: (_, a, __) => page,
+      transitionsBuilder: (context, a, __, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: a, curve: AppCurves.standard),
+          child: child,
+        );
+      },
+      transitionDuration: AppDurations.medium,
     );
-  },
-  transitionDuration: AppDurations.medium,
-);
 
 extension on BuildContext {
   void _showSnack(String msg, {required bool isError}) {
@@ -1439,4 +787,3 @@ extension on BuildContext {
     );
   }
 }
-

@@ -1,4 +1,3 @@
-
 import 'dart:async';
 
 import 'package:cached_network_image/cached_network_image.dart';
@@ -35,11 +34,14 @@ import 'services/supabase_client.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text.dart';
 import 'widgets/app_background.dart';
+import 'widgets/add_food_sheet.dart';
 import 'widgets/assigned_workout_card.dart';
 import 'widgets/food/glass_calories_card.dart';
 import 'widgets/food_logging_modal.dart';
 import 'widgets/food_log_fab.dart';
+import 'widgets/not_today_banner.dart';
 import 'widgets/pixel_art_icons.dart';
+import 'widgets/top_glow.dart';
 import 'features/health/data/health_service.dart';
 import 'features/health/presentation/widgets/today_activity_card.dart';
 
@@ -132,13 +134,11 @@ class _ModernPlayfulCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double borderRadius;
-  final Color? borderColor;
 
   const _ModernPlayfulCard({
     required this.child,
     this.padding,
     this.borderRadius = 22,
-    this.borderColor,
   });
 
   @override
@@ -148,10 +148,7 @@ class _ModernPlayfulCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: borderColor ?? AppColors.borderSubtle,
-          width: 1.0,
-        ),
+        border: Border.all(color: AppColors.borderSubtle, width: 1.0),
         boxShadow: [
           BoxShadow(
             // Home card spec: soft 4%-black elevation on light (blur 12,
@@ -613,7 +610,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             schema: 'public',
             table: 'subscriptions',
             callback: (payload) {
-              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              final rec = payload.newRecord.isNotEmpty
+                  ? payload.newRecord
+                  : payload.oldRecord;
               if (rec['client_id']?.toString() == uid && mounted) {
                 _loadAssignedWorkout();
               }
@@ -624,7 +623,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
             schema: 'public',
             table: 'workout_assignments',
             callback: (payload) {
-              final rec = payload.newRecord.isNotEmpty ? payload.newRecord : payload.oldRecord;
+              final rec = payload.newRecord.isNotEmpty
+                  ? payload.newRecord
+                  : payload.oldRecord;
               if (rec['client_id']?.toString() == uid && mounted) {
                 _loadAssignedWorkout();
               }
@@ -670,7 +671,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       value: 1.0,
     );
     StreakService.milestoneReached.addListener(_showMilestoneDialog);
-    _loadAll();
+    _loadAll(null, true);
   }
 
   void _showMilestoneDialog() {
@@ -719,7 +720,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: const Text('Keep going!'),
+                  child: Text(AppLocalizations.of(context)!.keepGoing),
                 ),
               ),
             ),
@@ -868,7 +869,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     );
   }
 
-  Future<void> _loadAll([DateTime? date]) async {
+  Future<void> _loadAll([DateTime? date, bool replayEntrance = false]) async {
     // Clear error on retry
     if (_hasError) {
       setState(() => _hasError = false);
@@ -876,10 +877,19 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     final targetDate = date ?? _selectedDate;
     final dateStr = targetDate.toIso8601String().substring(0, 10);
 
+    // Aim every save path that has no explicit date (FAB AI loggers,
+    // barcode, text, suggest-meal, mark-eaten) at the day the strip has
+    // selected — covers init, day taps and the midnight rollover snap.
+    NutritionService.syncSelectedLogDate(targetDate);
+
     // Best-effort smartwatch sync before reading today's summary. Hard-capped
     // at 3s so a hung health plugin can never stall home load; runs ahead of
     // the fetches so fresh steps land in daily_summary before we read it.
-    if (currentUserId != null && _isSameDay(targetDate, DateTime.now())) {
+    // Skipped on quiet refreshes (water taps, post-log refreshes) — steps
+    // don't change because a glass was drunk, and the 3s wait reads as lag.
+    if (replayEntrance &&
+        currentUserId != null &&
+        _isSameDay(targetDate, DateTime.now())) {
       try {
         await _syncTodayHealthQuietly().timeout(
           const Duration(seconds: 3),
@@ -896,8 +906,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     if (currentUserId == null) {
       if (mounted) {
         setState(() => _isLoading = false);
-        _heroCtrl.forward(from: 0.0);
-        _staggerCtrl.forward(from: 0.0);
+        if (replayEntrance) {
+          _heroCtrl.forward(from: 0.0);
+          _staggerCtrl.forward(from: 0.0);
+        }
       }
       return;
     }
@@ -977,8 +989,13 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       }
       if (mounted) {
         setState(() => _isLoading = false);
-        _heroCtrl.forward(from: 0.0);
-        _staggerCtrl.forward(from: 0.0);
+        // The entrance choreography plays on first load and day switches
+        // only — a quiet refresh (water tap, post-log reload) must update
+        // values in place, not re-animate the whole page (owner 2026-09-25).
+        if (replayEntrance) {
+          _heroCtrl.forward(from: 0.0);
+          _staggerCtrl.forward(from: 0.0);
+        }
       }
     }
   }
@@ -991,8 +1008,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   Widget _buildGlassCaloriesCard() {
     final l10n = AppLocalizations.of(context)!;
     final summary = _summary ?? const <String, dynamic>{};
-    double micro(String key) =>
-        (summary[key] as num?)?.toDouble() ?? 0;
+    double micro(String key) => (summary[key] as num?)?.toDouble() ?? 0;
 
     final macros = [
       NutrientChipMetric(
@@ -1023,8 +1039,13 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         goal: _goalFat,
         unit: 'g',
         color: AppColors.accentFat,
-        // Native pixel palette (greens + brown pit).
-        icon: PixelArtIcon(type: PixelIconType.avocado, size: 18),
+        // Native pixel palette tinted to the metric's own accent (lipid
+        // mauve), matching how the grain/leaf/sweet/salt glyphs are tinted.
+        icon: PixelArtIcon(
+          type: PixelIconType.avocado,
+          size: 18,
+          color: AppColors.accentFat,
+        ),
       ),
     ];
 
@@ -1079,9 +1100,7 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
           : DateFormat(
               'E d',
               Localizations.localeOf(context).languageCode,
-            )
-                .format(_selectedDate)
-                .toUpperCase(),
+            ).format(_selectedDate).toUpperCase(),
     );
   }
 
@@ -1127,12 +1146,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
 
   /// Food logged from outside home (the floating log button on any tab) —
   /// refresh the totals for the day being viewed so the hero rings are
-  /// current when the user switches back. No-op while browsing a past day:
-  /// today's log can't change what that day shows.
+  /// current when the user switches back. Backdated logging means a save
+  /// can land on ANY selected day, so no same-day guard: the debounced
+  /// refetch reads _selectedDate, which is always the right day.
   void refreshAfterExternalSave() {
-    if (_isSameDay(_selectedDate, DateTime.now())) {
-      _scheduleNutritionRefresh();
-    }
+    _scheduleNutritionRefresh();
   }
 
   /// Nutrition data changed anywhere in the app (nutrition tab's own logging,
@@ -1140,7 +1158,8 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
   /// routes every mutation here, so the hero card can't go stale no matter
   /// which surface the user logged from.
   void _onNutritionDataChanged() {
-    if (!_isSameDay(_selectedDate, DateTime.now())) return;
+    // No same-day guard: the debounced refetch reads the selected day, so
+    // a backdated write to a past day updates that day's card too.
     _scheduleNutritionRefresh();
   }
 
@@ -1194,8 +1213,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         (s, l) => s + ((l['fat_g'] as num?) ?? 0),
       );
       setState(() {});
-      _heroCtrl.forward(from: 0.0);
-      _staggerCtrl.forward(from: 0.0);
+      // Quiet refresh — values update in place; replaying the entrance
+      // choreography here made the whole page visibly "re-refresh" on every
+      // log/edit/delete through the data bus (owner 2026-09-25).
     } catch (e) {
       debugPrint('Home nutrition refresh error: $e');
     }
@@ -1321,217 +1341,263 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: _buildShimmer(),
+        // Ambient top light sits behind the skeleton and never scrolls.
+        body: Stack(children: [const TopGlow(), _buildShimmer()]),
       );
     }
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          _heroCtrl.reset();
-          _staggerCtrl.reset();
-          await _loadAll();
-        },
-        color: AppColors.primaryGreen,
-        backgroundColor: AppColors.surface,
-        child: CustomScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(height: MediaQuery.of(context).padding.top + 8),
-            ),
-
-            // ── 1. Top Greeting, Gamified Badges & Avatar ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 0,
-                child: _KaleeHeader(
-                  profile: _profile,
-                  isArabic: isArabic,
-                  streakCount: _streakStatus.currentStreak,
-                  streakLoggedToday: _streakStatus.loggedToday,
-                  onOpenProfile: () =>
-                      widget.onNavigate(widget.profileTabIndex),
-                  onOpenChat: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ChatListScreen()),
-                    );
-                  },
-                ),
+      body: Stack(
+        children: [
+          // Ambient top-down light bleed: fixed to the screen (Stack sibling
+          // of the scroll view, so it never moves on scroll), behind content,
+          // above the base background. AppBackground's corner orbs stay as-is.
+          const TopGlow(),
+          RefreshIndicator(
+            onRefresh: () async {
+              // Pull-to-refresh is an explicit ask — replay the entrance.
+              await _loadAll(null, true);
+            },
+            color: AppColors.primaryGreen,
+            backgroundColor: AppColors.surface,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics(),
               ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // A1/A2 — QuickStatsStrip removed: calories → Hero only, steps → Vitals only, protein → Hero macro rows.
-            // Hero is now the first data element after the header for visual hierarchy.
-
-            // ── 1b. Streak-at-risk nudge (once per app open) ──
-            if (_streakStatus.atRisk && !_nudgeShownThisSession)
-              SliverToBoxAdapter(
-                child: _StreakAtRiskBanner(
-                  streak: _streakStatus.currentStreak,
-                  isArabic: isArabic,
-                  onDismiss: () =>
-                      setState(() => _nudgeShownThisSession = true),
-                ),
-              ),
-
-            // ── 2. Goals Alert if not set ──
-            if (_noGoalsSet)
-              SliverToBoxAdapter(
-                child: _Stagger(
-                  ctrl: _staggerCtrl,
-                  index: 1,
-                  child: _GoalsOnboardingBanner(
-                    isArabic: isArabic,
-                    onTap: () => widget.onNavigate(widget.profileTabIndex),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: MediaQuery.of(context).padding.top + 8,
                   ),
                 ),
-              ),
 
-            // ── 2c. Week day selector (Fri..Thu) — sits above the hero and
-            // aims the whole page (hero + activity cards) at its day.
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 2,
-                child: WeekSelectorStrip(
-                  selectedDate: _selectedDate,
-                  onSelectDate: (d) {
-                    setState(() => _selectedDate = d);
-                    _loadAll(d);
-                  },
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-            // ── 3. Hero Fuel Card — calories gauge, macros & date stepper ──
-            // This is the single most important surface on Home: the ring
-            // and the calorie count get the most visual weight on the page.
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 2,
-                // Page-standard 20px inset — every other home section
-                // (header, week strip, activity, assigned card) self-pads
-                // with 20; without this the card runs edge-to-edge.
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _buildGlassCaloriesCard(),
-                ),
-              ),
-            ),
-
-            // 24px between major sections (hero → vitals → hub …), 12px
-            // within a section — the eye gets one obvious reading order:
-            // calories → macros → vitals → logging actions.
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── 4. Activity — Water & Steps cards ──
-            // Replaced the old vitals rings bar: same water/steps data,
-            // now driven by the week fetch and the selector above the hero.
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 3,
-                child: ActivitySection(
-                  selectedDate: _selectedDate,
-                  canEditDaily: _isSameDay(_selectedDate, DateTime.now()),
-                  onDataChanged: _loadAll,
-                  onOpenWatchSheet: _openWatchSheet,
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-            // ── 4b. Today's coach-assigned workout — hidden entirely when
-            // nothing is assigned so users without a coach see no friction.
-            if (_assignedWorkout != null) ...[
-              SliverToBoxAdapter(
-                child: _Stagger(
-                  ctrl: _staggerCtrl,
-                  index: 4,
-                  child: AssignedWorkoutCard(
-                    workout: _assignedWorkout!,
-                    isArabic: isArabic,
-                    onTap: _openAssignedWorkout,
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ],
-
-            // ── 5. App feature highlights — surfaces the app's other big
-            // pillars (coaches, workouts) right on Home so they
-            // don't get lost behind the bottom nav. Food logging lives in
-            // the floating button now (owner call 2026-09-17), so there is
-            // no inline logging hub here anymore.
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 5,
-                child: _FeatureHighlightsStrip(
-                  isArabic: isArabic,
-                  onOpenCoaches: () =>
-                      widget.onNavigate(widget.coachesTabIndex),
-                  // "Nutrition insights / full calorie details" — land on the
-                  // Nutrition tab (analytics), not the add-food logger.
-                  onOpenNutrition: () =>
-                      widget.onNavigate(widget.nutritionTabIndex),
-                  onOpenChat: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ChatListScreen()),
-                  ),
-                  onOpenRankings: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const LeaderboardScreen(),
+                // ── 1. Top Greeting, Gamified Badges & Avatar ──
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 0,
+                    child: _KaleeHeader(
+                      profile: _profile,
+                      isArabic: isArabic,
+                      streakCount: _streakStatus.currentStreak,
+                      streakLoggedToday: _streakStatus.loggedToday,
+                      onOpenProfile: () =>
+                          widget.onNavigate(widget.profileTabIndex),
+                      onOpenChat: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const ChatListScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
-              ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // 24px between major sections (header → strip → hero → activity
+                // → workout …), 12px within a section — one spacing scale for
+                // the whole page (2026-09-27 rhythm pass).
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-            // ── 6. Today's Fueling / Meals Feed ──
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 6,
-                child: _SectionHeader(
-                  title: l10n.todaysFueling,
-                  actionText: l10n.addFood,
-                  isArabic: isArabic,
-                  onAction: () => _openFoodLogger(),
+                // ── 1b. Streak-at-risk nudge (once per app open) ──
+                if (_streakStatus.atRisk && !_nudgeShownThisSession)
+                  SliverToBoxAdapter(
+                    child: _StreakAtRiskBanner(
+                      streak: _streakStatus.currentStreak,
+                      isArabic: isArabic,
+                      onDismiss: () =>
+                          setState(() => _nudgeShownThisSession = true),
+                    ),
+                  ),
+
+                // ── 2. Goals Alert if not set ──
+                if (_noGoalsSet)
+                  SliverToBoxAdapter(
+                    child: _Stagger(
+                      ctrl: _staggerCtrl,
+                      index: 1,
+                      child: _GoalsOnboardingBanner(
+                        isArabic: isArabic,
+                        onTap: () => widget.onNavigate(widget.profileTabIndex),
+                      ),
+                    ),
+                  ),
+
+                // ── 2c. Week day selector (Fri..Thu) — sits above the hero and
+                // aims the whole page (hero + activity cards) at its day.
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 2,
+                    child: WeekSelectorStrip(
+                      selectedDate: _selectedDate,
+                      onSelectDate: (d) {
+                        setState(() => _selectedDate = d);
+                        _loadAll(d);
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-            SliverToBoxAdapter(
-              child: _Stagger(
-                ctrl: _staggerCtrl,
-                index: 7,
-                child: _MealsFeed(
-                  logs: _nutritionLogs,
-                  isArabic: isArabic,
-                  onTapMeal: (mealType) => _openFoodLogger(mealType: mealType),
-                ),
-              ),
-            ),
 
-            // Bottom buffer to prevent navbar overlap
-            SliverToBoxAdapter(
-              child: SizedBox(height: LiquidTabBar.reservedHeight(context) + 8),
+                // ── 2d. "Not today" logging banner — persistent while the
+                // strip targets a non-today day: every entry added from any
+                // surface now lands on the viewed day, so the page says so.
+                // Not dismissible — it disappears the moment today is selected
+                // again (rebuilds on every strip change via setState).
+                if (!_isSameDay(_selectedDate, DateTime.now()))
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: LoggingNotTodayBanner(
+                        date: _selectedDate,
+                        isArabic: isArabic,
+                      ),
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── 3. Hero Fuel Card — calories gauge, macros & date stepper ──
+                // This is the single most important surface on Home: the ring
+                // and the calorie count get the most visual weight on the page.
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 2,
+                    // Page-standard 20px inset — every other home section
+                    // (header, week strip, activity, assigned card) self-pads
+                    // with 20; without this the card runs edge-to-edge.
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: _buildGlassCaloriesCard(),
+                    ),
+                  ),
+                ),
+
+                // 24px between major sections (hero → vitals → hub …), 12px
+                // within a section — the eye gets one obvious reading order:
+                // calories → macros → vitals → logging actions.
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── 4. Activity — Water & Steps cards ──
+                // Replaced the old vitals rings bar: same water/steps data,
+                // now driven by the week fetch and the selector above the hero.
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 3,
+                    child: ActivitySection(
+                      selectedDate: _selectedDate,
+                      canEditDaily: _isSameDay(_selectedDate, DateTime.now()),
+                      onDataChanged: _loadAll,
+                      onOpenWatchSheet: _openWatchSheet,
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── 4b. Today's coach-assigned workout — hidden entirely when
+                // nothing is assigned so users without a coach see no friction.
+                if (_assignedWorkout != null) ...[
+                  SliverToBoxAdapter(
+                    child: _Stagger(
+                      ctrl: _staggerCtrl,
+                      index: 4,
+                      child: AssignedWorkoutCard(
+                        workout: _assignedWorkout!,
+                        isArabic: isArabic,
+                        onTap: _openAssignedWorkout,
+                      ),
+                    ),
+                  ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
+
+                // ── 5. App feature highlights — surfaces the app's other big
+                // pillars (coaches, workouts) right on Home so they
+                // don't get lost behind the bottom nav. Food logging lives in
+                // the floating button now (owner call 2026-09-17), so there is
+                // no inline logging hub here anymore.
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 5,
+                    child: _FeatureHighlightsStrip(
+                      isArabic: isArabic,
+                      onOpenCoaches: () =>
+                          widget.onNavigate(widget.coachesTabIndex),
+                      // "Nutrition insights / full calorie details" — land on the
+                      // Nutrition tab (analytics), not the add-food logger.
+                      onOpenNutrition: () =>
+                          widget.onNavigate(widget.nutritionTabIndex),
+                      onOpenChat: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ChatListScreen(),
+                        ),
+                      ),
+                      onOpenRankings: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          // Pass the signed-in id so the board highlights
+                          // the user's row and pins their "your rank" card.
+                          builder: (_) => LeaderboardScreen(
+                            currentUserId:
+                                SupabaseConfig.client.auth.currentUser?.id,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // ── 6. Today's Fueling / Meals Feed ──
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 6,
+                    child: _SectionHeader(
+                      title: l10n.todaysFueling,
+                      actionText: l10n.addFood,
+                      isArabic: isArabic,
+                      // "+ إضافة طعام" opens the food library — the AI logger
+                      // is the meals-feed tap / FAB path, not this button.
+                      onAction: () => AddFoodSheet.show(
+                        context,
+                        onFoodLogged: _loadAll,
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                SliverToBoxAdapter(
+                  child: _Stagger(
+                    ctrl: _staggerCtrl,
+                    index: 7,
+                    child: _MealsFeed(
+                      logs: _nutritionLogs,
+                      isArabic: isArabic,
+                      onTapMeal: (mealType) =>
+                          _openFoodLogger(mealType: mealType),
+                    ),
+                  ),
+                ),
+
+                // Bottom buffer: nav-bar clearance PLUS the floating log button's
+                // full footprint (10 gap + 58 circle + 8 breathing) so the last
+                // rows of live text never sit under the FAB's hit area when the
+                // scroll bottoms out — on any screen height (2026-09-27).
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: LiquidTabBar.reservedHeight(context) + 76,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -1930,7 +1996,7 @@ class _StreakAtRiskBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
       padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -2228,10 +2294,10 @@ class _MealsFeed extends StatelessWidget {
           return _InteractiveScaleDetector(
             child: _ModernPlayfulCard(
               padding: const EdgeInsets.all(12),
-              borderRadius: 18,
-              borderColor: hasLogs
-                  ? AppColors.accent.withValues(alpha: 0.45)
-                  : AppColors.borderSubtle,
+              borderRadius: 20,
+              // Logged state reads from the filled check circle alone — the
+              // volt accent is reserved for actionable elements, so the card
+              // border stays the standard neutral hairline (2026-09-27).
               child: SizedBox(
                 width: 90,
                 child: Column(
@@ -2246,7 +2312,7 @@ class _MealsFeed extends StatelessWidget {
                           height: 18,
                           decoration: BoxDecoration(
                             color: hasLogs
-                                ? AppColors.accent
+                                ? AppColors.textPrimary
                                 : AppColors.surfaceContainerHighest,
                             shape: BoxShape.circle,
                           ),
@@ -2254,7 +2320,7 @@ class _MealsFeed extends StatelessWidget {
                             hasLogs ? Icons.check_rounded : Icons.add_rounded,
                             size: 11,
                             color: hasLogs
-                                ? AppColors.onPrimary
+                                ? AppColors.background
                                 : AppColors.textSecondary,
                           ),
                         ),
@@ -2279,7 +2345,7 @@ class _MealsFeed extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
                         color: hasLogs
-                            ? AppColors.onPrimaryContainer
+                            ? AppColors.textPrimary
                             : AppColors.textMuted,
                       ),
                     ),

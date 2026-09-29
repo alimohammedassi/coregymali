@@ -138,7 +138,6 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                         decoration: BoxDecoration(
                           color: AppColors.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.borderSubtle),
                         ),
                         child: Icon(
                           Icons.arrow_back_rounded,
@@ -169,9 +168,8 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                     ],
                   ),
                 ),
-                // Coach count instead of a static, purposeless "Premium"
-                // badge — a real, live piece of information in the same
-                // slot.
+                // Coach count — a real, live number in a quiet tinted pill,
+                // same badge language as the workout card's status badge.
                 Consumer<CoachListNotifier>(
                   builder: (ctx, notifier, _) {
                     final count = notifier.coaches?.length;
@@ -179,17 +177,17 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                     return Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 6,
+                        vertical: 7,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceContainerHigh,
+                        color: AppColors.lightGreen,
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.borderSubtle),
                       ),
                       child: Text(
                         '$count coaches',
                         style: AppText.labelMd.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.onPrimaryContainer,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     );
@@ -246,15 +244,25 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
+                          // Only the active chip carries any emphasis — a
+                          // filled pill with a soft glow. Inactive chips are
+                          // flat, no border, so the row doesn't read as a
+                          // grid of boxes.
                           color: active
                               ? AppColors.accent
                               : AppColors.surfaceContainerHigh,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: active
-                                ? AppColors.accent
-                                : AppColors.borderSubtle,
-                          ),
+                          boxShadow: active
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Text(
                           spec[0].toUpperCase() + spec.substring(1),
@@ -282,53 +290,48 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
   Widget _buildPriceSlider() {
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Price / month',
-                    style: AppText.labelSm.copyWith(color: AppColors.textMuted),
-                  ),
-                  Text(
-                    _priceRange.end >= 500
-                        ? '\$${_priceRange.start.toInt()}+'
-                        : '\$${_priceRange.start.toInt()} – \$${_priceRange.end.toInt()}',
-                    style: AppText.titleSm.copyWith(color: AppColors.accent),
-                  ),
-                ],
-              ),
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: AppColors.accent,
-                  inactiveTrackColor: AppColors.surfaceContainerHigh,
-                  thumbColor: AppColors.accent,
-                  overlayColor: AppColors.accent.withValues(alpha: 0.12),
-                  rangeThumbShape: const RoundRangeSliderThumbShape(
-                    enabledThumbRadius: 8,
-                  ),
+        // No card, no shadow — a boxed container around a single slider
+        // was visual weight with nothing in it. Same horizontal rhythm as
+        // the "Specialization" label above it instead.
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Price / month',
+                  style: AppText.labelSm.copyWith(color: AppColors.textMuted),
                 ),
-                child: RangeSlider(
-                  values: _priceRange,
-                  min: 0,
-                  max: 500,
-                  divisions: 20,
-                  onChanged: (v) => setState(() => _priceRange = v),
-                  onChangeEnd: (_) => _fetch(),
+                Text(
+                  _priceRange.end >= 500
+                      ? '\$${_priceRange.start.toInt()}+'
+                      : '\$${_priceRange.start.toInt()} – \$${_priceRange.end.toInt()}',
+                  style: AppText.titleSm.copyWith(color: AppColors.accent),
+                ),
+              ],
+            ),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                activeTrackColor: AppColors.accent,
+                inactiveTrackColor: AppColors.surfaceContainerHigh,
+                thumbColor: AppColors.accent,
+                overlayColor: AppColors.accent.withValues(alpha: 0.12),
+                rangeThumbShape: const RoundRangeSliderThumbShape(
+                  enabledThumbRadius: 8,
                 ),
               ),
-            ],
-          ),
+              child: RangeSlider(
+                values: _priceRange,
+                min: 0,
+                max: 500,
+                divisions: 20,
+                onChanged: (v) => setState(() => _priceRange = v),
+                onChangeEnd: (_) => _fetch(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -381,7 +384,8 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
                     isCancelling: isSubscribed && subNotifier.isLoading,
                     onTap: () => _navigateToDetail(coach),
                     onSubscribe: () => _showSubscribeSheet(coach),
-                    onCancel: () => _confirmCancelFromMarketplace(ctx, coach, subNotifier),
+                    onCancel: () =>
+                        _confirmCancelFromMarketplace(ctx, coach, subNotifier),
                   );
                 },
               ),
@@ -431,23 +435,36 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
   }
 
   Future<void> _confirmCancelFromMarketplace(
-    BuildContext ctx, CoachEntity coach, ActiveSubscriptionNotifier subNotifier) async {
+    BuildContext ctx,
+    CoachEntity coach,
+    ActiveSubscriptionNotifier subNotifier,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: ctx,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Cancel subscription?',
-            style: AppText.titleMd.copyWith(
-                color: AppColors.textPrimary, fontWeight: FontWeight.w800)),
+        title: Text(
+          'Cancel subscription?',
+          style: AppText.titleMd.copyWith(
+            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         content: Text(
           'Your coach workouts and nutrition plan will be hidden until you subscribe again.',
-          style: AppText.bodySm.copyWith(color: AppColors.textSecondary, height: 1.5),
+          style: AppText.bodySm.copyWith(
+            color: AppColors.textSecondary,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text('Keep', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text(
+              'Keep',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -463,12 +480,14 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
     ScaffoldMessenger.of(ctx).showSnackBar(
       SnackBar(
         content: Text(
-          ok ? 'Subscription cancelled' : (subNotifier.error ?? 'Couldn\'t cancel — try again'),
+          ok
+              ? 'Subscription cancelled'
+              : (subNotifier.error ?? 'Couldn\'t cancel — try again'),
           style: AppText.bodyMd.copyWith(
-              color: ok ? AppColors.textPrimary : Colors.white),
+            color: ok ? AppColors.textPrimary : Colors.white,
+          ),
         ),
-        backgroundColor:
-            ok ? AppColors.surfaceContainerHigh : AppColors.error,
+        backgroundColor: ok ? AppColors.surfaceContainerHigh : AppColors.error,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
@@ -501,6 +520,13 @@ class _CoachMarketplaceScreenState extends State<CoachMarketplaceScreen> {
 }
 
 // ── CoachCard widget ──────────────────────────────────────────────────────────
+//
+// Full rework: the previous version gave each coach a tall, mostly-empty
+// card (a big banner photo, then a lot of padding) so the page felt like
+// scrolling through whitespace instead of options. This version is a
+// compact row: a small photo, name/rating/specialties immediately next to
+// it, and price + a real CTA in the same glance — so every card actually
+// makes the case to subscribe instead of just taking up screen space.
 
 class CoachCard extends StatelessWidget {
   final CoachEntity coach;
@@ -525,8 +551,6 @@ class CoachCard extends StatelessWidget {
         ? coach.profile!.name.substring(0, 1).toUpperCase()
         : '?';
     return Container(
-      height: 120,
-      width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -537,12 +561,62 @@ class CoachCard extends StatelessWidget {
       child: Center(
         child: Text(
           initials,
-          style: AppText.headlineLg.copyWith(
+          style: AppText.titleLg.copyWith(
             color: AppColors.accent.withValues(alpha: 0.6),
-            fontSize: 40,
           ),
         ),
       ),
+    );
+  }
+
+  /// Small square thumbnail instead of a full-width banner — a photo that
+  /// supports the row instead of one that IS the row.
+  Widget _thumbnail() {
+    return FutureBuilder<dynamic>(
+      // Cache hit → zero queries. Miss → single lookup that fills the
+      // cache for every later rebuild of this card.
+      future: kCoachGalleryCache.containsKey(coach.userId)
+          ? Future.value(kCoachGalleryCache[coach.userId])
+          : Supabase.instance.client
+                .from('coach_onboarding')
+                .select('gallery_images')
+                .eq('user_id', coach.userId)
+                .maybeSingle()
+                .then((row) {
+                  final images = (row?['gallery_images'] as List?) ?? const [];
+                  kCoachGalleryCache[coach.userId] = images;
+                  return images;
+                }),
+      builder: (context, snapshot) {
+        final images = snapshot.data;
+        Widget child;
+        if (images is List && images.isNotEmpty) {
+          child = CachedNetworkImage(
+            imageUrl: images.first as String,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              color: AppColors.surfaceContainerHigh,
+              child: Center(
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.accent.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+            ),
+            errorWidget: (context, url, error) => _initialsFallback(),
+          );
+        } else {
+          child = _initialsFallback();
+        }
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(width: 68, height: 68, child: child),
+        );
+      },
     );
   }
 
@@ -554,244 +628,228 @@ class CoachCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 14),
-          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSubscribed
-                  ? AppColors.accent.withValues(alpha: 0.4)
-                  : AppColors.borderSubtle,
-            ),
+            // A single accent ring, reserved for the one state that
+            // actually matters: an active subscription.
+            border: isSubscribed
+                ? Border.all(color: AppColors.accent.withValues(alpha: 0.45))
+                : null,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cardShadow,
+                blurRadius: 14,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FutureBuilder<dynamic>(
-                // Cache hit → zero queries. Miss → single lookup that fills
-                // the cache for every later rebuild of this card.
-                future: kCoachGalleryCache.containsKey(coach.userId)
-                    ? Future.value(kCoachGalleryCache[coach.userId])
-                    : Supabase.instance.client
-                          .from('coach_onboarding')
-                          .select('gallery_images')
-                          .eq('user_id', coach.userId)
-                          .maybeSingle()
-                          .then((row) {
-                            final images =
-                                (row?['gallery_images'] as List?) ?? const [];
-                            kCoachGalleryCache[coach.userId] = images;
-                            return images;
-                          }),
-                builder: (context, snapshot) {
-                  final images = snapshot.data;
-                  if (images is List && images.isNotEmpty) {
-                    final bannerUrl = images.first as String;
-                    // A real image widget (with its own loading/error
-                    // states) instead of DecorationImage, which fails
-                    // silently and leaves a blank banner on a bad URL.
-                    return CachedNetworkImage(
-                      imageUrl: bannerUrl,
-                      height: 120,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        height: 120,
-                        width: double.infinity,
-                        color: AppColors.surfaceContainerHigh,
-                        child: Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: AppColors.accent.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => _initialsFallback(),
-                    );
-                  }
-
-                  return _initialsFallback();
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.all(18),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _thumbnail(),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CoachAvatar(url: coach.profile?.avatarUrl, size: 52),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      coach.profile?.name ?? 'Coach',
-                                      style: AppText.titleMd.copyWith(
-                                        color: AppColors.textPrimary,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isSubscribed)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.accent.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                        borderRadius: BorderRadius.circular(20),
-                                        border: Border.all(
-                                          color: AppColors.accent.withValues(
-                                            alpha: 0.4,
-                                          ),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Active',
-                                        style: AppText.labelMd.copyWith(
-                                          color: AppColors.accent,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              CoachStarRating(rating: coach.rating),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Bio
-                    Text(
-                      coach.bio,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.bodySm.copyWith(
-                        height: 1.5,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Spec chips
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: coach.specialization
-                          .take(3)
-                          .map((s) => CoachSpecChip(label: s))
-                          .toList(),
-                    ),
-                    const SizedBox(height: 12),
-                    // Latest review preview — visible while scrolling coaches page
-                    _CoachCardReviewPreview(coachId: coach.id),
-                    const SizedBox(height: 16),
-
-                    // Price + button
-                    Row(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(
-                              'Price / mo',
-                              style: AppText.labelSm.copyWith(
-                                color: AppColors.textMuted,
+                            Expanded(
+                              child: Text(
+                                coach.profile?.name ?? 'Coach',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppText.titleMd.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                             ),
-                            Text(
-                              '\$${coach.priceMonthly.toStringAsFixed(0)}',
-                              style: AppText.titleLg.copyWith(
-                                color: AppColors.accent,
+                            if (isSubscribed)
+                              Container(
+                                margin: const EdgeInsetsDirectional.only(
+                                  start: 6,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.lightGreen,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  'Active',
+                                  style: AppText.labelSm.copyWith(
+                                    color: AppColors.onPrimaryContainer,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 10,
+                                  ),
+                                ),
                               ),
-                            ),
                           ],
                         ),
-                        const Spacer(),
-                        Semantics(
-                          button: true,
-                          enabled: !isCancelling,
-                          label: isSubscribed
-                              ? (isCancelling ? 'Cancelling' : 'Cancel subscription')
-                              : 'Subscribe',
-                          child: GestureDetector(
-                            onTap: isCancelling
-                                ? null
-                                : (isSubscribed ? onCancel : onSubscribe),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: EdgeInsets.symmetric(
-                                horizontal: isSubscribed ? 14 : 20,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isSubscribed
-                                    ? Colors.transparent
-                                    : AppColors.accent,
-                                borderRadius: BorderRadius.circular(12),
-                                border: isSubscribed
-                                    ? Border.all(
-                                        color: AppColors.error
-                                            .withValues(alpha: 0.85),
-                                        width: 1.2,
-                                      )
-                                    : null,
-                              ),
-                              child: isCancelling
-                                  ? SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.error,
-                                      ),
-                                    )
-                                  : Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (isSubscribed) ...[
-                                          Icon(Icons.close_rounded,
-                                              color: AppColors.error,
-                                              size: 14),
-                                          const SizedBox(width: 6),
-                                        ],
-                                        Text(
-                                          isSubscribed
-                                              ? 'Cancel'
-                                              : 'Subscribe',
-                                          style: AppText.buttonPrimary
-                                              .copyWith(
-                                            color: isSubscribed
-                                                ? AppColors.error
-                                                : AppColors.onPrimary,
-                                            fontSize:
-                                                isSubscribed ? 12 : null,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                          ),
+                        const SizedBox(height: 3),
+                        CoachStarRating(rating: coach.rating),
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: coach.specialization
+                              .take(2)
+                              .map((s) => CoachSpecChip(label: s))
+                              .toList(),
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                ],
+              ),
+
+              // Latest review — a quiet quoted line, only shown when there
+              // is real social proof to show; this is what actually
+              // persuades someone to tap Subscribe, not a bigger photo.
+              _CoachCardReviewPreview(coachId: coach.id),
+
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Price / mo',
+                        style: AppText.labelSm.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      Text(
+                        '\$${coach.priceMonthly.toStringAsFixed(0)}',
+                        style: AppText.titleLg.copyWith(
+                          color: AppColors.accent,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  _CtaButton(
+                    isSubscribed: isSubscribed,
+                    isCancelling: isCancelling,
+                    onSubscribe: onSubscribe,
+                    onCancel: onCancel,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Subscribe/Cancel action. Subscribing gets the app's glowing gradient CTA
+/// treatment; cancelling stays deliberately quieter (text + subtle red
+/// tint, no gradient) so it never competes with it visually.
+class _CtaButton extends StatelessWidget {
+  final bool isSubscribed;
+  final bool isCancelling;
+  final VoidCallback onSubscribe;
+  final VoidCallback? onCancel;
+
+  const _CtaButton({
+    required this.isSubscribed,
+    required this.isCancelling,
+    required this.onSubscribe,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (isSubscribed) {
+      return Semantics(
+        button: true,
+        enabled: !isCancelling,
+        label: isCancelling ? 'Cancelling' : 'Cancel subscription',
+        child: GestureDetector(
+          onTap: isCancelling ? null : onCancel,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: isCancelling
+                ? SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.error,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.close_rounded,
+                        color: AppColors.error,
+                        size: 13,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        'Cancel',
+                        style: AppText.buttonPrimary.copyWith(
+                          color: AppColors.error,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      );
+    }
+
+    return Semantics(
+      button: true,
+      label: 'Subscribe',
+      child: GestureDetector(
+        onTap: onSubscribe,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryActionGradient,
+            borderRadius: BorderRadius.circular(13),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Subscribe',
+                style: AppText.buttonPrimary.copyWith(
+                  color: AppColors.onPrimary,
+                  fontSize: 13,
                 ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 14,
+                color: AppColors.onPrimary,
               ),
             ],
           ),
@@ -818,27 +876,29 @@ class _CoachCardReviewPreview extends StatelessWidget {
         final latest = reviews.first;
         final rating = (latest as dynamic).rating as int? ?? 0;
         final comment = (latest as dynamic).comment as String?;
-        if ((comment == null || comment.trim().isEmpty) && rating == 0) return const SizedBox.shrink();
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.borderSubtle),
-          ),
+        if ((comment == null || comment.trim().isEmpty) && rating == 0) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(top: 10),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.star_rounded, color: AppColors.tertiary, size: 14),
+              Icon(Icons.star_rounded, color: AppColors.tertiary, size: 13),
               const SizedBox(width: 4),
-              Text('$rating.0', style: AppText.labelSm.copyWith(color: AppColors.textSecondary, fontWeight: FontWeight.w800, fontSize: 11)),
-              const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  comment?.trim().isNotEmpty == true ? comment! : 'Rated $rating stars',
+                  comment?.trim().isNotEmpty == true
+                      ? '"${comment!.trim()}"'
+                      : 'Rated $rating stars',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppText.bodySm.copyWith(color: AppColors.textSecondary, fontSize: 11.5, height: 1.3),
+                  style: AppText.bodySm.copyWith(
+                    color: AppColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 11.5,
+                    height: 1.3,
+                  ),
                 ),
               ),
             ],
@@ -921,35 +981,44 @@ class _SubscribeBottomSheet extends StatelessWidget {
                         style: AppText.bodySm.copyWith(color: AppColors.error),
                       ),
                     ),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
                     height: 56,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: AppColors.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryActionGradient,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                        elevation: 0,
-                      ),
-                      onPressed: () async {
-                        final navigator = Navigator.of(context);
-                        final activeSub = context
-                            .read<ActiveSubscriptionNotifier>();
-                        final notifier = ctx.read<SubscriptionNotifier>();
-                        await notifier.subscribeToCoach(coach.id);
-                        // Failure keeps the sheet open so the error text
-                        // above stays visible; success refreshes the active
-                        // subscription and closes.
-                        if (notifier.error != null) return;
-                        await activeSub.fetchActiveSubscription();
-                        if (navigator.mounted) navigator.pop();
-                      },
-                      child: Text(
-                        'Confirm subscription',
-                        style: AppText.buttonPrimary.copyWith(
-                          color: AppColors.onPrimary,
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () async {
+                          final navigator = Navigator.of(context);
+                          final activeSub = context
+                              .read<ActiveSubscriptionNotifier>();
+                          final notifier = ctx.read<SubscriptionNotifier>();
+                          await notifier.subscribeToCoach(coach.id);
+                          // Failure keeps the sheet open so the error text
+                          // above stays visible; success refreshes the
+                          // active subscription and closes.
+                          if (notifier.error != null) return;
+                          await activeSub.fetchActiveSubscription();
+                          if (navigator.mounted) navigator.pop();
+                        },
+                        child: Center(
+                          child: Text(
+                            'Confirm subscription',
+                            style: AppText.buttonPrimary.copyWith(
+                              color: AppColors.onPrimary,
+                            ),
+                          ),
                         ),
                       ),
                     ),

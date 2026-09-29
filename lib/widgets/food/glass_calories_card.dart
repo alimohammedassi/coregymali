@@ -90,7 +90,7 @@ class NutrientChipMetric {
 ///             owner: the old rows read as loose colored slabs) with the
 ///             three micros as one-line rows split by hairline dividers;
 ///             color lives only in each row's dot
-///   below   — 2 pagination dots (volt active) + COMPACT centered
+///   below   — 2 pagination dots (neutral ink active) + COMPACT centered
 ///             Consumed/Remaining toggle (volt selected, near-black ink)
 ///
 /// Over goal: hero border + bar + kcal number turn amber-warning.
@@ -204,8 +204,16 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.glassBorder),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderSubtle),
+        // Same unified card chrome as the hero page beside it.
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -225,7 +233,9 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
     );
   }
 
-  // ── 2 dots: one per page (volt active — the app's active-state accent) ──
+  // ── 2 dots: one per page. Active dot is neutral ink — this is a page-
+  // position indicator (informational), and the volt accent is reserved for
+  // actionable elements only (2026-09-27 color-system pass).
   Widget _buildPageDots() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -245,7 +255,7 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
             margin: const EdgeInsets.symmetric(horizontal: 2.5),
             decoration: BoxDecoration(
               color: active
-                  ? AppColors.accent
+                  ? AppColors.textPrimary
                   : AppColors.textMuted.withValues(alpha: 0.30),
               borderRadius: BorderRadius.circular(2.5),
             ),
@@ -269,11 +279,20 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: over ? AppColors.overGoalWarningBorder : AppColors.glassBorder,
+          color: over ? AppColors.overGoalWarningBorder : AppColors.borderSubtle,
           width: over ? 1.4 : 1,
         ),
+        // Home card spec: the same soft elevation every card on this screen
+        // uses (blur 12 / offset (0,4)).
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -498,9 +517,19 @@ class _NutrientCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
+        // Unified card chrome (2026-09-27): every card on Home is surface/
+        // tinted fill + the same radius-20 neutral hairline + soft shadow.
+        // Only the fill/icon/bar color varies per metric — not the structure.
         color: _tintFill(m.color),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _tintBorder(m.color)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,8 +553,40 @@ class _NutrientCard extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          _MiniBar(fraction: state._fractionFor(m), color: m.color, height: 5),
-          const SizedBox(height: 8),
+          // Explanatory progress bar + % — the bar tells the story at a
+          // glance (owner 2026-09-26: "بارات توضيحية مش أرقام بس"); the fill
+          // and the % turn amber when the goal is exceeded.
+          Row(
+            children: [
+              Expanded(
+                child: _MiniBar(
+                  fraction: state._fractionFor(m),
+                  color: m.color,
+                  height: 8,
+                  over: over,
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  _localize(
+                    m.goal > 0 ? '${((value / m.goal) * 100).round()}%' : '—',
+                    context,
+                  ),
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    color: over
+                        ? AppColors.overGoalWarning
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 7),
           SizedBox(
             height: 16,
             child: Row(
@@ -585,58 +646,99 @@ class _MicroRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final m = metric;
     final double value = state._displayValue(m);
+    final bool over = m.goal > 0 && value > m.goal;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(color: m.color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              m.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+          Row(
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: m.color,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: AlignmentDirectional.centerEnd,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    '${_fmtL(value, context)}${m.unit}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary,
-                    ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Text(
+                  m.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
                   ),
-                  const SizedBox(width: 3),
-                  Text(
-                    '/ ${_fmtL(m.goal, context)}${m.unit}',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '${_fmtL(value, context)}${m.unit}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Text(
+                        '/ ${_fmtL(m.goal, context)}${m.unit}',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Same explanatory bar+%% as the macro cards — amber when the
+          // reference value is exceeded (owner 2026-09-26).
+          Row(
+            children: [
+              Expanded(
+                child: _MiniBar(
+                  fraction: m.goal > 0 ? (value / m.goal).clamp(0.0, 1.0) : 0.0,
+                  color: m.color,
+                  height: 6,
+                  over: over,
+                ),
+              ),
+              const SizedBox(width: 6),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  _localize(
+                    m.goal > 0 ? '${((value / m.goal) * 100).round()}%' : '—',
+                    context,
+                  ),
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: over ? AppColors.overGoalWarning : AppColors.textMuted,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -701,14 +803,20 @@ class _MiniBar extends StatelessWidget {
   final Color color;
   final double height;
 
+  /// Goal exceeded — the fill switches to the amber warning color so the
+  /// bar itself explains the over-goal state (2026-09-26).
+  final bool over;
+
   const _MiniBar({
     required this.fraction,
     required this.color,
     required this.height,
+    this.over = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final fill = over ? AppColors.overGoalWarning : color;
     return SizedBox(
       height: height,
       child: Stack(
@@ -731,7 +839,7 @@ class _MiniBar extends StatelessWidget {
                   widthFactor: value,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: color,
+                      color: fill,
                       borderRadius: BorderRadius.circular(height / 2),
                     ),
                   ),

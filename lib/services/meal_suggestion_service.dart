@@ -34,15 +34,17 @@ class MealSuggestionService {
 
   /// [mealType] / [style] are the sheet's optional preferences.
   /// [calorieFraction] is the share of the remaining budget the meal should
-  /// cover (owner v2.1 calorie picker). [targetCalories] is the NEW 2026-09-24
+  /// cover (owner v2.1 calorie picker). [targetCalories] is the 2026-09-24
   /// finish field: user-typed kcal that overrides fraction/remaining entirely.
-  /// The edge function treats absent values as "no hint" — caller supplies
-  /// EITHER targetCalories OR calorieFraction, targetCalories wins.
+  /// [craving] (2026-09-24 realism finish) is free text like "كشري" or
+  /// "burger" — the AI builds the closest real-world version of it, sized to
+  /// the target. Absent values mean "no hint"; targetCalories wins.
   Future<MealSuggestion> suggestMeal({
     String? mealType,
     String? style,
     double? calorieFraction,
     int? targetCalories,
+    String? craving,
   }) async {
     try {
       final response = await _supabase.functions.invoke(
@@ -52,6 +54,7 @@ class MealSuggestionService {
           if (style != null) 'style': style,
           if (calorieFraction != null) 'calorie_fraction': calorieFraction,
           if (targetCalories != null) 'target_calories': targetCalories,
+          if (craving != null && craving.isNotEmpty) 'craving': craving,
         },
       );
       return MealSuggestion.fromJson(

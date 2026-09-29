@@ -290,6 +290,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get logMeal => 'تسجيل وجبة';
 
   @override
+  String loggingNotToday(String date) {
+    return 'بتسجّل ليوم $date — مش النهاردة';
+  }
+
+  @override
   String get breakfast => 'الإفطار';
 
   @override
@@ -673,7 +678,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get workoutsLabel => 'تمارين';
 
   @override
-  String get caloriesLabel => 'سعرات';
+  String get caloriesLabel => 'السعرات';
 
   @override
   String get estimatedOneRM => 'تقدير الـ 1RM عبر الزمن';
@@ -1189,6 +1194,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appearance => 'المظهر';
 
   @override
+  String get themeMode => 'الثيم';
+
+  @override
   String get themeSystem => 'النظام';
 
   @override
@@ -1274,6 +1282,190 @@ class AppLocalizationsAr extends AppLocalizations {
   String get onbContinue => 'متابعة';
 
   @override
+  String get flow1Title => 'يلا نتعرّف\nأكتر';
+
+  @override
+  String get flow1Subtitle => 'اكتب بياناتك الأساسية';
+
+  @override
+  String get flow2Title => 'جسمك\nالحالي';
+
+  @override
+  String get flow2Subtitle => 'عشان نظبط خطتك على مقاسك';
+
+  @override
+  String get flow3Title => 'إيه\nهدفك؟';
+
+  @override
+  String get flow3Subtitle => 'اختار هدفك الأساسي';
+
+  @override
+  String get flow4Title => 'عايز النتيجة\nقد إيه بسرعة؟';
+
+  @override
+  String get flow4Subtitle => 'سرعتك هي اللي بتحدد تعديل السعرات';
+
+  @override
+  String get flowPaceNotNeeded =>
+      'هدفك عن الأداء — السعرات هتفضل كاملة من غير تعديل سرعة.';
+
+  @override
+  String get flow5Title => 'نشاطك\nقد إيه؟';
+
+  @override
+  String get flow5Subtitle => 'بيساعدنا نحسب تغذيتك';
+
+  @override
+  String get flow6Title => 'حدد\nأهدافك';
+
+  @override
+  String get flow6Subtitle => 'ابنِ روتينك';
+
+  @override
+  String get flowAge => 'السن';
+
+  @override
+  String get flowGender => 'النوع';
+
+  @override
+  String get flowHeight => 'الطول (سم)';
+
+  @override
+  String get flowWeight => 'الوزن (كجم)';
+
+  @override
+  String get flowBodyFat => 'نسبة الدهون %';
+
+  @override
+  String get flowOptional => 'اختياري';
+
+  @override
+  String get flowKnowBodyFat => 'أعرف نسبة دهوني';
+
+  @override
+  String get flowBodyFatHint =>
+      'حساب بالعضل الصافي (Katch-McArdle) — أدق تقدير ممكن';
+
+  @override
+  String get flowTargetWeight => 'الوزن المستهدف';
+
+  @override
+  String get flowYears => 'سنة';
+
+  @override
+  String get flowGoalDescGain => 'ابنِ عضل وقوة';
+
+  @override
+  String get flowGoalDescLoss => 'احرق دهون وخفّف';
+
+  @override
+  String get flowGoalDescEndurance => 'طوّر لياقتك وتنفّسك';
+
+  @override
+  String get flowGoalDescFlex => 'حركة أحسن واستشفاء أسرع';
+
+  @override
+  String get flowGoalDescGeneral => 'خليك صحي ونشيط';
+
+  @override
+  String get flowPaceSlow => 'هادي';
+
+  @override
+  String get flowPaceStandard => 'معتاد';
+
+  @override
+  String get flowPaceFast => 'سريع';
+
+  @override
+  String flowPaceDescSlow(int delta) {
+    return '$delta سعرة / يوم — ألطف على روتينك';
+  }
+
+  @override
+  String flowPaceDescStandard(int delta) {
+    return '$delta سعرة / يوم — المعدل الكلاسيكي';
+  }
+
+  @override
+  String flowPaceDescFast(int delta) {
+    return '$delta سعرة / يوم — سريع ومحتاج انضباط';
+  }
+
+  @override
+  String get flowActDescSedentary => 'بدون رياضة تقريباً';
+
+  @override
+  String get flowActDescLight => '1–3 أيام / أسبوع';
+
+  @override
+  String get flowActDescModerate => '3–5 أيام / أسبوع';
+
+  @override
+  String get flowActDescVery => '6–7 أيام / أسبوع';
+
+  @override
+  String get flowActDescExtra => 'مرتين يومياً / رياضي';
+
+  @override
+  String get flowEstDaily => 'تقدير سعراتك اليومية:';
+
+  @override
+  String get flowBmiTitle => 'مؤشر كتلة جسمك';
+
+  @override
+  String get flowBmiUnder => 'أقل من الطبيعي';
+
+  @override
+  String get flowBmiNormal => 'طبيعي';
+
+  @override
+  String get flowBmiOver => 'زيادة وزن';
+
+  @override
+  String get flowBmiObese => 'سمنة';
+
+  @override
+  String flowGainInsight(String diff) {
+    return 'زيادة $diff كجم من وزنك الحالي';
+  }
+
+  @override
+  String flowLoseInsight(String diff) {
+    return 'خسارة $diff كجم من وزنك الحالي';
+  }
+
+  @override
+  String get flowAllSet => 'جاهز خلاص!';
+
+  @override
+  String get flowAllSetDesc =>
+      'دي الخطة اللي بياناتك بنوها — غيّر أي حاجة وهتتحدث لحظياً.';
+
+  @override
+  String get flowResultDaily => 'هدفك اليومي';
+
+  @override
+  String get flowResultBmr => 'حرق الراحة (BMR)';
+
+  @override
+  String get flowResultActivity => 'حرق النشاط';
+
+  @override
+  String get flowResultGoal => 'تعديل الهدف';
+
+  @override
+  String get flowResultMacros => 'الماكروز الموصى بيها';
+
+  @override
+  String get flowKcalDay => 'سعرة / يوم';
+
+  @override
+  String get flowContinue => 'متابعة';
+
+  @override
+  String get flowComplete => 'إتمام';
+
+  @override
   String get pushDialogTitle => 'فعّل الإشعارات';
 
   @override
@@ -1354,6 +1546,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cpNoData => 'مفيش داتا متسجلة لسه';
+
+  @override
+  String get cpActivityPrivate =>
+      'العضو ده خيّل نشاطه اليومي خاص — هتشوف ترتيبه التنافسي بس.';
 
   @override
   String get rankCard => 'الترتيب';
@@ -1666,6 +1862,44 @@ class AppLocalizationsAr extends AppLocalizations {
   String get suggestMeal => 'اقترح وجبة';
 
   @override
+  String get dailyMeals => 'وجبات النهاردة';
+
+  @override
+  String itemsLoggedCount(String count) {
+    return '$count أكلة متسجلة';
+  }
+
+  @override
+  String kcalRemainingShort(String kcal) {
+    return 'باقي $kcal سعرة';
+  }
+
+  @override
+  String kcalGoalLabel(String kcal) {
+    return 'هدف $kcal سعرة';
+  }
+
+  @override
+  String ofGoal(String goal) {
+    return 'من $goal';
+  }
+
+  @override
+  String get syncingNutrition => 'بنزامن بيانات التغذية...';
+
+  @override
+  String get addLabel => 'إضافة';
+
+  @override
+  String get quickLabel => 'سريع';
+
+  @override
+  String get removeLabel => 'إزالة';
+
+  @override
+  String get keepGoing => 'كمّل كده!';
+
+  @override
   String get suggestCardSubtitle =>
       'الـ AI يركّبلك وجبة تضبط على الكالوريز المتبقية ليك';
 
@@ -1680,6 +1914,13 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get suggestCaloriesRow => 'السعرات';
+
+  @override
+  String get suggestCravingLabel => 'نفسك تاكل إيه؟ (اختياري)';
+
+  @override
+  String get suggestCravingHint =>
+      'الأكلة اللي في دماغك — مثال: كشري، برجر، شاورما';
 
   @override
   String get suggestCaloriesLabel => 'السعرات';
@@ -1778,4 +2019,591 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get suggestFailed => 'معرفناش نجيب اقتراح. جرب تاني.';
+
+  @override
+  String removeLogConfirm(String name) {
+    return 'تشيل \"$name\" من وجبات النهاردة؟';
+  }
+
+  @override
+  String get deleteAccount => 'حذف الحساب';
+
+  @override
+  String get deleteAccountTitle => 'تحذف حسابك؟';
+
+  @override
+  String get deleteAccountBody =>
+      'حسابك وكل بياناته — البروفايل وسجل التمارين والاشتراكات — هيتحذفوا نهائي، ومش هينفع ترجع.';
+
+  @override
+  String get deleteAccountFailed => 'معرفناش نحذف حسابك. جرب تاني.';
+
+  @override
+  String get legal => 'قانوني';
+
+  @override
+  String get termsOfService => 'شروط الاستخدام';
+
+  @override
+  String get rankRookie => 'مبتدئ';
+
+  @override
+  String get rankIron => 'حديد';
+
+  @override
+  String get rankBronze => 'برونز';
+
+  @override
+  String get rankSilver => 'فضة';
+
+  @override
+  String get rankGold => 'ذهب';
+
+  @override
+  String get lbTierDiamond => 'ماسي';
+
+  @override
+  String get lbWeeklyChallenge => 'تحدي الأسبوع';
+
+  @override
+  String get lbMonthlyChallenge => 'تحدي الشهر';
+
+  @override
+  String lbDaysLeft(int n) {
+    return 'متبقي $n أيام';
+  }
+
+  @override
+  String lbResetsOn(String date) {
+    return 'دور جديد يبدأ $date';
+  }
+
+  @override
+  String get lbWindowWeekly => 'أسبوعي';
+
+  @override
+  String get lbWindowMonthly => 'شهري';
+
+  @override
+  String get lbCatOverall => 'إجمالي';
+
+  @override
+  String get lbCatCalories => 'السعرات';
+
+  @override
+  String get lbCatWater => 'المياه';
+
+  @override
+  String get lbCatWorkouts => 'التمارين';
+
+  @override
+  String get lbCatStreak => 'الالتزام';
+
+  @override
+  String get lbCatLongestStreak => 'أطول التزام';
+
+  @override
+  String get lbYourRank => 'مركزك';
+
+  @override
+  String get lbUnitPts => 'نقطة';
+
+  @override
+  String get lbUnitWorkouts => 'تمارين';
+
+  @override
+  String get lbUnitDays => 'يوم';
+
+  @override
+  String lbDayStreakN(int n) {
+    return 'التزام $n يوم';
+  }
+
+  @override
+  String lbLongestStreakN(int n) {
+    return 'الأطول: $n يوم';
+  }
+
+  @override
+  String get lbLeadingBoard => 'أنت في صدارة الترتيب';
+
+  @override
+  String lbTiedWith(int rank) {
+    return 'متعادل مع المركز #$rank';
+  }
+
+  @override
+  String lbPtsToNextRank(int n, int rank) {
+    return 'باقي $n نقطة على المركز #$rank';
+  }
+
+  @override
+  String get lbTopTier => 'وصلت لأعلى مستوى';
+
+  @override
+  String lbPtsToTier(int n, String tier) {
+    return 'باقي $n نقطة للوصول إلى $tier';
+  }
+
+  @override
+  String get lbNewHere => 'جديد';
+
+  @override
+  String get lbSameRank => 'بدون تغيير';
+
+  @override
+  String lbMovedUp(int n) {
+    return 'تقدم $n مراكز';
+  }
+
+  @override
+  String lbMovedDown(int n) {
+    return 'تراجع $n مراكز';
+  }
+
+  @override
+  String get lbLastWeek => 'الأسبوع الماضي';
+
+  @override
+  String get lbNewCycle => 'بدأ تحدي جديد';
+
+  @override
+  String get lbDismiss => 'إخفاء';
+
+  @override
+  String get lbScoreTooltip => 'إزاي بتتحسب نقاطك';
+
+  @override
+  String get lbScoreCalcTitle => 'نقاطك';
+
+  @override
+  String get lbScoreFormula =>
+      'نقاطك = 60% التزام سعرات + 40% التزام مياه خلال الفترة المختارة. سجّل باستمرار لتتقدم.';
+
+  @override
+  String get lbSearchHint => 'ابحث عن اسم…';
+
+  @override
+  String lbNoSearchResults(String query) {
+    return 'مفيش حد اسمه \"$query\" هنا';
+  }
+
+  @override
+  String get lbEmptyCategory => 'لا أحد حجز لوحة الترتيب دي بعد';
+
+  @override
+  String get lbEmptyCategorySub => 'سجّل النهاردة واحتل المركز الأول';
+
+  @override
+  String get lbPinJump => 'مركزك — اضغط للانتقال';
+
+  @override
+  String get lbYou => 'أنت';
+
+  @override
+  String get lbYouBadge => 'أنت';
+
+  @override
+  String get lbCompCardTitle => 'التنافس';
+
+  @override
+  String lbRankOf(int rank, int total) {
+    return 'المركز #$rank من $total';
+  }
+
+  @override
+  String lbRankOfTotal(int total) {
+    return 'من $total';
+  }
+
+  @override
+  String lbRankJourney(int from, int to) {
+    return 'من #$from إلى #$to';
+  }
+
+  @override
+  String get lbRankHistoryEmpty => 'البيانات مش كفاية لسه';
+
+  @override
+  String get profilePhotoTitle => 'صورة البروفايل';
+
+  @override
+  String get editDataTitle => 'تعديل البيانات';
+
+  @override
+  String get saveDataBtn => 'احفظ البيانات';
+
+  @override
+  String get saveGoalsBtn => 'احفظ الأهداف';
+
+  @override
+  String get viewPhoto => 'شوف الصورة';
+
+  @override
+  String get changePhoto => 'غيّر الصورة';
+
+  @override
+  String get uploadPhoto => 'ارفع صورة';
+
+  @override
+  String get profilePhotoUpdated => 'صورة البروفايل اتحدثت';
+
+  @override
+  String get uploadFailed => 'الرفع فشل. جرب تاني.';
+
+  @override
+  String get coachDashboard => 'داشبورد المدرب';
+
+  @override
+  String get coachDashboardSubtitle => 'إدارة العملاء والبرامج من الويب';
+
+  @override
+  String get noProgressData => 'مفيش بيانات تقدم لسه';
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
+  String get refreshProfile => 'تحديث البروفايل';
+
+  @override
+  String get profilePhotoTapOptions => 'صورة البروفايل. دوس للاختيارات.';
+
+  @override
+  String get editBodyData => 'تعديل بيانات الجسم';
+
+  @override
+  String get editDailyTargets => 'تعديل الأهداف اليومية';
+
+  @override
+  String activeProgramTapHint(String name) {
+    return 'البرنامج النشط: $name. دوس للمشاهدة.';
+  }
+
+  @override
+  String chartSessionsSemantics(int count) {
+    return 'مخطط تقدم 1RM — $count حصص مسجلة.';
+  }
+
+  @override
+  String sessionsCount(int count) {
+    return '$count حصة';
+  }
+
+  @override
+  String get yearsShort => 'سنة';
+
+  @override
+  String get perWeekShort => '×/أسبوع';
+
+  @override
+  String get statsLoadFailed => 'معرفناش نجيب إحصائياتك.';
+
+  @override
+  String get invalidAgeRange => 'السن لازم يكون رقم صحيح بين 10 و 100.';
+
+  @override
+  String get invalidWeightRange => 'الوزن لازم يكون رقم بين 20 و 300 كجم.';
+
+  @override
+  String get invalidHeightRange => 'الطول لازم يكون رقم بين 100 و 250 سم.';
+
+  @override
+  String get invalidCalories => 'الكالوريز لازم تكون رقم صحيح مش سالب.';
+
+  @override
+  String get invalidProtein => 'البروتين لازم يكون رقم صحيح مش سالب.';
+
+  @override
+  String get invalidWeeklyWorkouts =>
+      'التمارين الأسبوعية لازم تكون رقم صحيح مش سالب.';
+
+  @override
+  String get motivationEmpty => 'سجّل أول أكلة تبدأ بيها يومك! 🌟';
+
+  @override
+  String get motivationStart => 'بداية جميلة! كمّل بأكل نضيف 🌱';
+
+  @override
+  String get motivationZone => 'إنت في المدار! كمّل لهدف البروتين ⚡';
+
+  @override
+  String get motivationAlmost => 'قربت من هدفك! اختم بقوة 🎯';
+
+  @override
+  String get motivationBullseye => 'ع المركز! يوم تغذية مثالي 🎉';
+
+  @override
+  String get motivationOver => 'عدّيت الهدف — وازنها بشربة مياه 🧘';
+
+  @override
+  String addCaloriesTo(String meal) {
+    return 'ضيف سعرات على $meal بالظبط';
+  }
+
+  @override
+  String get addToLog => 'ضيف على السجل';
+
+  @override
+  String get foodItemFallback => 'أكلة';
+
+  @override
+  String get editServingMeal => 'عدّل الكمية والوجبة';
+
+  @override
+  String get overBudget => 'عدّيت الميزانية';
+
+  @override
+  String targetKcal(String kcal) {
+    return 'الهدف: $kcal سعرة';
+  }
+
+  @override
+  String dailyTargetMl(String ml) {
+    return 'الهدف اليومي: $ml مل';
+  }
+
+  @override
+  String get waterGlassSub => 'كوب 🥛';
+
+  @override
+  String get waterBottleSub => 'زجاجة 💧';
+
+  @override
+  String get dailyGoalTargets => 'الأهداف اليومية';
+
+  @override
+  String macroLeftKcal(String kcal, String grams) {
+    return '$kcal سعرة · باقي ${grams}g';
+  }
+
+  @override
+  String get noFoodLogged => 'لسه مسجلتش أكل النهاردة';
+
+  @override
+  String get mealTotals => 'إجمالي الوجبة:';
+
+  @override
+  String get removeItem => 'تشيل العنصر؟';
+
+  @override
+  String get avgCalories => 'متوسط السعرات';
+
+  @override
+  String get onTrack => 'في المدار';
+
+  @override
+  String get daysInZone => 'أيام جوه النطاق';
+
+  @override
+  String get workouts => 'تمارين';
+
+  @override
+  String get thisWeek => 'الأسبوع ده';
+
+  @override
+  String get kcalPerDay => 'سعرة / يوم';
+
+  @override
+  String get aiWaitWorking => 'لسه شغال…';
+
+  @override
+  String aiWaitElapsed(String secs) {
+    return '$secs ث';
+  }
+
+  @override
+  String get aiWaitSlow =>
+      'بياخد وقت أطول من المعتاد — لسه بنشتغل عليه. أوقات الذروة ممكن توصل لحد دقيقة.';
+
+  @override
+  String get verifyTitle1 => 'تحقق';
+
+  @override
+  String get verifyTitle2 => 'الرمز';
+
+  @override
+  String verifySubtitle(String email) {
+    return 'أرسلنا رمز تحقق إلى $email';
+  }
+
+  @override
+  String get verifyButton => 'تحقق من الرمز';
+
+  @override
+  String get verifyDidntReceive => 'لم يصلك الرمز؟';
+
+  @override
+  String verifyResendIn(int seconds) {
+    return 'إعادة الإرسال بعد $seconds ث';
+  }
+
+  @override
+  String get verifyResend => 'إعادة إرسال';
+
+  @override
+  String get verifyRemember => 'تتذكر كلمة المرور؟';
+
+  @override
+  String get verifyDidntRemember => 'لم تتذكرها؟';
+
+  @override
+  String get verifySignIn => 'تسجيل الدخول';
+
+  @override
+  String get verifyErrIncomplete => 'أدخل الرمز الكامل من بريدك';
+
+  @override
+  String get verifyErrRateLimit => 'محاولات كثيرة. انتظر قليلا.';
+
+  @override
+  String get verifyErrInvalid => 'رمز غير صالح أو منتهي';
+
+  @override
+  String get verifyErrKeepTyping => 'رمز غير صالح - إذا كان أطول، أكمل الكتابة';
+
+  @override
+  String get verifyErrConnection => 'حدث خطأ. تحقق من اتصالك.';
+
+  @override
+  String get verifySnackResent => 'تم إرسال رمز جديد إلى بريدك';
+
+  @override
+  String get verifySnackWait => 'انتظر قبل طلب رمز آخر';
+
+  @override
+  String get verifySnackFailed => 'تعذر إعادة الإرسال. حاول مجددا.';
+
+  @override
+  String get forgotTitle1 => 'استعادة';
+
+  @override
+  String get forgotTitle2 => 'الوصول';
+
+  @override
+  String get forgotSubtitle => 'أدخل بريدك لاستلام رمز الاستعادة';
+
+  @override
+  String get forgotEmailLabel => 'البريد الإلكتروني';
+
+  @override
+  String get forgotEmailEmpty => 'أدخل بريدك الإلكتروني';
+
+  @override
+  String get forgotEmailInvalid => 'أدخل بريدا إلكترونيا صالحا';
+
+  @override
+  String get forgotSendButton => 'إرسال رمز الاستعادة';
+
+  @override
+  String get resetTitle1 => 'كلمة مرور';
+
+  @override
+  String get resetTitle2 => 'جديدة';
+
+  @override
+  String get resetSubtitle => 'أدخل كلمة المرور الجديدة';
+
+  @override
+  String get resetNewKey => 'الجديدة';
+
+  @override
+  String get resetConfirmKey => 'التأكيد';
+
+  @override
+  String get resetPassEmpty => 'أدخل كلمة المرور';
+
+  @override
+  String get resetPassShort => 'كلمة المرور 8 أحرف على الأقل';
+
+  @override
+  String get resetPassWeak => 'يجب أن تحوي حرفا كبيرا وصغيرا ورقما';
+
+  @override
+  String get resetPassConfirmEmpty => 'أكد كلمة المرور';
+
+  @override
+  String get resetPassMismatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get resetButton => 'تعيين كلمة المرور';
+
+  @override
+  String get resetSessionExpired => 'انتهت جلسة الاستعادة. اطلب رمزا جديدا.';
+
+  @override
+  String get resetSuccess => 'تم تعيين كلمة المرور بنجاح!';
+
+  @override
+  String get authLoginTitleA => 'أهلا';
+
+  @override
+  String get authLoginTitleB => 'بك';
+
+  @override
+  String get authSignupTitleA => 'إنشاء';
+
+  @override
+  String get authSignupTitleB => 'حساب';
+
+  @override
+  String get authStrengthWeak => 'ضعيفة';
+
+  @override
+  String get authStrengthFair => 'متوسطة';
+
+  @override
+  String get authStrengthStrong => 'قوية';
+
+  @override
+  String get authNameError => 'أدخل اسمك';
+
+  @override
+  String get authPassMismatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get authPassMatch => 'كلمتا المرور متطابقتان';
+
+  @override
+  String get authEmailEmpty => 'أدخل بريدك الإلكتروني';
+
+  @override
+  String get authEmailError => 'أدخل بريدا إلكترونيا صالحا';
+
+  @override
+  String get authPassEmpty => 'أدخل كلمة المرور';
+
+  @override
+  String get authPassShort => 'كلمة المرور 6 أحرف على الأقل';
+
+  @override
+  String get authAgreeTerms => 'وافق على الشروط والأحكام أولا';
+
+  @override
+  String get authAgreeTermsShort => 'وافق على الشروط أولا';
+
+  @override
+  String get authAppleSoon => 'تسجيل الدخول عبر Apple قريبا';
+
+  @override
+  String get authLegalSoon => 'الصفحات القانونية قريبا';
+
+  @override
+  String get authShowPass => 'إظهار كلمة المرور';
+
+  @override
+  String get authHidePass => 'إخفاء كلمة المرور';
+
+  @override
+  String authWelcomeBack(String email) {
+    return 'مرحبا بعودتك، $email!';
+  }
+
+  @override
+  String authWelcomeNew(String name) {
+    return 'أهلا $name!';
+  }
+
+  @override
+  String get authGoogleOk => 'تم تسجيل الدخول بواسطة Google!';
 }

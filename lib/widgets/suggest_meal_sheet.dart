@@ -13,6 +13,7 @@ import '../services/meal_suggestion_service.dart';
 import '../services/nutrition_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import 'ai_wait_line.dart';
 import 'pixel_art_icons.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,6 +41,12 @@ bool get _systemReduceMotion => WidgetsBinding
     .accessibilityFeatures
     .disableAnimations;
 
+/// Async remaining-budget read used by the FAB entry point: the sheet opens
+/// INSTANTLY and fills the hero/target when this lands (owner 2026-09-25 —
+/// awaiting the DB before pushing read as a dead button on slow networks).
+typedef SuggestBudgetLoader =
+    Future<({double kcal, double protein, double carbs, double fat})?> Function();
+
 // Tinted-outlined card language shared with the calories card.
 Color _tintFill(Color c) =>
     AppColors.isLight ? c.withValues(alpha: 0.12) : c.withValues(alpha: 0.18);
@@ -53,6 +60,7 @@ class SuggestMealPopupRoute extends PopupRoute<void> {
     required this.remainingProtein,
     required this.remainingCarbs,
     required this.remainingFat,
+    this.budgetLoader,
     this.onLogged,
   });
 
@@ -60,6 +68,7 @@ class SuggestMealPopupRoute extends PopupRoute<void> {
   final double remainingProtein;
   final double remainingCarbs;
   final double remainingFat;
+  final SuggestBudgetLoader? budgetLoader;
   final VoidCallback? onLogged;
 
   @override
@@ -99,9 +108,11 @@ class SuggestMealPopupRoute extends PopupRoute<void> {
             child: AnimatedBuilder(
               animation: curved,
               builder: (_, __) => BackdropFilter(
+                // Same 12σ as the food-log hub — cheaper per-frame blur,
+                // same frosted read (open-latency fix 2026-09-25).
                 filter: ImageFilter.blur(
-                  sigmaX: 16 * curved.value,
-                  sigmaY: 16 * curved.value,
+                  sigmaX: 12 * curved.value,
+                  sigmaY: 12 * curved.value,
                 ),
                 child: const SizedBox.expand(),
               ),
@@ -115,13 +126,18 @@ class SuggestMealPopupRoute extends PopupRoute<void> {
               begin: const Offset(0, 1),
               end: Offset.zero,
             ).animate(curved),
-            child: SuggestMealSheet(
-              remainingKcal: remainingKcal,
-              remainingProtein: remainingProtein,
-              remainingCarbs: remainingCarbs,
-              remainingFat: remainingFat,
-              routeAnimation: animation,
-              onLogged: onLogged,
+            // RepaintBoundary: sheet-internal repaints (typed digits, chips)
+            // must not invalidate the blurred backdrop layer behind them.
+            child: RepaintBoundary(
+              child: SuggestMealSheet(
+                remainingKcal: remainingKcal,
+                remainingProtein: remainingProtein,
+                remainingCarbs: remainingCarbs,
+                remainingFat: remainingFat,
+                routeAnimation: animation,
+                budgetLoader: budgetLoader,
+                onLogged: onLogged,
+              ),
             ),
           ),
         ),
@@ -153,6 +169,10 @@ class SuggestMealSheet extends StatefulWidget {
   /// slide. Null when the sheet is hosted standalone (tests).
   final Animation<double>? routeAnimation;
 
+  /// Async remaining-budget read (FAB entry). When set, the sheet opens with
+  /// the passed values (zeros) and re-binds to the loaded budget on arrival.
+  final SuggestBudgetLoader? budgetLoader;
+
   const SuggestMealSheet({
     super.key,
     required this.remainingKcal,
@@ -160,6 +180,7 @@ class SuggestMealSheet extends StatefulWidget {
     required this.remainingCarbs,
     required this.remainingFat,
     this.routeAnimation,
+    this.budgetLoader,
     this.onLogged,
   });
 
@@ -184,10 +205,23 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
   String _mealType = 'lunch';
   String _style = 'balanced';
 
+  /// When the in-flight request started — feeds [AiWaitLine]'s live elapsed
+  /// counter so a long Gemini call (server-side 429/503 retries) never reads
+  /// as a hung sheet (2026-09-27).
+  DateTime? _requestStartedAt;
+
   /// Share of the remaining budget this meal should cover (owner v2.1
   /// calorie picker) — fixed at full remaining now that the fraction chips
   /// were replaced by the typed CAL field.
   final double _fraction = 1.0;
+
+  // Live remaining budget — starts from the widget's values and re-binds
+  // when [widget.budgetLoader] lands (FAB entry opens before the read).
+  late double _remKcal = widget.remainingKcal;
+  late double _remProtein = widget.remainingProtein;
+  late double _remCarbs = widget.remainingCarbs;
+  late double _remFat = widget.remainingFat;
+  bool _budgetPending = false;
 
   // NEW 2026-09-24 — finish: user-typed calorie target (the "put his CAL" field).
   // When non-null & valid, this OVERRIDES remaining/fraction entirely. Valid
@@ -196,6 +230,10 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
   final _calorieFocus = FocusNode();
   String? _calorieError;
   int? _lastTargetCalories; // snapshot used for loading badge + match %
+
+  // 2026-09-24 realism finish: free-text craving ("كشري", "burger") — the AI
+  // builds the closest real-world version of it, sized to the target.
+  late final TextEditingController _cravingController;
 
   MealSuggestion? _suggestion;
   MealSuggestionError? _error;
@@ -206,7 +244,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
   int _activeStep = 0;
   Timer? _stepTimer;
 
-  bool get _goalMet => widget.remainingKcal <= 0;
+  bool get _goalMet => _remKcal <= 0;
 
   /// Parsed custom target, null if field empty. 80..5000 enforced.
   int? get _parsedCustomCalories {
@@ -226,7 +264,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
   }
 
   int get _effectiveTargetCalories =>
-      _parsedCustomCalories ?? widget.remainingKcal.round().clamp(80, 5000);
+      _parsedCustomCalories ?? _remKcal.round().clamp(80, 5000);
 
   // True when we should show the "goal met" empty state instead of chooser.
   // With the new CAL field, a goal-met day is still usable — user can type a
@@ -252,14 +290,39 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
         ? 'dinner'
         : 'snack';
     // Prefill with remaining when it is meaningful (>80). Goal-met days stay
-    // empty so the hint + "use remaining" chip can guide the user.
+    // empty so the hint + "use remaining" chip can guide the user. The FAB
+    // path opens with zeros and prefills here too once the loader lands.
     _calorieController = TextEditingController(
       text: widget.remainingKcal >= 80
           ? widget.remainingKcal.round().toString()
           : '',
     );
+    _cravingController = TextEditingController();
     _calorieFocus.addListener(() {
       if (mounted) setState(() {});
+    });
+    if (widget.budgetLoader != null) {
+      _budgetPending = true;
+      _loadBudget();
+    }
+  }
+
+  Future<void> _loadBudget() async {
+    final budget = await widget.budgetLoader!();
+    if (!mounted) return;
+    setState(() {
+      _budgetPending = false;
+      if (budget != null) {
+        _remKcal = budget.kcal;
+        _remProtein = budget.protein;
+        _remCarbs = budget.carbs;
+        _remFat = budget.fat;
+        // Same prefill rule as initState, applied once the real budget lands
+        // (only when the user hasn't started typing a target already).
+        if (_calorieController.text.isEmpty && _remKcal >= 80) {
+          _calorieController.text = _remKcal.round().toString();
+        }
+      }
     });
   }
 
@@ -267,6 +330,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
   void dispose() {
     _stepTimer?.cancel();
     _calorieController.dispose();
+    _cravingController.dispose();
     _calorieFocus.dispose();
     super.dispose();
   }
@@ -309,11 +373,12 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
     // Snapshot target for loading badge + match calc (prevents flicker if user
     // edits field while request is in flight).
     _lastTargetCalories =
-        customCals ?? widget.remainingKcal.round().clamp(80, 5000);
+        customCals ?? _remKcal.round().clamp(80, 5000);
 
     setState(() {
       _stage = _Stage.loading;
       _activeStep = 0;
+      _requestStartedAt = DateTime.now();
       _error = null;
       _calorieError = null;
     });
@@ -327,12 +392,14 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
       if (_activeStep < 2) setState(() => _activeStep += 1);
     });
     final minStory = Future<void>.delayed(const Duration(milliseconds: 1600));
+    final craving = _cravingController.text.trim();
     try {
       final suggestion = await _suggestionService.suggestMeal(
         mealType: _mealType,
         style: _style,
         calorieFraction: customCals == null ? _fraction : null,
         targetCalories: customCals,
+        craving: craving.isEmpty ? null : craving,
       );
       await minStory;
       _stepTimer?.cancel();
@@ -666,6 +733,19 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _sectionLabel(l10n.suggestCravingLabel),
+              SizedBox(height: 8),
+              _buildCravingField(),
+            ],
+          ),
+        ),
+        SizedBox(height: 18),
+        _Entrance(
+          animation: widget.routeAnimation,
+          begin: 0.2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               _sectionLabel(l10n.suggestCaloriesLabel),
               SizedBox(height: 8),
               _buildCalorieField(),
@@ -675,7 +755,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
         SizedBox(height: 22),
         _Entrance(
           animation: widget.routeAnimation,
-          begin: 0.2,
+          begin: 0.25,
           child: _ctaButton(
             label: l10n.suggestCta,
             icon: Icons.auto_awesome,
@@ -732,7 +812,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
-                widget.remainingKcal.round().toString(),
+                _budgetPending ? '…' : _remKcal.round().toString(),
                 style: TextStyle(
                   fontFamily: _ff,
                   fontSize: 34,
@@ -758,13 +838,13 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
           Row(
             children: [
               _macroPill(AppColors.accentProtein,
-                  '${widget.remainingProtein.round()}g'),
+                  '${_remProtein.round()}g'),
               SizedBox(width: 7),
               _macroPill(AppColors.accentCarbs,
-                  '${widget.remainingCarbs.round()}g'),
+                  '${_remCarbs.round()}g'),
               SizedBox(width: 7),
               _macroPill(AppColors.accentFat,
-                  '${widget.remainingFat.round()}g'),
+                  '${_remFat.round()}g'),
             ],
           ),
         ],
@@ -796,6 +876,59 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
               fontSize: 10.5,
               fontWeight: FontWeight.w800,
               color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Craving field — "the meal in your head". Free text, optional; the AI
+  // builds the closest real version of it within the calorie target.
+  Widget _buildCravingField() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.glass2,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.glassBorder),
+      ),
+      child: Row(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 14),
+            child: PixelArtIcon(
+              type: PixelIconType.chicken,
+              size: 18,
+              color: AppColors.textMuted,
+            ),
+          ),
+          Expanded(
+            child: TextField(
+              controller: _cravingController,
+              textInputAction: TextInputAction.next,
+              textCapitalization: TextCapitalization.sentences,
+              style: TextStyle(
+                fontFamily: _ff,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+              decoration: InputDecoration(
+                hintText: l10n.suggestCravingHint,
+                hintStyle: TextStyle(
+                  fontFamily: _ff,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted.withValues(alpha: 0.7),
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 15,
+                ),
+                isDense: true,
+              ),
             ),
           ),
         ],
@@ -910,17 +1043,14 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
                 ),
               ),
             ),
-            if (widget.remainingKcal >= 80 &&
-                _calorieController.text.trim() !=
-                    widget.remainingKcal.round().toString()) ...[
+            if (_remKcal >= 80 &&
+                _calorieController.text.trim() != _remKcal.round().toString()) ...[
               SizedBox(width: 10),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
                   setState(() {
-                    _calorieController.text = widget.remainingKcal
-                        .round()
-                        .toString();
+                    _calorieController.text = _remKcal.round().toString();
                     _calorieError = null;
                   });
                 },
@@ -937,7 +1067,7 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
                     ),
                   ),
                   child: Text(
-                    '${l10n.suggestUseRemaining} · ${widget.remainingKcal.round()} ${l10n.kcal}',
+                    '${l10n.suggestUseRemaining} · ${_remKcal.round()} ${l10n.kcal}',
                     style: TextStyle(
                       fontFamily: _ff,
                       fontSize: 10.5,
@@ -950,7 +1080,9 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
             ],
           ],
         ),
-        if (widget.remainingKcal < 80 && _parsedCustomCalories == null)
+        if (_remKcal < 80 &&
+            _parsedCustomCalories == null &&
+            !_budgetPending)
           Padding(
             padding: const EdgeInsets.only(top: 7),
             child: Text(
@@ -1204,6 +1336,12 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
               state: i < _activeStep ? 1 : (i == _activeStep ? 0 : -1),
             ),
           ],
+          // The stage story is scripted (~1.6s) but the compose step runs
+          // server-side against Gemini — when it goes long (429/503 retry
+          // bursts), this keeps the wait visibly alive instead of hung
+          // (2026-09-27).
+          SizedBox(height: 14),
+          AiWaitLine(startedAt: _requestStartedAt ?? DateTime.now()),
         ],
       ),
     );
@@ -1288,6 +1426,16 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
         ? AppColors.accent
         : AppColors.accentCalories;
 
+    // The AI's name for the composed dish — reads like a menu item, not a
+    // list of ingredients. Falls back to the generic label when absent.
+    final dishName = isAr
+        ? (suggestion.dishNameAr?.isNotEmpty == true
+              ? suggestion.dishNameAr!
+              : suggestion.dishNameEn)
+        : (suggestion.dishNameEn?.isNotEmpty == true
+              ? suggestion.dishNameEn!
+              : suggestion.dishNameAr);
+
     return Column(
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1317,13 +1465,15 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      l10n.suggestedMealTitle,
+                      dishName ?? l10n.suggestedMealTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: _ff,
-                        fontSize: 11,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.4,
-                        color: AppColors.textMuted,
+                        height: 1.25,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     SizedBox(height: 4),
@@ -1387,6 +1537,35 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
             ),
           ],
         ),
+        // Micros row — fiber / sugars / sodium, the same trio the calories
+        // card tracks. Hidden entirely when the catalog had no values.
+        if ((suggestion.totalFiber ?? 0) > 0 ||
+            (suggestion.totalSugars ?? 0) > 0 ||
+            (suggestion.totalSodium ?? 0) > 0) ...[
+          SizedBox(height: 9),
+          Row(
+            children: [
+              _microBadge(
+                PixelIconType.leaf,
+                AppColors.accentFiber,
+                '${_fmt(suggestion.totalFiber ?? 0)}g',
+                l10n.fiber,
+              ),
+              _microBadge(
+                PixelIconType.sweet,
+                AppColors.accentSugars,
+                '${_fmt(suggestion.totalSugars ?? 0)}g',
+                l10n.sugars,
+              ),
+              _microBadge(
+                PixelIconType.salt,
+                AppColors.accentSodium,
+                '${_fmt(suggestion.totalSodium ?? 0)}mg',
+                l10n.sodium,
+              ),
+            ],
+          ),
+        ],
         if (explanation.isNotEmpty) ...[
           SizedBox(height: 12),
           Container(
@@ -1562,6 +1741,58 @@ class _SuggestMealSheetState extends State<SuggestMealSheet> {
                 fontWeight: FontWeight.w900,
                 color: color,
               ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: _ff,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Compact micro pill — pixel glyph + value + label, same tinted anatomy.
+  Widget _microBadge(
+    PixelIconType icon,
+    Color color,
+    String value,
+    String label,
+  ) {
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 3),
+        padding: const EdgeInsets.symmetric(vertical: 9),
+        decoration: BoxDecoration(
+          color: _tintFill(color),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _tintBorder(color)),
+        ),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                PixelArtIcon(type: icon, size: 12, color: color),
+                SizedBox(width: 4),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontFamily: _ff,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 2),
             Text(

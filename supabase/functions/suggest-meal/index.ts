@@ -63,6 +63,20 @@ const TREAT_LIMITS: Record<string, number> = {
   arabic: 4,
 };
 
+// Slot-aware menus: a snack should look like a snack (yogurt, fruit, a
+// sandwich, a chocolate bar) and breakfast like breakfast — not a full
+// dinner plate shrunk down. Lunch/dinner keep the balanced defaults.
+const SLOT_LIMITS: Record<string, Record<string, number>> = {
+  snack: {
+    snacks: 24, dairy: 12, fruits: 14, desserts: 12, drinks: 12,
+    sandwiches: 10, vegetables: 6, protein: 6, carbs: 4, fats: 2,
+  },
+  breakfast: {
+    dairy: 14, carbs: 14, protein: 12, fruits: 10, arabic: 8,
+    vegetables: 6, snacks: 6, drinks: 6, fats: 4,
+  },
+};
+
 interface CatalogFood {
   id: string;
   name: string;
@@ -171,7 +185,7 @@ function buildPrompt(
   foods: CatalogFood[],
   mealType?: string,
   style?: string,
-  fraction?: number,
+  craving?: string,
 ): { system: string; user: string } {
   const menu = foods
     .map(
@@ -180,10 +194,18 @@ function buildPrompt(
     )
     .join('\n');
 
-  const system = `You are a nutrition expert building ONE complete balanced meal for a fitness-app user.
+  const slotLine = mealType === 'snack'
+    ? '- SNACK slots get SNACK FOOD: 1-2 items like yogurt + fruit, a sandwich, a chocolate bar + coffee, popcorn — never a shrunken dinner plate.'
+    : mealType === 'breakfast'
+    ? '- BREAKFAST slots get breakfast food: eggs, cheese, bread, labneh, oats, fruit — not dinner dishes.'
+    : '- LUNCH/DINNER slots get a real plate: one MAIN as the star plus 1-2 natural sides that the same restaurant would serve with it.';
+
+  const system = `You are a nutrition expert and chef composing ONE real meal for a fitness-app user.
 
 Return ONLY a raw JSON object — no markdown fences, no prose before or after. Exact shape:
 {
+  "dish_name_en": "<the meal's real name, e.g. Chicken Shawarma Plate>",
+  "dish_name_ar": "<the same in Egyptian Arabic>",
   "items": [{"food_id": "<id from the menu>", "quantity_multiplier": 1.0}],
   "explanation_en": "...",
   "explanation_ar": "...",
@@ -194,15 +216,19 @@ Return ONLY a raw JSON object — no markdown fences, no prose before or after. 
 }
 
 Hard rules:
-- ${style === 'treat'
-    ? 'Build ONE treat combo of 1 to 4 items from the menu. It does NOT need to be balanced — junk food is explicitly requested — but the calories must land within +/-10% of the target.'
-    : 'Build ONE meal with a protein component + a carb component + a fat and/or vegetable component: 2 to 4 items total.'}
+- Think like a CHEF, not a macro calculator. Compose a plate a real person would actually eat — coherent cuisine and natural pairings. NEVER stack unrelated dishes (no salad + salad + rice-cakes combos).
+- ${slotLine}
 - Use ONLY food_ids copied EXACTLY from the menu below. Never invent, modify or reformat an id.
 - quantity_multiplier is in SERVINGS of that item (1.0 = one listed serving; 0.5 = half serving). Plain numbers only.
-- The meal's calories (sum of item calories x multiplier) must land within +/-10% of the remaining calorie target.
-- Prefer the meal also covering a good share of the remaining protein/carbs/fat, but calories are the hard constraint.
-- explanation_en: 1-2 short English sentences about the meal. explanation_ar: the same in Egyptian Arabic.
+- The meal's calories (sum of item calories x multiplier) must land within +/-10% of the target.
+- Prefer the meal also covering a good share of the protein/carbs/fat targets, but calories are the hard constraint.
+- dish_name_en / dish_name_ar: name the meal like a menu item (the dish the user picturese), not a list of ingredients.
+- explanation_en: 1-2 short English sentences describing the meal. explanation_ar: the same in Egyptian Arabic.
 - total_* fields are your computed sums (plain numbers, no units).`;
+
+  const cravingLine = craving
+    ? `\n- The user is CRAVING: "${craving}". Build the closest real-world version of exactly that craving using the matching menu items — keep it within the calorie target even if the craving is indulgent (smaller multiplier, lighter sides).`
+    : '';
 
   const preference = [
     mealType
@@ -228,7 +254,7 @@ Hard rules:
 ${preference ? preference + '\n' : ''}Menu (id | name | kcal per serving | macros per serving | serving size):
 ${menu}`;
 
-  return { system, user };
+  return { system: system + cravingLine, user };
 }
 
 // Validate strictly: real ids only, sane multipliers, recomputed calories
@@ -308,6 +334,12 @@ function validateAndEnrich(
   return {
     ok: true,
     payload: {
+      ...(typeof parsed.dish_name_en === 'string' && parsed.dish_name_en.trim()
+        ? { dish_name_en: parsed.dish_name_en.trim().slice(0, 60) }
+        : {}),
+      ...(typeof parsed.dish_name_ar === 'string' && parsed.dish_name_ar.trim()
+        ? { dish_name_ar: parsed.dish_name_ar.trim().slice(0, 60) }
+        : {}),
       items: enriched,
       explanation_en: typeof parsed.explanation_en === 'string' && parsed.explanation_en.trim()
         ? parsed.explanation_en.trim()
@@ -359,6 +391,13 @@ Deno.serve(async (req: Request) => {
     const fraction = Number.isFinite(rawFraction) && rawFraction >= 0.2 && rawFraction <= 1
       ? rawFraction
       : 1;
+
+    // Optional craving text (owner finish "الأكلة اللي في دماغه"): the user
+    // types the dish they want ("كشري", "burger", "شاورما") and the AI builds
+    // the closest real version of it, sized to the calorie target.
+    const craving = typeof body?.craving === 'string' && body.craving.trim().length >= 2
+      ? body.craving.trim().slice(0, 80)
+      : undefined;
 
     // NEW: user-typed calorie target (finish field: "put his CAL"). When
     // present, this overrides the remaining-budget calculation entirely so the
@@ -449,26 +488,54 @@ Deno.serve(async (req: Request) => {
       fat: targetFat,
     };
 
-    // ── Candidate menu (random slices, ≤~100 rows; junk-biased in treat mode) ─
+    // ── Candidate menu ──────────────────────────────────────────────────────
+    // Limits depend on mode: treat biases junk, snack/breakfast bias slot-
+    // appropriate foods, lunch/dinner keep balanced defaults. A craving then
+    // force-boosts the matched catalog rows (any category) to the top.
     const { data: rows, error: foodsError } = await admin
       .from('foods')
       .select('id, name, name_ar, calories, protein_g, carbs_g, fat_g, fiber_g, sugars_g, sodium_mg, potassium_mg, calcium_mg, iron_mg, cholesterol_mg, caffeine_mg, serving_size, serving_unit, category, image_url')
-      .eq('is_custom', false)
-      .in('category', Object.keys(style === 'treat' ? TREAT_LIMITS : CATEGORY_LIMITS));
+      .eq('is_custom', false);
     if (foodsError || !rows?.length) {
       console.error('foods query failed:', foodsError);
       return json({ error: 'foods_unavailable' }, 500);
     }
-    const menu = pickMenu(rows as CatalogFood[], style === 'treat' ? TREAT_LIMITS : CATEGORY_LIMITS);
+    const allRows = rows as CatalogFood[];
+
+    const limits = style === 'treat'
+      ? TREAT_LIMITS
+      : SLOT_LIMITS[mealType ?? ''] ?? CATEGORY_LIMITS;
+    const menu = pickMenu(allRows, limits);
     const byId = new Map<string, CatalogFood>();
     for (const r of menu) byId.set(r.id, r);
+
+    if (craving) {
+      const words = craving.split(/\s+/).filter((w) => w.length >= 3).slice(0, 3);
+      const matches: CatalogFood[] = [];
+      for (const r of allRows) {
+        if (matches.length >= 30) break;
+        const hay = `${r.name} ${r.name_ar ?? ''}`.toLowerCase();
+        if (words.some((w) => hay.includes(w.toLowerCase())) && !byId.has(r.id)) {
+          matches.push(r);
+        }
+      }
+      // Boosted rows go first in the menu so the model reads them as the
+      // strongest candidates for the craving.
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const r = matches[i];
+        byId.set(r.id, r);
+        menu.unshift(r);
+      }
+    }
 
     // ── Gemini → validate → ONE corrective retry of the SAME call ───────────
     // No fallback model exists (PROJECT_MASTER §5): after one failed
     // validation the same prompt reruns with the correction note, then the
     // feature honestly reports it could not build a fitting meal.
-    const { system, user } = buildPrompt(target, menu, mealType, style, fraction);
-    const minItems = style === 'treat' ? 1 : 2;
+    const { system, user } = buildPrompt(target, menu, mealType, style, craving);
+    // A single well-sized item is a legitimate answer for snacks, treat mode
+    // and cravings — balanced lunch/dinner plates still need >= 2.
+    const minItems = style === 'treat' || mealType === 'snack' || craving ? 1 : 2;
     const first = await callGemini(system, user);
     if (first.ok) {
       const verdict = validateAndEnrich(extractJsonObject(first.content), byId, targetCalories, minItems);

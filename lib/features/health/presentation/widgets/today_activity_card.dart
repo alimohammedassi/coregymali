@@ -2,9 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
 import '../../../../widgets/pixel_art_icons.dart';
+import '../../../home/data/dashboard_activity_repository.dart';
+import '../../../home/domain/day_activity.dart';
 import '../../data/health_service.dart';
 import '../../domain/daily_activity.dart';
 import '../providers/health_providers.dart';
@@ -23,6 +26,8 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _progressAnim;
+  final DashboardActivityRepository _weekRepo = DashboardActivityRepository();
+  Future<List<DayActivity>>? _weekFuture;
 
   @override
   void initState() {
@@ -36,6 +41,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
       curve: Curves.easeOutCubic,
     );
     _animController.forward();
+    _weekFuture = _weekRepo.fetchCurrentWeek();
   }
 
   @override
@@ -59,13 +65,17 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
         border: Border.all(color: AppColors.borderSubtle, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: AppColors.cardShadow,
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
+        // Shrink-wrap to content — this card hosts inside the watch bottom
+        // sheet, where mainAxisSize.max would stretch it over the full screen
+        // and leave a huge blank void under three small cards.
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row: Title, Smartwatch badge, Sync button
@@ -162,11 +172,9 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                               ? 'متصل بـ $sourceName'
                               : 'Linked with $sourceName')
                         : (isArabic ? 'غير متصل' : 'Not Connected'),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                    style: AppText.styledScaleCaption(
+                      isArabic: isArabic,
                       color: AppColors.textSecondary,
-                      fontFamily: AppText.fontFamily(isArabic: isArabic),
                     ),
                   ),
                 ],
@@ -198,6 +206,9 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                     await ref
                         .read(todayActivityProvider.notifier)
                         .refresh(forceSync: true);
+                    if (mounted) {
+                      setState(() => _weekFuture = _weekRepo.fetchCurrentWeek());
+                    }
                     widget.onSynced?.call();
                   },
           ),
@@ -214,7 +225,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: AppColors.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.borderSubtle),
           ),
@@ -227,17 +238,15 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                     children: [
                        Icon(
                         Icons.directions_walk_rounded,
-                        color: AppColors.primaryGreen,
+                        color: AppColors.accentSteps,
                         size: 20,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         isArabic ? 'الخطوات' : 'Steps',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w700,
+                        style: AppText.styledLabelLg(
+                          isArabic: isArabic,
                           color: AppColors.textSecondary,
-                          fontFamily: AppText.fontFamily(isArabic: isArabic),
                         ),
                       ),
                     ],
@@ -251,17 +260,15 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                       children: [
                         TextSpan(
                           text: '${activity.steps} ',
-                          style:  TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.primaryGreen,
-                          ),
+                          style:  AppText.styledScaleTitleSm(
+                            isArabic: isArabic,
+                            color: AppColors.accentSteps,
+                          ).copyWith(fontSize: 17, fontWeight: FontWeight.w900),
                         ),
                         TextSpan(
                           text: '/ ${widget.stepGoal}',
-                          style:  TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                          style:  AppText.styledScaleBodySm(
+                            isArabic: isArabic,
                             color: AppColors.textMuted,
                           ),
                         ),
@@ -281,7 +288,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                       minHeight: 8,
                       backgroundColor: AppColors.borderSubtle,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primaryGreen,
+                        AppColors.accentSteps,
                       ),
                     ),
                   );
@@ -313,7 +320,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
               Expanded(
                 child: _buildMetricTile(
                   icon: Icons.favorite_rounded,
-                  iconColor: const Color(0xFFE53935),
+                  iconColor: AppColors.redAccent,
                   label: isArabic ? 'النبض' : 'Heart Rate',
                   value: '${activity.heartRateAvg!.toInt()}',
                   unit: 'BPM',
@@ -327,7 +334,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
             Expanded(
               child: _buildMetricTile(
                 icon: Icons.timer_rounded,
-                iconColor: const Color(0xFF3B82F6),
+                iconColor: AppColors.secondary,
                 label: isArabic ? 'تمرين' : 'Exercise',
                 value: activity.exerciseMinutes != null
                     ? '${activity.exerciseMinutes!.toInt()}'
@@ -338,7 +345,115 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
             ),
           ],
         ),
+        const SizedBox(height: 12),
+
+        // Weekly steps chart — same get_user_activity data the home week
+        // strip uses. Shows whenever the week is loaded, all-zero weeks
+        // included (stub bars + day labels), so the details are reachable
+        // even before the first real sync lands.
+        FutureBuilder<List<DayActivity>>(
+          future: _weekFuture,
+          builder: (context, snap) {
+            final week = snap.data;
+            if (week == null) {
+              return const SizedBox.shrink();
+            }
+            return _buildWeeklyStepsChart(isArabic, week);
+          },
+        ),
       ],
+    );
+  }
+
+  Widget _buildWeeklyStepsChart(bool isArabic, List<DayActivity> week) {
+    final maxSteps = week.fold<int>(0, (m, d) => d.steps > m ? d.steps : m);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final locale = Localizations.localeOf(context).languageCode;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isArabic ? 'الخطوات الأسبوعية' : 'Weekly Steps',
+            style: AppText.styledLabelLg(
+              isArabic: isArabic,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              for (final day in week)
+                Expanded(
+                  child: _buildWeekBar(isArabic, day, maxSteps, today, locale),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeekBar(
+    bool isArabic,
+    DayActivity day,
+    int maxSteps,
+    DateTime today,
+    String locale,
+  ) {
+    final isToday =
+        day.date.year == today.year &&
+        day.date.month == today.month &&
+        day.date.day == today.day;
+    final hasSteps = day.steps > 0;
+    final fraction = maxSteps == 0 ? 0.0 : day.steps / maxSteps;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 3),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 44,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: FractionallySizedBox(
+                // Zero-step days keep a short stub so every weekday slot
+                // reads as a bar column, not an empty gap.
+                heightFactor: hasSteps ? 0.15 + 0.85 * fraction : 0.08,
+                widthFactor: 1,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: !hasSteps
+                        ? AppColors.borderSubtle
+                        : isToday
+                        ? AppColors.accentSteps
+                        : AppColors.accentSteps.withValues(alpha: .35),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            DateFormat.E(locale).format(day.date),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.styledScaleCaption(
+              isArabic: isArabic,
+              color: isToday ? AppColors.accentSteps : AppColors.textMuted,
+            ).copyWith(fontWeight: isToday ? FontWeight.w800 : FontWeight.w600),
+          ),
+        ],
+      ),
     );
   }
 
@@ -353,7 +468,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderSubtle),
       ),
@@ -362,18 +477,25 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
         children: [
           Row(
             children: [
-              Icon(icon, size: 15, color: iconColor),
-              const SizedBox(width: 4),
+              // Rounded-square icon badge — the shared metric-chip treatment.
+              Container(
+                width: 26,
+                height: 26,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: .12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 14, color: iconColor),
+              ),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
+                  style: AppText.styledScaleCaption(
+                    isArabic: isArabic,
                     color: AppColors.textSecondary,
-                    fontFamily: AppText.fontFamily(isArabic: isArabic),
                   ),
                 ),
               ),
@@ -386,18 +508,16 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
             children: [
               Text(
                 value,
-                style:  TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
+                style: AppText.styledTitleMd(
+                  isArabic: isArabic,
                   color: AppColors.textPrimary,
-                ),
+                ).copyWith(fontWeight: FontWeight.w900),
               ),
               const SizedBox(width: 2),
               Text(
                 unit,
-                style:  TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w600,
+                style: AppText.styledScaleCaption(
+                  isArabic: isArabic,
                   color: AppColors.textMuted,
                 ),
               ),
@@ -449,8 +569,8 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
           backgroundColor: result.isSuccess
               ? AppColors.primaryGreen
               : (result.status == HealthPermissionStatus.notInstalled
-                    ? const Color(0xFFF57F17)
-                    : const Color(0xFFDC2626)),
+                    ? AppColors.overGoalWarning
+                    : AppColors.error),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -473,7 +593,7 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.borderSubtle),
       ),
@@ -484,12 +604,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                 ? 'اربط ساعتك الذكية (Apple Watch أو Galaxy Watch وغيرها) لقراءة خطواتك وسعراتك التلقائية!'
                 : 'Connect your smartwatch (Apple Watch, Galaxy Watch, etc.) to track steps and burned calories automatically!',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+            style: AppText.styledScaleBodySm(
+              isArabic: isArabic,
               color: AppColors.textSecondary,
-              fontFamily: AppText.fontFamily(isArabic: isArabic),
-            ),
+            ).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
@@ -512,11 +630,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                   : (isArabic
                         ? 'ربط الساعة الذكية والموافقة'
                         : 'Connect Smartwatch & Grant Access'),
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                fontFamily: AppText.fontFamily(isArabic: isArabic),
-              ),
+              style: AppText.styledLabelLg(
+                isArabic: isArabic,
+                color: AppColors.onPrimary,
+              ).copyWith(fontSize: 12.5, fontWeight: FontWeight.w800),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGreen,
@@ -537,17 +654,17 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E1),
+        color: AppColors.overGoalWarningBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFFE082)),
+        border: Border.all(color: AppColors.overGoalWarningBorder),
       ),
       child: Column(
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.info_outline_rounded,
-                color: Color(0xFFF57F17),
+                color: AppColors.overGoalWarning,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -556,12 +673,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                   isArabic
                       ? 'تطبيق Health Connect مطلوب على جهازك لمزامنة الساعة'
                       : 'Google Health Connect is required to sync smartwatch data',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFE65100),
-                    fontFamily: AppText.fontFamily(isArabic: isArabic),
-                  ),
+                  style: AppText.styledScaleBodySm(
+                    isArabic: isArabic,
+                    color: AppColors.overGoalWarning,
+                  ).copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ],
@@ -583,6 +698,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                 : const Icon(Icons.download_rounded, size: 16),
             label: Text(
               isArabic ? 'تثبيت من Google Play' : 'Install from Google Play',
+              style: AppText.styledLabelLg(
+                isArabic: isArabic,
+                color: AppColors.onPrimary,
+              ),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.tertiary,
@@ -605,7 +724,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
           isArabic
               ? 'مزامنة الساعات الذكية متوفرة على أجهزة iOS و Android'
               : 'Smartwatch sync is available on iOS and Android devices',
-          style:  TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: AppText.styledScaleBodySm(
+            isArabic: isArabic,
+            color: AppColors.textMuted,
+          ),
         ),
       ),
     );
@@ -631,14 +753,15 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEE2E2),
+        color: AppColors.error.withValues(alpha: .12),
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.error.withValues(alpha: .45)),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: Color(0xFFDC2626),
+            color: AppColors.error,
             size: 20,
           ),
           const SizedBox(width: 8),
@@ -647,11 +770,10 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
               isArabic
                   ? 'تعذر جلب بيانات الساعة'
                   : 'Could not fetch watch data',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFFDC2626),
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppText.styledScaleBodySm(
+                isArabic: isArabic,
+                color: AppColors.error,
+              ).copyWith(fontWeight: FontWeight.w600),
             ),
           ),
           TextButton(

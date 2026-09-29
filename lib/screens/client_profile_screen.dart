@@ -5,6 +5,9 @@ import '../l10n/app_localizations.dart';
 import '../services/rank_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/leaderboard/leaderboard_rank_delta.dart';
+import '../widgets/leaderboard/leaderboard_sparkline.dart';
+import '../widgets/leaderboard/leaderboard_tier_chip.dart';
 
 /// Read-only public profile of another client: commitment heatmap +
 /// trend charts (calories / water / steps adherence), leaderboard style.
@@ -51,22 +54,21 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
   int _range = 30;
   _TrendMode _mode = _TrendMode.daily;
 
-  late final AnimationController _entrance = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  );
-  late final Animation<double> _headerFade = CurvedAnimation(
-    parent: _entrance,
-    curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-  );
-  late final Animation<double> _heatmapFade = CurvedAnimation(
-    parent: _entrance,
-    curve: const Interval(0.25, 0.8, curve: Curves.easeOut),
-  );
-  late final Animation<double> _trendFade = CurvedAnimation(
-    parent: _entrance,
-    curve: const Interval(0.45, 1.0, curve: Curves.easeOut),
-  );
+  // Competitive garnish — fetched separately so a failure here never
+  // blocks the core profile (graceful degradation).
+  LeaderboardStanding? _standing;
+  List<RankHistoryPoint> _rankHistory = const [];
+
+  // True when the activity RPC refused us (privacy F1 fix: raw daily
+  // activity is self/coach-only). The profile degrades to the public
+  // competitive card instead of a full-screen error.
+  bool _activityDenied = false;
+
+  late final AnimationController _entrance;
+  late final Animation<double> _headerFade;
+  late final Animation<double> _compFade;
+  late final Animation<double> _heatmapFade;
+  late final Animation<double> _trendFade;
 
   static const _calColor = Color(0xFFB2D742); // lime — calories
   static const _waterColor = Color(0xFF4DA8DC); // blue — water
@@ -75,6 +77,31 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
   @override
   void initState() {
     super.initState();
+    // Created here, NOT as a late-final field initializer: when the user
+    // backs out before the 35-day fetch lands, dispose() is the FIRST thing
+    // to touch _entrance — the lazy initializer then builds a ticker on a
+    // deactivated element and throws
+    // "Looking up a deactivated widget's ancestor is unsafe".
+    _entrance = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _headerFade = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+    );
+    _compFade = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0.15, 0.7, curve: Curves.easeOut),
+    );
+    _heatmapFade = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0.3, 0.85, curve: Curves.easeOut),
+    );
+    _trendFade = CurvedAnimation(
+      parent: _entrance,
+      curve: const Interval(0.5, 1.0, curve: Curves.easeOut),
+    );
     _load();
   }
 
@@ -100,9 +127,33 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        final denied = e.toString().contains('Not authorized');
+        _activityDenied = denied;
+        _error = denied ? null : e.toString();
         _loading = false;
       });
+      _entrance.forward(from: 0);
+    }
+    _loadCompetitive();
+  }
+
+  /// Board standing (rank, movement, streaks, next target) + rank history.
+  /// Best-effort: when it fails the profile simply shows without the card.
+  Future<void> _loadCompetitive() async {
+    try {
+      final standing = await _service.getLeaderboardV2(
+        category: LeaderboardCategory.overall,
+        days: 7,
+        forUserId: widget.userId,
+      );
+      final history = await _service.getRankHistory(widget.userId, days: 14);
+      if (!mounted) return;
+      setState(() {
+        _standing = standing.me;
+        _rankHistory = history;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _standing = null);
     }
   }
 
@@ -112,7 +163,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final tierColors = _tierColorsOf(widget.tier);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -127,13 +177,153 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
           : ListView(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
               children: [
-                _rise(_headerFade, _header(l10n, tierColors)),
+                _rise(_headerFade, _header(l10n)),
                 const SizedBox(height: 16),
-                _rise(_heatmapFade, _heatmapCard(l10n)),
+                _rise(_compFade, _competitiveCard(l10n)),
                 const SizedBox(height: 16),
-                _rise(_trendFade, _trendCard(l10n)),
+                if (_activityDenied)
+                  _rise(_heatmapFade, _privateNote(l10n))
+                else ...[
+                  _rise(_heatmapFade, _heatmapCard(l10n)),
+                  const SizedBox(height: 16),
+                  _rise(_trendFade, _trendCard(l10n)),
+                ],
               ],
             ),
+    );
+  }
+
+  /// Privacy note shown instead of the heatmap/charts when the activity RPC
+  /// refuses the viewer (self/coach-only per the F1 privacy fix).
+  Widget _privateNote(AppLocalizations l10n) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lock_outline_rounded,
+              size: 22, color: AppColors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              l10n.cpActivityPrivate,
+              style: AppText.bodySm.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// The client's competitive card: rank + movement this cycle, logging
+  /// streak, next achievable target, and the 14-day rank journey. Hidden
+  /// entirely when the client isn't on this cycle's board or data failed.
+  Widget _competitiveCard(AppLocalizations l10n) {
+    final s = _standing;
+    if (s == null) return const SizedBox.shrink();
+    final journey = _rankHistory.length >= 2;
+    final first = _rankHistory.first;
+    final last = _rankHistory.last;
+
+    return _card(
+      title: l10n.lbCompCardTitle,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                '#${s.rank}',
+                style: AppText.headlineMd.copyWith(
+                  color: AppColors.primaryFixed,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  l10n.lbRankOfTotal(s.total),
+                  style: AppText.labelMd.copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+              LeaderboardRankDelta(delta: s.rankDelta),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (s.currentStreak > 0) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.local_fire_department_rounded,
+                  size: 14,
+                  color: AppColors.primaryFixed,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${l10n.lbDayStreakN(s.currentStreak)} · ${l10n.lbLongestStreakN(s.longestStreak)}',
+                  style: AppText.labelSm.copyWith(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (s.rank == 1)
+            Row(
+              children: [
+                Icon(Icons.emoji_events_rounded, size: 15, color: AppColors.tertiary),
+                const SizedBox(width: 5),
+                Text(
+                  l10n.lbLeadingBoard,
+                  style: AppText.labelMd.copyWith(
+                    color: AppColors.tertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            )
+          else if (s.nextUser != null)
+            Text(
+              s.pointsToNext <= 0
+                  ? l10n.lbTiedWith(s.nextRank ?? s.rank - 1)
+                  : l10n.lbPtsToNextRank(s.pointsToNext, s.nextRank ?? s.rank - 1),
+              style: AppText.labelMd.copyWith(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          if (journey) ...[
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 26,
+              width: double.infinity,
+              child: LeaderboardSparkline(
+                // Inverted so "up" always means improved position — the
+                // journey text below carries the literal rank numbers.
+                values: [
+                  for (final p in _rankHistory) (p.total + 1 - p.rank),
+                ],
+                width: double.infinity,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l10n.lbRankJourney(first.rank, last.rank),
+              style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+            ),
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                l10n.lbRankHistoryEmpty,
+                style: AppText.labelSm.copyWith(color: AppColors.textMuted),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -175,7 +365,7 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
     );
   }
 
-  Widget _header(AppLocalizations l10n, (Color, String) tierColors) {
+  Widget _header(AppLocalizations l10n) {
     final initial = widget.name.isNotEmpty ? widget.name[0].toUpperCase() : '?';
     final logged = _days.where((d) => d.calories > 0 || d.waterMl > 0).length;
     final avgScore = logged > 0
@@ -238,22 +428,9 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
                           curve: Curves.elasticOut,
                           builder: (context, scale, child) =>
                               Transform.scale(scale: scale, child: child),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: tierColors.$1.withValues(alpha: 0.14),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${tierColors.$2} ${widget.score}',
-                              style: AppText.labelSm.copyWith(
-                                color: tierColors.$1,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                          child: LeaderboardTierChip(
+                            tier: widget.tier,
+                            score: widget.score,
                           ),
                         ),
                       ],
@@ -675,14 +852,6 @@ class _ClientProfileScreenState extends State<ClientProfileScreen>
     );
   }
 }
-
-(Color, String) _tierColorsOf(RankTier tier) => switch (tier) {
-  RankTier.diamond => (const Color(0xFF4DC591), '💎'),
-  RankTier.gold => (const Color(0xFFE8B93E), '🥇'),
-  RankTier.silver => (const Color(0xFF9AA3AF), '🥈'),
-  RankTier.bronze => (const Color(0xFFCE8A5B), '🥉'),
-  RankTier.unranked => (AppColors.textSecondary, '—'),
-};
 
 /// Renders the commitment heatmap. 7 rows (weekdays) × N columns (weeks),
 /// aligned so each column is a real calendar week (Monday-first).

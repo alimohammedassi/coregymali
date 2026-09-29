@@ -55,6 +55,13 @@ class FoodLogFab extends StatefulWidget {
   /// can refresh whatever surfaces today's nutrition totals.
   final VoidCallback? onLogged;
 
+  /// True while a tall card (Today's Workout) intersects the button's
+  /// on-screen rect. The button scales away instead of floating over the
+  /// card's text — no fixed position above the nav bar can guarantee
+  /// clearance on every viewport, so the button yields (2026-09-27).
+  /// Driven by AssignedWorkoutCard's intersection reporter.
+  static final ValueNotifier<bool> obstructed = ValueNotifier(false);
+
   const FoodLogFab({super.key, this.onLogged});
 
   @override
@@ -63,16 +70,19 @@ class FoodLogFab extends StatefulWidget {
 
 class _FoodLogFabState extends State<FoodLogFab> {
   bool _barMinimized = LiquidTabBarController.shared.minimized;
+  bool _obstructed = FoodLogFab.obstructed.value;
 
   @override
   void initState() {
     super.initState();
     LiquidTabBarController.shared.addListener(_onBarChanged);
+    FoodLogFab.obstructed.addListener(_onObstructionChanged);
   }
 
   @override
   void dispose() {
     LiquidTabBarController.shared.removeListener(_onBarChanged);
+    FoodLogFab.obstructed.removeListener(_onObstructionChanged);
     super.dispose();
   }
 
@@ -80,6 +90,12 @@ class _FoodLogFabState extends State<FoodLogFab> {
     final minimized = LiquidTabBarController.shared.minimized;
     if (minimized != _barMinimized && mounted) {
       setState(() => _barMinimized = minimized);
+    }
+  }
+
+  void _onObstructionChanged() {
+    if (_obstructed != FoodLogFab.obstructed.value && mounted) {
+      setState(() => _obstructed = FoodLogFab.obstructed.value);
     }
   }
 
@@ -93,7 +109,7 @@ class _FoodLogFabState extends State<FoodLogFab> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final visible = !_barMinimized;
+    final visible = !_barMinimized && !_obstructed;
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return Positioned(
       right: 18,
@@ -212,9 +228,13 @@ class FoodLogPopupRoute extends PopupRoute<void> {
             child: AnimatedBuilder(
               animation: curved,
               builder: (_, __) => BackdropFilter(
+                // 12σ: still clearly frosted, but ~35% cheaper per frame than
+                // 16 — the full-screen blur is re-applied every frame of the
+                // entrance and was the open-latency hog on mid devices
+                // (owner 2026-09-25: "الـ log food بطئ جدا عقبال ما يفتح").
                 filter: ImageFilter.blur(
-                  sigmaX: 16 * curved.value,
-                  sigmaY: 16 * curved.value,
+                  sigmaX: 12 * curved.value,
+                  sigmaY: 12 * curved.value,
                 ),
                 child: const SizedBox.expand(),
               ),
@@ -228,7 +248,14 @@ class FoodLogPopupRoute extends PopupRoute<void> {
               begin: const Offset(0, 1),
               end: Offset.zero,
             ).animate(curved),
-            child: FoodLogSheet(routeAnimation: animation, onLogged: onLogged),
+            // Isolate sheet repaints (stagger entrances, the animated robot)
+            // from the blurred backdrop layer.
+            child: RepaintBoundary(
+              child: FoodLogSheet(
+                routeAnimation: animation,
+                onLogged: onLogged,
+              ),
+            ),
           ),
         ),
       ],
@@ -331,54 +358,72 @@ class _FoodLogSheetState extends State<FoodLogSheet>
       if (logged) widget.onLogged?.call();
     }
 
-    // Suggest-a-Meal: close this hub first, then open the full flow sheet —
-    // same hand-off pattern as the other AI entries. The remaining budget is
-    // read from the same two tables the nutrition screen uses, so the sheet
-    // opens with the real target no matter which tab the FAB lives on.
-    Future<void> openSuggestMeal() async {
+    // Suggest-a-Meal: close this hub and open the flow IMMEDIATELY — the
+    // remaining budget loads inside the sheet via [SuggestMealPopupRoute.budgetLoader],
+    // so a slow network never delays the open (owner 2026-09-25: "بطئ جدا
+    // عقبال ما يفتح"). Same hand-off pattern as the other AI entries.
+    void openSuggestMeal() {
       HapticFeedback.lightImpact();
       final client = Supabase.instance.client;
       final uid = client.auth.currentUser?.id;
-      double remain = 0, remainP = 0, remainC = 0, remainF = 0;
-      if (uid != null) {
-        try {
-          final day = DateTime.now().toIso8601String().substring(0, 10);
-          final results = await Future.wait([
-            client
-                .from('daily_summary')
-                .select('calories_consumed, protein_g, carbs_g, fat_g')
-                .eq('user_id', uid)
-                .eq('summary_date', day)
-                .maybeSingle(),
-            client
-                .from('user_goals')
-                .select('daily_calories, daily_protein_g, daily_carbs_g, daily_fat_g')
-                .eq('user_id', uid)
-                .maybeSingle(),
-          ]);
-          double g(String k) => (results[1]?[k] as num?)?.toDouble() ?? 0;
-          double s(String k) => (results[0]?[k] as num?)?.toDouble() ?? 0;
-          remain = (g('daily_calories') - s('calories_consumed'))
-              .clamp(0.0, double.infinity);
-          remainP = (g('daily_protein_g') - s('protein_g'))
-              .clamp(0.0, double.infinity);
-          remainC = (g('daily_carbs_g') - s('carbs_g'))
-              .clamp(0.0, double.infinity);
-          remainF = (g('daily_fat_g') - s('fat_g'))
-              .clamp(0.0, double.infinity);
-        } catch (e) {
-          debugPrint('FAB suggest-meal budget read failed: $e');
-        }
-      }
-      if (!mounted) return;
       nav.pop();
-      await nav.push(SuggestMealPopupRoute(
-        remainingKcal: remain,
-        remainingProtein: remainP,
-        remainingCarbs: remainC,
-        remainingFat: remainF,
-        onLogged: widget.onLogged,
-      ));
+      nav.push(
+        SuggestMealPopupRoute(
+          remainingKcal: 0,
+          remainingProtein: 0,
+          remainingCarbs: 0,
+          remainingFat: 0,
+          budgetLoader: uid == null
+              ? null
+              : () async {
+                  try {
+                    final day = DateTime.now().toIso8601String().substring(
+                      0,
+                      10,
+                    );
+                    final results = await Future.wait([
+                      client
+                          .from('daily_summary')
+                          .select('calories_consumed, protein_g, carbs_g, fat_g')
+                          .eq('user_id', uid)
+                          .eq('summary_date', day)
+                          .maybeSingle(),
+                      client
+                          .from('user_goals')
+                          .select(
+                            'daily_calories, daily_protein_g, daily_carbs_g, daily_fat_g',
+                          )
+                          .eq('user_id', uid)
+                          .maybeSingle(),
+                    ]);
+                    double g(String k) =>
+                        (results[1]?[k] as num?)?.toDouble() ?? 0;
+                    double s(String k) =>
+                        (results[0]?[k] as num?)?.toDouble() ?? 0;
+                    return (
+                      kcal: (g('daily_calories') - s('calories_consumed'))
+                          .clamp(0.0, double.infinity),
+                      protein: (g('daily_protein_g') - s('protein_g')).clamp(
+                        0.0,
+                        double.infinity,
+                      ),
+                      carbs: (g('daily_carbs_g') - s('carbs_g')).clamp(
+                        0.0,
+                        double.infinity,
+                      ),
+                      fat: (g('daily_fat_g') - s('fat_g')).clamp(
+                        0.0,
+                        double.infinity,
+                      ),
+                    );
+                  } catch (e) {
+                    debugPrint('FAB suggest-meal budget read failed: $e');
+                    return null;
+                  }
+                },
+          onLogged: widget.onLogged,
+        ),
+      );
     }
 
     return Transform.translate(

@@ -54,7 +54,10 @@ class StepsCard extends ConsumerWidget {
     return ActivityCardShell(
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
-        onTap: connected ? null : onConnectWatch,
+        // Always opens the watch sheet — before linking it's the connect
+        // prompt, after linking it's the details + weekly chart. (It used to
+        // be tap-dead once connected, leaving the details unreachable.)
+        onTap: onConnectWatch,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -72,6 +75,12 @@ class StepsCard extends ConsumerWidget {
                   Icon(
                     Icons.watch_outlined,
                     size: 14,
+                    color: AppColors.textMuted,
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
                     color: AppColors.textMuted,
                   ),
               ],

@@ -17,6 +17,17 @@ abstract final class AppDurations {
   static const Duration fast = Duration(milliseconds: 150);
   static const Duration medium = Duration(milliseconds: 300);
   static const Duration slow = Duration(milliseconds: 400);
+
+  // Reveal band — step entrances, chart/gauge animations, numeric count-ups.
+  static const Duration reveal = Duration(milliseconds: 700);
+  static const Duration countUp = Duration(milliseconds: 900);
+  static const Duration stagger = Duration(milliseconds: 70);
+
+  // Elastic tap feedback (selection cells).
+  static const Duration bounce = Duration(milliseconds: 420);
+
+  // Ambient background shifts (glow color moves between steps).
+  static const Duration ambient = Duration(milliseconds: 550);
 }
 
 abstract final class AppCurves {
@@ -28,6 +39,12 @@ abstract final class AppCurves {
 
   /// Exit/collapse — accelerate away.
   static const Curve exit = Curves.easeInCubic;
+
+  /// Achievement pops — donut/blocks overshooting their resting scale.
+  static const Curve overshoot = Curves.easeOutBack;
+
+  /// Playful settle — selection-cell tap bounce.
+  static const Curve bounce = Curves.elasticOut;
 }
 
 // ────────────────────────────────────────────────────────────────────────────

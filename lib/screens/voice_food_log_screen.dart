@@ -10,6 +10,7 @@ import '../services/nutrition_service.dart';
 import '../services/voice_food_log_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -54,6 +55,11 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   Timer? _elapsedTimer;
   int _stepIndex = 0;
   int _elapsedSeconds = 0;
+
+  /// When the current analyze request started — feeds [AiWaitLine]'s live
+  /// elapsed counter (the analyze call retries server-side, so its length is
+  /// invisible to the client).
+  DateTime _analyzingStarted = DateTime.now();
 
   _VoicePhase _phase = _VoicePhase.idle;
   String _mealType;
@@ -195,6 +201,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
       _audioFile = file;
       _phase = _VoicePhase.analyzing;
       _stepIndex = 0;
+      _analyzingStarted = DateTime.now();
     });
     _startStepCycle();
     await _analyze();
@@ -726,6 +733,16 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                   backgroundColor: AppColors.surfaceContainerHigh,
                   valueColor: AlwaysStoppedAnimation(AppColors.primaryFixed),
                 ),
+              ),
+            ),
+            // Live wait feedback: elapsed counter + reassurance when the
+            // server-side AI call runs long (2026-09-27).
+            Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: AiWaitLine(
+                startedAt: _analyzingStarted,
+                slowAfter: const Duration(seconds: 6),
+                center: true,
               ),
             ),
           ],
@@ -1278,6 +1295,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
                   setState(() {
                     _phase = _VoicePhase.analyzing;
                     _stepIndex = 0;
+                    _analyzingStarted = DateTime.now();
                   });
                   _startStepCycle();
                   _analyze();

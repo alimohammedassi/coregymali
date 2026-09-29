@@ -78,17 +78,21 @@ class WaterCard extends ConsumerWidget {
             width: double.infinity,
             height: 32,
             child: TextButton(
-              onPressed: canEdit
-                  ? () async {
-                      // Optimistic tick lands inside the notifier; the write
-                      // goes through StatsService like every other water
-                      // entry point. Double-taps are debounced there.
-                      await ref
-                          .read(activityWeekProvider.notifier)
-                          .addWaterGlass();
-                      onChanged?.call();
-                    }
-                  : null,
+            onPressed: canEdit
+                ? () async {
+                    // Optimistic tick lands inside the notifier; the write
+                    // goes through StatsService like every other water
+                    // entry point. Double-taps are debounced there.
+                    // NOTE: no onChanged/_loadAll after this — water changes
+                    // nothing the hero or meals feed show, and a full reload
+                    // (with its 3s health-sync window + entrance replay)
+                    // made the card visibly "re-refresh" on every tap
+                    // (owner 2026-09-25). Riverpod repaints the dots inline.
+                    await ref
+                        .read(activityWeekProvider.notifier)
+                        .addWaterGlass();
+                  }
+                : null,
               style: TextButton.styleFrom(
                 // 12% teal wash + teal ink — the water accent's soft
                 // container, mirroring AppColors.lightGreen's pattern.

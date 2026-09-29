@@ -255,16 +255,23 @@ class AppColors {
 
   // ── Nutrition & Fitness Data Accents (one coherent data-viz family) ──
   // Home redesign spec: semantic metrics use distinct but RELATED hues at a
-  // shared mid-saturation/lightness band — coral → gold → green → teal →
-  // orange — instead of unrelated pastels. Carbs moved off blue (it collided
-  // with water/teal) to the gold shared with the tertiary token; steps moved
-  // off violet to the same gold.
+  // shared mid-saturation/lightness band — coral → gold → mauve → teal →
+  // orange — instead of unrelated pastels. 2026-09-27 color-system pass:
+  // fat moved off green (it read as the volt/lime primary-accent family,
+  // which is reserved for actions) to the mauve it shares with cholesterol —
+  // cholesterol IS a lipid marker, so the shared hue is semantic, and the
+  // "reuse a covered hue" precedent is fiber=water teal below. Steps moved
+  // off gold (it collided with carbs AND the calories amber) to azure, so
+  // the activity pair (water teal / steps azure) sits in its own cool
+  // family, visually separate from nutrition's warm band. Carbs earlier
+  // moved off blue (collided with water/teal) to the gold shared with the
+  // tertiary token.
   static const Color accentCalories = Color(0xFFF5A623); // Calories (Pixel Fire)
   static const Color accentProtein = Color(0xFFEA7A72);  // Protein (Pixel Meat)
   static const Color accentCarbs = Color(0xFFE8C468);    // Carbs (Pixel Grain)
-  static const Color accentFat = Color(0xFF36B37E);      // Fat (Pixel Avocado)
+  static const Color accentFat = Color(0xFFB87FA8);      // Fat → lipid mauve
   static const Color accentWater = Color(0xFF4FD1C5);    // Water → calm teal
-  static const Color accentSteps = Color(0xFFE8C468);    // Steps → gold
+  static const Color accentSteps = Color(0xFF4A90D9);    // Steps → azure
   static const Color accentWorkout = Color(0xFFF5A623);  // Workout (Pixel Dumbbell)
 
   // ── Micro-Nutrient Accents (calories card micros rows) ──
@@ -282,6 +289,14 @@ class AppColors {
   static const Color accentIron = Color(0xFFC97B3D);
   static const Color accentCholesterol = Color(0xFFB87FA8);
   static const Color accentCaffeine = Color(0xFF8D6E63);
+
+  // ── Rank Tier Accents (leaderboard / competitive hub) ──
+  // Centralized 2026-09-29 — were previously hardcoded as private switch
+  // expressions in BOTH leaderboard_screen.dart and client_profile_screen.dart.
+  static const Color tierDiamond = Color(0xFF4DC591);
+  static const Color tierGold = Color(0xFFE8B93E);
+  static const Color tierSilver = Color(0xFF9AA3AF);
+  static const Color tierBronze = Color(0xFFCE8A5B);
 
   // ── Semantic Aliases & Backward Compatibility (data-viz, mode-safe) ──
   static const Color redAccent = Color(0xFFEA7A72);

@@ -6,8 +6,9 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_animations.dart';
 import '../theme/app_colors.dart';
 
-/// Segmented System / Light / Dark control for the Profile screen.
-/// Selected option gets the volt fill with ink text (never white-on-volt).
+/// Compact System / Light / Dark segmented control for the profile
+/// appearance row. Icon-only so it fits as a row's trailing control —
+/// selected option gets the volt fill with ink text (never white-on-volt).
 class ThemeModeToggle extends StatelessWidget {
   const ThemeModeToggle({super.key});
 
@@ -17,37 +18,32 @@ class ThemeModeToggle extends StatelessWidget {
     final provider = context.watch<ThemeModeProvider>();
 
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.borderSubtle),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: _ModeOption(
-              icon: Icons.brightness_auto_outlined,
-              label: l10n.themeSystem,
-              isSelected: provider.mode == ThemeMode.system,
-              onTap: () => _select(context, provider, ThemeMode.system),
-            ),
+          _ModeOption(
+            icon: Icons.brightness_auto_outlined,
+            tooltip: l10n.themeSystem,
+            isSelected: provider.mode == ThemeMode.system,
+            onTap: () => _select(context, provider, ThemeMode.system),
           ),
-          Expanded(
-            child: _ModeOption(
-              icon: Icons.light_mode_outlined,
-              label: l10n.themeLight,
-              isSelected: provider.mode == ThemeMode.light,
-              onTap: () => _select(context, provider, ThemeMode.light),
-            ),
+          _ModeOption(
+            icon: Icons.light_mode_outlined,
+            tooltip: l10n.themeLight,
+            isSelected: provider.mode == ThemeMode.light,
+            onTap: () => _select(context, provider, ThemeMode.light),
           ),
-          Expanded(
-            child: _ModeOption(
-              icon: Icons.dark_mode_outlined,
-              label: l10n.themeDark,
-              isSelected: provider.mode == ThemeMode.dark,
-              onTap: () => _select(context, provider, ThemeMode.dark),
-            ),
+          _ModeOption(
+            icon: Icons.dark_mode_outlined,
+            tooltip: l10n.themeDark,
+            isSelected: provider.mode == ThemeMode.dark,
+            onTap: () => _select(context, provider, ThemeMode.dark),
           ),
         ],
       ),
@@ -66,63 +62,39 @@ class ThemeModeToggle extends StatelessWidget {
 
 class _ModeOption extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String tooltip;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _ModeOption({
     required this.icon,
-    required this.label,
+    required this.tooltip,
     required this.isSelected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: AppDurations.medium,
-        curve: AppCurves.standard,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryFixed : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: AppColors.primaryGlow,
-                    blurRadius: 12,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: isSelected
-                  ? AppColors.onPrimary
-                  : AppColors.textSecondary,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: isSelected
-                    ? AppColors.onPrimary
-                    : AppColors.textSecondary,
-              ),
-            ),
-          ],
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: AppDurations.medium,
+          curve: AppCurves.standard,
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primaryFixed : Colors.transparent,
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: isSelected
+                ? AppColors.onPrimary
+                : AppColors.textSecondary,
+          ),
         ),
       ),
     );

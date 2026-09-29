@@ -6,10 +6,22 @@ class MealSuggestion {
   final List<MealSuggestionItem> items;
   final String explanationEn;
   final String explanationAr;
+
+  /// The AI's name for the composed dish ("Chicken Shawarma Plate" /
+  /// "ساندوتش شاورما فراخ") — the result header shows it so the suggestion
+  /// reads like a real meal, not a list of ingredients. Null = unnamed.
+  final String? dishNameEn;
+  final String? dishNameAr;
   final int totalCalories;
   final double totalProtein;
   final double totalCarbs;
   final double totalFat;
+
+  /// Micro-nutrient totals (already summed server-side from the catalog).
+  /// Null/0 = catalog had no values — the result card hides empty pills.
+  final double? totalFiber;
+  final double? totalSugars;
+  final double? totalSodium;
 
   const MealSuggestion({
     required this.items,
@@ -19,9 +31,15 @@ class MealSuggestion {
     required this.totalProtein,
     required this.totalCarbs,
     required this.totalFat,
+    this.dishNameEn,
+    this.dishNameAr,
+    this.totalFiber,
+    this.totalSugars,
+    this.totalSodium,
   });
 
   factory MealSuggestion.fromJson(Map<String, dynamic> json) {
+    double? opt(dynamic v) => v is num ? v.toDouble() : null;
     return MealSuggestion(
       items: ((json['items'] as List?) ?? const [])
           .whereType<Map<String, dynamic>>()
@@ -29,10 +47,15 @@ class MealSuggestion {
           .toList(),
       explanationEn: json['explanation_en']?.toString() ?? '',
       explanationAr: json['explanation_ar']?.toString() ?? '',
+      dishNameEn: (json['dish_name_en'] as String?)?.trim(),
+      dishNameAr: (json['dish_name_ar'] as String?)?.trim(),
       totalCalories: (json['total_calories'] as num?)?.toInt() ?? 0,
       totalProtein: (json['total_protein'] as num?)?.toDouble() ?? 0,
       totalCarbs: (json['total_carbs'] as num?)?.toDouble() ?? 0,
       totalFat: (json['total_fat'] as num?)?.toDouble() ?? 0,
+      totalFiber: opt(json['total_fiber_g']),
+      totalSugars: opt(json['total_sugars_g']),
+      totalSodium: opt(json['total_sodium_mg']),
     );
   }
 }

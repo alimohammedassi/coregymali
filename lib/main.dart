@@ -284,8 +284,25 @@ class MyApp extends StatelessWidget {
         thickness: 1,
       ),
       textTheme: isArabic
-          ? GoogleFonts.cairoTextTheme(base.textTheme)
+          ? _arabicTextTheme(base.textTheme)
           : GoogleFonts.poppinsTextTheme(base.textTheme),
     );
   }
+}
+
+/// App-wide Arabic text theme: locally bundled Cairo (no runtime fetch),
+/// with regular body/label text lifted to SemiBold (w600) for readability.
+/// Display/headline/title weights are left untouched to preserve hierarchy.
+TextTheme _arabicTextTheme(TextTheme base) {
+  final themed = base.apply(fontFamily: 'Cairo');
+  TextStyle? semiBold(TextStyle? style) =>
+      style?.copyWith(fontWeight: FontWeight.w600);
+  return themed.copyWith(
+    bodyLarge: semiBold(themed.bodyLarge),
+    bodyMedium: semiBold(themed.bodyMedium),
+    bodySmall: semiBold(themed.bodySmall),
+    labelLarge: semiBold(themed.labelLarge),
+    labelMedium: semiBold(themed.labelMedium),
+    labelSmall: semiBold(themed.labelSmall),
+  );
 }

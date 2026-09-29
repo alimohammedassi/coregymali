@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:provider/provider.dart';
 import 'l10n/app_localizations.dart';
 import 'supabase/auth_service.dart';
 import 'supabase/profile_service.dart';
 import 'supabase/supabase_config.dart';
+import 'providers/locale_provider.dart';
 import 'services/stats_service.dart';
 import 'services/streak_service.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -20,6 +22,14 @@ import 'widgets/language_toggle.dart';
 import 'widgets/theme_mode_toggle.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'screens/workout_screen.dart';
+import 'package:intl/intl.dart' show DateFormat;
+
+// ── Legal ────────────────────────────────────────────────────────────────────
+// Hosted on the CoreGym dashboard site (core_dashboard repo: /privacy, /terms).
+const String kPrivacyPolicyUrl =
+    'https://coregym-coach-dashboard-orpin.vercel.app/privacy';
+const String kTermsOfServiceUrl =
+    'https://coregym-coach-dashboard-orpin.vercel.app/terms';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PAGE
@@ -44,6 +54,7 @@ class _ProfilePageState extends State<ProfilePage>
   // ── State ─────────────────────────────────────────────────────────────────
   bool _isLoading = true;
   bool _isUploadingAvatar = false;
+  bool _statsLoadFailed = false;
   int _streakCount = 0;
   bool _streakLoggedToday = false;
 
@@ -64,7 +75,7 @@ class _ProfilePageState extends State<ProfilePage>
   // Stats
   int _totalWorkoutsThisMonth = 0;
   int _totalCaloriesThisMonth = 0;
-  String _activeProgramName = 'None';
+  String? _activeProgramName;
   int _totalWorkoutsAllTime = 0;
   List<Map<String, dynamic>> _exerciseProgress = [];
 
@@ -82,12 +93,20 @@ class _ProfilePageState extends State<ProfilePage>
   void initState() {
     super.initState();
 
-    _bgCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 18))
-      ..repeat(reverse: true);
+    _bgCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 18),
+    )..repeat(reverse: true);
 
-    _entryCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _entryCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    );
 
-    _avatarCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
+    _avatarCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
     _avatarScale = Tween<double>(
       begin: 1.0,
       end: 0.93,
@@ -237,14 +256,18 @@ class _ProfilePageState extends State<ProfilePage>
 
         final active = results[2] as Map<String, dynamic>?;
         if (active?['training_programs'] != null) {
-          _activeProgramName =
-              active!['training_programs']['name'] as String? ?? 'None';
+          _activeProgramName = active!['training_programs']['name'] as String?;
         }
 
         _totalWorkoutsAllTime = (results[3] as dynamic).count as int;
         _exerciseProgress = List<Map<String, dynamic>>.from(results[4] as List);
+        _statsLoadFailed = false;
       });
-    } catch (_) {}
+    } catch (_) {
+      // Don't leave zeros on screen looking like real data — surface the
+      // failure with a retry affordance instead.
+      if (mounted) setState(() => _statsLoadFailed = true);
+    }
   }
 
   String _fmtGoal(String raw) {
@@ -312,7 +335,7 @@ class _ProfilePageState extends State<ProfilePage>
       });
       HapticFeedback.mediumImpact();
       _toast(
-        'Profile photo updated',
+        AppLocalizations.of(context)!.profilePhotoUpdated,
         Icons.check_circle_outline_rounded,
         AppColors.greenAccent,
       );
@@ -320,7 +343,7 @@ class _ProfilePageState extends State<ProfilePage>
       if (!mounted) return;
       setState(() => _isUploadingAvatar = false);
       _toast(
-        'Upload failed. Try again.',
+        AppLocalizations.of(context)!.uploadFailed,
         Icons.error_outline_rounded,
         AppColors.error,
       );
@@ -382,12 +405,7 @@ class _ProfilePageState extends State<ProfilePage>
               slivers: [
                 _buildAppBar(),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    20,
-                    8,
-                    20,
-                    120,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 120),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate(_items()),
                   ),
@@ -456,19 +474,28 @@ class _ProfilePageState extends State<ProfilePage>
           Positioned(
             top: -80 + 30 * sin(t * pi),
             right: -60 + 18 * cos(t * pi * 1.3),
-            child: _Orb(size: 280, color: AppColors.primary.withValues(alpha: .07)),
+            child: _Orb(
+              size: 280,
+              color: AppColors.primary.withValues(alpha: .07),
+            ),
           ),
           Positioned(
             bottom: -50 + 24 * cos(t * pi * .7),
             left: -60,
-            child: _Orb(size: 220, color: AppColors.secondary.withValues(alpha: .05)),
+            child: _Orb(
+              size: 220,
+              color: AppColors.secondary.withValues(alpha: .05),
+            ),
           ),
           Positioned(
             top:
                 MediaQuery.of(context).size.height * .42 +
                 18 * sin(t * pi * 1.1),
             right: -30,
-            child: _Orb(size: 150, color: AppColors.tertiary.withValues(alpha: .04)),
+            child: _Orb(
+              size: 150,
+              color: AppColors.tertiary.withValues(alpha: .04),
+            ),
           ),
         ],
       );
@@ -476,37 +503,14 @@ class _ProfilePageState extends State<ProfilePage>
   );
 
   // ── SliverAppBar ──────────────────────────────────────────────────────────
+  // No app-bar actions: the language + theme controls live in the appearance
+  // card below, and data refreshes via pull-to-refresh only.
   Widget _buildAppBar() => SliverAppBar(
     pinned: true,
     expandedHeight: 290,
     backgroundColor: AppColors.surface,
     surfaceTintColor: Colors.transparent,
     elevation: 0,
-    actions: [
-      SizedBox(
-        height: 44,
-        child: const LanguageToggle(compact: true),
-      ),
-      const SizedBox(width: 4),
-      Semantics(
-        label: 'Refresh profile',
-        button: true,
-        child: IconButton(
-          icon: Icon(
-            Icons.refresh_rounded,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            _loadData();
-          },
-          tooltip: 'Refresh',
-          splashRadius: 20,
-        ),
-      ),
-      const SizedBox(width: 8),
-    ],
     flexibleSpace: FlexibleSpaceBar(
       collapseMode: CollapseMode.pin,
       background: _buildHeroHeader(),
@@ -533,40 +537,28 @@ class _ProfilePageState extends State<ProfilePage>
   // "volt"), lower tiers step down through cyan / amber / silver / muted.
   // All values are readable on light pill backgrounds.
   ({String label, Color color}) _getRank() {
+    final l10n = AppLocalizations.of(context)!;
     if (_totalWorkoutsAllTime < 5) {
-      return (label: 'ROOKIE', color: AppColors.textMuted);
+      return (label: l10n.rankRookie, color: AppColors.textMuted);
     }
     if (_totalWorkoutsAllTime < 20) {
-      return (label: 'IRON', color: AppColors.secondaryDim);
+      return (label: l10n.rankIron, color: AppColors.secondaryDim);
     }
     if (_totalWorkoutsAllTime < 50) {
-      return (label: 'BRONZE', color: AppColors.tertiaryDim);
+      return (label: l10n.rankBronze, color: AppColors.tertiaryDim);
     }
     if (_totalWorkoutsAllTime < 100) {
-      return (label: 'SILVER', color: AppColors.textSecondary);
+      return (label: l10n.rankSilver, color: AppColors.textSecondary);
     }
-    return (label: 'GOLD', color: AppColors.primaryGreen);
+    return (label: l10n.rankGold, color: AppColors.primaryGreen);
   }
 
   // ── Date Formatter ────────────────────────────────────────────────────────
   String _formatDate(String isoStr) {
     try {
       final dt = DateTime.parse(isoStr);
-      final months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
-      return '${months[dt.month - 1]} ${dt.day}';
+      final l10n = AppLocalizations.of(context)!;
+      return DateFormat('MMM d', l10n.localeName).format(dt);
     } catch (_) {
       return '';
     }
@@ -574,10 +566,11 @@ class _ProfilePageState extends State<ProfilePage>
 
   // ── Avatar Options ────────────────────────────────────────────────────────
   void _showAvatarOptions() {
+    final l10n = AppLocalizations.of(context)!;
     final hasAvatar = _avatarUrl.isNotEmpty;
     _openSheet(
       context,
-      title: 'PROFILE PHOTO',
+      title: l10n.profilePhotoTitle,
       builder: (ctx, _) => [
         if (hasAvatar) ...[
           _PressCard(
@@ -591,7 +584,7 @@ class _ProfilePageState extends State<ProfilePage>
                 Icon(Icons.fullscreen_rounded, color: AppColors.primary),
                 const SizedBox(width: 16),
                 Text(
-                  'View Photo',
+                  l10n.viewPhoto,
                   style: TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
@@ -614,7 +607,7 @@ class _ProfilePageState extends State<ProfilePage>
               Icon(Icons.photo_library_rounded, color: AppColors.primary),
               const SizedBox(width: 16),
               Text(
-                hasAvatar ? 'Change Photo' : 'Upload Photo',
+                hasAvatar ? l10n.changePhoto : l10n.uploadPhoto,
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w600,
@@ -648,9 +641,8 @@ class _ProfilePageState extends State<ProfilePage>
                   fit: BoxFit.cover,
                   placeholder: (_, __) =>
                       Container(color: AppColors.surfaceContainerHigh),
-                  errorWidget: (_, __, ___) => Container(
-                    color: AppColors.surfaceContainerHigh,
-                  ),
+                  errorWidget: (_, __, ___) =>
+                      Container(color: AppColors.surfaceContainerHigh),
                 ),
               ),
             ),
@@ -700,7 +692,7 @@ class _ProfilePageState extends State<ProfilePage>
 
                   // ── Avatar ──────────────────────────────────────────────
                   Semantics(
-                    label: 'Profile photo. Tap for options.',
+                    label: AppLocalizations.of(context)!.profilePhotoTapOptions,
                     button: true,
                     child: GestureDetector(
                       onTapDown: (_) => _avatarCtrl.forward(),
@@ -738,7 +730,9 @@ class _ProfilePageState extends State<ProfilePage>
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: AppColors.primary.withValues(alpha: .45),
+                                    color: AppColors.primary.withValues(
+                                      alpha: .45,
+                                    ),
                                     width: 1.5,
                                   ),
                                 ),
@@ -788,11 +782,13 @@ class _ProfilePageState extends State<ProfilePage>
                                     ),
                                   ),
                                 ),
-                              // Camera/Edit badge — directional so it mirrors with language
+                              // Camera/Edit badge — pinned to the bottom-right
+                              // in BOTH languages: a directional `end` here
+                              // made it jump sides on every language toggle.
                               if (!_isUploadingAvatar)
-                                PositionedDirectional(
+                                Positioned(
                                   bottom: 3,
-                                  end: 3,
+                                  right: 3,
                                   child: Container(
                                     width: 30,
                                     height: 30,
@@ -805,14 +801,15 @@ class _ProfilePageState extends State<ProfilePage>
                                       ),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: AppColors.primary
-                                              .withValues(alpha: .35),
+                                          color: AppColors.primary.withValues(
+                                            alpha: .35,
+                                          ),
                                           blurRadius: 10,
                                           offset: const Offset(0, 2),
                                         ),
                                       ],
                                     ),
-                                    child:  Icon(
+                                    child: Icon(
                                       Icons.edit_rounded,
                                       size: 14,
                                       color: AppColors.onPrimary,
@@ -853,8 +850,9 @@ class _ProfilePageState extends State<ProfilePage>
                       _Pill(
                         icon: Icons.local_fire_department_rounded,
                         label: '$_streakCount',
-                        colorOverride:
-                            _streakLoggedToday ? AppColors.primary : null,
+                        colorOverride: _streakLoggedToday
+                            ? AppColors.primary
+                            : null,
                       ),
                       _Pill(
                         icon: Icons.military_tech_rounded,
@@ -886,10 +884,16 @@ class _ProfilePageState extends State<ProfilePage>
     final l10n = AppLocalizations.of(context)!;
     return [
       _A(0, _buildStatsRow()),
+      if (_statsLoadFailed) ...[
+        const SizedBox(height: 10),
+        _A(0, _buildStatsErrorNudge()),
+      ],
       if (_totalWorkoutsAllTime == 0) ...[
         const SizedBox(height: 10),
         _A(0, _buildFirstRunNudge()),
       ],
+      // TODO: a real monthly breakdown (e.g. a chart) could live here — the
+      // old "This Month" card was removed as a duplicate of the stats row.
       const SizedBox(height: 20),
 
       _A(1, _buildProgramBanner()),
@@ -901,7 +905,7 @@ class _ProfilePageState extends State<ProfilePage>
         2,
         _ProfileCard(
           onTap: () => _showEditDataSheet(context),
-          semanticLabel: 'Edit body data',
+          semanticLabel: l10n.editBodyData,
           showEditBadge: true,
           child: _buildMetricsRows(),
         ),
@@ -914,37 +918,39 @@ class _ProfilePageState extends State<ProfilePage>
         3,
         _ProfileCard(
           onTap: () => _showEditGoalsSheet(context),
-          semanticLabel: 'Edit daily targets',
+          semanticLabel: l10n.editDailyTargets,
           showEditBadge: true,
           child: _buildTargetRows(),
         ),
       ),
       const SizedBox(height: 20),
 
-      _A(4, _SectionHeader(title: l10n.thisMonth)),
-      const SizedBox(height: 10),
-      _A(4, _ProfileCard(child: _buildMonthRows())),
-      const SizedBox(height: 20),
-
       if (_exerciseProgress.isNotEmpty) ...[
-        _A(5, _SectionHeader(title: l10n.rmProgress)),
+        _A(4, _SectionHeader(title: l10n.rmProgress)),
         const SizedBox(height: 10),
-        _A(5, _buildProgressChart()),
+        _A(4, _buildProgressChart()),
         const SizedBox(height: 20),
       ],
 
-      _A(6, _GradientDivider()),
+      _A(5, _GradientDivider()),
       const SizedBox(height: 24),
 
-      _A(7, _buildCoachCta()),
-      const SizedBox(height: 10),
+      _A(6, _buildCoachCta()),
+      const SizedBox(height: 20),
 
-      _A(8, _SectionHeader(title: l10n.appearance)),
+      _A(7, _SectionHeader(title: l10n.appearance)),
       const SizedBox(height: 10),
-      _A(8, _ProfileCard(child: ThemeModeToggle())),
+      _A(7, _ProfileCard(child: _buildAppearanceRows())),
+      const SizedBox(height: 20),
+
+      _A(8, _SectionHeader(title: l10n.legal)),
+      const SizedBox(height: 10),
+      _A(8, _buildLegalCard()),
       const SizedBox(height: 20),
 
       _A(9, _buildSignOutBtn()),
+      const SizedBox(height: 10),
+      _A(9, _buildDeleteAccountBtn()),
     ];
   }
 
@@ -962,8 +968,11 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         child: Row(
           children: [
-            Icon(Icons.emoji_events_outlined,
-                size: 18, color: AppColors.tertiary),
+            Icon(
+              Icons.emoji_events_outlined,
+              size: 18,
+              color: AppColors.tertiary,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -973,6 +982,57 @@ class _ProfilePageState extends State<ProfilePage>
                   height: 1.4,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Stats load failure ────────────────────────────────────────────────────
+  // The extended-stats fetch failed — say so instead of quietly showing the
+  // zero defaults as if they were real data.
+  Widget _buildStatsErrorNudge() {
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      label: l10n.statsLoadFailed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.error.withValues(alpha: .08),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.error.withValues(alpha: .3)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 18, color: AppColors.error),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.statsLoadFailed,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: _loadData,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                l10n.retry,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.error,
                 ),
               ),
             ),
@@ -1010,7 +1070,11 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           _statDivider(),
           _InlineStat(
-            value: '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k',
+            // Compact only from 1000 up — "0.0k"/"0.9k" for small numbers
+            // reads like broken data.
+            value: _totalCaloriesThisMonth >= 1000
+                ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
+                : '$_totalCaloriesThisMonth',
             label: l10n.kcalLogged,
             icon: Icons.local_fire_department_rounded,
             color: AppColors.accentCalories,
@@ -1021,77 +1085,77 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _statDivider() => Container(
-        width: 1,
-        height: 26,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        color: AppColors.borderSubtle,
-      );
+    width: 1,
+    height: 26,
+    margin: const EdgeInsets.symmetric(horizontal: 4),
+    color: AppColors.borderSubtle,
+  );
 
   // ── Program banner ────────────────────────────────────────────────────────
-  Widget _buildProgramBanner() => _PressCard(
-    semanticLabel: 'Active program: $_activeProgramName. Tap to view.',
-    // The banner promises "tap to view" — open the active program in the
-    // Workouts tab (in-app) or push the workout screen when standalone.
-    onTap: () {
-      HapticFeedback.lightImpact();
-      if (widget.onOpenWorkout != null) {
-        widget.onOpenWorkout!();
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const WorkoutScreen()),
-        );
-      }
-    },
-    child: Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: .12),
-            borderRadius: BorderRadius.circular(12),
+  Widget _buildProgramBanner() {
+    final l10n = AppLocalizations.of(context)!;
+    final programName = _activeProgramName ?? l10n.noActiveProgram;
+    return _PressCard(
+      semanticLabel: l10n.activeProgramTapHint(programName),
+      // The banner promises "tap to view" — open the active program in the
+      // Workouts tab (in-app) or push the workout screen when standalone.
+      onTap: () {
+        HapticFeedback.lightImpact();
+        if (widget.onOpenWorkout != null) {
+          widget.onOpenWorkout!();
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const WorkoutScreen()),
+          );
+        }
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.bolt_rounded, color: AppColors.primary, size: 24),
           ),
-          child: Icon(
-            Icons.bolt_rounded,
-            color: AppColors.primary,
-            size: 24,
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context)!.activeProgram2.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 9,
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.8,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context)!.activeProgram2.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.8,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                _activeProgramName,
-                style: AppText.titleSm.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  color: AppColors.textPrimary,
+                const SizedBox(height: 3),
+                Text(
+                  programName,
+                  style: AppText.titleSm.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textSecondary.withValues(alpha: .7),
-          size: 20,
-        ),
-      ],
-    ),
-  );
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textSecondary.withValues(alpha: .7),
+            size: 20,
+          ),
+        ],
+      ),
+    );
+  }
 
   // ── Unified metric-row list pattern ───────────────────────────────────────
   // One consistent card language for all "a few numbers" sections
@@ -1165,7 +1229,7 @@ class _ProfilePageState extends State<ProfilePage>
           color: AppColors.secondary,
           label: l10n.age,
           value: _age == '--' ? '--' : _age,
-          unit: _age == '--' ? null : 'yrs',
+          unit: _age == '--' ? null : l10n.yearsShort,
         ),
         _metricListRow(
           icon: Icons.monitor_weight_outlined,
@@ -1215,44 +1279,101 @@ class _ProfilePageState extends State<ProfilePage>
           color: AppColors.primary,
           label: l10n.workoutsLabel,
           value: '$_weeklyWorkouts',
-          unit: '×/wk',
+          unit: l10n.perWeekShort,
           isLast: true,
         ),
       ],
     );
   }
 
-  Widget _buildMonthRows() {
+  // ── Appearance rows ───────────────────────────────────────────────────────
+  // Theme + language as compact list rows — they used to sit in the app bar
+  // (language pill + refresh icon up top), now they live with the settings.
+  Widget _buildAppearanceRows() {
     final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
-        _metricListRow(
-          icon: Icons.fitness_center_rounded,
-          color: AppColors.primary,
-          label: l10n.workoutsLabel,
-          value: '$_totalWorkoutsThisMonth',
+        _settingsRow(
+          icon: Icons.contrast_rounded,
+          color: AppColors.purpleAccent,
+          label: l10n.themeMode,
+          trailing: const ThemeModeToggle(),
         ),
-        _metricListRow(
-          icon: Icons.local_fire_department_rounded,
-          color: AppColors.accentCalories,
-          label: l10n.caloriesLabel,
-          value: _totalCaloriesThisMonth > 0
-              ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
-              : '0',
-          unit: _totalCaloriesThisMonth > 0 ? 'kcal' : null,
+        _settingsRow(
+          icon: Icons.language_rounded,
+          color: AppColors.secondary,
+          label: l10n.language,
+          trailing: const LanguageToggle(compact: true),
+          onTap: () => context.read<LocaleProvider>().toggle(),
           isLast: true,
         ),
+      ],
+    );
+  }
+
+  // Same visual language as _metricListRow, but the trailing slot takes any
+  // control (segmented theme switch, language pill) instead of a value.
+  Widget _settingsRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required Widget trailing,
+    VoidCallback? onTap,
+    bool isLast = false,
+  }) {
+    final row = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: .12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: color, size: 17),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: AppText.bodySm.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          trailing,
+        ],
+      ),
+    );
+    return Column(
+      children: [
+        if (onTap == null)
+          row
+        else
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticFeedback.lightImpact();
+              onTap();
+            },
+            child: row,
+          ),
+        if (!isLast) Divider(height: 1, color: AppColors.borderLight),
       ],
     );
   }
 
   // ── Progress chart ────────────────────────────────────────────────────────
   Widget _buildProgressChart() {
+    final l10n = AppLocalizations.of(context)!;
     if (_exerciseProgress.isEmpty) {
       return _ProfileCard(
         child: _EmptyState(
           icon: Icons.show_chart_rounded,
-          label: 'No progress data yet',
+          label: l10n.noProgressData,
         ),
       );
     }
@@ -1290,13 +1411,12 @@ class _ProfilePageState extends State<ProfilePage>
                 style: AppText.titleSm.copyWith(fontWeight: FontWeight.w700),
               ),
               const Spacer(),
-              _Pill(label: '${spots.length} sessions'),
+              _Pill(label: l10n.sessionsCount(spots.length)),
             ],
           ),
           const SizedBox(height: 20),
           Semantics(
-            label:
-                '1RM progress line chart — ${spots.length} sessions recorded.',
+            label: l10n.chartSessionsSemantics(spots.length),
             child: SizedBox(
               height: 160,
               child: LineChart(
@@ -1304,10 +1424,8 @@ class _ProfilePageState extends State<ProfilePage>
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) => FlLine(
-                      color: AppColors.borderLight,
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: AppColors.borderLight, strokeWidth: 1),
                   ),
                   titlesData: FlTitlesData(
                     leftTitles: AxisTitles(
@@ -1429,98 +1547,174 @@ class _ProfilePageState extends State<ProfilePage>
 
   // ── Coach CTA — opens the external Coach Dashboard website. Surface card
   // in both modes, volt-family icon badge, AA-safe text. ──
-  Widget _buildCoachCta() => Semantics(
-    button: true,
-    label: 'Coach Dashboard',
-    child: _PressCard(
-      onTap: () {
-        HapticFeedback.mediumImpact();
-        launchUrl(
-          Uri.parse('https://coregym-coach-dashboard-orpin.vercel.app'),
-          mode: LaunchMode.externalApplication,
-        );
-      },
-      padding: EdgeInsets.zero,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 44),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.borderSubtle),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+  Widget _buildCoachCta() {
+    final l10n = AppLocalizations.of(context)!;
+    return Semantics(
+      button: true,
+      label: l10n.coachDashboard,
+      child: _PressCard(
+        onTap: () {
+          HapticFeedback.mediumImpact();
+          launchUrl(
+            Uri.parse('https://coregym-coach-dashboard-orpin.vercel.app'),
+            mode: LaunchMode.externalApplication,
+          );
+        },
+        padding: EdgeInsets.zero,
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 44),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderSubtle),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.cardShadow,
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryFixed.withValues(alpha: .14),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Icon(
+                  Icons.dashboard_rounded,
+                  color: AppColors.onPrimaryContainer,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          l10n.coachDashboard.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.4,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      l10n.coachDashboardSubtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.arrow_back_ios_rounded
+                    : Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
         ),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+      ),
+    );
+  }
+
+  // ── Legal — Privacy Policy & Terms of Service (Play Console requirement:
+  // must be reachable from inside the app). Content itself is hosted. ──
+  Widget _buildLegalCard() {
+    final l10n = AppLocalizations.of(context)!;
+    return _ProfileCard(
+      child: Column(
+        children: [
+          _buildLegalRow(
+            icon: Icons.privacy_tip_outlined,
+            color: AppColors.secondary,
+            label: l10n.privacyPolicy,
+            url: kPrivacyPolicyUrl,
+          ),
+          Divider(height: 1, color: AppColors.borderLight),
+          _buildLegalRow(
+            icon: Icons.description_outlined,
+            color: AppColors.tertiary,
+            label: l10n.termsOfService,
+            url: kTermsOfServiceUrl,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegalRow({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String url,
+  }) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 11),
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: AppColors.primaryFixed.withValues(alpha: .14),
-                borderRadius: BorderRadius.circular(13),
+                color: color.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.dashboard_rounded,
-                color: AppColors.onPrimaryContainer,
-                size: 24,
-              ),
+              child: Icon(icon, color: color, size: 17),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'COACH DASHBOARD',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.4,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Manage clients & programs on the web',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                label,
+                style: AppText.bodySm.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Icon(
               Directionality.of(context) == TextDirection.rtl
                   ? Icons.arrow_back_ios_rounded
                   : Icons.arrow_forward_ios_rounded,
-              size: 14,
+              size: 12,
               color: AppColors.textMuted,
             ),
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 
   // ── Sign out ──────────────────────────────────────────────────────────────
   Widget _buildSignOutBtn() => _FlatActionBtn(
@@ -1530,10 +1724,176 @@ class _ProfilePageState extends State<ProfilePage>
     onTap: () => _showLogoutDialog(context),
   );
 
+  // ── Delete account (Play User Data policy) ───────────────────────────────
+  // Solid red — deliberately stronger than the outlined Sign Out above it so
+  // the two destructive actions can't be confused.
+  Widget _buildDeleteAccountBtn() => _FlatActionBtn(
+    label: AppLocalizations.of(context)!.deleteAccount,
+    icon: Icons.delete_forever_rounded,
+    isDestructive: true,
+    filled: true,
+    onTap: () => _showDeleteAccountDialog(context),
+  );
+
+  void _showDeleteAccountDialog(BuildContext ctx) {
+    final l10n = AppLocalizations.of(ctx)!;
+    bool deleting = false;
+    showDialog(
+      context: ctx,
+      barrierDismissible: false,
+      builder: (dCtx) => StatefulBuilder(
+        builder: (dCtx, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: AppColors.error.withValues(alpha: .25)),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          icon: Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: AppColors.error.withValues(alpha: .12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.delete_forever_rounded,
+              color: AppColors.error,
+              size: 24,
+            ),
+          ),
+          title: Text(
+            l10n.deleteAccountTitle,
+            style: AppText.headlineSm.copyWith(
+              fontSize: 18,
+              color: AppColors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            l10n.deleteAccountBody,
+            style: AppText.bodyMd.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+          actions: [
+            SizedBox(
+              height: 44,
+              child: TextButton(
+                onPressed: deleting ? null : () => Navigator.pop(dCtx),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: AppColors.borderSubtle),
+                  ),
+                ),
+                child: Text(
+                  l10n.cancel,
+                  style: AppText.labelMd.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              height: 44,
+              child: ElevatedButton(
+                onPressed: deleting
+                    ? null
+                    : () async {
+                        HapticFeedback.mediumImpact();
+                        setDialogState(() => deleting = true);
+                        try {
+                          // Server-side wipe: the function verifies the
+                          // caller's JWT, deletes every row tied to the user
+                          // and removes the auth user itself (service-role
+                          // key never leaves the server).
+                          await SupabaseConfig.client.functions.invoke(
+                            'delete-account',
+                          );
+                        } catch (_) {
+                          if (!ctx.mounted) return;
+                          Navigator.pop(dCtx);
+                          _toast(
+                            l10n.deleteAccountFailed,
+                            Icons.error_outline_rounded,
+                            AppColors.error,
+                          );
+                          return; // stay signed in — deletion didn't happen
+                        }
+                        if (!ctx.mounted) return;
+                        Navigator.pop(dCtx);
+                        await AuthService().signOut();
+                        if (ctx.mounted) {
+                          Navigator.of(ctx).pushAndRemoveUntil(
+                            PageRouteBuilder(
+                              pageBuilder: (_, a, __) => const AuthWrapper(),
+                              transitionsBuilder: (context, a, __, child) {
+                                if (MediaQuery.disableAnimationsOf(context)) {
+                                  return child;
+                                }
+                                return FadeTransition(
+                                  opacity: CurvedAnimation(
+                                    parent: a,
+                                    curve: AppCurves.standard,
+                                  ),
+                                  child: child,
+                                );
+                              },
+                              transitionDuration: AppDurations.slow,
+                            ),
+                            (_) => false,
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.error,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: AppColors.error.withValues(
+                    alpha: .6,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: deleting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        l10n.deleteAccount,
+                        style: AppText.labelMd.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────────────
   // SHEETS
   // ─────────────────────────────────────────────────────────────────────────
   void _showEditDataSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final ageCtrl = TextEditingController(text: _age == '--' ? '' : _age);
     final weightCtrl = TextEditingController(
       text: _weight == '--' ? '' : _weight.replaceAll(' kg', ''),
@@ -1545,11 +1905,11 @@ class _ProfilePageState extends State<ProfilePage>
 
     _openSheet(
       context,
-      title: 'EDIT DATA',
+      title: l10n.editDataTitle,
       builder: (ctx, setState) => [
         _FieldInput(
           label: AppLocalizations.of(context)!.age,
-          unit: 'yrs',
+          unit: l10n.yearsShort,
           ctrl: ageCtrl,
           icon: Icons.cake_outlined,
           color: AppColors.secondary,
@@ -1586,9 +1946,35 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         const SizedBox(height: 24),
         _SaveBtn(
-          label: 'SAVE DATA',
+          label: l10n.saveDataBtn,
           onPressed: () async {
             HapticFeedback.mediumImpact();
+            // Validate before touching Supabase — an empty or non-numeric
+            // field must never silently save null, and an out-of-range
+            // value must never overwrite a good one.
+            String? invalid;
+            final age = int.tryParse(ageCtrl.text.trim());
+            if (age == null || age < 10 || age > 100) {
+              invalid = l10n.invalidAgeRange;
+            }
+            final weight = double.tryParse(
+              weightCtrl.text.trim().replaceAll(',', '.'),
+            );
+            if (invalid == null &&
+                (weight == null || weight < 20 || weight > 300)) {
+              invalid = l10n.invalidWeightRange;
+            }
+            final height = double.tryParse(
+              heightCtrl.text.trim().replaceAll(',', '.'),
+            );
+            if (invalid == null &&
+                (height == null || height < 100 || height > 250)) {
+              invalid = l10n.invalidHeightRange;
+            }
+            if (invalid != null) {
+              _toast(invalid, Icons.error_outline_rounded, AppColors.error);
+              return; // keep the sheet open so the field can be fixed
+            }
             bool ok = false;
             try {
               final db = SupabaseConfig.client;
@@ -1597,9 +1983,9 @@ class _ProfilePageState extends State<ProfilePage>
                 await db
                     .from('profiles')
                     .update({
-                      'age': int.tryParse(ageCtrl.text),
-                      'weight_kg': double.tryParse(weightCtrl.text),
-                      'height_cm': double.tryParse(heightCtrl.text),
+                      'age': age,
+                      'weight_kg': weight,
+                      'height_cm': height,
                       'fitness_goal': goal,
                     })
                     .eq('id', uid);
@@ -1661,9 +2047,26 @@ class _ProfilePageState extends State<ProfilePage>
         ),
         const SizedBox(height: 24),
         _SaveBtn(
-          label: 'SAVE GOALS',
+          label: l10n.saveGoalsBtn,
           onPressed: () async {
             HapticFeedback.mediumImpact();
+            // Validate before touching Supabase — no silent fallback to the
+            // old value, and no negative/empty saves.
+            String? invalid;
+            final cal = int.tryParse(calCtrl.text.trim());
+            if (cal == null || cal < 0) invalid = l10n.invalidCalories;
+            final protein = int.tryParse(proCtrl.text.trim());
+            if (invalid == null && (protein == null || protein < 0)) {
+              invalid = l10n.invalidProtein;
+            }
+            final workouts = int.tryParse(wkCtrl.text.trim());
+            if (invalid == null && (workouts == null || workouts < 0)) {
+              invalid = l10n.invalidWeeklyWorkouts;
+            }
+            if (invalid != null) {
+              _toast(invalid, Icons.error_outline_rounded, AppColors.error);
+              return; // keep the sheet open so the field can be fixed
+            }
             bool ok = false;
             try {
               final db = SupabaseConfig.client;
@@ -1671,12 +2074,9 @@ class _ProfilePageState extends State<ProfilePage>
               if (uid != null) {
                 await db.from('user_goals').upsert({
                   'user_id': uid,
-                  'daily_calories':
-                      int.tryParse(calCtrl.text) ?? _dailyCalories,
-                  'daily_protein_g':
-                      int.tryParse(proCtrl.text) ?? _dailyProtein,
-                  'weekly_workouts':
-                      int.tryParse(wkCtrl.text) ?? _weeklyWorkouts,
+                  'daily_calories': cal,
+                  'daily_protein_g': protein,
+                  'weekly_workouts': workouts,
                   'updated_at': DateTime.now().toIso8601String(),
                 }, onConflict: 'user_id');
                 ok = true;
@@ -1737,12 +2137,7 @@ class _ProfilePageState extends State<ProfilePage>
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: AppColors.error.withValues(alpha: .25)),
         ),
-        contentPadding: const EdgeInsets.fromLTRB(
-          24,
-          20,
-          24,
-          24,
-        ),
+        contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
         titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
         icon: Container(
           width: 52,
@@ -1751,11 +2146,7 @@ class _ProfilePageState extends State<ProfilePage>
             color: AppColors.error.withValues(alpha: .12),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            Icons.logout_rounded,
-            color: AppColors.error,
-            size: 24,
-          ),
+          child: Icon(Icons.logout_rounded, color: AppColors.error, size: 24),
         ),
         title: Text(
           l10n.signOutTitle,
@@ -1806,7 +2197,9 @@ class _ProfilePageState extends State<ProfilePage>
                     PageRouteBuilder(
                       pageBuilder: (_, a, __) => const AuthWrapper(),
                       transitionsBuilder: (context, a, __, child) {
-                        if (MediaQuery.disableAnimationsOf(context)) return child;
+                        if (MediaQuery.disableAnimationsOf(context)) {
+                          return child;
+                        }
                         return FadeTransition(
                           opacity: CurvedAnimation(
                             parent: a,
@@ -1845,7 +2238,6 @@ class _ProfilePageState extends State<ProfilePage>
   }
 }
 
-
 /// Section header — quiet eyebrow label
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -1867,7 +2259,7 @@ class _SectionHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           title.toUpperCase(),
-          style:  TextStyle(
+          style: TextStyle(
             fontSize: 10,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w700,
@@ -2089,16 +2481,18 @@ class _InlineStat extends StatelessWidget {
   );
 }
 
-/// Flat outline action button (sign-out)
+/// Flat outline action button (sign-out, delete account)
 class _FlatActionBtn extends StatefulWidget {
   final String label;
   final IconData icon;
   final bool isDestructive;
+  final bool filled;
   final VoidCallback onTap;
   const _FlatActionBtn({
     required this.label,
     required this.icon,
     this.isDestructive = false,
+    this.filled = false,
     required this.onTap,
   });
   @override
@@ -2113,7 +2507,10 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
   @override
   void initState() {
     super.initState();
-    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 150));
+    _c = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
     _s = Tween<double>(
       begin: 1.0,
       end: .97,
@@ -2144,24 +2541,27 @@ class _FlatActionBtnState extends State<_FlatActionBtn>
           onTapCancel: () => _c.reverse(),
           child: Container(
             constraints: const BoxConstraints(minHeight: 44),
-            padding: const EdgeInsets.symmetric(
-              vertical: 16,
-              horizontal: 20,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
             decoration: BoxDecoration(
-              color: c.withValues(alpha: 0.07),
+              color: widget.filled ? c : c.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: c.withValues(alpha: .22)),
+              border: Border.all(
+                color: widget.filled ? c : c.withValues(alpha: .22),
+              ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(widget.icon, color: c, size: 20),
+                Icon(
+                  widget.icon,
+                  color: widget.filled ? Colors.white : c,
+                  size: 20,
+                ),
                 const SizedBox(width: 12),
                 Text(
                   widget.label.toUpperCase(),
                   style: AppText.labelMd.copyWith(
-                    color: c,
+                    color: widget.filled ? Colors.white : c,
                     letterSpacing: 1.8,
                     fontWeight: FontWeight.w800,
                     fontSize: 12,
@@ -2370,7 +2770,7 @@ class _FieldDropdown extends StatelessWidget {
         value: value,
         isExpanded: true,
         dropdownColor: AppColors.surfaceContainerHigh,
-        icon:  Icon(
+        icon: Icon(
           Icons.keyboard_arrow_down_rounded,
           color: AppColors.textSecondary,
         ),
@@ -2403,9 +2803,7 @@ class _SaveBtn extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         elevation: 0,
       ),
       child: Text(
@@ -2530,11 +2928,7 @@ class _EmptyStateState extends State<_EmptyState>
                   border: Border.all(color: AppColors.borderSubtle),
                 ),
                 alignment: Alignment.center,
-                child: Icon(
-                  widget.icon,
-                  color: AppColors.textMuted,
-                  size: 26,
-                ),
+                child: Icon(widget.icon, color: AppColors.textMuted, size: 26),
               ),
               const SizedBox(height: 12),
               Text(

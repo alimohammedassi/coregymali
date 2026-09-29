@@ -7,16 +7,18 @@ import 'supabase_client.dart';
 import 'water_reminder_service.dart';
 
 class StatsService {
-  // Get today's summary
-  Future<Map<String, dynamic>> getTodaySummary() async {
+  // Get the summary for [date] — the Nutrition tab passes the selected log
+  // date (Home week strip) so its totals mirror the day being viewed;
+  // callers without a day context keep reading today.
+  Future<Map<String, dynamic>> getTodaySummary({DateTime? date}) async {
     if (currentUserId == null) return _empty();
-    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final d = (date ?? DateTime.now()).toIso8601String().substring(0, 10);
     try {
       final res = await supabase
           .from('daily_summary')
           .select()
           .eq('user_id', currentUserId!)
-          .eq('summary_date', today)
+          .eq('summary_date', d)
           .maybeSingle();
       if (res == null) return _empty();
       return res;

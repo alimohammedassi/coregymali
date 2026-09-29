@@ -17,7 +17,9 @@ import '../../domain/day_activity.dart';
 /// Owner brief 2026-09-18: the strip is week-navigable — chevron arrows on
 /// both ends page to the previous/next week (next is disabled once the
 /// current week is shown), so past days and their logged data are reachable.
-class WeekDaySelector extends StatelessWidget {
+/// The strip is also swipeable: a horizontal drag pages weeks the same way
+/// (RTL-mirrored), with a short slide transition.
+class WeekDaySelector extends StatefulWidget {
   final List<DayActivity> week;
   final DateTime selectedDate;
   final ValueChanged<DateTime> onSelectDate;
@@ -39,6 +41,37 @@ class WeekDaySelector extends StatelessWidget {
   });
 
   @override
+  State<WeekDaySelector> createState() => _WeekDaySelectorState();
+}
+
+class _WeekDaySelectorState extends State<WeekDaySelector> {
+  /// Slide direction of the last week change, in physical pixels sign
+  /// (+1 = incoming week slides from the right). Drives the
+  /// [AnimatedSwitcher] so swipe/chevron paging animates like a pager.
+  /// Starts at 0 so the first build appears without animation.
+  double _slideDir = 0;
+
+  void _page(bool goNext, bool isArabic) {
+    if (goNext && !widget.canGoNext) return;
+    // LTR: forward slides in from the right; RTL mirrors it.
+    final base = isArabic ? -1.0 : 1.0;
+    setState(() => _slideDir = goNext ? base : -base);
+    if (goNext) {
+      widget.onNextWeek?.call();
+    } else {
+      widget.onPreviousWeek?.call();
+    }
+  }
+
+  void _onSwipe(DragEndDetails details, bool isArabic) {
+    final velocity = details.primaryVelocity ?? 0;
+    // Threshold so taps and vertical-scroll jitter never flip the week.
+    if (velocity.abs() < 200) return;
+    // LTR: swipe left (negative velocity) = forward. RTL mirrors it.
+    _page(isArabic ? velocity > 0 : velocity < 0, isArabic);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     // RTL flips the reading direction, so "previous week" points right.
@@ -48,27 +81,60 @@ class WeekDaySelector extends StatelessWidget {
     final nextIcon = isArabic
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
+    final week = widget.week;
+    final weekKey = week.isNotEmpty
+        ? DateTime(
+            week.first.date.year, week.first.date.month, week.first.date.day)
+        : DateTime(1970);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         children: [
-          _WeekArrow(icon: prevIcon, onTap: onPreviousWeek),
+          _WeekArrow(
+            icon: prevIcon,
+            onTap: widget.onPreviousWeek == null
+                ? null
+                : () => _page(false, isArabic),
+          ),
           Expanded(
-            child: Row(
-              children: [
-                for (final day in week)
-                  _DayCell(
-                    day: day,
-                    selectedDate: selectedDate,
-                    onSelectDate: onSelectDate,
-                  ),
-              ],
+            child: GestureDetector(
+              onHorizontalDragEnd: (details) => _onSwipe(details, isArabic),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final slide =
+                      Tween<Offset>(
+                        begin: Offset(_slideDir, 0),
+                        end: Offset.zero,
+                      ).animate(animation);
+                  return SlideTransition(
+                    position: slide,
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Row(
+                  key: ValueKey(weekKey),
+                  children: [
+                    for (final day in week)
+                      _DayCell(
+                        day: day,
+                        selectedDate: widget.selectedDate,
+                        onSelectDate: widget.onSelectDate,
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
           _WeekArrow(
             icon: nextIcon,
-            onTap: canGoNext ? onNextWeek : null,
+            onTap: widget.canGoNext ? () => _page(true, isArabic) : null,
           ),
         ],
       ),
@@ -199,10 +265,11 @@ class _DayCell extends StatelessWidget {
                 height: 5,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  // Lit dot = the volt accent (the design system's
-                  // active-state color); empty = a faint outline dot.
+                  // Lit dot = neutral ink: "something was logged" is an
+                  // informational indicator, and the volt accent is reserved
+                  // for actionable elements (2026-09-27 color-system pass).
                   color: day.hasActivity && !isFuture
-                      ? AppColors.accent
+                      ? AppColors.textPrimary
                       : Colors.transparent,
                   border: day.hasActivity && !isFuture
                       ? null

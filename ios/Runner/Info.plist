@@ -55,5 +55,13 @@
 	<string>CoreGym uses the camera to scan food photos and product barcodes so it can log your meals.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>CoreGym needs photo library access to let you share images in chat.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>CoreGym uses your location to find your gym on the map and detect when you arrive so it can log your visit automatically.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>CoreGym needs background location to detect when you arrive at or leave your gym and log your attendance automatically, even when the app is closed.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+	</array>
 </dict>
 </plist>

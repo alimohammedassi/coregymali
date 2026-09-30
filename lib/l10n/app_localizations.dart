@@ -4933,6 +4933,342 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Signed in with Google!'**
   String get authGoogleOk;
+
+  /// No description provided for @gymAttEntryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic Gym Attendance'**
+  String get gymAttEntryTitle;
+
+  /// No description provided for @gymAttEntryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your gym visits automatically'**
+  String get gymAttEntryDesc;
+
+  /// No description provided for @gymAttEntryActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance tracking is active'**
+  String get gymAttEntryActive;
+
+  /// No description provided for @gymAttIntroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic Gym Attendance'**
+  String get gymAttIntroTitle;
+
+  /// No description provided for @gymAttIntroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'CoreGym detects when you arrive at your gym and logs your visit automatically — no buttons, no check-ins.'**
+  String get gymAttIntroBody;
+
+  /// No description provided for @gymAttIntroRuleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How it works'**
+  String get gymAttIntroRuleTitle;
+
+  /// No description provided for @gymAttIntroRuleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay 25 minutes or more inside your gym\'s area and the visit is recorded automatically. Passing by without stopping is ignored.'**
+  String get gymAttIntroRuleBody;
+
+  /// No description provided for @gymAttIntroPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Location is used only to detect gym visits — it stays on your device and is never sold or shared.'**
+  String get gymAttIntroPrivacy;
+
+  /// No description provided for @gymAttIntroCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get gymAttIntroCta;
+
+  /// No description provided for @gymAttPermContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get gymAttPermContinue;
+
+  /// No description provided for @gymAttPermAllow.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow'**
+  String get gymAttPermAllow;
+
+  /// No description provided for @gymAttPermSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get gymAttPermSkip;
+
+  /// No description provided for @gymAttPermGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Enabled'**
+  String get gymAttPermGranted;
+
+  /// No description provided for @gymAttOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get gymAttOpenSettings;
+
+  /// No description provided for @gymAttPermDeniedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permission not granted'**
+  String get gymAttPermDeniedTitle;
+
+  /// No description provided for @gymAttPermDeniedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permission is needed for automatic tracking. You can enable it anytime from Settings.'**
+  String get gymAttPermDeniedBody;
+
+  /// No description provided for @gymAttContinueWithout.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without it'**
+  String get gymAttContinueWithout;
+
+  /// No description provided for @gymAttLocTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Know when you arrive'**
+  String get gymAttLocTitle;
+
+  /// No description provided for @gymAttLocBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We use your location only to detect when you arrive at or leave your gym. Nothing else.'**
+  String get gymAttLocBody;
+
+  /// No description provided for @gymAttLocWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why we need this: detection runs on your device and only near your gym.'**
+  String get gymAttLocWhy;
+
+  /// No description provided for @gymAttBgTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Works even when the app is closed'**
+  String get gymAttBgTitle;
+
+  /// No description provided for @gymAttBgBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Background location lets CoreGym detect your visit without opening the app. Detection only activates near your gym to protect your battery and privacy.'**
+  String get gymAttBgBody;
+
+  /// No description provided for @gymAttBgWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Why we need this: without it, visits are only detected while the app is open.'**
+  String get gymAttBgWhy;
+
+  /// No description provided for @gymAttActTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional, but smarter'**
+  String get gymAttActTitle;
+
+  /// No description provided for @gymAttActBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity data like steps can optionally confirm you were actually training — attendance never depends on it. Notifications tell you when a visit is recorded.'**
+  String get gymAttActBody;
+
+  /// No description provided for @gymAttActWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Fully optional — tracking works without it.'**
+  String get gymAttActWhy;
+
+  /// No description provided for @gymAttMapTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your gym'**
+  String get gymAttMapTitle;
+
+  /// No description provided for @gymAttMapSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the map or search to place the pin on your gym'**
+  String get gymAttMapSubtitle;
+
+  /// No description provided for @gymAttMapFinding.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location...'**
+  String get gymAttMapFinding;
+
+  /// No description provided for @gymAttMapLocErrorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We couldn\'t find your location'**
+  String get gymAttMapLocErrorTitle;
+
+  /// No description provided for @gymAttRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get gymAttRetry;
+
+  /// No description provided for @gymAttSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search gym or area'**
+  String get gymAttSearchHint;
+
+  /// No description provided for @gymAttSearchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found'**
+  String get gymAttSearchNoResults;
+
+  /// No description provided for @gymAttMyLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'My Location'**
+  String get gymAttMyLocation;
+
+  /// No description provided for @gymAttYourGym.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Gym'**
+  String get gymAttYourGym;
+
+  /// No description provided for @gymAttTrackingRadius.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking radius'**
+  String get gymAttTrackingRadius;
+
+  /// No description provided for @gymAttRadiusValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String gymAttRadiusValue(String meters);
+
+  /// No description provided for @gymAttDistanceValue.
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} away'**
+  String gymAttDistanceValue(String distance);
+
+  /// No description provided for @gymAttConfirmGym.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Gym'**
+  String get gymAttConfirmGym;
+
+  /// No description provided for @gymAttUnnamedGym.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected location'**
+  String get gymAttUnnamedGym;
+
+  /// No description provided for @gymAttConfirmAreaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking area'**
+  String get gymAttConfirmAreaTitle;
+
+  /// No description provided for @gymAttConfirmExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'CoreGym will automatically detect when you arrive at and leave this area. Visits of 25 minutes or more are recorded.'**
+  String get gymAttConfirmExplain;
+
+  /// No description provided for @gymAttStartTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Tracking'**
+  String get gymAttStartTracking;
+
+  /// No description provided for @gymAttChangeGym.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Gym'**
+  String get gymAttChangeGym;
+
+  /// No description provided for @gymAttSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re all set'**
+  String get gymAttSuccessTitle;
+
+  /// No description provided for @gymAttSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'CoreGym will track your gym visits automatically.'**
+  String get gymAttSuccessBody;
+
+  /// No description provided for @gymAttMyGymTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My Gym'**
+  String get gymAttMyGymTitle;
+
+  /// No description provided for @gymAttTrackingOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic tracking ON'**
+  String get gymAttTrackingOn;
+
+  /// No description provided for @gymAttTrackingOnDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'CoreGym is watching for your gym visits.'**
+  String get gymAttTrackingOnDesc;
+
+  /// No description provided for @gymAttSaving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get gymAttSaving;
+
+  /// No description provided for @gymAttSaveError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your gym. Try again.'**
+  String get gymAttSaveError;
+
+  /// No description provided for @gymAttBannerInsideTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re inside your gym area'**
+  String get gymAttBannerInsideTitle;
+
+  /// No description provided for @gymAttBannerCountdownLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit will be recorded in'**
+  String get gymAttBannerCountdownLabel;
+
+  /// No description provided for @gymAttBannerCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get gymAttBannerCancel;
+
+  /// No description provided for @gymAttBannerConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit recorded'**
+  String get gymAttBannerConfirmed;
+
+  /// No description provided for @gymAttBannerConfirmedDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min at your gym'**
+  String gymAttBannerConfirmedDesc(String minutes);
 }
 
 class _AppLocalizationsDelegate

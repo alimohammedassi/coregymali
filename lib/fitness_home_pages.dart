@@ -16,6 +16,8 @@ import 'features/coach/data/repositories/subscription_repository_impl.dart';
 import 'features/coach/presentation/providers/coach_providers.dart';
 import 'features/coach/presentation/providers/subscription_providers.dart';
 import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
+import 'features/gym_attendance/data/gym_geofence_watcher.dart';
+import 'features/gym_attendance/presentation/gym_geofence_banner.dart';
 import 'features/home/presentation/widgets/activity_section.dart';
 import 'l10n/app_localizations.dart';
 import 'profile.dart';
@@ -642,6 +644,10 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     NutritionService.addDataListener(_onNutritionDataChanged);
     subscriptionChangeNotifier.addListener(_onSubscriptionChanged);
     _subscribeToSubscriptions();
+    // Gym Attendance banner — arm in-app geofence detection once per app
+    // open. Fire-and-forget and guarded: the watcher swallows its own errors
+    // and stays idle until a gym is configured and location is permitted.
+    unawaited(GymGeofenceWatcher.instance.start());
     // OneSignal SDK verification dialog — shown at most once per session
     // right after home paints. Its "Got it" button is the ONLY place the OS
     // notification permission is requested (per OneSignal's integration
@@ -1399,6 +1405,20 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                 // → workout …), 12px within a section — one spacing scale for
                 // the whole page (2026-09-27 rhythm pass).
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // Gym Attendance banner — in-app geofence watcher output:
+                // dwell countdown while inside the gym's area, visit
+                // confirmation after 25 minutes. Idle renders
+                // SizedBox.shrink, so this slot costs nothing when the user
+                // is not at the gym; the AnimatedBuilder is scoped INSIDE the
+                // banner widget (never around the scroll body) so watcher
+                // notifications rebuild only this slot.
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: GymGeofenceBanner(),
+                  ),
+                ),
 
                 // ── 1b. Streak-at-risk nudge (once per app open) ──
                 if (_streakStatus.atRisk && !_nudgeShownThisSession)

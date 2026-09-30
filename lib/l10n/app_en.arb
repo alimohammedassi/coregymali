@@ -1208,5 +1208,83 @@
       }
     }
   },
-  "authGoogleOk": "Signed in with Google!"
+  "authGoogleOk": "Signed in with Google!",
+
+  "gymAttEntryTitle": "Automatic Gym Attendance",
+  "gymAttEntryDesc": "Track your gym visits automatically",
+  "gymAttEntryActive": "Attendance tracking is active",
+  "gymAttIntroTitle": "Automatic Gym Attendance",
+  "gymAttIntroBody": "CoreGym detects when you arrive at your gym and logs your visit automatically — no buttons, no check-ins.",
+  "gymAttIntroRuleTitle": "How it works",
+  "gymAttIntroRuleBody": "Stay 25 minutes or more inside your gym's area and the visit is recorded automatically. Passing by without stopping is ignored.",
+  "gymAttIntroPrivacy": "Location is used only to detect gym visits — it stays on your device and is never sold or shared.",
+  "gymAttIntroCta": "Get Started",
+  "gymAttPermContinue": "Continue",
+  "gymAttPermAllow": "Allow",
+  "gymAttPermSkip": "Not now",
+  "gymAttPermGranted": "Enabled",
+  "gymAttOpenSettings": "Open Settings",
+  "gymAttPermDeniedTitle": "Permission not granted",
+  "gymAttPermDeniedBody": "This permission is needed for automatic tracking. You can enable it anytime from Settings.",
+  "gymAttContinueWithout": "Continue without it",
+  "gymAttLocTitle": "Know when you arrive",
+  "gymAttLocBody": "We use your location only to detect when you arrive at or leave your gym. Nothing else.",
+  "gymAttLocWhy": "Why we need this: detection runs on your device and only near your gym.",
+  "gymAttBgTitle": "Works even when the app is closed",
+  "gymAttBgBody": "Background location lets CoreGym detect your visit without opening the app. Detection only activates near your gym to protect your battery and privacy.",
+  "gymAttBgWhy": "Why we need this: without it, visits are only detected while the app is open.",
+  "gymAttActTitle": "Optional, but smarter",
+  "gymAttActBody": "Activity data like steps can optionally confirm you were actually training — attendance never depends on it. Notifications tell you when a visit is recorded.",
+  "gymAttActWhy": "Fully optional — tracking works without it.",
+  "gymAttMapTitle": "Choose your gym",
+  "gymAttMapSubtitle": "Tap the map or search to place the pin on your gym",
+  "gymAttMapFinding": "Finding your location...",
+  "gymAttMapLocErrorTitle": "We couldn't find your location",
+  "gymAttRetry": "Try Again",
+  "gymAttSearchHint": "Search gym or area",
+  "gymAttSearchNoResults": "No results found",
+  "gymAttMyLocation": "My Location",
+  "gymAttYourGym": "Your Gym",
+  "gymAttTrackingRadius": "Tracking radius",
+  "gymAttRadiusValue": "{meters} m",
+  "@gymAttRadiusValue": {
+    "placeholders": {
+      "meters": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttDistanceValue": "{distance} away",
+  "@gymAttDistanceValue": {
+    "placeholders": {
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttConfirmGym": "Confirm Gym",
+  "gymAttUnnamedGym": "Selected location",
+  "gymAttConfirmAreaTitle": "Tracking area",
+  "gymAttConfirmExplain": "CoreGym will automatically detect when you arrive at and leave this area. Visits of 25 minutes or more are recorded.",
+  "gymAttStartTracking": "Start Tracking",
+  "gymAttChangeGym": "Change Gym",
+  "gymAttSuccessTitle": "You're all set",
+  "gymAttSuccessBody": "CoreGym will track your gym visits automatically.",
+  "gymAttMyGymTitle": "My Gym",
+  "gymAttTrackingOn": "Automatic tracking ON",
+  "gymAttTrackingOnDesc": "CoreGym is watching for your gym visits.",
+  "gymAttSaving": "Saving...",
+  "gymAttSaveError": "Couldn't save your gym. Try again.",
+  "gymAttBannerInsideTitle": "You're inside your gym area",
+  "gymAttBannerCountdownLabel": "Visit will be recorded in",
+  "gymAttBannerCancel": "Cancel",
+  "gymAttBannerConfirmed": "Visit recorded",
+  "gymAttBannerConfirmedDesc": "{minutes} min at your gym",
+  "@gymAttBannerConfirmedDesc": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  }
 }

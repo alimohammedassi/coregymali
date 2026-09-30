@@ -22,6 +22,7 @@ import 'widgets/language_toggle.dart';
 import 'widgets/theme_mode_toggle.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'screens/workout_screen.dart';
+import 'features/gym_attendance/presentation/gym_attendance_entry_card.dart';
 import 'package:intl/intl.dart' show DateFormat;
 
 // ── Legal ────────────────────────────────────────────────────────────────────
@@ -936,6 +937,10 @@ class _ProfilePageState extends State<ProfilePage>
       const SizedBox(height: 24),
 
       _A(6, _buildCoachCta()),
+      const SizedBox(height: 20),
+
+      // Gym Attendance entry
+      _A(6, const GymAttendanceEntryCard()),
       const SizedBox(height: 20),
 
       _A(7, _SectionHeader(title: l10n.appearance)),

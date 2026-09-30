@@ -2630,4 +2630,190 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authGoogleOk => 'Signed in with Google!';
+
+  @override
+  String get gymAttEntryTitle => 'Automatic Gym Attendance';
+
+  @override
+  String get gymAttEntryDesc => 'Track your gym visits automatically';
+
+  @override
+  String get gymAttEntryActive => 'Attendance tracking is active';
+
+  @override
+  String get gymAttIntroTitle => 'Automatic Gym Attendance';
+
+  @override
+  String get gymAttIntroBody =>
+      'CoreGym detects when you arrive at your gym and logs your visit automatically — no buttons, no check-ins.';
+
+  @override
+  String get gymAttIntroRuleTitle => 'How it works';
+
+  @override
+  String get gymAttIntroRuleBody =>
+      'Stay 25 minutes or more inside your gym\'s area and the visit is recorded automatically. Passing by without stopping is ignored.';
+
+  @override
+  String get gymAttIntroPrivacy =>
+      'Location is used only to detect gym visits — it stays on your device and is never sold or shared.';
+
+  @override
+  String get gymAttIntroCta => 'Get Started';
+
+  @override
+  String get gymAttPermContinue => 'Continue';
+
+  @override
+  String get gymAttPermAllow => 'Allow';
+
+  @override
+  String get gymAttPermSkip => 'Not now';
+
+  @override
+  String get gymAttPermGranted => 'Enabled';
+
+  @override
+  String get gymAttOpenSettings => 'Open Settings';
+
+  @override
+  String get gymAttPermDeniedTitle => 'Permission not granted';
+
+  @override
+  String get gymAttPermDeniedBody =>
+      'This permission is needed for automatic tracking. You can enable it anytime from Settings.';
+
+  @override
+  String get gymAttContinueWithout => 'Continue without it';
+
+  @override
+  String get gymAttLocTitle => 'Know when you arrive';
+
+  @override
+  String get gymAttLocBody =>
+      'We use your location only to detect when you arrive at or leave your gym. Nothing else.';
+
+  @override
+  String get gymAttLocWhy =>
+      'Why we need this: detection runs on your device and only near your gym.';
+
+  @override
+  String get gymAttBgTitle => 'Works even when the app is closed';
+
+  @override
+  String get gymAttBgBody =>
+      'Background location lets CoreGym detect your visit without opening the app. Detection only activates near your gym to protect your battery and privacy.';
+
+  @override
+  String get gymAttBgWhy =>
+      'Why we need this: without it, visits are only detected while the app is open.';
+
+  @override
+  String get gymAttActTitle => 'Optional, but smarter';
+
+  @override
+  String get gymAttActBody =>
+      'Activity data like steps can optionally confirm you were actually training — attendance never depends on it. Notifications tell you when a visit is recorded.';
+
+  @override
+  String get gymAttActWhy => 'Fully optional — tracking works without it.';
+
+  @override
+  String get gymAttMapTitle => 'Choose your gym';
+
+  @override
+  String get gymAttMapSubtitle =>
+      'Tap the map or search to place the pin on your gym';
+
+  @override
+  String get gymAttMapFinding => 'Finding your location...';
+
+  @override
+  String get gymAttMapLocErrorTitle => 'We couldn\'t find your location';
+
+  @override
+  String get gymAttRetry => 'Try Again';
+
+  @override
+  String get gymAttSearchHint => 'Search gym or area';
+
+  @override
+  String get gymAttSearchNoResults => 'No results found';
+
+  @override
+  String get gymAttMyLocation => 'My Location';
+
+  @override
+  String get gymAttYourGym => 'Your Gym';
+
+  @override
+  String get gymAttTrackingRadius => 'Tracking radius';
+
+  @override
+  String gymAttRadiusValue(String meters) {
+    return '$meters m';
+  }
+
+  @override
+  String gymAttDistanceValue(String distance) {
+    return '$distance away';
+  }
+
+  @override
+  String get gymAttConfirmGym => 'Confirm Gym';
+
+  @override
+  String get gymAttUnnamedGym => 'Selected location';
+
+  @override
+  String get gymAttConfirmAreaTitle => 'Tracking area';
+
+  @override
+  String get gymAttConfirmExplain =>
+      'CoreGym will automatically detect when you arrive at and leave this area. Visits of 25 minutes or more are recorded.';
+
+  @override
+  String get gymAttStartTracking => 'Start Tracking';
+
+  @override
+  String get gymAttChangeGym => 'Change Gym';
+
+  @override
+  String get gymAttSuccessTitle => 'You\'re all set';
+
+  @override
+  String get gymAttSuccessBody =>
+      'CoreGym will track your gym visits automatically.';
+
+  @override
+  String get gymAttMyGymTitle => 'My Gym';
+
+  @override
+  String get gymAttTrackingOn => 'Automatic tracking ON';
+
+  @override
+  String get gymAttTrackingOnDesc => 'CoreGym is watching for your gym visits.';
+
+  @override
+  String get gymAttSaving => 'Saving...';
+
+  @override
+  String get gymAttSaveError => 'Couldn\'t save your gym. Try again.';
+
+  @override
+  String get gymAttBannerInsideTitle => 'You\'re inside your gym area';
+
+  @override
+  String get gymAttBannerCountdownLabel => 'Visit will be recorded in';
+
+  @override
+  String get gymAttBannerCancel => 'Cancel';
+
+  @override
+  String get gymAttBannerConfirmed => 'Visit recorded';
+
+  @override
+  String gymAttBannerConfirmedDesc(String minutes) {
+    return '$minutes min at your gym';
+  }
 }

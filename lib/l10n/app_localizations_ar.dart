@@ -2606,4 +2606,189 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authGoogleOk => 'تم تسجيل الدخول بواسطة Google!';
+
+  @override
+  String get gymAttEntryTitle => 'تسجيل حضور الجيم تلقائيًا';
+
+  @override
+  String get gymAttEntryDesc => 'سجّل زيارات جيمك تلقائيًا';
+
+  @override
+  String get gymAttEntryActive => 'تسجيل الحضور مفعّل';
+
+  @override
+  String get gymAttIntroTitle => 'تسجيل حضور الجيم تلقائيًا';
+
+  @override
+  String get gymAttIntroBody =>
+      'كور جيم بيكتشف وصولك للجيم ويسجّل حضورك تلقائيًا — من غير أزرار ولا تسجيل.';
+
+  @override
+  String get gymAttIntroRuleTitle => 'إزاي بيشتغل';
+
+  @override
+  String get gymAttIntroRuleBody =>
+      'اقعد جوّه نطاق جيمك 25 دقيقة أو أكتر والزيارة تتسجل لوحدها. المرور العابر بيتجاهل.';
+
+  @override
+  String get gymAttIntroPrivacy =>
+      'الموقع بيُستخدم لاكتشاف زيارات الجيم فقط — بيفضل على جهازك ولا يتم مشاركته.';
+
+  @override
+  String get gymAttIntroCta => 'يلا نبدأ';
+
+  @override
+  String get gymAttPermContinue => 'متابعة';
+
+  @override
+  String get gymAttPermAllow => 'السماح';
+
+  @override
+  String get gymAttPermSkip => 'مش حالًا';
+
+  @override
+  String get gymAttPermGranted => 'تم التفعيل';
+
+  @override
+  String get gymAttOpenSettings => 'افتح الإعدادات';
+
+  @override
+  String get gymAttPermDeniedTitle => 'الإذن مش مفعّل';
+
+  @override
+  String get gymAttPermDeniedBody =>
+      'الإذن ده مطلوب للتتبع التلقائي. تقدر تفعّله في أي وقت من الإعدادات.';
+
+  @override
+  String get gymAttContinueWithout => 'كمّل من غيره';
+
+  @override
+  String get gymAttLocTitle => 'نعرف إمتى بتوصل';
+
+  @override
+  String get gymAttLocBody =>
+      'بنستخدم موقعك بس عشان نعرف إمتى توصل الجيم أو تسيبه. لا حاجة تانية.';
+
+  @override
+  String get gymAttLocWhy =>
+      'ليه محتاجينه: الاكتشاف بيشتغل على جهازك وفي نطاق جيمك بس.';
+
+  @override
+  String get gymAttBgTitle => 'بيشتغل حتى والتطبيق مقفول';
+
+  @override
+  String get gymAttBgBody =>
+      'موقع الخلفية بيخلي كور جيم يكتشف زيارتك من غير ما تفتح التطبيق. الاكتشاف بيشتغل قرب الجيم بس حفاظًا على بطاريتك وخصوصيتك.';
+
+  @override
+  String get gymAttBgWhy =>
+      'ليه محتاجينه: من غيره الاكتشاف بيشتغل بس والتطبيق مفتوح.';
+
+  @override
+  String get gymAttActTitle => 'اختياري — بس أدق';
+
+  @override
+  String get gymAttActBody =>
+      'بيانات النشاط زي الخطوات ممكن تأكّد إنك بتتمرن فعلًا — الحضور مش معتمد عليها أبدًا. والإشعارات بتخبرك لما الزيارة تتسجل.';
+
+  @override
+  String get gymAttActWhy => 'اختياري تمامًا — التتبع بيشتغل من غيره.';
+
+  @override
+  String get gymAttMapTitle => 'اختار جيمك';
+
+  @override
+  String get gymAttMapSubtitle =>
+      'دوس على الخريطة أو دوّر عشان تحط الدبوس على جيمك';
+
+  @override
+  String get gymAttMapFinding => 'بنحدد موقعك...';
+
+  @override
+  String get gymAttMapLocErrorTitle => 'مش قادرين نحدد موقعك';
+
+  @override
+  String get gymAttRetry => 'حاول تاني';
+
+  @override
+  String get gymAttSearchHint => 'دوّر على جيم أو منطقة';
+
+  @override
+  String get gymAttSearchNoResults => 'مفيش نتائج';
+
+  @override
+  String get gymAttMyLocation => 'موقعي';
+
+  @override
+  String get gymAttYourGym => 'جيمك';
+
+  @override
+  String get gymAttTrackingRadius => 'نطاق التتبع';
+
+  @override
+  String gymAttRadiusValue(String meters) {
+    return '$meters م';
+  }
+
+  @override
+  String gymAttDistanceValue(String distance) {
+    return 'على بُعد $distance';
+  }
+
+  @override
+  String get gymAttConfirmGym => 'تأكيد الجيم';
+
+  @override
+  String get gymAttUnnamedGym => 'مكان محدد';
+
+  @override
+  String get gymAttConfirmAreaTitle => 'منطقة التتبع';
+
+  @override
+  String get gymAttConfirmExplain =>
+      'كور جيم هيكتشف تلقائيًا لما توصل المنطقة دي أو تسيبها. الزيارات من 25 دقيقة أو أكتر تتسجل.';
+
+  @override
+  String get gymAttStartTracking => 'ابدأ التتبع';
+
+  @override
+  String get gymAttChangeGym => 'غيّر الجيم';
+
+  @override
+  String get gymAttSuccessTitle => 'كله تمام';
+
+  @override
+  String get gymAttSuccessBody => 'كور جيم هيسجّل زياراتك للجيم تلقائيًا.';
+
+  @override
+  String get gymAttMyGymTitle => 'جيمي';
+
+  @override
+  String get gymAttTrackingOn => 'التتبع التلقائي: شغّال';
+
+  @override
+  String get gymAttTrackingOnDesc => 'كور جيم بيراقب زياراتك للجيم.';
+
+  @override
+  String get gymAttSaving => 'جاري الحفظ...';
+
+  @override
+  String get gymAttSaveError => 'مش قادرين نحفظ الجيم. حاول تاني.';
+
+  @override
+  String get gymAttBannerInsideTitle => 'أنت دلوقتي جوّه نطاق الجيم';
+
+  @override
+  String get gymAttBannerCountdownLabel => 'هيتم تسجيل الزيارة بعد';
+
+  @override
+  String get gymAttBannerCancel => 'إلغاء';
+
+  @override
+  String get gymAttBannerConfirmed => 'تم تسجيل زيارتك';
+
+  @override
+  String gymAttBannerConfirmedDesc(String minutes) {
+    return '$minutes دقيقة في جيمك';
+  }
 }

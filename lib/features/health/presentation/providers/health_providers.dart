@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../home/presentation/providers/activity_providers.dart'
+    show activityWeekProvider;
 import '../../data/health_service.dart';
 import '../../domain/daily_activity.dart';
 
@@ -25,11 +27,26 @@ class TodayActivityNotifier extends AsyncNotifier<DailyActivity> {
     final service = ref.read(healthServiceProvider);
     final activity = await service.fetchTodayActivity();
 
-    // Silently sync to Supabase in the background
-    service.syncTodayActivity(activity, force: forceSync).catchError((e) {
-      // Background sync errors are logged in service and non-blocking
-      return false;
-    });
+    if (forceSync) {
+      // Explicit sync (sync-now / connect): await the write so the outer
+      // week card can refetch values that are guaranteed fresh.
+      bool synced = false;
+      try {
+        synced = await service.syncTodayActivity(activity, force: true);
+      } catch (_) {}
+      if (synced) {
+        // daily_summary just changed — the home week strip / steps card read
+        // it through activityWeekProvider, which fetches only once otherwise.
+        ref.invalidate(activityWeekProvider);
+      }
+    } else {
+      // Quiet path (provider build): fire-and-forget, throttled by the
+      // service; cold-start home load reads daily_summary after this lands.
+      service.syncTodayActivity(activity, force: false).catchError((e) {
+        // Background sync errors are logged in service and non-blocking
+        return false;
+      });
+    }
 
     return activity;
   }

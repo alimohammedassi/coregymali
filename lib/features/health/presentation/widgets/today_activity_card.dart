@@ -207,7 +207,9 @@ class _TodayActivityCardState extends ConsumerState<TodayActivityCard>
                         .read(todayActivityProvider.notifier)
                         .refresh(forceSync: true);
                     if (mounted) {
-                      setState(() => _weekFuture = _weekRepo.fetchCurrentWeek());
+                      setState(() {
+                        _weekFuture = _weekRepo.fetchCurrentWeek();
+                      });
                     }
                     widget.onSynced?.call();
                   },

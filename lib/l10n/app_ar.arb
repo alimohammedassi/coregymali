@@ -1085,6 +1085,7 @@
   "gymAttIntroRuleBody": "اقعد جوّه نطاق جيمك 25 دقيقة أو أكتر والزيارة تتسجل لوحدها. المرور العابر بيتجاهل.",
   "gymAttIntroPrivacy": "الموقع بيُستخدم لاكتشاف زيارات الجيم فقط — بيفضل على جهازك ولا يتم مشاركته.",
   "gymAttIntroCta": "يلا نبدأ",
+  "gymAttPromoCta": "فعّلها من البروفايل",
   "gymAttPermContinue": "متابعة",
   "gymAttPermAllow": "السماح",
   "gymAttPermSkip": "مش حالًا",
@@ -1131,5 +1132,147 @@
   "gymAttBannerCountdownLabel": "هيتم تسجيل الزيارة بعد",
   "gymAttBannerCancel": "إلغاء",
   "gymAttBannerConfirmed": "تم تسجيل زيارتك",
-  "gymAttBannerConfirmedDesc": "{minutes} دقيقة في جيمك"
+  "gymAttBannerConfirmedDesc": "{minutes} دقيقة في جيمك",
+  "gymAttHistoryTitle": "سجل الحضور",
+  "gymAttHeatmapNoVisit": "لا زيارة",
+  "gymAttHeatmapVisited": "{date} · {minutes} دقيقة في الجيم",
+  "@gymAttHeatmapVisited": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttStatsWeek": "الأسبوع ده",
+  "gymAttStatsMonth": "الشهر ده",
+  "gymAttStatsAvgWeekly": "المعدل الأسبوعي",
+  "gymAttStatsAvgMonthly": "المعدل الشهري",
+  "gymAttViewWeekly": "أسبوعي",
+  "gymAttViewMonthly": "شهري",
+  "gymAttViewYearly": "سنوي",
+  "gymAttStatsYear": "السنة دي",
+  "gymAttStatsStreak": "أيام متتالية",
+  "gymAttStatsLastVisit": "آخر زيارة",
+  "gymAttStatsDays": "{n} يوم",
+  "@gymAttStatsDays": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttGeofenceActive": "الجيوفنس نشط",
+  "gymAttFacilityLabel": "الجيم الأساسي",
+  "gymAttAutoPill": "تتبع تلقائي مفعّل",
+  "gymAttLastSession": "آخر جلسة",
+  "gymAttDurationH": "{h}س",
+  "@gymAttDurationH": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttDurationHM": "{h}س {m}د",
+  "@gymAttDurationHM": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      },
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttDurationM": "{m}د",
+  "@gymAttDurationM": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttMetricsTitle": "المؤشرات",
+  "gymAttTotalVisits": "إجمالي الزيارات",
+  "gymAttPaceAvg": "المعدل",
+  "gymAttPerWeek": "يوم/أسبوع",
+  "gymAttPerMonth": "يوم/شهر",
+  "gymAttAvgDwell": "متوسط القعدة",
+  "gymAttPerSession": "للجلسة",
+  "gymAttMatrixTitle": "مصفوفة الحضور",
+  "gymAttMatrixSubYear": "التزام 52 أسبوع",
+  "gymAttMatrixSubMonth": "التزام الشهر ده",
+  "gymAttMatrixSubWeek": "آخر 7 أيام",
+  "gymAttHeatLess": "أقل",
+  "gymAttHeatMore": "أكثر",
+  "gymAttRecentTitle": "آخر تسجيلات الحضور",
+  "gymAttRowCompleted": "تمت",
+  "gymAttRowGeofence": "تسجيل تلقائي",
+  "gymAttManualCheckInSuccess": "تم تسجيل الحضور",
+  "gymAttSettingsTooltip": "إعدادات الجيم",
+  "gymAttSignalPing": "فحص",
+  "gymAttSignalPingMs": "{ms} م.ث",
+  "@gymAttSignalPingMs": {
+    "placeholders": {
+      "ms": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttHotBadge": "نشط",
+  "gymAttViewFullLog": "عرض الكل",
+  "gymAttSessionInProgress": "جارية · {m} دقيقة حتى الآن",
+  "@gymAttSessionInProgress": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttInsideZone": "داخل النطاق",
+  "gymAttManualCheckInNow": "سجّل حضور الآن",
+  "telemetryLogTag": "تسجيل الطعام",
+  "dayTargetTelemetry": "هدف اليوم • قياس الطاقة",
+  "macrosTelemetry": "قياس الماكروز",
+  "freeformEntry": "اوصف أكلك بحرية",
+  "wordCountLabel": "{count} كلمات",
+  "@wordCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "liveParser": "تحليل مباشر",
+  "clearText": "مسح",
+  "quickMicroAdd": "إضافات سريعة",
+  "frequentlyLogged": "الأكثر تكرارًا",
+  "recentLogHistory": "آخر ما سجلته",
+  "yesterdayLabel": "امبارح",
+  "nleTitle": "محرك اللغة الطبيعي شغّال",
+  "nleBody": "بيفهم الأوزان وطريقة التحضير والماركات وأحجام الحصص تلقائيًا ويحوّلها لماكروز دقيقة.",
+  "readyToListen": "جاهز أسمعك",
+  "slotActive": "نشط",
+  "featMacroTitle": "استخراج الماكروز",
+  "featMacroSub": "فوري",
+  "featPortionTitle": "حساب الحصص",
+  "featPortionSub": "حسب السياق",
+  "featTypingTitle": "من غير كتابة",
+  "featTypingSub": "صوت بس",
+  "opticsActive": "الكاميرا • شغالة",
+  "loggingToMeal": "بتسجّل في {meal}",
+  "@loggingToMeal": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "alignBarcodeHint": "ظبّط الباركود جوه الفريم وهييتقري لوحده",
+  "readyToScan": "جاهز أصوّر",
+  "waterGoalEdit": "هدف المية اليومي",
+  "waterQuickLog": "تسجيل سريع"
 }

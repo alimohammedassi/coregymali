@@ -1,13 +1,10 @@
-import 'dart:ui' show lerpDouble;
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../l10n/app_localizations.dart';
-import '../../../../theme/app_animations.dart';
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_text.dart';
+import '../widgets/gym_pin_glyph.dart';
 
 /// Static explainer that opens the gym-attendance setup: what automatic
 /// attendance is, the one rule that governs it, and the privacy promise.
@@ -30,19 +27,7 @@ class GymAttendanceIntroScreen extends StatefulWidget {
       _GymAttendanceIntroScreenState();
 }
 
-class _GymAttendanceIntroScreenState extends State<GymAttendanceIntroScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _glyph = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2800),
-  )..repeat();
-
-  @override
-  void dispose() {
-    _glyph.dispose();
-    super.dispose();
-  }
-
+class _GymAttendanceIntroScreenState extends State<GymAttendanceIntroScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -61,7 +46,7 @@ class _GymAttendanceIntroScreenState extends State<GymAttendanceIntroScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
-                      child: _IntroPinGlyph(controller: _glyph),
+                      child: GymPinGlyph(),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     Text(
@@ -240,98 +225,4 @@ class _GymAttendanceIntroScreenState extends State<GymAttendanceIntroScreen>
       ),
     );
   }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Compact intro glyph — the pin + geofence ring motif from the permission
-// steps, simplified: a pin holding position while rings ping outward around
-// it. Reduced motion shows the settled pose.
-// ─────────────────────────────────────────────────────────────────────────────
-class _IntroPinGlyph extends StatelessWidget {
-  final AnimationController controller;
-
-  const _IntroPinGlyph({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    if (MediaQuery.disableAnimationsOf(context)) {
-      return CustomPaint(
-        size: const Size(190, 130),
-        painter: _IntroPinPainter(0.25),
-      );
-    }
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) => CustomPaint(
-        size: const Size(190, 130),
-        painter: _IntroPinPainter(controller.value),
-      ),
-    );
-  }
-}
-
-class _IntroPinPainter extends CustomPainter {
-  final double t;
-
-  _IntroPinPainter(this.t);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height * 0.40);
-
-    // Two staggered pings breathing around the pin.
-    for (final (start, radius) in [(0.0, 58.0), (0.5, 44.0)]) {
-      final p = ((t - start) % 1.0);
-      final eased = AppCurves.standard.transform(p);
-      canvas.drawCircle(
-        center,
-        lerpDouble(16, radius, eased)!,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2
-          ..color = AppColors.accent.withValues(alpha: (1 - eased) * 0.35),
-      );
-    }
-
-    // Steady geofence ring.
-    canvas.drawCircle(
-      center,
-      16,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5
-        ..color = AppColors.accent.withValues(alpha: 0.6),
-    );
-
-    // Gentle pin bob.
-    final bob = math.sin(t * 2 * math.pi) * 2.5;
-    final headCenter = Offset(center.dx, center.dy - 8 + bob);
-    final pinPaint = Paint()..color = AppColors.accent;
-
-    final pinPath = Path()
-      ..moveTo(center.dx, center.dy + 16 + bob)
-      ..quadraticBezierTo(
-        headCenter.dx - 14,
-        headCenter.dy + 2,
-        headCenter.dx,
-        headCenter.dy,
-      )
-      ..quadraticBezierTo(
-        headCenter.dx + 14,
-        headCenter.dy + 2,
-        center.dx,
-        center.dy + 16 + bob,
-      )
-      ..close();
-    canvas.drawCircle(headCenter, 12, pinPaint);
-    canvas.drawPath(pinPath, pinPaint);
-    canvas.drawCircle(
-      headCenter,
-      4.5,
-      Paint()..color = AppColors.onPrimary,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_IntroPinPainter oldDelegate) => oldDelegate.t != t;
 }

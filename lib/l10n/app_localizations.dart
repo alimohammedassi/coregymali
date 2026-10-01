@@ -4988,6 +4988,12 @@ abstract class AppLocalizations {
   /// **'Get Started'**
   String get gymAttIntroCta;
 
+  /// No description provided for @gymAttPromoCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable from Profile'**
+  String get gymAttPromoCta;
+
   /// No description provided for @gymAttPermContinue.
   ///
   /// In en, this message translates to:
@@ -5269,6 +5275,444 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{minutes} min at your gym'**
   String gymAttBannerConfirmedDesc(String minutes);
+
+  /// No description provided for @gymAttHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance log'**
+  String get gymAttHistoryTitle;
+
+  /// No description provided for @gymAttHeatmapNoVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'No visit'**
+  String get gymAttHeatmapNoVisit;
+
+  /// No description provided for @gymAttHeatmapVisited.
+  ///
+  /// In en, this message translates to:
+  /// **'{date} · {minutes} min at the gym'**
+  String gymAttHeatmapVisited(String date, String minutes);
+
+  /// No description provided for @gymAttStatsWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'This week'**
+  String get gymAttStatsWeek;
+
+  /// No description provided for @gymAttStatsMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get gymAttStatsMonth;
+
+  /// No description provided for @gymAttStatsAvgWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly avg'**
+  String get gymAttStatsAvgWeekly;
+
+  /// No description provided for @gymAttStatsAvgMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly avg'**
+  String get gymAttStatsAvgMonthly;
+
+  /// No description provided for @gymAttViewWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get gymAttViewWeekly;
+
+  /// No description provided for @gymAttViewMonthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get gymAttViewMonthly;
+
+  /// No description provided for @gymAttViewYearly.
+  ///
+  /// In en, this message translates to:
+  /// **'Yearly'**
+  String get gymAttViewYearly;
+
+  /// No description provided for @gymAttStatsYear.
+  ///
+  /// In en, this message translates to:
+  /// **'This year'**
+  String get gymAttStatsYear;
+
+  /// No description provided for @gymAttStatsStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get gymAttStatsStreak;
+
+  /// No description provided for @gymAttStatsLastVisit.
+  ///
+  /// In en, this message translates to:
+  /// **'Last visit'**
+  String get gymAttStatsLastVisit;
+
+  /// No description provided for @gymAttStatsDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{n} days'**
+  String gymAttStatsDays(String n);
+
+  /// No description provided for @gymAttGeofenceActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Geofence active'**
+  String get gymAttGeofenceActive;
+
+  /// No description provided for @gymAttFacilityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Home facility'**
+  String get gymAttFacilityLabel;
+
+  /// No description provided for @gymAttAutoPill.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto check-in on'**
+  String get gymAttAutoPill;
+
+  /// No description provided for @gymAttLastSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Last session'**
+  String get gymAttLastSession;
+
+  /// No description provided for @gymAttDurationH.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h'**
+  String gymAttDurationH(String h);
+
+  /// No description provided for @gymAttDurationHM.
+  ///
+  /// In en, this message translates to:
+  /// **'{h}h {m}m'**
+  String gymAttDurationHM(String h, String m);
+
+  /// No description provided for @gymAttDurationM.
+  ///
+  /// In en, this message translates to:
+  /// **'{m}m'**
+  String gymAttDurationM(String m);
+
+  /// No description provided for @gymAttMetricsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metrics'**
+  String get gymAttMetricsTitle;
+
+  /// No description provided for @gymAttTotalVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Total visits'**
+  String get gymAttTotalVisits;
+
+  /// No description provided for @gymAttPaceAvg.
+  ///
+  /// In en, this message translates to:
+  /// **'Pace avg'**
+  String get gymAttPaceAvg;
+
+  /// No description provided for @gymAttPerWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'days/wk'**
+  String get gymAttPerWeek;
+
+  /// No description provided for @gymAttPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'days/mo'**
+  String get gymAttPerMonth;
+
+  /// No description provided for @gymAttAvgDwell.
+  ///
+  /// In en, this message translates to:
+  /// **'Avg dwell'**
+  String get gymAttAvgDwell;
+
+  /// No description provided for @gymAttPerSession.
+  ///
+  /// In en, this message translates to:
+  /// **'per session'**
+  String get gymAttPerSession;
+
+  /// No description provided for @gymAttMatrixTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Attendance matrix'**
+  String get gymAttMatrixTitle;
+
+  /// No description provided for @gymAttMatrixSubYear.
+  ///
+  /// In en, this message translates to:
+  /// **'52-week consistency'**
+  String get gymAttMatrixSubYear;
+
+  /// No description provided for @gymAttMatrixSubMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'This month\'s consistency'**
+  String get gymAttMatrixSubMonth;
+
+  /// No description provided for @gymAttMatrixSubWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get gymAttMatrixSubWeek;
+
+  /// No description provided for @gymAttHeatLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Less'**
+  String get gymAttHeatLess;
+
+  /// No description provided for @gymAttHeatMore.
+  ///
+  /// In en, this message translates to:
+  /// **'More'**
+  String get gymAttHeatMore;
+
+  /// No description provided for @gymAttRecentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent check-ins'**
+  String get gymAttRecentTitle;
+
+  /// No description provided for @gymAttRowCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get gymAttRowCompleted;
+
+  /// No description provided for @gymAttRowGeofence.
+  ///
+  /// In en, this message translates to:
+  /// **'Geofence verified'**
+  String get gymAttRowGeofence;
+
+  /// No description provided for @gymAttManualCheckInSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Check-in recorded'**
+  String get gymAttManualCheckInSuccess;
+
+  /// No description provided for @gymAttSettingsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Gym settings'**
+  String get gymAttSettingsTooltip;
+
+  /// No description provided for @gymAttSignalPing.
+  ///
+  /// In en, this message translates to:
+  /// **'Ping'**
+  String get gymAttSignalPing;
+
+  /// No description provided for @gymAttSignalPingMs.
+  ///
+  /// In en, this message translates to:
+  /// **'{ms} ms'**
+  String gymAttSignalPingMs(String ms);
+
+  /// No description provided for @gymAttHotBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'HOT'**
+  String get gymAttHotBadge;
+
+  /// No description provided for @gymAttViewFullLog.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get gymAttViewFullLog;
+
+  /// No description provided for @gymAttSessionInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'In progress · {m} min so far'**
+  String gymAttSessionInProgress(String m);
+
+  /// No description provided for @gymAttInsideZone.
+  ///
+  /// In en, this message translates to:
+  /// **'Inside zone'**
+  String get gymAttInsideZone;
+
+  /// No description provided for @gymAttManualCheckInNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Check in now'**
+  String get gymAttManualCheckInNow;
+
+  /// No description provided for @telemetryLogTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Telemetry • Log'**
+  String get telemetryLogTag;
+
+  /// No description provided for @dayTargetTelemetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Day target • fuel telemetry'**
+  String get dayTargetTelemetry;
+
+  /// No description provided for @macrosTelemetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Macros telemetry'**
+  String get macrosTelemetry;
+
+  /// No description provided for @freeformEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeform meal entry'**
+  String get freeformEntry;
+
+  /// No description provided for @wordCountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} words'**
+  String wordCountLabel(String count);
+
+  /// No description provided for @liveParser.
+  ///
+  /// In en, this message translates to:
+  /// **'Live parser'**
+  String get liveParser;
+
+  /// No description provided for @clearText.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearText;
+
+  /// No description provided for @quickMicroAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick micro-add'**
+  String get quickMicroAdd;
+
+  /// No description provided for @frequentlyLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently logged'**
+  String get frequentlyLogged;
+
+  /// No description provided for @recentLogHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent log history'**
+  String get recentLogHistory;
+
+  /// No description provided for @yesterdayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterdayLabel;
+
+  /// No description provided for @nleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Natural language engine active'**
+  String get nleTitle;
+
+  /// No description provided for @nleBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Parses complex weights, preparation styles, restaurant brands & estimated portion volumes automatically into precise macros.'**
+  String get nleBody;
+
+  /// No description provided for @readyToListen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to listen'**
+  String get readyToListen;
+
+  /// No description provided for @slotActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get slotActive;
+
+  /// No description provided for @featMacroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Macro extraction'**
+  String get featMacroTitle;
+
+  /// No description provided for @featMacroSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time'**
+  String get featMacroSub;
+
+  /// No description provided for @featPortionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-portion'**
+  String get featPortionTitle;
+
+  /// No description provided for @featPortionSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Contextual'**
+  String get featPortionSub;
+
+  /// No description provided for @featTypingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Zero typing'**
+  String get featTypingTitle;
+
+  /// No description provided for @featTypingSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Hands-free'**
+  String get featTypingSub;
+
+  /// No description provided for @opticsActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Optics • active'**
+  String get opticsActive;
+
+  /// No description provided for @loggingToMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Logging to {meal}'**
+  String loggingToMeal(String meal);
+
+  /// No description provided for @alignBarcodeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Align barcode within the frame to scan automatically'**
+  String get alignBarcodeHint;
+
+  /// No description provided for @readyToScan.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to scan'**
+  String get readyToScan;
+
+  /// No description provided for @waterGoalEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily water goal'**
+  String get waterGoalEdit;
+
+  /// No description provided for @waterQuickLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick log'**
+  String get waterQuickLog;
 }
 
 class _AppLocalizationsDelegate

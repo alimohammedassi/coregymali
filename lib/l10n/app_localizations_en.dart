@@ -2662,6 +2662,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get gymAttIntroCta => 'Get Started';
 
   @override
+  String get gymAttPromoCta => 'Enable from Profile';
+
+  @override
   String get gymAttPermContinue => 'Continue';
 
   @override
@@ -2816,4 +2819,243 @@ class AppLocalizationsEn extends AppLocalizations {
   String gymAttBannerConfirmedDesc(String minutes) {
     return '$minutes min at your gym';
   }
+
+  @override
+  String get gymAttHistoryTitle => 'Attendance log';
+
+  @override
+  String get gymAttHeatmapNoVisit => 'No visit';
+
+  @override
+  String gymAttHeatmapVisited(String date, String minutes) {
+    return '$date · $minutes min at the gym';
+  }
+
+  @override
+  String get gymAttStatsWeek => 'This week';
+
+  @override
+  String get gymAttStatsMonth => 'This month';
+
+  @override
+  String get gymAttStatsAvgWeekly => 'Weekly avg';
+
+  @override
+  String get gymAttStatsAvgMonthly => 'Monthly avg';
+
+  @override
+  String get gymAttViewWeekly => 'Weekly';
+
+  @override
+  String get gymAttViewMonthly => 'Monthly';
+
+  @override
+  String get gymAttViewYearly => 'Yearly';
+
+  @override
+  String get gymAttStatsYear => 'This year';
+
+  @override
+  String get gymAttStatsStreak => 'Streak';
+
+  @override
+  String get gymAttStatsLastVisit => 'Last visit';
+
+  @override
+  String gymAttStatsDays(String n) {
+    return '$n days';
+  }
+
+  @override
+  String get gymAttGeofenceActive => 'Geofence active';
+
+  @override
+  String get gymAttFacilityLabel => 'Home facility';
+
+  @override
+  String get gymAttAutoPill => 'Auto check-in on';
+
+  @override
+  String get gymAttLastSession => 'Last session';
+
+  @override
+  String gymAttDurationH(String h) {
+    return '${h}h';
+  }
+
+  @override
+  String gymAttDurationHM(String h, String m) {
+    return '${h}h ${m}m';
+  }
+
+  @override
+  String gymAttDurationM(String m) {
+    return '${m}m';
+  }
+
+  @override
+  String get gymAttMetricsTitle => 'Metrics';
+
+  @override
+  String get gymAttTotalVisits => 'Total visits';
+
+  @override
+  String get gymAttPaceAvg => 'Pace avg';
+
+  @override
+  String get gymAttPerWeek => 'days/wk';
+
+  @override
+  String get gymAttPerMonth => 'days/mo';
+
+  @override
+  String get gymAttAvgDwell => 'Avg dwell';
+
+  @override
+  String get gymAttPerSession => 'per session';
+
+  @override
+  String get gymAttMatrixTitle => 'Attendance matrix';
+
+  @override
+  String get gymAttMatrixSubYear => '52-week consistency';
+
+  @override
+  String get gymAttMatrixSubMonth => 'This month\'s consistency';
+
+  @override
+  String get gymAttMatrixSubWeek => 'Last 7 days';
+
+  @override
+  String get gymAttHeatLess => 'Less';
+
+  @override
+  String get gymAttHeatMore => 'More';
+
+  @override
+  String get gymAttRecentTitle => 'Recent check-ins';
+
+  @override
+  String get gymAttRowCompleted => 'Completed';
+
+  @override
+  String get gymAttRowGeofence => 'Geofence verified';
+
+  @override
+  String get gymAttManualCheckInSuccess => 'Check-in recorded';
+
+  @override
+  String get gymAttSettingsTooltip => 'Gym settings';
+
+  @override
+  String get gymAttSignalPing => 'Ping';
+
+  @override
+  String gymAttSignalPingMs(String ms) {
+    return '$ms ms';
+  }
+
+  @override
+  String get gymAttHotBadge => 'HOT';
+
+  @override
+  String get gymAttViewFullLog => 'View all';
+
+  @override
+  String gymAttSessionInProgress(String m) {
+    return 'In progress · $m min so far';
+  }
+
+  @override
+  String get gymAttInsideZone => 'Inside zone';
+
+  @override
+  String get gymAttManualCheckInNow => 'Check in now';
+
+  @override
+  String get telemetryLogTag => 'Telemetry • Log';
+
+  @override
+  String get dayTargetTelemetry => 'Day target • fuel telemetry';
+
+  @override
+  String get macrosTelemetry => 'Macros telemetry';
+
+  @override
+  String get freeformEntry => 'Freeform meal entry';
+
+  @override
+  String wordCountLabel(String count) {
+    return '$count words';
+  }
+
+  @override
+  String get liveParser => 'Live parser';
+
+  @override
+  String get clearText => 'Clear';
+
+  @override
+  String get quickMicroAdd => 'Quick micro-add';
+
+  @override
+  String get frequentlyLogged => 'Frequently logged';
+
+  @override
+  String get recentLogHistory => 'Recent log history';
+
+  @override
+  String get yesterdayLabel => 'Yesterday';
+
+  @override
+  String get nleTitle => 'Natural language engine active';
+
+  @override
+  String get nleBody =>
+      'Parses complex weights, preparation styles, restaurant brands & estimated portion volumes automatically into precise macros.';
+
+  @override
+  String get readyToListen => 'Ready to listen';
+
+  @override
+  String get slotActive => 'Active';
+
+  @override
+  String get featMacroTitle => 'Macro extraction';
+
+  @override
+  String get featMacroSub => 'Real-time';
+
+  @override
+  String get featPortionTitle => 'Auto-portion';
+
+  @override
+  String get featPortionSub => 'Contextual';
+
+  @override
+  String get featTypingTitle => 'Zero typing';
+
+  @override
+  String get featTypingSub => 'Hands-free';
+
+  @override
+  String get opticsActive => 'Optics • active';
+
+  @override
+  String loggingToMeal(String meal) {
+    return 'Logging to $meal';
+  }
+
+  @override
+  String get alignBarcodeHint =>
+      'Align barcode within the frame to scan automatically';
+
+  @override
+  String get readyToScan => 'Ready to scan';
+
+  @override
+  String get waterGoalEdit => 'Daily water goal';
+
+  @override
+  String get waterQuickLog => 'Quick log';
 }

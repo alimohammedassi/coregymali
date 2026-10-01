@@ -2638,6 +2638,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gymAttIntroCta => 'يلا نبدأ';
 
   @override
+  String get gymAttPromoCta => 'فعّلها من البروفايل';
+
+  @override
   String get gymAttPermContinue => 'متابعة';
 
   @override
@@ -2791,4 +2794,242 @@ class AppLocalizationsAr extends AppLocalizations {
   String gymAttBannerConfirmedDesc(String minutes) {
     return '$minutes دقيقة في جيمك';
   }
+
+  @override
+  String get gymAttHistoryTitle => 'سجل الحضور';
+
+  @override
+  String get gymAttHeatmapNoVisit => 'لا زيارة';
+
+  @override
+  String gymAttHeatmapVisited(String date, String minutes) {
+    return '$date · $minutes دقيقة في الجيم';
+  }
+
+  @override
+  String get gymAttStatsWeek => 'الأسبوع ده';
+
+  @override
+  String get gymAttStatsMonth => 'الشهر ده';
+
+  @override
+  String get gymAttStatsAvgWeekly => 'المعدل الأسبوعي';
+
+  @override
+  String get gymAttStatsAvgMonthly => 'المعدل الشهري';
+
+  @override
+  String get gymAttViewWeekly => 'أسبوعي';
+
+  @override
+  String get gymAttViewMonthly => 'شهري';
+
+  @override
+  String get gymAttViewYearly => 'سنوي';
+
+  @override
+  String get gymAttStatsYear => 'السنة دي';
+
+  @override
+  String get gymAttStatsStreak => 'أيام متتالية';
+
+  @override
+  String get gymAttStatsLastVisit => 'آخر زيارة';
+
+  @override
+  String gymAttStatsDays(String n) {
+    return '$n يوم';
+  }
+
+  @override
+  String get gymAttGeofenceActive => 'الجيوفنس نشط';
+
+  @override
+  String get gymAttFacilityLabel => 'الجيم الأساسي';
+
+  @override
+  String get gymAttAutoPill => 'تتبع تلقائي مفعّل';
+
+  @override
+  String get gymAttLastSession => 'آخر جلسة';
+
+  @override
+  String gymAttDurationH(String h) {
+    return '$hس';
+  }
+
+  @override
+  String gymAttDurationHM(String h, String m) {
+    return '$hس $mد';
+  }
+
+  @override
+  String gymAttDurationM(String m) {
+    return '$mد';
+  }
+
+  @override
+  String get gymAttMetricsTitle => 'المؤشرات';
+
+  @override
+  String get gymAttTotalVisits => 'إجمالي الزيارات';
+
+  @override
+  String get gymAttPaceAvg => 'المعدل';
+
+  @override
+  String get gymAttPerWeek => 'يوم/أسبوع';
+
+  @override
+  String get gymAttPerMonth => 'يوم/شهر';
+
+  @override
+  String get gymAttAvgDwell => 'متوسط القعدة';
+
+  @override
+  String get gymAttPerSession => 'للجلسة';
+
+  @override
+  String get gymAttMatrixTitle => 'مصفوفة الحضور';
+
+  @override
+  String get gymAttMatrixSubYear => 'التزام 52 أسبوع';
+
+  @override
+  String get gymAttMatrixSubMonth => 'التزام الشهر ده';
+
+  @override
+  String get gymAttMatrixSubWeek => 'آخر 7 أيام';
+
+  @override
+  String get gymAttHeatLess => 'أقل';
+
+  @override
+  String get gymAttHeatMore => 'أكثر';
+
+  @override
+  String get gymAttRecentTitle => 'آخر تسجيلات الحضور';
+
+  @override
+  String get gymAttRowCompleted => 'تمت';
+
+  @override
+  String get gymAttRowGeofence => 'تسجيل تلقائي';
+
+  @override
+  String get gymAttManualCheckInSuccess => 'تم تسجيل الحضور';
+
+  @override
+  String get gymAttSettingsTooltip => 'إعدادات الجيم';
+
+  @override
+  String get gymAttSignalPing => 'فحص';
+
+  @override
+  String gymAttSignalPingMs(String ms) {
+    return '$ms م.ث';
+  }
+
+  @override
+  String get gymAttHotBadge => 'نشط';
+
+  @override
+  String get gymAttViewFullLog => 'عرض الكل';
+
+  @override
+  String gymAttSessionInProgress(String m) {
+    return 'جارية · $m دقيقة حتى الآن';
+  }
+
+  @override
+  String get gymAttInsideZone => 'داخل النطاق';
+
+  @override
+  String get gymAttManualCheckInNow => 'سجّل حضور الآن';
+
+  @override
+  String get telemetryLogTag => 'تسجيل الطعام';
+
+  @override
+  String get dayTargetTelemetry => 'هدف اليوم • قياس الطاقة';
+
+  @override
+  String get macrosTelemetry => 'قياس الماكروز';
+
+  @override
+  String get freeformEntry => 'اوصف أكلك بحرية';
+
+  @override
+  String wordCountLabel(String count) {
+    return '$count كلمات';
+  }
+
+  @override
+  String get liveParser => 'تحليل مباشر';
+
+  @override
+  String get clearText => 'مسح';
+
+  @override
+  String get quickMicroAdd => 'إضافات سريعة';
+
+  @override
+  String get frequentlyLogged => 'الأكثر تكرارًا';
+
+  @override
+  String get recentLogHistory => 'آخر ما سجلته';
+
+  @override
+  String get yesterdayLabel => 'امبارح';
+
+  @override
+  String get nleTitle => 'محرك اللغة الطبيعي شغّال';
+
+  @override
+  String get nleBody =>
+      'بيفهم الأوزان وطريقة التحضير والماركات وأحجام الحصص تلقائيًا ويحوّلها لماكروز دقيقة.';
+
+  @override
+  String get readyToListen => 'جاهز أسمعك';
+
+  @override
+  String get slotActive => 'نشط';
+
+  @override
+  String get featMacroTitle => 'استخراج الماكروز';
+
+  @override
+  String get featMacroSub => 'فوري';
+
+  @override
+  String get featPortionTitle => 'حساب الحصص';
+
+  @override
+  String get featPortionSub => 'حسب السياق';
+
+  @override
+  String get featTypingTitle => 'من غير كتابة';
+
+  @override
+  String get featTypingSub => 'صوت بس';
+
+  @override
+  String get opticsActive => 'الكاميرا • شغالة';
+
+  @override
+  String loggingToMeal(String meal) {
+    return 'بتسجّل في $meal';
+  }
+
+  @override
+  String get alignBarcodeHint => 'ظبّط الباركود جوه الفريم وهييتقري لوحده';
+
+  @override
+  String get readyToScan => 'جاهز أصوّر';
+
+  @override
+  String get waterGoalEdit => 'هدف المية اليومي';
+
+  @override
+  String get waterQuickLog => 'تسجيل سريع';
 }

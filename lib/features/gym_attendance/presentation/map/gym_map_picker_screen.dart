@@ -405,6 +405,21 @@ class _GymMapPickerScreenState extends State<GymMapPickerScreen>
         TileLayer(
           urlTemplate: _kTileUrlTemplate,
           userAgentPackageName: 'CoreGym/1.0 (fitness app)',
+          // OSM tiles ship light-only cartography — in dark mode an unfiltered
+          // map is a glaring white slab on the graphite canvas. Inverted
+          // grayscale keeps the map monochrome (no weird inverted hues) and
+          // lets the volt geofence ring/pin stay the accent.
+          tileBuilder: AppColors.isLight
+              ? null
+              : (context, tile, _) => ColorFiltered(
+                  colorFilter: const ColorFilter.matrix(<double>[
+                    -0.2126, -0.7152, -0.0722, 0, 255, //
+                    -0.2126, -0.7152, -0.0722, 0, 255, //
+                    -0.2126, -0.7152, -0.0722, 0, 255, //
+                    0, 0, 0, 1, 0,
+                  ]),
+                  child: tile,
+                ),
         ),
         if (pin != null)
           TweenAnimationBuilder<double>(

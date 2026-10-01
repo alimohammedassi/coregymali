@@ -1219,6 +1219,7 @@
   "gymAttIntroRuleBody": "Stay 25 minutes or more inside your gym's area and the visit is recorded automatically. Passing by without stopping is ignored.",
   "gymAttIntroPrivacy": "Location is used only to detect gym visits — it stays on your device and is never sold or shared.",
   "gymAttIntroCta": "Get Started",
+  "gymAttPromoCta": "Enable from Profile",
   "gymAttPermContinue": "Continue",
   "gymAttPermAllow": "Allow",
   "gymAttPermSkip": "Not now",
@@ -1286,5 +1287,147 @@
         "type": "String"
       }
     }
-  }
+  },
+  "gymAttHistoryTitle": "Attendance log",
+  "gymAttHeatmapNoVisit": "No visit",
+  "gymAttHeatmapVisited": "{date} · {minutes} min at the gym",
+  "@gymAttHeatmapVisited": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttStatsWeek": "This week",
+  "gymAttStatsMonth": "This month",
+  "gymAttStatsAvgWeekly": "Weekly avg",
+  "gymAttStatsAvgMonthly": "Monthly avg",
+  "gymAttViewWeekly": "Weekly",
+  "gymAttViewMonthly": "Monthly",
+  "gymAttViewYearly": "Yearly",
+  "gymAttStatsYear": "This year",
+  "gymAttStatsStreak": "Streak",
+  "gymAttStatsLastVisit": "Last visit",
+  "gymAttStatsDays": "{n} days",
+  "@gymAttStatsDays": {
+    "placeholders": {
+      "n": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttGeofenceActive": "Geofence active",
+  "gymAttFacilityLabel": "Home facility",
+  "gymAttAutoPill": "Auto check-in on",
+  "gymAttLastSession": "Last session",
+  "gymAttDurationH": "{h}h",
+  "@gymAttDurationH": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttDurationHM": "{h}h {m}m",
+  "@gymAttDurationHM": {
+    "placeholders": {
+      "h": {
+        "type": "String"
+      },
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttDurationM": "{m}m",
+  "@gymAttDurationM": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttMetricsTitle": "Metrics",
+  "gymAttTotalVisits": "Total visits",
+  "gymAttPaceAvg": "Pace avg",
+  "gymAttPerWeek": "days/wk",
+  "gymAttPerMonth": "days/mo",
+  "gymAttAvgDwell": "Avg dwell",
+  "gymAttPerSession": "per session",
+  "gymAttMatrixTitle": "Attendance matrix",
+  "gymAttMatrixSubYear": "52-week consistency",
+  "gymAttMatrixSubMonth": "This month's consistency",
+  "gymAttMatrixSubWeek": "Last 7 days",
+  "gymAttHeatLess": "Less",
+  "gymAttHeatMore": "More",
+  "gymAttRecentTitle": "Recent check-ins",
+  "gymAttRowCompleted": "Completed",
+  "gymAttRowGeofence": "Geofence verified",
+  "gymAttManualCheckInSuccess": "Check-in recorded",
+  "gymAttSettingsTooltip": "Gym settings",
+  "gymAttSignalPing": "Ping",
+  "gymAttSignalPingMs": "{ms} ms",
+  "@gymAttSignalPingMs": {
+    "placeholders": {
+      "ms": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttHotBadge": "HOT",
+  "gymAttViewFullLog": "View all",
+  "gymAttSessionInProgress": "In progress · {m} min so far",
+  "@gymAttSessionInProgress": {
+    "placeholders": {
+      "m": {
+        "type": "String"
+      }
+    }
+  },
+  "gymAttInsideZone": "Inside zone",
+  "gymAttManualCheckInNow": "Check in now",
+  "telemetryLogTag": "Telemetry • Log",
+  "dayTargetTelemetry": "Day target • fuel telemetry",
+  "macrosTelemetry": "Macros telemetry",
+  "freeformEntry": "Freeform meal entry",
+  "wordCountLabel": "{count} words",
+  "@wordCountLabel": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "liveParser": "Live parser",
+  "clearText": "Clear",
+  "quickMicroAdd": "Quick micro-add",
+  "frequentlyLogged": "Frequently logged",
+  "recentLogHistory": "Recent log history",
+  "yesterdayLabel": "Yesterday",
+  "nleTitle": "Natural language engine active",
+  "nleBody": "Parses complex weights, preparation styles, restaurant brands & estimated portion volumes automatically into precise macros.",
+  "readyToListen": "Ready to listen",
+  "slotActive": "Active",
+  "featMacroTitle": "Macro extraction",
+  "featMacroSub": "Real-time",
+  "featPortionTitle": "Auto-portion",
+  "featPortionSub": "Contextual",
+  "featTypingTitle": "Zero typing",
+  "featTypingSub": "Hands-free",
+  "opticsActive": "Optics • active",
+  "loggingToMeal": "Logging to {meal}",
+  "@loggingToMeal": {
+    "placeholders": {
+      "meal": {
+        "type": "String"
+      }
+    }
+  },
+  "alignBarcodeHint": "Align barcode within the frame to scan automatically",
+  "readyToScan": "Ready to scan",
+  "waterGoalEdit": "Daily water goal",
+  "waterQuickLog": "Quick log"
 }

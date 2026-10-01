@@ -92,9 +92,9 @@ class _ConfirmGymScreenState extends State<ConfirmGymScreen> {
                   border: Border.all(color: AppColors.borderSubtle),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: .03),
+                      color: AppColors.cardShadow,
                       blurRadius: 12,
-                      offset: const Offset(0, 3),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),

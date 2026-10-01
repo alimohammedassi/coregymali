@@ -9,12 +9,18 @@ class Gym {
   final double longitude;
   final int radiusM;
 
+  /// Street address when the picker/DB provides one — null when unknown.
+  /// The `gyms` table has no address column yet, so this stays null until
+  /// one is added; the UI already hides the row when null/empty.
+  final String? address;
+
   const Gym({
     required this.id,
     required this.name,
     required this.latitude,
     required this.longitude,
     this.radiusM = 120,
+    this.address,
   });
 
   factory Gym.fromMap(Map<String, dynamic> map) {
@@ -24,6 +30,9 @@ class Gym {
       latitude: (map['latitude'] as num).toDouble(),
       longitude: (map['longitude'] as num).toDouble(),
       radiusM: (map['radius_m'] as num?)?.toInt() ?? 120,
+      address: (map['address'] as String?)?.trim().isNotEmpty == true
+          ? (map['address'] as String).trim()
+          : null,
     );
   }
 

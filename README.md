@@ -693,6 +693,8 @@ Provider covers the majority of the app and keeps the mental model simple. River
 ---
 
 ## 📄 License
+Copyright (c) 2026 Ali Mohammed. All rights reserved.
+This code may not be copied, modified, or distributed without written permission.
 
 This project is proprietary and confidential. All rights reserved.
 

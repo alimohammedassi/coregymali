@@ -7,6 +7,7 @@ import '../models/barcode_product_result.dart';
 import '../services/barcode_lookup_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
+import '../widgets/food/log_telemetry_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BarcodeScanScreen — camera scan → lookup → review macros → save to log
@@ -28,18 +29,13 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
     with TickerProviderStateMixin {
   final _lookupService = BarcodeLookupService();
 
-  static const _meals = [
-    (type: 'breakfast', emoji: '🍳'),
-    (type: 'lunch', emoji: '🥗'),
-    (type: 'dinner', emoji: '🍽'),
-    (type: 'snack', emoji: '🥜'),
-  ];
+  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   MobileScannerController? _cameraController;
   bool _isProcessingFrame = false;
+  bool _torchOn = false;
 
   late AnimationController _frameController;
-  late Animation<double> _frameOpacity;
 
   _BarcodePhase _phase = _BarcodePhase.scanning;
   String _mealType;
@@ -49,6 +45,9 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
   BarcodeLookupErrorType? _errorType;
 
   _BarcodeScanScreenState() : _mealType = _defaultMealType();
+
+  bool get _isArabic =>
+      Localizations.localeOf(context).languageCode == 'ar';
 
   static String _defaultMealType() {
     final h = DateTime.now().hour;
@@ -77,16 +76,13 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
   void initState() {
     super.initState();
     if (widget.initialMealType != null &&
-        _meals.any((m) => m.type == widget.initialMealType)) {
+        _mealTypes.contains(widget.initialMealType)) {
       _mealType = widget.initialMealType!;
     }
     _frameController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     )..repeat(reverse: true);
-    _frameOpacity = Tween(begin: 0.35, end: 1.0).animate(
-      CurvedAnimation(parent: _frameController, curve: Curves.easeInOut),
-    );
   }
 
   @override
@@ -208,29 +204,11 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Barcode Scanner',
-              style: AppText.headlineSm.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Text(
-              l10n.scanSubtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        leading: const TelemetryBackButton(),
+        title: TelemetryAppBarTitle(
+          tag: l10n.telemetryLogTag,
+          title: 'Barcode Scanner',
+          isArabic: _isArabic,
         ),
       ),
       body: SafeArea(
@@ -266,81 +244,413 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
   // ─── SCANNING ─────────────────────────────────────────────────────────────
   Widget _buildScanner() {
     _cameraController ??= MobileScannerController();
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
+        // Meal context pill + torch toggle.
         Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-          child: Text(
-            'Point the camera at the barcode on the package',
-            textAlign: TextAlign.center,
-            style: AppText.bodyMd.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Stack(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
+          child: Row(
             children: [
-              MobileScanner(
-                controller: _cameraController,
-                onDetect: _onDetect,
-                errorBuilder: (context, error, child) =>
-                    _buildCameraError(error),
-              ),
-              // Scan frame
-              Center(
-                child: FadeTransition(
-                  opacity: _frameOpacity,
-                  child: Container(
-                    width: 260,
-                    height: 150,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: AppColors.primary,
-                        width: 2.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: .25),
-                          blurRadius: 18,
-                        ),
-                      ],
+              GestureDetector(
+                onTap: _pickMeal,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerHigh.withValues(
+                      alpha: 0.85,
                     ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.accent,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.8),
+                              blurRadius: 7,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        l10n.loggingToMeal(_mealLabel(l10n)),
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: _isArabic ? 0.2 : 0.8,
+                          color: AppColors.textPrimary,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        Icons.expand_more_rounded,
+                        size: 15,
+                        color: AppColors.textSecondary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: _toggleTorch,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _torchOn
+                        ? AppColors.primary
+                        : AppColors.surfaceContainerHigh.withValues(alpha: 0.9),
+                  ),
+                  child: Icon(
+                    _torchOn
+                        ? Icons.flash_on_rounded
+                        : Icons.flash_off_rounded,
+                    size: 19,
+                    color: _torchOn
+                        ? AppColors.onPrimary
+                        : AppColors.textPrimary,
                   ),
                 ),
               ),
             ],
           ),
         ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: MobileScanner(
+                    controller: _cameraController,
+                    onDetect: _onDetect,
+                    errorBuilder: (context, error, child) =>
+                        _buildCameraError(error),
+                  ),
+                ),
+                // Reticle overlay — volt corner brackets, kinetic laser sweep
+                // and a faint barcode glyph, per the design.
+                Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.surfaceContainerLow.withValues(
+                            alpha: 0.85,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.secondary,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              l10n.opticsActive,
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: _isArabic ? 0.2 : 0.8,
+                                color: AppColors.textPrimary,
+                                fontFamily:
+                                    AppText.fontFamily(isArabic: _isArabic),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: 250,
+                        height: 170,
+                        child: AnimatedBuilder(
+                          animation: _frameController,
+                          builder: (context, _) => Stack(
+                            children: [
+                              // Faint barcode glyph at the center.
+                              Center(
+                                child: Icon(
+                                  Icons.barcode_reader,
+                                  size: 58,
+                                  color: AppColors.textPrimary.withValues(
+                                    alpha: 0.22,
+                                  ),
+                                ),
+                              ),
+                              // Kinetic laser sweep.
+                              Positioned(
+                                left: 10,
+                                right: 10,
+                                top: 16 +
+                                    (_frameController.value * 138),
+                                child: Container(
+                                  height: 2,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(2),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.65,
+                                        ),
+                                        blurRadius: 12,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              // Volt corner brackets.
+                              Positioned(
+                                top: 0,
+                                left: 0,
+                                child: _bracket(
+                                  topLeft: true,
+                                  topRight: false,
+                                  bottomLeft: false,
+                                  bottomRight: false,
+                                ),
+                              ),
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: _bracket(
+                                  topLeft: false,
+                                  topRight: true,
+                                  bottomLeft: false,
+                                  bottomRight: false,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                child: _bracket(
+                                  topLeft: false,
+                                  topRight: false,
+                                  bottomLeft: true,
+                                  bottomRight: false,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: _bracket(
+                                  topLeft: false,
+                                  topRight: false,
+                                  bottomLeft: false,
+                                  bottomRight: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          l10n.alignBarcodeHint,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                            height: 1.5,
+                            fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Optics status strip.
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.center_focus_strong_rounded,
+                  size: 15,
+                  color: AppColors.secondary,
+                ),
+                const SizedBox(width: 7),
+                TelemetryCapsLabel(l10n.opticsActive, isArabic: _isArabic),
+                const Spacer(),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.secondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
           child: SizedBox(
             width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              onPressed: () =>
-                  Navigator.of(context).pop(false),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(
-                  color: AppColors.primary.withValues(alpha: .35),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
+            height: 50,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
               ),
-              icon: const Icon(Icons.close_rounded, size: 19),
-              label: const Text(
-                'Cancel',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => Navigator.of(context).pop(false),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        l10n.cancel,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ],
+    );
+  }
+
+  void _toggleTorch() {
+    HapticFeedback.selectionClick();
+    setState(() => _torchOn = !_torchOn);
+    try {
+      _cameraController?.toggleTorch();
+    } catch (_) {
+      // Camera not ready — the toggle icon still reflects intent.
+    }
+  }
+
+  /// Meal selection sheet for the "Logging to …" pill.
+  Future<void> _pickMeal() async {
+    final l10n = AppLocalizations.of(context)!;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TelemetryCapsLabel(l10n.scanSaveToMeal, isArabic: _isArabic),
+              const SizedBox(height: 14),
+              MealSlotGrid(
+                selected: _mealType,
+                onSelect: (t) => Navigator.pop(context, t),
+                isArabic: _isArabic,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() => _mealType = picked);
+    }
+  }
+
+  /// One volt corner bracket for the scan reticle.
+  Widget _bracket({
+    required bool topLeft,
+    required bool topRight,
+    required bool bottomLeft,
+    required bool bottomRight,
+  }) {
+    return Container(
+      width: 26,
+      height: 26,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: topLeft ? const Radius.circular(9) : Radius.zero,
+          topRight: topRight ? const Radius.circular(9) : Radius.zero,
+          bottomLeft: bottomLeft ? const Radius.circular(9) : Radius.zero,
+          bottomRight: bottomRight ? const Radius.circular(9) : Radius.zero,
+        ),
+        border: Border(
+          top: topLeft || topRight
+              ? BorderSide(color: AppColors.primary, width: 3)
+              : BorderSide.none,
+          bottom: bottomLeft || bottomRight
+              ? BorderSide(color: AppColors.primary, width: 3)
+              : BorderSide.none,
+          left: topLeft || bottomLeft
+              ? BorderSide(color: AppColors.primary, width: 3)
+              : BorderSide.none,
+          right: topRight || bottomRight
+              ? BorderSide(color: AppColors.primary, width: 3)
+              : BorderSide.none,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.5),
+            blurRadius: 12,
+          ),
+        ],
+      ),
     );
   }
 
@@ -404,7 +714,6 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
   // ─── RESULT ───────────────────────────────────────────────────────────────
   Widget _buildResult() {
     final p = _product!;
-    final l10n = AppLocalizations.of(context)!;
     final kcal = p.caloriesFor(_quantityG);
     final protein = p.proteinFor(_quantityG);
     final carbs = p.carbsFor(_quantityG);
@@ -422,72 +731,13 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Meal picker
-                Row(
-                  children: _meals.map((m) {
-                    final sel = _mealType == m.type;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () {
-                          HapticFeedback.selectionClick();
-                          setState(() => _mealType = m.type);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          curve: Curves.easeOutCubic,
-                          margin: EdgeInsetsDirectional.only(
-                            end: m.type == 'snack' ? 0 : 8,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          decoration: BoxDecoration(
-                            gradient: sel
-                                ? LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      AppColors.primary,
-                                      AppColors.secondaryGreen,
-                                    ],
-                                  )
-                                : null,
-                            color: sel
-                                ? null
-                                : AppColors.surfaceContainerHigh,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: sel
-                                  ? Colors.transparent
-                                  : AppColors.borderSubtle,
-                            ),
-                          ),
-                          child: Column(
-                            children: [
-                              AnimatedScale(
-                                duration: const Duration(milliseconds: 220),
-                                scale: sel ? 1.12 : 1.0,
-                                child: Text(
-                                  m.emoji,
-                                  style: const TextStyle(fontSize: 20),
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _mealName(l10n, m.type),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  color: sel
-                                      ? Colors.white
-                                      : AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                MealSlotGrid(
+                  selected: _mealType,
+                  onSelect: (t) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _mealType = t);
+                  },
+                  isArabic: _isArabic,
                 ),
 
                 const SizedBox(height: 20),
@@ -779,20 +1029,19 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 56,
+        height: 54,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: canSave
-                ? AppColors.primaryActionGradient
-                : null,
-            color: canSave ? null : AppColors.primary.withValues(alpha: .35),
+            borderRadius: BorderRadius.circular(14),
+            color: canSave
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: .35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
                       color: AppColors.primary.withValues(alpha: .3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      blurRadius: 20,
+                      offset: const Offset(0, 5),
                     ),
                   ]
                 : null,
@@ -800,33 +1049,37 @@ class _BarcodeScanScreenState extends State<BarcodeScanScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
               onTap: canSave ? _saveToLog : null,
               child: Center(
                 child: _saveInProgress
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.add_circle_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            l10n.scanLogToMeal(_mealLabel(l10n)),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Colors.white,
+                          Flexible(
+                            child: Text(
+                              l10n.scanLogToMeal(_mealLabel(l10n)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: AppColors.onPrimary,
+                              ),
                             ),
                           ),
                         ],

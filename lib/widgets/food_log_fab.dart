@@ -113,7 +113,9 @@ class _FoodLogFabState extends State<FoodLogFab> {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return Positioned(
       right: 18,
-      bottom: LiquidTabBar.reservedHeight(context) + 10,
+      // Fixed, safe offset above the bar's reserved height — one standard
+      // gap the buffer on every page accounts for (vendor pass 2026-09-30).
+      bottom: LiquidTabBar.reservedHeight(context) + 16,
       child: IgnorePointer(
         ignoring: !visible,
         child: AnimatedOpacity(

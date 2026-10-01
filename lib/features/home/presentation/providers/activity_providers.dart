@@ -90,6 +90,36 @@ class ActivityWeekNotifier extends AsyncNotifier<List<DayActivity>> {
       _waterWritePending = false;
     }
   }
+
+  /// Adds [ml] (negative amounts subtract) to TODAY's water total — same
+  /// optimistic-then-persist path as [addWaterGlass], used by the water
+  /// log sheet's quick-amount chips.
+  Future<void> addWaterMl(int ml) async {
+    final today = _today;
+    final current = state.value;
+    if (current == null || ml == 0) return;
+
+    final todayRow = _dayOf(current, today);
+    final newMl = ((todayRow?.waterMl ?? 0) + ml).clamp(0, 10000);
+
+    state = AsyncData([
+      for (final d in current)
+        if (d.isSameDay(today))
+          d.copyWith(waterMl: newMl)
+        else
+          d,
+    ]);
+
+    try {
+      await ref
+          .read(dashboardActivityRepositoryProvider)
+          .saveTodayWaterMl(newMl);
+    } catch (e) {
+      debugPrint('addWaterMl persist error: $e');
+      // Same policy as addWaterGlass: keep the optimistic tick, a refresh
+      // re-syncs from daily_summary.
+    }
+  }
 }
 
 final activityWeekProvider =

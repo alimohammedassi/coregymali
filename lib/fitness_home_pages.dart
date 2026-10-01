@@ -18,6 +18,7 @@ import 'features/coach/presentation/providers/subscription_providers.dart';
 import 'features/coach/presentation/screens/coach_marketplace_screen.dart';
 import 'features/gym_attendance/data/gym_geofence_watcher.dart';
 import 'features/gym_attendance/presentation/gym_geofence_banner.dart';
+import 'features/gym_attendance/presentation/promo/gym_attendance_promo_dialog.dart';
 import 'features/home/presentation/widgets/activity_section.dart';
 import 'l10n/app_localizations.dart';
 import 'profile.dart';
@@ -43,9 +44,24 @@ import 'widgets/food_logging_modal.dart';
 import 'widgets/food_log_fab.dart';
 import 'widgets/not_today_banner.dart';
 import 'widgets/pixel_art_icons.dart';
-import 'widgets/top_glow.dart';
 import 'features/health/data/health_service.dart';
 import 'features/health/presentation/widgets/today_activity_card.dart';
+
+// ─── Home Vertical Spacing Scale (vendor pass 2026-09-30) ────────────────────
+/// One rhythm for the whole page: 12px between related elements inside a
+/// section, one fixed 32px at EVERY major section boundary (header → strip →
+/// hero → activity → explore → fueling) — never a different gap for
+/// different section pairs. Horizontal gaps between cards sharing a row keep
+/// the page's 12px.
+abstract final class HomeSpacing {
+  static const double inSection = 12;
+  static const double section = 32;
+
+  /// Bottom buffer over the nav bar's reserved height: the FAB's footprint
+  /// (16 gap + 58 circle) plus clear air, so no card ever renders underneath
+  /// the button or the bar.
+  static const double bottomFabBuffer = 96;
+}
 
 // ─── Nutrition Defaults (B7 — magic numbers centralized) ─────────────────────
 abstract final class NutritionDefaults {
@@ -496,6 +512,10 @@ class _LiquidNavBar extends StatelessWidget {
     // correct mirrored visualSlot for the current _rtl.
     return LiquidTabBar(
       key: key,
+      // Solid tier, always — scroll content must never read through the bar
+      // (vendor pass 2026-09-30). opaqueSurface/opaqueEdge/shadow below are
+      // all existing tokens.
+      forceOpaque: true,
       items: [
         for (final tab in tabs)
           LiquidTabItem.icon(
@@ -666,6 +686,19 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
         _onNotificationsReady();
       });
     }
+    // Gym Attendance promo — the in-app "ad" for the feature while it isn't
+    // set up yet: pin + geofence animation, pitch in the active language,
+    // CTA onto the Profile tab. Owns its session guard + 7-day frequency
+    // cap + error swallowing; never shows once a gym is configured.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        GymAttendancePromo.maybeShow(
+          context,
+          onOpenProfile: () => widget.onNavigate(widget.profileTabIndex),
+        ),
+      );
+    });
     _heroCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
@@ -1345,10 +1378,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
     }
 
     if (_isLoading) {
+      // Flat background under the skeleton — the page's single ambient glow
+      // lives anchored to the avatar in the header, nowhere else.
       return Scaffold(
         backgroundColor: AppColors.background,
-        // Ambient top light sits behind the skeleton and never scrolls.
-        body: Stack(children: [const TopGlow(), _buildShimmer()]),
+        body: _buildShimmer(),
       );
     }
 
@@ -1356,10 +1390,6 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          // Ambient top-down light bleed: fixed to the screen (Stack sibling
-          // of the scroll view, so it never moves on scroll), behind content,
-          // above the base background. AppBackground's corner orbs stay as-is.
-          const TopGlow(),
           RefreshIndicator(
             onRefresh: () async {
               // Pull-to-refresh is an explicit ask — replay the entrance.
@@ -1401,10 +1431,11 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                 ),
 
-                // 24px between major sections (header → strip → hero → activity
-                // → workout …), 12px within a section — one spacing scale for
-                // the whole page (2026-09-27 rhythm pass).
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                // 32px at every major section boundary, 12px inside a section
+                // — the page's single spacing scale (vendor pass 2026-09-30).
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
 
                 // Gym Attendance banner — in-app geofence watcher output:
                 // dwell countdown while inside the gym's area, visit
@@ -1476,7 +1507,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                     ),
                   ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
 
                 // ── 3. Hero Fuel Card — calories gauge, macros & date stepper ──
                 // This is the single most important surface on Home: the ring
@@ -1495,10 +1528,12 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                 ),
 
-                // 24px between major sections (hero → vitals → hub …), 12px
-                // within a section — the eye gets one obvious reading order:
+                // 32px section boundary (hero → activity → hub …), 12px within
+                // a section — the eye gets one obvious reading order:
                 // calories → macros → vitals → logging actions.
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
 
                 // ── 4. Activity — Water & Steps cards ──
                 // Replaced the old vitals rings bar: same water/steps data,
@@ -1516,7 +1551,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
 
                 // ── 4b. Today's coach-assigned workout — hidden entirely when
                 // nothing is assigned so users without a coach see no friction.
@@ -1532,7 +1569,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
                 ],
 
                 // ── 5. App feature highlights — surfaces the app's other big
@@ -1571,7 +1610,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.section),
+                ),
 
                 // ── 6. Today's Fueling / Meals Feed ──
                 SliverToBoxAdapter(
@@ -1591,7 +1632,9 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: HomeSpacing.inSection),
+                ),
                 SliverToBoxAdapter(
                   child: _Stagger(
                     ctrl: _staggerCtrl,
@@ -1605,13 +1648,14 @@ class _HomeScreenCoreState extends State<_HomeScreenCore>
                   ),
                 ),
 
-                // Bottom buffer: nav-bar clearance PLUS the floating log button's
-                // full footprint (10 gap + 58 circle + 8 breathing) so the last
-                // rows of live text never sit under the FAB's hit area when the
-                // scroll bottoms out — on any screen height (2026-09-27).
+                // Bottom buffer: nav-bar clearance PLUS the floating log
+                // button's full footprint (16 gap + 58 circle + air) so the
+                // last rows of live text never sit under the FAB's hit area
+                // or the bar — on any screen height (vendor pass 2026-09-30).
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: LiquidTabBar.reservedHeight(context) + 76,
+                    height: LiquidTabBar.reservedHeight(context) +
+                        HomeSpacing.bottomFabBuffer,
                   ),
                 ),
               ],
@@ -1663,10 +1707,35 @@ class _KaleeHeader extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: isCompactHeader ? 12 : 20),
       child: Row(
         children: [
-          // Avatar with accent border ring
+          // Avatar with accent border ring. The page's ONE deliberate light
+          // source: a tightly-contained radial anchored behind the avatar,
+          // fading to the flat background within a short radius (vendor pass
+          // 2026-09-30 — replaces the screen-wide TopGlow bleed that read as
+          // accidental and fought the streak chip / icons for attention).
           _InteractiveScaleDetector(
             onTap: onOpenProfile,
-            child: Container(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: -46,
+                  top: -46,
+                  right: -46,
+                  bottom: -46,
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            AppColors.accent.withValues(alpha: 0.12),
+                            AppColors.accent.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
               width: isCompactHeader ? 40 : 46,
               height: isCompactHeader ? 40 : 46,
               decoration: BoxDecoration(
@@ -1743,6 +1812,8 @@ class _KaleeHeader extends StatelessWidget {
                       ),
               ),
             ),
+            ],
+          ),
           ),
 
           SizedBox(width: isCompactHeader ? 8 : 12),

@@ -1,15 +1,20 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/text_food_log_result.dart';
+import '../services/nutrition_service.dart';
+import '../services/stats_service.dart';
 import '../services/text_food_log_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
+import '../widgets/food/log_telemetry_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TextFoodLogScreen — AI text logging: type → analyze → review → save
@@ -30,15 +35,13 @@ class TextFoodLogScreen extends StatefulWidget {
 class _TextFoodLogScreenState extends State<TextFoodLogScreen>
     with TickerProviderStateMixin {
   final _textService = TextFoodLogService();
+  final _nutritionService = NutritionService();
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
 
-  static const _meals = [
-    (type: 'breakfast', emoji: '🍳'),
-    (type: 'lunch', emoji: '🥗'),
-    (type: 'dinner', emoji: '🍽'),
-    (type: 'snack', emoji: '🥜'),
-  ];
+  static final NumberFormat _countFormat = NumberFormat('#,###');
+
+  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   static const _analyzingSteps = [
     'Reading description',
@@ -66,6 +69,17 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
   TextLogErrorType? _errorType;
   bool _saving = false;
   TextLogErrorType? _saveErrorType;
+
+  // ── Screen context (display-only, Stitch redesign 2026-10-01): today's
+  // totals vs goals feed the telemetry bar; recent logs feed the quick-add
+  // chips and history cards. Read-only — the save flow never touches these,
+  // and every section hides itself when there is no data.
+  Map<String, dynamic>? _goals;
+  List<Map<String, dynamic>> _recentLogs = [];
+  double _consumedKcal = 0;
+  double _consumedProtein = 0;
+  double _consumedCarbs = 0;
+  double _consumedFat = 0;
 
   static String _defaultMealType() {
     final h = DateTime.now().hour;
@@ -114,13 +128,14 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
   void initState() {
     super.initState();
     if (widget.initialMealType != null &&
-        _meals.any((m) => m.type == widget.initialMealType)) {
+        _mealTypes.contains(widget.initialMealType)) {
       _mealType = widget.initialMealType!;
     }
     _ringController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     )..repeat();
+    _loadLogContext();
   }
 
   @override
@@ -130,6 +145,64 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  // ─── display context (read-only) ──────────────────────────────────────────
+  /// Goals + today/yesterday logs for the telemetry bar, quick-add chips and
+  /// history cards. Fails soft: any error just leaves the sections hidden.
+  Future<void> _loadLogContext() async {
+    try {
+      final goals = await StatsService().getGoals();
+      final today = await _nutritionService.getTodayLogs();
+      final yesterday = await _nutritionService.getTodayLogs(
+        date: DateTime.now().subtract(const Duration(days: 1)),
+      );
+      if (!mounted) return;
+
+      double kcal = 0, p = 0, c = 0, f = 0;
+      for (final logs in today.values) {
+        for (final row in logs) {
+          kcal += (row['calories'] as num?)?.toDouble() ?? 0;
+          p += (row['protein_g'] as num?)?.toDouble() ?? 0;
+          c += (row['carbs_g'] as num?)?.toDouble() ?? 0;
+          f += (row['fat_g'] as num?)?.toDouble() ?? 0;
+        }
+      }
+      final flat = <Map<String, dynamic>>[
+        ...today.values.expand((l) => l),
+        ...yesterday.values.expand((l) => l),
+      ];
+      flat.sort((a, b) {
+        final ta = DateTime.tryParse('${a['logged_at']}') ?? DateTime(2000);
+        final tb = DateTime.tryParse('${b['logged_at']}') ?? DateTime(2000);
+        return tb.compareTo(ta);
+      });
+
+      setState(() {
+        _goals = goals;
+        _consumedKcal = kcal;
+        _consumedProtein = p;
+        _consumedCarbs = c;
+        _consumedFat = f;
+        _recentLogs = flat;
+      });
+    } catch (_) {
+      // Sections stay hidden — logging itself never depends on this.
+    }
+  }
+
+  /// Top frequently-logged foods (today + yesterday), deduped by name —
+  /// the quick micro-add chips' data source.
+  List<Map<String, dynamic>> get _quickChips {
+    final seen = <String>{};
+    final chips = <Map<String, dynamic>>[];
+    for (final row in _recentLogs) {
+      final name = (row['food_name'] ?? '').toString().trim();
+      if (name.isEmpty || !seen.add(name.toLowerCase())) continue;
+      chips.add(row);
+      if (chips.length == 6) break;
+    }
+    return chips;
   }
 
   // ─── actions ──────────────────────────────────────────────────────────────
@@ -275,29 +348,11 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.textTitle,
-              style: AppText.headlineSm.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Text(
-              l10n.textSubtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        leading: const TelemetryBackButton(),
+        title: TelemetryAppBarTitle(
+          tag: l10n.telemetryLogTag,
+          title: l10n.textTitle,
+          isArabic: _isArabic,
         ),
       ),
       body: AppBackground(
@@ -336,89 +391,177 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.scanSaveToMeal,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        TelemetryCapsLabel(l10n.scanSaveToMeal, isArabic: _isArabic),
         const SizedBox(height: 10),
-        Row(
-          children: _meals.map((m) {
-            final sel = _mealType == m.type;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _mealType = m.type);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  margin: EdgeInsetsDirectional.only(
-                    end: m.type == 'snack' ? 0 : 8,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                    gradient: sel
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.primaryFixed,
-                              AppColors.secondaryFixed,
-                            ],
-                          )
-                        : null,
-                    color: sel ? null : AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: sel
-                          ? Colors.transparent
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    boxShadow: sel
-                        ? [
-                            BoxShadow(
-                              color:
-                                  AppColors.primaryFixed.withValues(alpha: 0.35),
-                              blurRadius: 14,
-                              offset: const Offset(0, 5),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    children: [
-                      AnimatedScale(
-                        duration: const Duration(milliseconds: 220),
-                        scale: sel ? 1.12 : 1.0,
-                        child: Text(
-                          m.emoji,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _mealName(l10n, m.type),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: sel ? Colors.white : AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+        MealSlotGrid(
+          selected: _mealType,
+          onSelect: (t) => setState(() => _mealType = t),
+          isArabic: _isArabic,
         ),
       ],
+    );
+  }
+
+  // ─── display-context sections (Stitch redesign) ───────────────────────────
+
+  /// "Day Target • Fuel Telemetry" bar — today's consumed kcal/macros vs the
+  /// user's goals. Hidden entirely until the context load lands.
+  Widget _buildMacroTelemetry() {
+    if (_goals == null) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context)!;
+    final kcalGoal =
+        (_goals!['daily_calories'] as num?)?.toDouble() ?? 2000;
+    final pGoal = (_goals!['daily_protein_g'] as num?)?.toDouble() ?? 150;
+    final cGoal = (_goals!['daily_carbs_g'] as num?)?.toDouble() ?? 250;
+    final fGoal = (_goals!['daily_fat_g'] as num?)?.toDouble() ?? 65;
+
+    int pct(double value, double goal) =>
+        goal > 0 ? ((value / goal) * 100).round() : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.accent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                      blurRadius: 7,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TelemetryCapsLabel(
+                  l10n.dayTargetTelemetry,
+                  isArabic: _isArabic,
+                ),
+              ),
+              Text(
+                '${_countFormat.format(_consumedKcal.round())} / '
+                '${_countFormat.format(kcalGoal.round())} ${l10n.kcal}',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.2,
+                  color: AppColors.onPrimaryContainer,
+                  fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _macroTile(
+                  l10n.protein,
+                  '${_consumedProtein.round()}g',
+                  pct(_consumedProtein, pGoal),
+                  AppColors.accentProtein,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _macroTile(
+                  l10n.carbs,
+                  '${_consumedCarbs.round()}g',
+                  pct(_consumedCarbs, cGoal),
+                  AppColors.accentCarbs,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _macroTile(
+                  l10n.fat,
+                  '${_consumedFat.round()}g',
+                  pct(_consumedFat, fGoal),
+                  AppColors.accentFat,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _macroTile(String label, String grams, int percent, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w800,
+              letterSpacing: _isArabic ? 0.2 : 0.6,
+              color: AppColors.textSecondary,
+              fontFamily: AppText.fontFamily(isArabic: _isArabic),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Text(
+                grams,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '$percent%',
+                style: TextStyle(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                  fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              height: 3,
+              child: Stack(
+                children: [
+                  Container(color: AppColors.surfaceContainerHighest),
+                  FractionallySizedBox(
+                    widthFactor: (percent / 100).clamp(0.0, 1.0),
+                    child: Container(color: color),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -428,69 +571,506 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
     final canAnalyze = _controller.text.trim().isNotEmpty;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_goals != null) ...[
+            _buildMacroTelemetry(),
+            const SizedBox(height: 20),
+          ],
           _buildMealPicker(),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          const SizedBox(height: 22),
+          _buildLogPrompt(),
+          if (_quickChips.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            _buildQuickAdd(),
+          ],
+          if (_recentLogs.isNotEmpty) ...[
+            const SizedBox(height: 22),
+            _buildRecentHistory(),
+          ],
+          const SizedBox(height: 22),
+          _buildNleCard(),
+          const SizedBox(height: 18),
+          TelemetryPrimaryButton(
+            label: l10n.textAnalyzeCta,
+            icon: Icons.auto_awesome_rounded,
+            isArabic: _isArabic,
+            onTap: canAnalyze ? _analyze : null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Freeform entry card — header row with a Clear affordance, the description
+  /// field and the live word/char telemetry footer.
+  Widget _buildLogPrompt() {
+    final l10n = AppLocalizations.of(context)!;
+    final text = _controller.text;
+    final hasText = text.trim().isNotEmpty;
+    final words = hasText ? text.trim().split(RegExp(r'\s+')).length : 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.psychology_alt_rounded,
+              size: 15,
+              color: AppColors.secondary,
             ),
+            const SizedBox(width: 6),
+            TelemetryCapsLabel(l10n.freeformEntry, isArabic: _isArabic),
+            const Spacer(),
+            if (hasText)
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  _controller.clear();
+                  setState(() {});
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text(
+                    l10n.clearText,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.edit_note_rounded,
+                    size: 17,
+                    color: AppColors.onPrimaryContainer,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.textInputHint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: AppColors.textSecondary,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              TextField(
+                controller: _controller,
+                focusNode: _focusNode,
+                minLines: 3,
+                maxLines: 6,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                inputFormatters: [
+                  LengthLimitingTextInputFormatter(_maxLength),
+                ],
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.6,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                ),
+                decoration: InputDecoration(
+                  hintText: l10n.textSubtitle,
+                  hintMaxLines: 2,
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textMuted.withValues(alpha: 0.7),
+                    fontWeight: FontWeight.w500,
+                    fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onChanged: (_) => setState(() {}),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '$words ',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.onPrimaryContainer,
+                            ),
+                          ),
+                          TextSpan(
+                            text: l10n.wordCountLabel('').trim(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${text.length}/$_maxLength',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    l10n.liveParser,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.secondary,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Quick micro-add pills — the most frequently logged foods; tapping
+  /// appends the food name to the description.
+  Widget _buildQuickAdd() {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            TelemetryCapsLabel(
+              l10n.quickMicroAdd,
+              isArabic: _isArabic,
+              color: AppColors.textMuted,
+            ),
+            const Spacer(),
+            Text(
+              l10n.frequentlyLogged,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onPrimaryContainer,
+                fontFamily: AppText.fontFamily(isArabic: _isArabic),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [for (final row in _quickChips) _quickChip(row)],
+        ),
+      ],
+    );
+  }
+
+  Widget _quickChip(Map<String, dynamic> row) {
+    final l10n = AppLocalizations.of(context)!;
+    final name = (row['food_name'] ?? '').toString().trim();
+    final kcal = ((row['calories'] as num?)?.toDouble() ?? 0).round();
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        final current = _controller.text.trim();
+        _controller.text = current.isEmpty ? name : '$current, $name';
+        _controller.selection = TextSelection.collapsed(
+          offset: _controller.text.length,
+        );
+        setState(() {});
+        _focusNode.requestFocus();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '+',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w900,
+                color: AppColors.onPrimaryContainer,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                  fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                ),
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '$kcal ${l10n.kcal}',
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textMuted,
+                fontFamily: AppText.fontFamily(isArabic: _isArabic),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Recent log history cards — real logged meals (photo when the food
+  /// catalog has one, neutral tile otherwise). No static images are shipped.
+  Widget _buildRecentHistory() {
+    final l10n = AppLocalizations.of(context)!;
+    final cards = _recentLogs.take(2).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            TelemetryCapsLabel(
+              l10n.recentLogHistory,
+              isArabic: _isArabic,
+              color: AppColors.textMuted,
+            ),
+            const Spacer(),
+            Icon(Icons.history_rounded, size: 15, color: AppColors.textMuted),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: _historyCard(cards[i])),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _historyCard(Map<String, dynamic> row) {
+    final l10n = AppLocalizations.of(context)!;
+    final name = (row['food_name'] ?? '').toString().trim();
+    final imageUrl = (row['image_url'] ?? '').toString();
+    final kcal = ((row['calories'] as num?)?.toDouble() ?? 0).round();
+    final loggedAt = DateTime.tryParse('${row['logged_at']}');
+    final now = DateTime.now();
+    final isToday = loggedAt != null &&
+        loggedAt.year == now.year &&
+        loggedAt.month == now.month &&
+        loggedAt.day == now.day;
+    final timeLabel = loggedAt == null
+        ? ''
+        : '${isToday ? '' : '${l10n.yesterdayLabel} • '}'
+            '${DateFormat('HH:mm').format(loggedAt)}';
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: SizedBox(
+              width: double.infinity,
+              height: 74,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (imageUrl.isNotEmpty)
+                    CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        color: AppColors.surfaceContainerHighest,
+                      ),
+                      errorWidget: (_, __, ___) => _historyFallback(),
+                    )
+                  else
+                    _historyFallback(),
+                  PositionedDirectional(
+                    bottom: 4,
+                    end: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceLowest.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '$kcal ${l10n.kcal}',
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onPrimaryContainer,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+              fontFamily: AppText.fontFamily(isArabic: _isArabic),
+            ),
+          ),
+          if (timeLabel.isNotEmpty) const SizedBox(height: 2),
+          if (timeLabel.isNotEmpty)
+            Text(
+              timeLabel,
+              style: TextStyle(
+                fontSize: 10.5,
+                color: AppColors.textSecondary,
+                fontFamily: AppText.fontFamily(isArabic: _isArabic),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _historyFallback() => Container(
+        color: AppColors.surfaceContainerHighest,
+        alignment: Alignment.center,
+        child: Icon(
+          Icons.restaurant_rounded,
+          size: 22,
+          color: AppColors.textMuted,
+        ),
+      );
+
+  /// "Natural Language Engine" explainer card — describes what the analyze
+  /// call actually does.
+  Widget _buildNleCard() {
+    final l10n = AppLocalizations.of(context)!;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Icon(
+              Icons.bolt_rounded,
+              size: 18,
+              color: AppColors.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  minLines: 3,
-                  maxLines: 6,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  inputFormatters: [
-                    LengthLimitingTextInputFormatter(_maxLength),
-                  ],
+                Text(
+                  l10n.nleTitle,
                   style: TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
                     color: AppColors.textPrimary,
                     fontFamily: AppText.fontFamily(isArabic: _isArabic),
                   ),
-                  decoration: InputDecoration(
-                    hintText: l10n.textInputHint,
-                    hintMaxLines: 2,
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
-                    ),
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                  onChanged: (_) => setState(() {}),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 3),
                 Text(
-                  '${_controller.text.length}/$_maxLength',
+                  l10n.nleBody,
                   style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.onSurfaceVariant,
+                    fontSize: 11,
+                    height: 1.5,
+                    color: AppColors.textSecondary,
+                    fontFamily: AppText.fontFamily(isArabic: _isArabic),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 24),
-          _GradientButton(
-            label: l10n.textAnalyzeCta,
-            icon: Icons.auto_awesome_rounded,
-            onTap: canAnalyze ? _analyze : null,
           ),
         ],
       ),
@@ -1134,22 +1714,19 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 56,
+        height: 54,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: canSave
-                ? LinearGradient(
-                    colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-                  )
-                : null,
-            color: canSave ? null : AppColors.primaryFixed.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(14),
+            color: canSave
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 5),
                     ),
                   ]
                 : null,
@@ -1157,7 +1734,7 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
               onTap: canSave ? _saveToLog : null,
               child: Center(
                 child: _saving
@@ -1210,9 +1787,10 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
               _errorText(l10n, _errorType ?? TextLogErrorType.unknown),
             ),
             const SizedBox(height: 24),
-            _GradientButton(
+            TelemetryPrimaryButton(
               label: l10n.textEditDescription,
               icon: Icons.edit_rounded,
+              isArabic: _isArabic,
               onTap: _editDescription,
             ),
             const SizedBox(height: 10),
@@ -1310,81 +1888,3 @@ class _TextFoodLogScreenState extends State<TextFoodLogScreen>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable gradient primary CTA button (nullable onTap → disabled styling)
-// ─────────────────────────────────────────────────────────────────────────────
-class _GradientButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback? onTap;
-
-  const _GradientButton({
-    required this.label,
-    required this.icon,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final enabled = onTap != null;
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: Opacity(
-        opacity: enabled ? 1 : 0.45,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: enabled
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-                  )
-                : null,
-            color: enabled ? null : AppColors.surfaceContainerHigh,
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: onTap,
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(icon,
-                        size: 22,
-                        color: enabled
-                            ? Colors.white
-                            : AppColors.onSurfaceVariant),
-                    const SizedBox(width: 10),
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        color: enabled
-                            ? Colors.white
-                            : AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

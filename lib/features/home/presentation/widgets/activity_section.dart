@@ -89,12 +89,28 @@ class ActivitySection extends ConsumerWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            l10n.activity,
-            style: AppText.styledHeadlineSm(
-              isArabic: isArabic,
-              color: AppColors.textPrimary,
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.activity,
+                  style: AppText.styledHeadlineSm(
+                    isArabic: isArabic,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              // "TODAY" tag — only truthful on the live day; a past day's
+              // log must not claim to be today's.
+              if (selected.isSameDay(DateTime.now()))
+                Text(
+                  l10n.today,
+                  style: AppText.styledScaleCaption(
+                    isArabic: isArabic,
+                    color: AppColors.textMuted,
+                  ).copyWith(fontWeight: FontWeight.w800, letterSpacing: 1.2),
+                ),
+            ],
           ),
         ),
         const SizedBox(height: 12),

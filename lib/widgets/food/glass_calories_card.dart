@@ -281,7 +281,9 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: over ? AppColors.overGoalWarningBorder : AppColors.borderSubtle,
+          color: over
+              ? AppColors.overGoalWarningBorder
+              : AppColors.borderSubtle,
           width: over ? 1.4 : 1,
         ),
         // Home card spec: the same soft elevation every card on this screen
@@ -403,8 +405,8 @@ class _GlassCaloriesCardState extends State<GlassCaloriesCard> {
   Widget _buildModeSwitch(AppLocalizations l10n) {
     return Center(
       child: SizedBox(
-        width: 264,
-        height: 36,
+        width: 345,
+        height: 40,
         child: Container(
           decoration: BoxDecoration(
             color: AppColors.glass2,
@@ -734,7 +736,9 @@ class _MicroRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.w800,
-                    color: over ? AppColors.overGoalWarning : AppColors.textMuted,
+                    color: over
+                        ? AppColors.overGoalWarning
+                        : AppColors.textMuted,
                   ),
                 ),
               ),

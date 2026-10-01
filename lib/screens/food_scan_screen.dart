@@ -13,6 +13,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
+import '../widgets/food/log_telemetry_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FoodScanScreen — AI food photo scan: capture → analyze → review → save
@@ -48,12 +49,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   final _nutritionService = NutritionService();
   final _picker = ImagePicker();
 
-  static const _meals = [
-    (type: 'breakfast', emoji: '🍳'),
-    (type: 'lunch', emoji: '🥗'),
-    (type: 'dinner', emoji: '🍽'),
-    (type: 'snack', emoji: '🥜'),
-  ];
+  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   static const _analyzingSteps = [
     'Detecting food items',
@@ -95,6 +91,9 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   FoodScanErrorType? _saveErrorType;
 
   _FoodScanScreenState() : _mealType = _defaultMealType();
+
+  bool get _isArabic =>
+      Localizations.localeOf(context).languageCode == 'ar';
 
   static String _defaultMealType() {
     final h = DateTime.now().hour;
@@ -149,7 +148,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   void initState() {
     super.initState();
     if (widget.initialMealType != null &&
-        _meals.any((m) => m.type == widget.initialMealType)) {
+        _mealTypes.contains(widget.initialMealType)) {
       _mealType = widget.initialMealType!;
     }
     _scanController = AnimationController(
@@ -383,33 +382,11 @@ class _FoodScanScreenState extends State<FoodScanScreen>
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: Semantics(
-          label: 'Back',
-          button: true,
-          child: IconButton(
-            icon: Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
-            onPressed: () => Navigator.of(context).pop(false),
-          ),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.scanTitle,
-              style: AppText.headlineSm.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Text(
-              l10n.scanSubtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        leading: const TelemetryBackButton(),
+        title: TelemetryAppBarTitle(
+          tag: l10n.telemetryLogTag,
+          title: l10n.scanTitle,
+          isArabic: _isArabic,
         ),
       ),
       body: AppBackground(
@@ -448,233 +425,222 @@ class _FoodScanScreenState extends State<FoodScanScreen>
     final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.scanSaveToMeal,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.onSurfaceVariant,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          TelemetryCapsLabel(l10n.scanSaveToMeal, isArabic: _isArabic),
           const SizedBox(height: 10),
-          Row(
-            children: _meals.map((m) {
-              final sel = _mealType == m.type;
-              return Expanded(
-                child: Semantics(
-                  label: '${_mealName(l10n, m.type)}${sel ? ', selected' : ''}',
-                  button: true,
-                  selected: sel,
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      setState(() => _mealType = m.type);
-                    },
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      margin: EdgeInsetsDirectional.only(
-                        end: m.type == 'snack' ? 0 : 8,
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      decoration: BoxDecoration(
-                        gradient: sel
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  AppColors.primaryFixed,
-                                  AppColors.secondaryFixed,
-                                ],
-                              )
-                            : null,
-                        color: sel ? null : AppColors.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: sel
-                              ? Colors.transparent
-                              : Colors.white.withValues(alpha: 0.08),
-                        ),
-                        boxShadow: sel
-                            ? [
-                                BoxShadow(
-                                  color: AppColors.primaryFixed.withValues(
-                                    alpha: 0.35,
-                                  ),
-                                  blurRadius: 14,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Column(
-                        children: [
-                          AnimatedScale(
-                            duration: const Duration(milliseconds: 220),
-                            scale: sel ? 1.12 : 1.0,
-                            child: Text(
-                              m.emoji,
-                              style: const TextStyle(fontSize: 20),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _mealName(l10n, m.type),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              color: sel
-                                  ? Colors.white
-                                  : AppColors.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 32),
-          Center(
-            child: AnimatedBuilder(
-              animation: _pulseController,
-              builder: (_, child) {
-                final t = Curves.easeInOut.transform(_pulseController.value);
-                return Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: AppColors.primaryFixed.withValues(
-                      alpha: 0.05 + 0.03 * t,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: child,
-                );
-              },
-              child: Container(
-                width: 124,
-                height: 124,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primaryFixed.withValues(alpha: 0.16),
-                      AppColors.secondaryFixed.withValues(alpha: 0.10),
-                    ],
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppColors.primaryFixed.withValues(alpha: 0.3),
-                    width: 1.5,
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.restaurant_rounded,
-                  size: 52,
-                  color: AppColors.primaryFixed,
-                ),
-              ),
-            ),
+          MealSlotGrid(
+            selected: _mealType,
+            onSelect: (t) {
+              HapticFeedback.selectionClick();
+              setState(() => _mealType = t);
+            },
+            isArabic: _isArabic,
           ),
           const SizedBox(height: 24),
-          Center(
-            child: Text(
-              l10n.scanIdleHint,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.onSurfaceVariant,
-                height: 1.6,
-                fontWeight: FontWeight.w500,
-              ),
+          // "Scan core" card — same language as the voice screen's audio core:
+          // status pill, volt orb over glass shells, hint + rotating tip.
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(18),
             ),
-          ),
-          const SizedBox(height: 14),
-          // Rotating tip — keeps the empty state feeling alive and teaches
-          // better scan habits over time instead of a static wall of text.
-          Center(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 320),
-              transitionBuilder: (child, anim) =>
-                  FadeTransition(opacity: anim, child: child),
-              child: Container(
-                key: ValueKey(_tipIndex),
-                constraints: const BoxConstraints(maxWidth: 300),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.05),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
                   ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline_rounded,
-                      size: 14,
-                      color: AppColors.primaryFixed,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        _idleTips[_tipIndex],
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.onSurfaceVariant,
-                          height: 1.4,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.accent,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.8),
+                              blurRadius: 7,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 7),
+                      Text(
+                        l10n.readyToScan,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: _isArabic ? 0.2 : 0.9,
+                          color: AppColors.textPrimary,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 20),
+                AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (_, child) {
+                    final t = Curves.easeInOut.transform(
+                      _pulseController.value,
+                    );
+                    return Container(
+                      width: 132 + 8 * t,
+                      height: 132 + 8 * t,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.primary.withValues(alpha: 0.05),
+                      ),
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 104,
+                        height: 104,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary.withValues(alpha: 0.10),
+                        ),
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 78,
+                          height: 78,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.35,
+                                ),
+                                blurRadius: 24,
+                              ),
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.restaurant_rounded,
+                            size: 34,
+                            color: AppColors.onPrimary,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.scanIdleHint,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.6,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Rotating tip — keeps the empty state feeling alive and
+                // teaches better scan habits instead of a static wall of text.
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 320),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
+                  child: Container(
+                    key: ValueKey(_tipIndex),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline_rounded,
+                          size: 14,
+                          color: AppColors.onPrimaryContainer,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            _idleTips[_tipIndex],
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                              fontFamily:
+                                  AppText.fontFamily(isArabic: _isArabic),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 28),
-          _GradientButton(
+          const SizedBox(height: 20),
+          TelemetryPrimaryButton(
             label: l10n.scanCameraCta,
             icon: Icons.photo_camera_rounded,
+            isArabic: _isArabic,
             onTap: () => _pickAndAnalyze(ImageSource.camera),
           ),
           const SizedBox(height: 12),
+          // Gallery — secondary ghost button (rim + neutral ink).
           SizedBox(
             width: double.infinity,
-            height: 54,
-            child: OutlinedButton.icon(
-              onPressed: () => _pickAndAnalyze(ImageSource.gallery),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryFixed,
-                side: BorderSide(
-                  color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
+            height: 52,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(14),
+                color: AppColors.surfaceContainerLow,
+                border: Border.all(color: AppColors.borderSubtle),
               ),
-              icon: const Icon(Icons.photo_library_rounded, size: 20),
-              label: Text(
-                l10n.scanGalleryCta,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => _pickAndAnalyze(ImageSource.gallery),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.photo_library_rounded,
+                        size: 19,
+                        color: AppColors.textSecondary,
+                      ),
+                      const SizedBox(width: 9),
+                      Text(
+                        l10n.scanGalleryCta,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          color: AppColors.textSecondary,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -849,7 +815,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               right: 0,
               child: Container(
                 height: thickness,
-                color: Colors.white.withValues(alpha: 0.85),
+                color: AppColors.primary.withValues(alpha: 0.9),
               ),
             ),
             Positioned(
@@ -860,7 +826,7 @@ class _FoodScanScreenState extends State<FoodScanScreen>
               child: Container(
                 width: thickness,
                 height: size,
-                color: Colors.white.withValues(alpha: 0.85),
+                color: AppColors.primary.withValues(alpha: 0.9),
               ),
             ),
           ],
@@ -1477,24 +1443,19 @@ class _FoodScanScreenState extends State<FoodScanScreen>
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 56,
+        height: 54,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: canSave
-                ? LinearGradient(
-                    colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-                  )
-                : null,
+            borderRadius: BorderRadius.circular(14),
             color: canSave
-                ? null
-                : AppColors.primaryFixed.withValues(alpha: 0.35),
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 5),
                     ),
                   ]
                 : null,
@@ -1502,33 +1463,37 @@ class _FoodScanScreenState extends State<FoodScanScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
               onTap: canSave ? _saveToLog : null,
               child: Center(
                 child: _saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
-                          color: Colors.white,
+                          color: AppColors.onPrimary,
                           strokeWidth: 2.5,
                         ),
                       )
                     : Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.add_circle_rounded,
                             size: 20,
-                            color: Colors.white,
+                            color: AppColors.onPrimary,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            l10n.scanLogToMeal(_mealLabel(l10n)),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: Colors.white,
+                          Flexible(
+                            child: Text(
+                              l10n.scanLogToMeal(_mealLabel(l10n)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: AppColors.onPrimary,
+                              ),
                             ),
                           ),
                         ],
@@ -1558,9 +1523,10 @@ class _FoodScanScreenState extends State<FoodScanScreen>
             ),
             const SizedBox(height: 24),
             if (canRetrySamePhoto)
-              _GradientButton(
+              TelemetryPrimaryButton(
                 label: l10n.scanRetrySamePhoto,
                 icon: Icons.refresh_rounded,
+                isArabic: _isArabic,
                 onTap: () {
                   setState(() {
                     _phase = _ScanPhase.analyzing;
@@ -1662,66 +1628,3 @@ class _FoodScanScreenState extends State<FoodScanScreen>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable gradient primary CTA button
-// ─────────────────────────────────────────────────────────────────────────────
-class _GradientButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _GradientButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryFixed.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 22, color: Colors.white),
-                  const SizedBox(width: 10),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

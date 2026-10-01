@@ -508,7 +508,7 @@ class _ProfilePageState extends State<ProfilePage>
   // card below, and data refreshes via pull-to-refresh only.
   Widget _buildAppBar() => SliverAppBar(
     pinned: true,
-    expandedHeight: 290,
+    expandedHeight: 218,
     backgroundColor: AppColors.surface,
     surfaceTintColor: Colors.transparent,
     elevation: 0,
@@ -654,9 +654,13 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   // ── Hero header ───────────────────────────────────────────────────────────
+  // Telemetry identity block: avatar left, caps volt tag + name + email
+  // stacked beside it, rank/streak pills under the row (2026-10-01 redesign).
   Widget _buildHeroHeader() {
+    final l10n = AppLocalizations.of(context)!;
     final initial = _userName.isNotEmpty ? _userName[0].toUpperCase() : 'U';
     final hasAvatar = _avatarUrl.isNotEmpty;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final rank = _getRank();
 
     return Container(
@@ -685,166 +689,181 @@ class _ProfilePageState extends State<ProfilePage>
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 18),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
-
-                  // ── Avatar ──────────────────────────────────────────────
-                  Semantics(
-                    label: AppLocalizations.of(context)!.profilePhotoTapOptions,
-                    button: true,
-                    child: GestureDetector(
-                      onTapDown: (_) => _avatarCtrl.forward(),
-                      onTapUp: (_) {
-                        _avatarCtrl.reverse();
-                        _showAvatarOptions();
-                      },
-                      onTapCancel: () => _avatarCtrl.reverse(),
-                      child: ScaleTransition(
-                        scale: _avatarScale,
-                        child: SizedBox(
-                          width: 112,
-                          height: 112,
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Glow halo
-                              Container(
-                                width: 112,
-                                height: 112,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: RadialGradient(
-                                    colors: [
-                                      AppColors.primary.withValues(alpha: .16),
-                                      Colors.transparent,
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // Primary ring
-                              Container(
-                                width: 98,
-                                height: 98,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(
-                                      alpha: .45,
-                                    ),
-                                    width: 1.5,
-                                  ),
-                                ),
-                              ),
-                              // Avatar image or initials
-                              Hero(
-                                tag: 'profile_avatar_hero',
-                                child: CircleAvatar(
-                                  radius: 43,
-                                  backgroundColor:
-                                      AppColors.surfaceContainerHigh,
-                                  backgroundImage: hasAvatar
-                                      ? NetworkImage(_avatarUrl)
-                                      : null,
-                                  onBackgroundImageError: hasAvatar
-                                      ? (_, __) {}
-                                      : null,
-                                  child: !hasAvatar
-                                      ? Text(
-                                          initial,
-                                          style: TextStyle(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 30,
-                                          ),
-                                        )
-                                      : null,
-                                ),
-                              ),
-                              // Upload spinner overlay
-                              if (_isUploadingAvatar)
-                                Container(
-                                  width: 86,
-                                  height: 86,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.black.withValues(alpha: .5),
-                                  ),
-                                  child: const Center(
-                                    child: SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              // Camera/Edit badge — pinned to the bottom-right
-                              // in BOTH languages: a directional `end` here
-                              // made it jump sides on every language toggle.
-                              if (!_isUploadingAvatar)
-                                Positioned(
-                                  bottom: 3,
-                                  right: 3,
-                                  child: Container(
-                                    width: 30,
-                                    height: 30,
+                  Row(
+                    children: [
+                      // ── Avatar (tap → photo options, unchanged logic) ──
+                      Semantics(
+                        label: l10n.profilePhotoTapOptions,
+                        button: true,
+                        child: GestureDetector(
+                          onTapDown: (_) => _avatarCtrl.forward(),
+                          onTapUp: (_) {
+                            _avatarCtrl.reverse();
+                            _showAvatarOptions();
+                          },
+                          onTapCancel: () => _avatarCtrl.reverse(),
+                          child: ScaleTransition(
+                            scale: _avatarScale,
+                            child: SizedBox(
+                              width: 88,
+                              height: 88,
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Volt identity ring
+                                  Container(
+                                    width: 88,
+                                    height: 88,
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary,
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: AppColors.surface,
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.primary.withValues(
-                                            alpha: .35,
-                                          ),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 2),
+                                        color: AppColors.primary.withValues(
+                                          alpha: .45,
                                         ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.edit_rounded,
-                                      size: 14,
-                                      color: AppColors.onPrimary,
+                                        width: 1.5,
+                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
+                                  Hero(
+                                    tag: 'profile_avatar_hero',
+                                    child: CircleAvatar(
+                                      radius: 38,
+                                      backgroundColor:
+                                          AppColors.surfaceContainerHigh,
+                                      backgroundImage: hasAvatar
+                                          ? NetworkImage(_avatarUrl)
+                                          : null,
+                                      onBackgroundImageError: hasAvatar
+                                          ? (_, __) {}
+                                          : null,
+                                      child: !hasAvatar
+                                          ? Text(
+                                              initial,
+                                              style: TextStyle(
+                                                color: AppColors.primary,
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 26,
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                  ),
+                                  // Upload spinner overlay
+                                  if (_isUploadingAvatar)
+                                    Container(
+                                      width: 76,
+                                      height: 76,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.black.withValues(
+                                          alpha: .5,
+                                        ),
+                                      ),
+                                      child: const Center(
+                                        child: SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 2,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  // Camera/Edit badge — pinned to the
+                                  // bottom-right in BOTH languages: a
+                                  // directional `end` here made it jump sides
+                                  // on every language toggle.
+                                  if (!_isUploadingAvatar)
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: AppColors.surface,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.edit_rounded,
+                                          size: 13,
+                                          color: AppColors.onPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+
+                      const SizedBox(width: 16),
+
+                      // ── Identity ──
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.profileTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: isArabic ? 0.3 : 1.4,
+                                color: AppColors.onPrimaryContainer,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            // Force LTR so "COACH / NAME" slash stays between
+                            // words in both EN and AR (RTL bidi would
+                            // otherwise reverse it).
+                            Text(
+                              _userName,
+                              textDirection: TextDirection.ltr,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 19,
+                                height: 1.15,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (_userEmail.isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                _userEmail,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
-                  // ── Name — force LTR so "COACH / NAME" slash stays between
-                  // words in both EN and AR (RTL bidi would otherwise reverse it).
-                  Text(
-                    _userName.toUpperCase(),
-                    textDirection: TextDirection.ltr,
-                    textAlign: TextAlign.center,
-                    style: AppText.headlineMd.copyWith(
-                      letterSpacing: 2.0,
-                      fontSize: 20,
-                      height: 1.1,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  // ── Badges Row ──────────────────────────────────────────
+                  // ── Badges Row (start-aligned, telemetry pills) ──
                   Wrap(
-                    alignment: WrapAlignment.center,
                     spacing: 8,
                     runSpacing: 8,
                     children: [
@@ -861,16 +880,8 @@ class _ProfilePageState extends State<ProfilePage>
                         colorOverride: rank.color,
                         subtle: false,
                       ),
-                      if (_userEmail.isNotEmpty)
-                        _Pill(
-                          icon: Icons.alternate_email_rounded,
-                          label: _userEmail,
-                          subtle: true,
-                        ),
                     ],
                   ),
-
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -1047,54 +1058,89 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  // ── Stats row — deliberately quiet: one compact borderless strip so the
-  // program banner and daily targets read as the primary content.
+  // ── Stats row — three telemetry tiles: icon, value, caps label ──
   Widget _buildStatsRow() {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.borderSubtle),
-      ),
-      child: Row(
-        children: [
-          _InlineStat(
-            value: '$_totalWorkoutsAllTime',
-            label: l10n.totalWorkouts,
-            icon: Icons.fitness_center_rounded,
-            color: AppColors.primary,
-          ),
-          _statDivider(),
-          _InlineStat(
-            value: '$_totalWorkoutsThisMonth',
-            label: l10n.thisMonthWorkouts,
-            icon: Icons.calendar_month_rounded,
-            color: AppColors.secondary,
-          ),
-          _statDivider(),
-          _InlineStat(
-            // Compact only from 1000 up — "0.0k"/"0.9k" for small numbers
-            // reads like broken data.
-            value: _totalCaloriesThisMonth >= 1000
-                ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
-                : '$_totalCaloriesThisMonth',
-            label: l10n.kcalLogged,
-            icon: Icons.local_fire_department_rounded,
-            color: AppColors.accentCalories,
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        _statTile(
+          icon: Icons.fitness_center_rounded,
+          color: AppColors.primary,
+          value: '$_totalWorkoutsAllTime',
+          label: l10n.totalWorkouts,
+        ),
+        const SizedBox(width: 8),
+        _statTile(
+          icon: Icons.calendar_month_rounded,
+          color: AppColors.secondary,
+          value: '$_totalWorkoutsThisMonth',
+          label: l10n.thisMonthWorkouts,
+        ),
+        const SizedBox(width: 8),
+        _statTile(
+          icon: Icons.local_fire_department_rounded,
+          color: AppColors.accentCalories,
+          // Compact only from 1000 up — "0.0k"/"0.9k" for small numbers
+          // reads like broken data.
+          value: _totalCaloriesThisMonth >= 1000
+              ? '${(_totalCaloriesThisMonth / 1000).toStringAsFixed(1)}k'
+              : '$_totalCaloriesThisMonth',
+          label: l10n.kcalLogged,
+        ),
+      ],
     );
   }
 
-  Widget _statDivider() => Container(
-    width: 1,
-    height: 26,
-    margin: const EdgeInsets.symmetric(horizontal: 4),
-    color: AppColors.borderSubtle,
-  );
+  Widget _statTile({
+    required IconData icon,
+    required Color color,
+    required String value,
+    required String label,
+  }) {
+    return Expanded(
+      child: Semantics(
+        label: '$value $label',
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 16, color: color),
+              const SizedBox(height: 7),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  height: 1,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .4,
+                  color: AppColors.textMuted,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   // ── Program banner ────────────────────────────────────────────────────────
   Widget _buildProgramBanner() {
@@ -1121,10 +1167,14 @@ class _ProfilePageState extends State<ProfilePage>
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: .12),
+              color: AppColors.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.bolt_rounded, color: AppColors.primary, size: 24),
+            child: Icon(
+              Icons.bolt_rounded,
+              color: AppColors.onPrimaryContainer,
+              size: 24,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1135,9 +1185,9 @@ class _ProfilePageState extends State<ProfilePage>
                   AppLocalizations.of(context)!.activeProgram2.toUpperCase(),
                   style: TextStyle(
                     fontSize: 9,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.8,
+                    color: AppColors.onPrimaryContainer,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -1162,66 +1212,78 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  // ── Unified metric-row list pattern ───────────────────────────────────────
-  // One consistent card language for all "a few numbers" sections
-  // (body data, daily targets, this month): icon chip · label · value.
-  Widget _metricListRow({
+  // ── Metric tiles — body data / daily targets render as a 2-up tile grid
+  // (2026-10-01 redesign): icon, value+unit, caps label. Values stay live;
+  // the card's tap still opens the edit sheets.
+  Widget _metricTile({
     required IconData icon,
     required Color color,
     required String label,
     required String value,
     String? unit,
-    bool isLast = false,
   }) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          child: Row(
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainer,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: .12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: color, size: 17),
-              ),
-              const SizedBox(width: 12),
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   label,
-                  style: AppText.bodySm.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .3,
+                    color: AppColors.textMuted,
                   ),
-                ),
-              ),
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: value,
-                      style: AppText.metricMd.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if (unit != null && unit.isNotEmpty)
-                      TextSpan(
-                        text: ' $unit',
-                        style: AppText.bodySm.copyWith(
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                  ],
                 ),
               ),
             ],
           ),
-        ),
-        if (!isLast) Divider(height: 1, color: AppColors.borderLight),
-      ],
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    height: 1,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              if (unit != null && unit.isNotEmpty) ...[
+                const SizedBox(width: 3),
+                Text(
+                  unit,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1229,33 +1291,51 @@ class _ProfilePageState extends State<ProfilePage>
     final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
-        _metricListRow(
-          icon: Icons.cake_outlined,
-          color: AppColors.secondary,
-          label: l10n.age,
-          value: _age == '--' ? '--' : _age,
-          unit: _age == '--' ? null : l10n.yearsShort,
+        Row(
+          children: [
+            Expanded(
+              child: _metricTile(
+                icon: Icons.cake_outlined,
+                color: AppColors.secondary,
+                label: l10n.age,
+                value: _age == '--' ? '--' : _age,
+                unit: _age == '--' ? null : l10n.yearsShort,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _metricTile(
+                icon: Icons.monitor_weight_outlined,
+                color: AppColors.purpleAccent,
+                label: l10n.weight,
+                value: _weight == '--' ? '--' : _weight.replaceAll(' kg', ''),
+                unit: _weight == '--' ? null : 'kg',
+              ),
+            ),
+          ],
         ),
-        _metricListRow(
-          icon: Icons.monitor_weight_outlined,
-          color: AppColors.purpleAccent,
-          label: l10n.weight,
-          value: _weight == '--' ? '--' : _weight.replaceAll(' kg', ''),
-          unit: _weight == '--' ? null : 'kg',
-        ),
-        _metricListRow(
-          icon: Icons.height_outlined,
-          color: AppColors.tertiary,
-          label: l10n.height,
-          value: _height == '--' ? '--' : _height.replaceAll(' cm', ''),
-          unit: _height == '--' ? null : 'cm',
-        ),
-        _metricListRow(
-          icon: Icons.track_changes_outlined,
-          color: AppColors.primary,
-          label: l10n.goal,
-          value: _goal,
-          isLast: true,
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _metricTile(
+                icon: Icons.height_outlined,
+                color: AppColors.tertiary,
+                label: l10n.height,
+                value: _height == '--' ? '--' : _height.replaceAll(' cm', ''),
+                unit: _height == '--' ? null : 'cm',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _metricTile(
+                icon: Icons.track_changes_outlined,
+                color: AppColors.primary,
+                label: l10n.goal,
+                value: _goal,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -1263,29 +1343,36 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildTargetRows() {
     final l10n = AppLocalizations.of(context)!;
-    return Column(
+    return Row(
       children: [
-        _metricListRow(
-          icon: Icons.local_fire_department_rounded,
-          color: AppColors.accentCalories,
-          label: l10n.caloriesLabel,
-          value: '$_dailyCalories',
-          unit: l10n.kcal,
+        Expanded(
+          child: _metricTile(
+            icon: Icons.local_fire_department_rounded,
+            color: AppColors.accentCalories,
+            label: l10n.caloriesLabel,
+            value: '$_dailyCalories',
+            unit: l10n.kcal,
+          ),
         ),
-        _metricListRow(
-          icon: Icons.egg_alt_outlined,
-          color: AppColors.accentProtein,
-          label: l10n.proteinGoal,
-          value: '$_dailyProtein',
-          unit: 'g',
+        const SizedBox(width: 8),
+        Expanded(
+          child: _metricTile(
+            icon: Icons.egg_alt_outlined,
+            color: AppColors.accentProtein,
+            label: l10n.proteinGoal,
+            value: '$_dailyProtein',
+            unit: 'g',
+          ),
         ),
-        _metricListRow(
-          icon: Icons.fitness_center_rounded,
-          color: AppColors.primary,
-          label: l10n.workoutsLabel,
-          value: '$_weeklyWorkouts',
-          unit: l10n.perWeekShort,
-          isLast: true,
+        const SizedBox(width: 8),
+        Expanded(
+          child: _metricTile(
+            icon: Icons.fitness_center_rounded,
+            color: AppColors.primary,
+            label: l10n.workoutsLabel,
+            value: '$_weeklyWorkouts',
+            unit: l10n.perWeekShort,
+          ),
         ),
       ],
     );
@@ -2257,7 +2344,7 @@ class _SectionHeader extends StatelessWidget {
           width: 3,
           height: 12,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: .8),
+            color: AppColors.accent,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -2267,8 +2354,8 @@ class _SectionHeader extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             color: AppColors.textSecondary,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 2,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.4,
           ),
         ),
       ],
@@ -2276,7 +2363,7 @@ class _SectionHeader extends StatelessWidget {
   );
 }
 
-/// Flat card base — the shared CoreGym card language (white surface,
+/// Flat card base — the shared CoreGym card language (lifted tonal surface,
 /// subtle border, soft shadow). Optionally tappable with an inline edit
 /// badge so editability is discoverable on the data itself.
 class _ProfileCard extends StatelessWidget {
@@ -2294,16 +2381,16 @@ class _ProfileCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final card = Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppColors.borderSubtle),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: .03),
+            color: AppColors.cardShadow,
             blurRadius: 12,
-            offset: const Offset(0, 3),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -2334,7 +2421,7 @@ class _ProfileCard extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
+                    color: AppColors.accent,
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.surface, width: 2),
                     boxShadow: [
@@ -2348,7 +2435,7 @@ class _ProfileCard extends StatelessWidget {
                   child: const Icon(
                     Icons.edit_rounded,
                     size: 13,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
               ),
@@ -2414,73 +2501,19 @@ class _PressCardState extends State<_PressCard>
             : Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh.withValues(alpha: .6),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: AppColors.borderSubtle),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.cardShadow,
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: widget.child,
               ),
-      ),
-    ),
-  );
-}
-
-/// Compact inline stat for the de-emphasized stats strip
-class _InlineStat extends StatelessWidget {
-  final String value, label;
-  final IconData icon;
-  final Color color;
-  const _InlineStat({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Semantics(
-      label: '$value $label',
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            // Keep icon → value order physical LTR in both languages so the
-            // stats strip doesn't visibly jump left/right on EN↔AR toggle.
-            textDirection: TextDirection.ltr,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, color: color, size: 14),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 9,
-              color: AppColors.textMuted,
-              letterSpacing: .3,
-              height: 1.3,
-            ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
       ),
     ),
   );

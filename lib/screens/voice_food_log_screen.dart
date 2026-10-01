@@ -12,6 +12,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_text.dart';
 import '../widgets/ai_wait_line.dart';
 import '../widgets/app_background.dart';
+import '../widgets/food/log_telemetry_widgets.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VoiceFoodLogScreen — AI voice logging: record → transcribe → review → save
@@ -34,12 +35,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   final _voiceService = VoiceFoodLogService();
   final _nutritionService = NutritionService();
 
-  static const _meals = [
-    (type: 'breakfast', emoji: '🍳'),
-    (type: 'lunch', emoji: '🥗'),
-    (type: 'dinner', emoji: '🍽'),
-    (type: 'snack', emoji: '🥜'),
-  ];
+  static const _mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
   static const _analyzingSteps = [
     'Transcribing speech',
@@ -80,6 +76,9 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     return 'snack';
   }
 
+  bool get _isArabic =>
+      Localizations.localeOf(context).languageCode == 'ar';
+
   String _mealLabel(AppLocalizations l10n) => _mealName(l10n, _mealType);
 
   static String _mealName(AppLocalizations l10n, String type) {
@@ -118,7 +117,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   void initState() {
     super.initState();
     if (widget.initialMealType != null &&
-        _meals.any((m) => m.type == widget.initialMealType)) {
+        _mealTypes.contains(widget.initialMealType)) {
       _mealType = widget.initialMealType!;
     }
     _pulseController = AnimationController(
@@ -309,29 +308,11 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
         backgroundColor: AppColors.surface,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: AppColors.onSurface),
-          onPressed: () => Navigator.of(context).pop(false),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.voiceTitle,
-              style: AppText.headlineSm.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
-            ),
-            Text(
-              l10n.voiceSubtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
+        leading: const TelemetryBackButton(),
+        title: TelemetryAppBarTitle(
+          tag: l10n.telemetryLogTag,
+          title: l10n.voiceTitle,
+          isArabic: _isArabic,
         ),
       ),
       body: AppBackground(
@@ -371,88 +352,24 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          l10n.scanSaveToMeal,
-          style: TextStyle(
-            fontSize: 12,
-            color: AppColors.onSurfaceVariant,
-            fontWeight: FontWeight.w600,
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: TelemetryCapsLabel(l10n.scanSaveToMeal, isArabic: _isArabic),
+            ),
+            TelemetryCapsLabel(
+              l10n.macrosTelemetry,
+              isArabic: _isArabic,
+              color: AppColors.onPrimaryContainer,
+              fontSize: 9.5,
+            ),
+          ],
         ),
         const SizedBox(height: 10),
-        Row(
-          children: _meals.map((m) {
-            final sel = _mealType == m.type;
-            return Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _mealType = m.type);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  curve: Curves.easeOutCubic,
-                  margin: EdgeInsetsDirectional.only(
-                    end: m.type == 'snack' ? 0 : 8,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  decoration: BoxDecoration(
-                    gradient: sel
-                        ? LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              AppColors.primaryFixed,
-                              AppColors.secondaryFixed,
-                            ],
-                          )
-                        : null,
-                    color: sel ? null : AppColors.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: sel
-                          ? Colors.transparent
-                          : Colors.white.withValues(alpha: 0.08),
-                    ),
-                    boxShadow: sel
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                              blurRadius: 14,
-                              offset: const Offset(0, 5),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    children: [
-                      AnimatedScale(
-                        duration: const Duration(milliseconds: 220),
-                        scale: sel ? 1.12 : 1.0,
-                        child: Text(
-                          m.emoji,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _mealName(l10n, m.type),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: sel
-                              ? Colors.white
-                              : AppColors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+        MealSlotCarousel(
+          selected: _mealType,
+          onSelect: (t) => setState(() => _mealType = t),
+          isArabic: _isArabic,
         ),
       ],
     );
@@ -463,30 +380,34 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMealPicker(),
-          const SizedBox(height: 32),
-          Center(child: _micOrb(recording: false)),
           const SizedBox(height: 24),
-          Center(
+          _audioCoreCard(
+            l10n: l10n,
+            recording: false,
             child: Text(
               l10n.voiceIdleHint,
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.onSurfaceVariant,
+                color: AppColors.textSecondary,
                 height: 1.6,
                 fontWeight: FontWeight.w500,
+                fontFamily: AppText.fontFamily(isArabic: _isArabic),
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          _GradientButton(
+          const SizedBox(height: 20),
+          _buildFeatureBadges(),
+          const SizedBox(height: 20),
+          TelemetryPrimaryButton(
             label: l10n.voiceRecordCta,
             icon: Icons.mic_rounded,
+            isArabic: _isArabic,
             onTap: _startRecording,
           ),
         ],
@@ -499,58 +420,71 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildMealPicker(),
-          const SizedBox(height: 32),
-          Center(child: _micOrb(recording: true)),
-          const SizedBox(height: 16),
-          Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.35)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.fiber_manual_record_rounded,
-                      size: 12, color: AppColors.error),
-                  const SizedBox(width: 7),
-                  Text(
-                    _elapsedLabel,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.error,
-                      letterSpacing: 1.2,
+          const SizedBox(height: 24),
+          _audioCoreCard(
+            l10n: l10n,
+            recording: true,
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.error.withValues(alpha: 0.35),
                     ),
                   ),
-                ],
-              ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.fiber_manual_record_rounded,
+                        size: 12,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        _elapsedLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.error,
+                          letterSpacing: 1.2,
+                          fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  l10n.voiceRecordingHint,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                    height: 1.6,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 18),
-          Center(
-            child: Text(
-              l10n.voiceRecordingHint,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.onSurfaceVariant,
-                height: 1.6,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          _GradientButton(
+          const SizedBox(height: 20),
+          TelemetryPrimaryButton(
             label: l10n.voiceStopCta,
             icon: Icons.stop_rounded,
+            isArabic: _isArabic,
             onTap: _stopAndAnalyze,
           ),
         ],
@@ -558,75 +492,274 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
     );
   }
 
+  /// The "Audio Core" card from the design — status pill, concentric rings
+  /// around the volt mic orb, live waveform bars (recording only) and the
+  /// caller's hint content below.
+  Widget _audioCoreCard({
+    required AppLocalizations l10n,
+    required bool recording,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.accent,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.8),
+                        blurRadius: 7,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Text(
+                  l10n.readyToListen,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: _isArabic ? 0.2 : 0.9,
+                    color: AppColors.textPrimary,
+                    fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          _micOrb(recording: recording),
+          const SizedBox(height: 14),
+          if (recording) ...[
+            _waveBars(),
+            const SizedBox(height: 14),
+          ],
+          child,
+        ],
+      ),
+    );
+  }
+
+  /// Static telemetry-style waveform strip (idle) / pulsing bars (recording).
+  Widget _waveBars() {
+    const count = 15;
+    const baseHeights = [2.0, 4.0, 7.0, 3.0, 9.0, 12.0, 6.0, 14.0, 6.0, 10.0, 3.0, 7.0, 4.0, 2.0, 3.0];
+    return SizedBox(
+      height: 18,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < count; i++)
+            AnimatedBuilder(
+              animation: _pulseController,
+              builder: (context, _) {
+                final t = _pulseController.value;
+                final h = recordingNow
+                    ? baseHeights[i] + 6 * (0.5 + 0.5 * ((t + i / count) % 1))
+                    : baseHeights[i];
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                  width: 3,
+                  height: h.clamp(2.0, 20.0),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(
+                      alpha: recordingNow ? 0.9 : 0.45,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  bool get recordingNow => _phase == _VoicePhase.recording;
+
+  /// Concentric-ring mic orb — volt tactile center button inside glass
+  /// shells; tapping it starts/stops recording, matching the CTA below.
   Widget _micOrb({required bool recording}) {
-    final accent = recording ? AppColors.error : AppColors.primaryFixed;
     return AnimatedBuilder(
       animation: Listenable.merge([_pulseController, _ringController]),
-      builder: (_, child) {
+      builder: (context, _) {
         final t = Curves.easeInOut.transform(_pulseController.value);
         return SizedBox(
-          width: 190,
-          height: 190,
+          width: 236,
+          height: 236,
           child: Stack(
             alignment: Alignment.center,
             children: [
+              // Ambient aura + concentric wave layers.
+              Container(
+                width: 220 + 8 * t,
+                height: 220 + 8 * t,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.05),
+                ),
+              ),
+              Container(
+                width: 186,
+                height: 186,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                ),
+              ),
               if (recording)
                 ...[0.0, 0.45].map((delay) {
                   final v =
                       ((_ringController.value - delay) / 1.0).clamp(0.0, 1.0);
                   return Container(
-                    width: 124 + (v * 60),
-                    height: 124 + (v * 60),
+                    width: 130 + (v * 90),
+                    height: 130 + (v * 90),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: accent.withValues(alpha: 0.4 * (1 - v)),
+                        color: AppColors.primary.withValues(
+                          alpha: 0.4 * (1 - v),
+                        ),
                         width: 2,
                       ),
                     ),
                   );
                 }),
+              // Glass outer shell + inner plate.
               Container(
-                width: 160,
-                height: 160,
+                width: 126,
+                height: 126,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: accent.withValues(alpha: 0.05 + 0.03 * t),
+                  color: AppColors.surfaceContainerHigh,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                alignment: Alignment.center,
-                child: child,
+              ),
+              Container(
+                width: 106,
+                height: 106,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.surfaceContainer,
+                ),
+              ),
+              // The volt center button.
+              Material(
+                color: Colors.transparent,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: recording ? _stopAndAnalyze : _startRecording,
+                  child: Container(
+                    width: 84,
+                    height: 84,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.35),
+                          blurRadius: 24,
+                        ),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      recording
+                          ? Icons.stop_rounded
+                          : Icons.mic_rounded,
+                      size: 34,
+                      color: AppColors.onPrimary,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
         );
       },
-      child: Container(
-        width: 124,
-        height: 124,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              (recording ? AppColors.error : AppColors.primaryFixed)
-                  .withValues(alpha: 0.16),
-              AppColors.secondaryFixed.withValues(alpha: 0.10),
-            ],
+    );
+  }
+
+  /// The three realtime-engine capability tiles under the audio core card.
+  Widget _buildFeatureBadges() {
+    final l10n = AppLocalizations.of(context)!;
+    final tiles = [
+      (Icons.bolt_rounded, l10n.featMacroTitle, l10n.featMacroSub,
+          AppColors.secondary),
+      (Icons.scale_rounded, l10n.featPortionTitle, l10n.featPortionSub,
+          AppColors.onPrimaryContainer),
+      (Icons.record_voice_over_rounded, l10n.featTypingTitle,
+          l10n.featTypingSub, AppColors.tertiary),
+    ];
+    return Row(
+      children: [
+        for (var i = 0; i < tiles.length; i++) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  Icon(tiles[i].$1, size: 19, color: tiles[i].$4),
+                  const SizedBox(height: 6),
+                  Text(
+                    tiles[i].$2,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    tiles[i].$3,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9.5,
+                      color: AppColors.textMuted,
+                      fontFamily: AppText.fontFamily(isArabic: _isArabic),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: (recording ? AppColors.error : AppColors.primaryFixed)
-                .withValues(alpha: 0.3),
-            width: 1.5,
-          ),
-        ),
-        alignment: Alignment.center,
-        child: Icon(
-          Icons.mic_rounded,
-          size: 52,
-          color: recording ? AppColors.error : AppColors.primaryFixed,
-        ),
-      ),
+        ],
+      ],
     );
   }
 
@@ -1208,22 +1341,19 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 56,
+        height: 54,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: canSave
-                ? LinearGradient(
-                    colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-                  )
-                : null,
-            color: canSave ? null : AppColors.primaryFixed.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(14),
+            color: canSave
+                ? AppColors.primary
+                : AppColors.primary.withValues(alpha: 0.35),
             boxShadow: canSave
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryFixed.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: AppColors.primary.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 5),
                     ),
                   ]
                 : null,
@@ -1231,7 +1361,7 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(14),
               onTap: canSave ? _saveToLog : null,
               child: Center(
                 child: _saving
@@ -1288,9 +1418,10 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
             ),
             const SizedBox(height: 24),
             if (canRetrySameAudio)
-              _GradientButton(
+              TelemetryPrimaryButton(
                 label: l10n.voiceRetrySameAudio,
                 icon: Icons.refresh_rounded,
+                isArabic: _isArabic,
                 onTap: () {
                   setState(() {
                     _phase = _VoicePhase.analyzing;
@@ -1396,66 +1527,3 @@ class _VoiceFoodLogScreenState extends State<VoiceFoodLogScreen>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable gradient primary CTA button
-// ─────────────────────────────────────────────────────────────────────────────
-class _GradientButton extends StatelessWidget {
-  final String label;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _GradientButton({
-    required this.label,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primaryFixed, AppColors.secondaryFixed],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primaryFixed.withValues(alpha: 0.35),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(16),
-            onTap: onTap,
-            child: Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, size: 22, color: Colors.white),
-                  const SizedBox(width: 10),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 15,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}

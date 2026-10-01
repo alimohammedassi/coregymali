@@ -11,14 +11,11 @@ import 'food_log_fab.dart';
 /// Today's coach-assigned workout card — the HERO of the workout page's
 /// My Program tab and Home.
 ///
-/// Redesign goals vs. the previous version:
-/// - ONE visual hero (the workout name) instead of five competing elements.
-/// - No internal borders/dividers — spacing alone separates sections.
-/// - Muscle tags collapsed to a glance (max 2 + "+n"), not a full row.
-/// - Stats read as icon + value, not bare numbers next to a label.
-/// - The CTA is unmistakably the most prominent thing on the card: full-
-///   bleed Electric Volt gradient with a soft glow, so it reads as an
-///   invitation to tap rather than a footnote.
+/// 2026-10-01 restyle to the "next up protocol" look: accent status pill,
+/// the muscle targets as a subtitle under the name, three labelled stat
+/// tiles (Est. time / Exercises / Sets) and a 2-exercise preview with
+/// sets × reps targets — same [AssignedWorkout] input, same tap contract,
+/// same FAB obstruction reporting; data and behavior unchanged.
 class AssignedWorkoutCard extends StatelessWidget {
   final AssignedWorkout workout;
   final bool isArabic;
@@ -40,193 +37,229 @@ class AssignedWorkoutCard extends StatelessWidget {
         .join(' ');
   }
 
+  /// "4 sets × 8-10"-style target from the exercise's plan; falls back to a
+  /// bare sets count when the coach left reps unset.
+  String _targetLabel(AppLocalizations l10n, AssignedExercise exercise) {
+    final sets = '${exercise.targetSets}';
+    final reps = exercise.targetReps;
+    final weight = exercise.targetWeightKg;
+    if (reps != null && reps > 0 && weight != null && weight > 0) {
+      return l10n.assignedTargetWeight(sets, '$reps', _weightLabel(weight));
+    }
+    if (reps != null && reps > 0) {
+      return l10n.assignedTarget(sets, '$reps');
+    }
+    return '$sets ${l10n.assignedStatSets}';
+  }
+
+  static String _weightLabel(double kg) =>
+      kg == kg.roundToDouble() ? kg.round().toString() : kg.toStringAsFixed(1);
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final muscles = workout.targetMuscles.map(_muscleLabel).toList();
+    final muscles = workout.targetMuscles
+        .map(_muscleLabel)
+        .where((m) => m.isNotEmpty)
+        .toList();
     final font = AppText.fontFamily(isArabic: isArabic);
-    final visibleMuscles = muscles.take(2).toList();
-    final extraCount = muscles.length - visibleMuscles.length;
+    final preview = workout.exercises.take(2).toList();
+    final extraCount = workout.exercises.length - preview.length;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: _FabObstructionReporter(
         child: GestureDetector(
-        onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          // Unified card chrome shared with every Home card (2026-09-27):
-          // radius 20, neutral hairline border, soft blur-12 elevation —
-          // only the CTA inside carries the volt, nothing structural.
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderSubtle),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              // Unified card chrome shared with every Home card (2026-09-27):
+              // radius 20, neutral hairline border, soft blur-12 elevation —
+              // only the CTA inside carries the volt, nothing structural.
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.borderSubtle),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.cardShadow,
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Status badge (quiet — supports, doesn't compete) ──
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.lightGreen,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            // Neutral status dot — informational; the volt
-                            // stays on the CTA button only (2026-09-27).
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          l10n.assignedWorkoutTitle,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                            color: AppColors.onPrimaryContainer,
-                            fontFamily: font,
-                          ),
-                        ),
-                      ],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Status pill — solid accent with dark ink ("NEXT UP").
+                // A tiny badge is the accent token's sanctioned micro-fill.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    l10n.assignedWorkoutTitle,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                      color: AppColors.onPrimary,
+                      fontFamily: font,
                     ),
                   ),
-                  const Spacer(),
-                  if (visibleMuscles.isNotEmpty)
-                    Text(
-                      extraCount > 0
-                          ? '${visibleMuscles.join(' · ')} +$extraCount'
-                          : visibleMuscles.join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted,
-                        fontFamily: font,
-                      ),
-                    ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // ── Name — the ONLY hero element on the card ──
-              Text(
-                workout.templateName,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 26,
-                  height: 1.15,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.4,
-                  color: AppColors.textPrimary,
-                  fontFamily: font,
                 ),
-              ),
 
-              const SizedBox(height: 16),
+                const SizedBox(height: 14),
 
-              // ── Stats as icon + value chips — scannable, not a data row ──
-              Row(
-                children: [
-                  _StatChip(
-                    icon: Icons.fitness_center_rounded,
-                    value: '${workout.exercises.length}',
-                    font: font,
+                // ── Name — the ONLY hero element on the card ──
+                Text(
+                  workout.templateName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 26,
+                    height: 1.15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.4,
+                    color: AppColors.textPrimary,
+                    fontFamily: font,
                   ),
-                  const SizedBox(width: 8),
-                  _StatChip(
-                    icon: Icons.repeat_rounded,
-                    value: '${workout.totalSets}',
-                    font: font,
-                  ),
-                  const SizedBox(width: 8),
-                  _StatChip(
-                    icon: Icons.schedule_rounded,
-                    value:
-                        '~${workout.estimatedMinutes}${isArabic ? ' د' : 'm'}',
-                    font: font,
+                ),
+
+                if (muscles.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    muscles.join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                      fontFamily: font,
+                    ),
                   ),
                 ],
-              ),
 
-              const SizedBox(height: 18),
+                const SizedBox(height: 16),
 
-              // ── CTA — the most prominent element on the card ──
-              Container(
-                width: double.infinity,
-                height: 52,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  gradient: AppColors.primaryActionGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.35),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // ── Stat tiles — icon, value, label; one third each ──
+                Row(
                   children: [
-                    Icon(
-                      workout.isResumable
-                          ? Icons.play_arrow_rounded
-                          : Icons.bolt_rounded,
-                      size: 20,
-                      color: AppColors.onPrimary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      workout.isResumable
-                          ? l10n.assignedResume
-                          : l10n.startWorkout,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.onPrimary,
-                        fontFamily: font,
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.schedule_rounded,
+                        iconColor: AppColors.accent,
+                        value:
+                            '~${workout.estimatedMinutes}${isArabic ? ' د' : 'm'}',
+                        label: l10n.assignedStatTime,
+                        font: font,
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(
-                      isArabic
-                          ? Icons.arrow_back_rounded
-                          : Icons.arrow_forward_rounded,
-                      size: 18,
-                      color: AppColors.onPrimary,
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.fitness_center_rounded,
+                        iconColor: AppColors.secondary,
+                        value: '${workout.exercises.length}',
+                        label: l10n.assignedStatExercises,
+                        font: font,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _StatTile(
+                        icon: Icons.repeat_rounded,
+                        iconColor: AppColors.tertiary,
+                        value: '${workout.totalSets}',
+                        label: l10n.assignedStatSets,
+                        font: font,
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+
+                // ── Exercise preview — first 2 in template order ──
+                if (preview.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  for (var i = 0; i < preview.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 8),
+                    _ExercisePreviewRow(
+                      index: i + 1,
+                      name: preview[i].exerciseName,
+                      target: _targetLabel(l10n, preview[i]),
+                      font: font,
+                    ),
+                  ],
+                  if (extraCount > 0) ...[
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 36),
+                      child: Text(
+                        '+$extraCount',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMuted,
+                          fontFamily: font,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+
+                const SizedBox(height: 16),
+
+                // ── CTA — the most prominent element on the card ──
+                Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: AppColors.primaryActionGradient,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        workout.isResumable
+                            ? Icons.play_arrow_rounded
+                            : Icons.bolt_rounded,
+                        size: 20,
+                        color: AppColors.onPrimary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        workout.isResumable
+                            ? l10n.assignedResume
+                            : l10n.startWorkout,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.onPrimary,
+                          fontFamily: font,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        isArabic
+                            ? Icons.arrow_back_rounded
+                            : Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: AppColors.onPrimary,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -341,34 +374,129 @@ class _FabObstructionReporterState extends State<_FabObstructionReporter> {
   }
 }
 
-/// Compact icon+value chip used for the stat row — reads at a glance,
-/// no separate label needed since the icon carries the meaning.
-class _StatChip extends StatelessWidget {
+/// Labelled stat tile — icon on top, value, then the small label; one third
+/// of the card's stat row.
+class _StatTile extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String value;
+  final String label;
   final String? font;
 
-  const _StatChip({required this.icon, required this.value, this.font});
+  const _StatTile({
+    required this.icon,
+    required this.iconColor,
+    required this.value,
+    required this.label,
+    this.font,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: iconColor),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textPrimary,
+              fontFamily: font,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
+              fontFamily: font,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Numbered exercise preview row — name on the left, its sets × reps target
+/// on the right, sitting in the same soft container as the stat tiles.
+class _ExercisePreviewRow extends StatelessWidget {
+  final int index;
+  final String name;
+  final String target;
+  final String? font;
+
+  const _ExercisePreviewRow({
+    required this.index,
+    required this.name,
+    required this.target,
+    this.font,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: AppColors.textSecondary),
-          const SizedBox(width: 6),
+          Container(
+            width: 24,
+            height: 24,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.accent,
+            ),
+            child: Text(
+              '$index',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w800,
+                color: AppColors.onPrimary,
+                fontFamily: font,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+                fontFamily: font,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           Text(
-            value,
+            target,
             style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
               fontFamily: font,
             ),
           ),

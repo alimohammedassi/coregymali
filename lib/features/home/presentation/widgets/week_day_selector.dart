@@ -44,18 +44,61 @@ class WeekDaySelector extends StatefulWidget {
   State<WeekDaySelector> createState() => _WeekDaySelectorState();
 }
 
-class _WeekDaySelectorState extends State<WeekDaySelector> {
+class _WeekDaySelectorState extends State<WeekDaySelector>
+    with SingleTickerProviderStateMixin {
   /// Slide direction of the last week change, in physical pixels sign
   /// (+1 = incoming week slides from the right). Drives the
   /// [AnimatedSwitcher] so swipe/chevron paging animates like a pager.
   /// Starts at 0 so the first build appears without animation.
   double _slideDir = 0;
 
+  // ── Finger-follow drag (owner: "اسكرول سموس") ──
+  // The strip tracks the drag 1:1 while the finger is down, then either
+  // commits to the adjacent week (slide transition) or glides back to rest.
+  double _dragOffset = 0;
+  bool _dragging = false;
+  Animation<double>? _snapBack;
+  late final AnimationController _snap = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+    value: 1.0,
+  );
+
+  /// A gentle flick now pages — the old 200px/s threshold needed a hard
+  /// flick and read as "not scrolling".
+  static const double _flickVelocity = 120;
+
+  @override
+  void initState() {
+    super.initState();
+    _snap.addListener(() {
+      if (!_dragging && mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _snap.dispose();
+    super.dispose();
+  }
+
+  /// Physical-pixel offset currently applied to the strip.
+  double get _visualOffset {
+    if (_dragging) return _dragOffset;
+    return _snapBack?.value ?? 0;
+  }
+
   void _page(bool goNext, bool isArabic) {
     if (goNext && !widget.canGoNext) return;
     // LTR: forward slides in from the right; RTL mirrors it.
     final base = isArabic ? -1.0 : 1.0;
-    setState(() => _slideDir = goNext ? base : -base);
+    setState(() {
+      _slideDir = goNext ? base : -base;
+      _dragging = false;
+      _dragOffset = 0;
+      _snapBack = null;
+      _snap.value = 1.0;
+    });
     if (goNext) {
       widget.onNextWeek?.call();
     } else {
@@ -63,12 +106,42 @@ class _WeekDaySelectorState extends State<WeekDaySelector> {
     }
   }
 
-  void _onSwipe(DragEndDetails details, bool isArabic) {
+  void _onDragEnd(DragEndDetails details, bool isArabic, double width) {
     final velocity = details.primaryVelocity ?? 0;
-    // Threshold so taps and vertical-scroll jitter never flip the week.
-    if (velocity.abs() < 200) return;
-    // LTR: swipe left (negative velocity) = forward. RTL mirrors it.
-    _page(isArabic ? velocity > 0 : velocity < 0, isArabic);
+    // LTR: leftward motion pages to the next week; RTL mirrors. Either a
+    // gentle flick or dragging past ~28% of the strip commits the page.
+    final nextByVelocity =
+        isArabic ? velocity > _flickVelocity : velocity < -_flickVelocity;
+    final prevByVelocity =
+        isArabic ? velocity < -_flickVelocity : velocity > _flickVelocity;
+    final nextByDistance =
+        isArabic ? _dragOffset > width * 0.28 : _dragOffset < -width * 0.28;
+    final prevByDistance =
+        isArabic ? _dragOffset < -width * 0.28 : _dragOffset > width * 0.28;
+
+    if ((nextByVelocity || nextByDistance) && widget.canGoNext) {
+      _page(true, isArabic);
+    } else if (prevByVelocity || prevByDistance) {
+      _page(false, isArabic);
+    } else {
+      _glideBack();
+    }
+  }
+
+  /// Ease the strip back to its rest position after a non-committal drag.
+  void _glideBack() {
+    if (_dragOffset == 0) {
+      if (mounted) setState(() => _dragging = false);
+      return;
+    }
+    _snapBack = Tween<double>(begin: _dragOffset, end: 0).animate(
+      CurvedAnimation(parent: _snap, curve: Curves.easeOutCubic),
+    );
+    setState(() {
+      _dragging = false;
+      _dragOffset = 0;
+    });
+    _snap.forward(from: 0);
   }
 
   @override
@@ -98,38 +171,59 @@ class _WeekDaySelectorState extends State<WeekDaySelector> {
                 : () => _page(false, isArabic),
           ),
           Expanded(
-            child: GestureDetector(
-              onHorizontalDragEnd: (details) => _onSwipe(details, isArabic),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  final slide =
-                      Tween<Offset>(
-                        begin: Offset(_slideDir, 0),
-                        end: Offset.zero,
-                      ).animate(animation);
-                  return SlideTransition(
-                    position: slide,
-                    child: FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    ),
-                  );
-                },
-                child: Row(
-                  key: ValueKey(weekKey),
-                  children: [
-                    for (final day in week)
-                      _DayCell(
-                        day: day,
-                        selectedDate: widget.selectedDate,
-                        onSelectDate: widget.onSelectDate,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                return GestureDetector(
+                  onHorizontalDragStart: (_) {
+                    setState(() {
+                      _dragging = true;
+                      _snapBack = null;
+                      _snap.value = 1.0;
+                    });
+                  },
+                  onHorizontalDragUpdate: (details) => setState(() {
+                    _dragOffset = (_dragOffset + details.delta.dx)
+                        .clamp(-width * 0.5, width * 0.5);
+                  }),
+                  onHorizontalDragEnd: (details) =>
+                      _onDragEnd(details, isArabic, width),
+                  onHorizontalDragCancel: _glideBack,
+                  child: Transform.translate(
+                    offset: Offset(_visualOffset, 0),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        final slide =
+                            Tween<Offset>(
+                              begin: Offset(_slideDir, 0),
+                              end: Offset.zero,
+                            ).animate(animation);
+                        return SlideTransition(
+                          position: slide,
+                          child: FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Row(
+                        key: ValueKey(weekKey),
+                        children: [
+                          for (final day in week)
+                            _DayCell(
+                              day: day,
+                              selectedDate: widget.selectedDate,
+                              onSelectDate: widget.onSelectDate,
+                            ),
+                        ],
                       ),
-                  ],
-                ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           _WeekArrow(

@@ -2,7 +2,9 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
-const GEMINI_MODEL = 'gemini-3.6-flash';
+// Text-only task on the lite tier (highest free-tier RPD pool; load split
+// off 3.6-flash, 2026-10-01).
+const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 
 const admin = createClient(
   Deno.env.get('SUPABASE_URL')!,
